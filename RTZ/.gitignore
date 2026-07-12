@@ -1,0 +1,8 @@
+.hemttout/
+releases/
+*.pbo
+*.biprivatekey
+.hemttprivatekey
+*.bikey
+texHeaders.bin
+.claude/settings.local.json

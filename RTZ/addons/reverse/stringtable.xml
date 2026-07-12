@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Reverse">
+        <Key ID="STR_RTZ_Reverse_DisplayName">
+            <English>Vehicle Reversing</English>
+        </Key>
+        <Key ID="STR_RTZ_Reverse_ReverseToCursor">
+            <English>Reverse to Cursor</English>
+        </Key>
+        <Key ID="STR_RTZ_Reverse_ReverseToCursor_Description">
+            <English>Selected AI-driven land vehicles reverse in a straight line towards the cursor position. The cursor must be behind the vehicle.</English>
+        </Key>
+        <Key ID="STR_RTZ_Reverse_Timeout">
+            <English>Reverse Timeout</English>
+        </Key>
+        <Key ID="STR_RTZ_Reverse_Timeout_Description">
+            <English>Time in seconds a vehicle may spend reversing before the order expires.</English>
+        </Key>
+    </Package>
+</Project>

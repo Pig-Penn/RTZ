@@ -1,0 +1,13 @@
+name = "Real-Time Zeus"
+prefix = "rtz"
+author = "Maxim"
+mainprefix = "x"
+
+[files]
+include = [
+    "mod.cpp",
+    "README.md",
+]
+
+[version]
+git_hash = 0

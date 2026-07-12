@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Economy">
+        <Key ID="STR_RTZ_Economy_CostAPC">
+            <English>Wheeled APC Cost</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostAPC_Description">
+            <English>Points to place a wheeled APC. 100 points is a full resource bar.</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostBoat">
+            <English>Boat Cost</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostBoat_Description">
+            <English>Points to place a boat or ship. 100 points is a full resource bar.</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostCar">
+            <English>Car Cost</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostCar_Description">
+            <English>Points to place a car, truck or MRAP. 100 points is a full resource bar.</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostHelicopter">
+            <English>Helicopter Cost</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostHelicopter_Description">
+            <English>Points to place a helicopter. 100 points is a full resource bar.</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostInfantry">
+            <English>Infantry Cost</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostInfantry_Description">
+            <English>Points to place a single soldier. Groups charge this per member. 100 points is a full resource bar.</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostPlane">
+            <English>Plane Cost</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostPlane_Description">
+            <English>Points to place a plane or VTOL. 100 points is a full resource bar.</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostStatic">
+            <English>Static Weapon Cost</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostStatic_Description">
+            <English>Points to place a static weapon. 100 points is a full resource bar.</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostTracked">
+            <English>Tracked Armor Cost</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CostTracked_Description">
+            <English>Points to place a tank or tracked APC. 100 points is a full resource bar.</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CrewMultiplier">
+            <English>Crewed Vehicle Multiplier</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CrewMultiplier_Description">
+            <English>Cost multiplier applied when a vehicle is placed together with its crew.</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_DeleteRefund">
+            <English>Delete Refund</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_DeleteRefund_Description">
+            <English>Percentage of an object's cost refunded when Zeus deletes it. Note that deleting corpses and wrecks also refunds.</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_DisplayName">
+            <English>Economy</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_Enable">
+            <English>Enable Economy</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_Enable_Description">
+            <English>Placing units, vehicles and static weapons costs curator points, shown as the resource bar in the Zeus interface. When disabled, everything is free. Costs refresh when the Zeus interface is reopened.</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_Income">
+            <English>Income</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_Income_Description">
+            <English>Points gained per minute. 100 points is a full resource bar.</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_StartingPoints">
+            <English>Starting Points</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_StartingPoints_Description">
+            <English>Points each Zeus begins the mission with. 100 points is a full resource bar.</English>
+        </Key>
+    </Package>
+</Project>
