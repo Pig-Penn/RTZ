@@ -6,3 +6,4 @@ releases/
 *.bikey
 texHeaders.bin
 .claude/settings.local.json
+*.code-workspace
