@@ -2,10 +2,16 @@
 <Project name="RTZ">
     <Package name="Mine">
         <Key ID="STR_RTZ_Mine_ActionDisarm">
-            <English>Disarm Mine</English>
+            <English>Clear Mines</English>
         </Key>
         <Key ID="STR_RTZ_Mine_ActionPlace">
             <English>Place Mine</English>
+        </Key>
+        <Key ID="STR_RTZ_Mine_ClearHidden">
+            <English>Clear Undetected Mines</English>
+        </Key>
+        <Key ID="STR_RTZ_Mine_ClearHidden_Description">
+            <English>Let ordered groups clear mines their side has not detected yet, sweeping the whole area instead of only known mines.</English>
         </Key>
         <Key ID="STR_RTZ_Mine_DisplayName">
             <English>Mines</English>
@@ -38,7 +44,7 @@
             <English>Order Timeout</English>
         </Key>
         <Key ID="STR_RTZ_Mine_PlaceTimeout_Description">
-            <English>Time in seconds a unit has to reach the ordered position before a place or disarm order expires.</English>
+            <English>Time in seconds a unit has to reach the ordered position before a place order expires.</English>
         </Key>
         <Key ID="STR_RTZ_Mine_SideAll">
             <English>All Sides</English>

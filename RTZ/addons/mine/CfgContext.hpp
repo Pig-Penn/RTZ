@@ -10,7 +10,7 @@ class zen_context_menu_actions {
         displayName = CSTRING(ActionDisarm);
         icon = "\a3\ui_f\data\igui\cfg\simpleTasks\types\repair_ca.paa";
         statement = QUOTE([ARR_2(_position,_objects)] call FUNC(orderDisarm));
-        condition = QUOTE(([ARR_2(_position,_objects)] call FUNC(findDisarmTarget)) isNotEqualTo []);
+        condition = QUOTE([ARR_2(_position,_objects)] call FUNC(canDisarm));
         priority = 29;
     };
 };

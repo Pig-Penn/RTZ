@@ -18,9 +18,8 @@
 // Zeus map control
 #define IDC_RSCDISPLAYCURATOR_MAINMAP 50
 
-// How close a unit must get before planting or disarming (meters)
+// How close a unit must get before planting a mine (meters)
 #define PLACE_DISTANCE 2
-#define DISARM_DISTANCE 3
 
 // Radius around the context menu position in which mines are looked up (meters)
 #define SEARCH_RADIUS 15

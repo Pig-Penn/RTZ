@@ -9,6 +9,14 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 ] call CBA_fnc_addSetting;
 
 [
+    QGVAR(clearHidden), "CHECKBOX",
+    [LSTRING(ClearHidden), LSTRING(ClearHidden_Description)],
+    _category,
+    false,
+    false
+] call CBA_fnc_addSetting;
+
+[
     QGVAR(mark3D), "CHECKBOX",
     [LSTRING(Mark3D), LSTRING(Mark3D_Description)],
     _category,

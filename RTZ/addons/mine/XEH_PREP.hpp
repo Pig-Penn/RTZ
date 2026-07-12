@@ -1,8 +1,9 @@
 PREP(approach);
-PREP(disarmMine);
+PREP(canDisarm);
+PREP(demine);
 PREP(draw3D);
 PREP(drawMap);
-PREP(findDisarmTarget);
+PREP(getDeminers);
 PREP(orderDisarm);
 PREP(orderPlace);
 PREP(placeActions);

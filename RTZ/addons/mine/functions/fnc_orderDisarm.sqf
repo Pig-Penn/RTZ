@@ -1,8 +1,8 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Orders the best suited selected explosive specialist to disarm
- * the spotted mine nearest to the context menu position.
+ * Orders every selected demine-capable group to sweep the area around the
+ * context menu position for mines. The order runs where each group is local.
  *
  * Arguments:
  * 0: Context Position ASL <ARRAY>
@@ -17,8 +17,13 @@
  * Public: No
  */
 
-(_this call FUNC(findDisarmTarget)) params [["_unit", objNull], ["_mine", objNull]];
+params ["_position", "_objects"];
 
-if (isNull _unit) exitWith {};
+private _groups = _objects call FUNC(getDeminers);
+if (_groups isEqualTo []) exitWith {};
 
-[QGVAR(disarm), [_unit, _mine], _unit] call CBA_fnc_targetEvent;
+private _pos = ASLToAGL _position;
+
+{
+    [QGVAR(disarm), [_x, _pos, GVAR(clearHidden)], leader _x] call CBA_fnc_targetEvent;
+} forEach _groups;
