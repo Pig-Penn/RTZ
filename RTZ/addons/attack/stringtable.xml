@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Attack">
+        <Key ID="STR_RTZ_Attack_ActionDestroy">
+            <English>Destroy Target</English>
+        </Key>
+        <Key ID="STR_RTZ_Attack_NoTarget">
+            <English>No Target</English>
+        </Key>
+    </Package>
+</Project>
