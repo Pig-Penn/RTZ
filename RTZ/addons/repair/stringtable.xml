@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Repair">
+        <Key ID="STR_RTZ_Repair_ActionRepair">
+            <English>Repair Vehicle</English>
+        </Key>
+        <Key ID="STR_RTZ_Repair_DisplayName">
+            <English>Repair</English>
+        </Key>
+        <Key ID="STR_RTZ_Repair_RepairDuration">
+            <English>Repair Duration</English>
+        </Key>
+        <Key ID="STR_RTZ_Repair_RepairDuration_Description">
+            <English>Time in seconds an engineer takes to fully repair a vehicle once work begins.</English>
+        </Key>
+        <Key ID="STR_RTZ_Repair_RepairTimeout">
+            <English>Order Timeout</English>
+        </Key>
+        <Key ID="STR_RTZ_Repair_RepairTimeout_Description">
+            <English>Time in seconds an engineer has to reach the vehicle before a repair order expires.</English>
+        </Key>
+        <Key ID="STR_RTZ_Repair_RequireToolkit">
+            <English>Require Toolkit</English>
+        </Key>
+        <Key ID="STR_RTZ_Repair_RequireToolkit_Description">
+            <English>Only let engineers carrying a toolkit repair vehicles. Disable to allow any engineer to repair.</English>
+        </Key>
+    </Package>
+</Project>
