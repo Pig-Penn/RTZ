@@ -151,13 +151,13 @@ _costs append [
     ["I_Tura_Offroad_armor_AT_lxWS", 0], // Offroad (UP, AT)
 
     // Tura - Drones
-    ["I_Tura_UAV_02_IED_lxWS", 0] // IED UAV
+    ["I_Tura_UAV_02_IED_lxWS", 0], // IED UAV
 
     // Tura - Men
     ["I_Tura_deserter_lxWS", 1], // Deserter (Rifle)
     ["I_Tura_enforcer_lxWS", 1], // Enforcer (Rifle)
     ["I_Tura_scout_lxWS", 1], // Scout (Rifle)
-    ["I_Tura_watcher_lxWS", 1] // Watcher (Rifle)
+    ["I_Tura_watcher_lxWS", 1], // Watcher (Rifle)
     ["I_Tura_medic2_lxWS", 1], // Snatcher (Medikit)
     ["I_Tura_thug_lxWS", 0], // Thug (Mines)
     ["I_Tura_soldier_UAV_lxWS", 0], // UAV Operator (IED)
@@ -169,6 +169,6 @@ _costs append [
 
     // Tura - Turrets
     ["I_Tura_HMG_02_lxWS", 8], // M2 HMG
-    ["I_Tura_HMG_02_high_lxWS", 8] // M2 HMG (Raised)
+    ["I_Tura_HMG_02_high_lxWS", 8], // M2 HMG (Raised)
     ["I_Tura_Mortar_lxWS", 8] // Mk6 Mortar
 ];
