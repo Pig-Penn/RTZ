@@ -19,10 +19,13 @@
 params ["_class"];
 
 switch (true) do {
+    // No officer base class exists, so match on the classname; before infantry
+    case (_class isKindOf "CAManBase" && {toLower _class find "officer" != -1}): {INDEX_OFFICER};
     case (_class isKindOf "CAManBase"): {INDEX_INFANTRY}; // excludes animals, which derive from Man directly
     case (_class isKindOf "StaticWeapon"): {INDEX_STATIC};
     case (_class isKindOf "Wheeled_APC_F"): {INDEX_APC}; // before Car, wheeled APCs derive from it
     case (_class isKindOf "Tank"): {INDEX_TRACKED}; // includes tracked APCs
+    case (_class isKindOf "Truck_F"): {INDEX_TRUCK}; // before Car, trucks derive from it
     case (_class isKindOf "Car"): {INDEX_CAR};
     case (_class isKindOf "ParachuteBase"): {INDEX_FREE}; // before Helicopter, parachutes derive from it
     case (_class isKindOf "Helicopter"): {INDEX_HELICOPTER};

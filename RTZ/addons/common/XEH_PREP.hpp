@@ -1,0 +1,2 @@
+PREP(applySkill);
+PREP(initMan);

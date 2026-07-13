@@ -35,14 +35,16 @@ private _defaults = GVAR(defaultCosts);
 
 // In points, indexed by cost category
 private _bases = [
-    GVAR(costInfantry),
-    GVAR(costStatic),
-    GVAR(costCar),
-    GVAR(costAPC),
-    GVAR(costTracked),
-    GVAR(costHelicopter),
-    GVAR(costPlane),
-    GVAR(costBoat)
+    COST_INFANTRY,
+    COST_STATIC,
+    COST_CAR,
+    COST_APC,
+    COST_TRACKED,
+    COST_HELICOPTER,
+    COST_PLANE,
+    COST_BOAT,
+    COST_TRUCK,
+    COST_OFFICER
 ];
 
 _classes apply {

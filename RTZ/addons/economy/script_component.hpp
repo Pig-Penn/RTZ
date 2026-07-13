@@ -32,3 +32,18 @@
 #define INDEX_HELICOPTER 5
 #define INDEX_PLANE 6
 #define INDEX_BOAT 7
+#define INDEX_TRUCK 8
+#define INDEX_OFFICER 9
+
+// Base cost per category, in points (POINTS_MAX = a full resource bar). Used as
+// the fallback for classes without an explicit entry in the defaultCosts table
+#define COST_INFANTRY 1
+#define COST_STATIC 5
+#define COST_CAR 6
+#define COST_APC 15
+#define COST_TRACKED 25
+#define COST_HELICOPTER 20
+#define COST_PLANE 30
+#define COST_BOAT 10
+#define COST_TRUCK 5
+#define COST_OFFICER 20
