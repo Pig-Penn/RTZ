@@ -31,7 +31,7 @@ if (!GVAR(enable)) exitWith {_classes apply {[true, 0]}};
 
 private _categories = GVAR(categories);
 private _overrides = GETGVAR(overrides,createHashMap);
-private _crewMultiplier = GVAR(crewMultiplier);
+private _defaults = GVAR(defaultCosts);
 
 // In points, indexed by cost category
 private _bases = [
@@ -47,11 +47,11 @@ private _bases = [
 
 _classes apply {
     private _index = _categories getOrDefaultCall [_x, {_x call FUNC(categorize)}, true];
-    private _cost = (_overrides getOrDefault [_x, if (_index == INDEX_FREE) then {0} else {_bases select _index}]) / POINTS_MAX;
+    // Precedence: mission override -> built-in table -> category default
+    private _base = _defaults getOrDefault [_x, if (_index == INDEX_FREE) then {0} else {_bases select _index}];
+    private _cost = (_overrides getOrDefault [_x, _base]) / POINTS_MAX;
 
-    if (_index == INDEX_FREE || {_index == INDEX_INFANTRY}) then {
-        [true, _cost]
-    } else {
-        [true, _cost, _cost * _crewMultiplier]
-    }
+    // A vehicle costs the same placed with or without its crew, so a single
+    // cost (charged for both cases by the engine) is enough for every class
+    [true, _cost]
 }

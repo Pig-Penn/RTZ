@@ -40,14 +40,6 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 ] call CBA_fnc_addSetting;
 
 [
-    QGVAR(crewMultiplier), "SLIDER",
-    [LSTRING(CrewMultiplier), LSTRING(CrewMultiplier_Description)],
-    _category,
-    [1, 4, 1.5, 2],
-    true
-] call CBA_fnc_addSetting;
-
-[
     QGVAR(costInfantry), "SLIDER",
     [LSTRING(CostInfantry), LSTRING(CostInfantry_Description)],
     _category,

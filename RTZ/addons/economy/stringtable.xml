@@ -49,12 +49,6 @@
         <Key ID="STR_RTZ_Economy_CostTracked_Description">
             <English>Points to place a tank or tracked APC. 100 points is a full resource bar.</English>
         </Key>
-        <Key ID="STR_RTZ_Economy_CrewMultiplier">
-            <English>Crewed Vehicle Multiplier</English>
-        </Key>
-        <Key ID="STR_RTZ_Economy_CrewMultiplier_Description">
-            <English>Cost multiplier applied when a vehicle is placed together with its crew.</English>
-        </Key>
         <Key ID="STR_RTZ_Economy_DeleteRefund">
             <English>Delete Refund</English>
         </Key>
