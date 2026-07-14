@@ -9,6 +9,12 @@ private _costs = [];
 
 #include "defaultCosts\acm_msf.inc.sqf"
 #include "defaultCosts\csat.inc.sqf"
-#include "defaultCosts\guerilla.inc.sqf"
+#include "defaultCosts\viper.inc.sqf"
+#include "defaultCosts\aaf.inc.sqf"
+#include "defaultCosts\fia.inc.sqf"
+#include "defaultCosts\insurgents.inc.sqf"
+#include "defaultCosts\looters.inc.sqf"
+#include "defaultCosts\syndikat.inc.sqf"
+#include "defaultCosts\tura.inc.sqf"
 
 GVAR(defaultCosts) = createHashMapFromArray _costs;

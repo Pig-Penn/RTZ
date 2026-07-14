@@ -1,5 +1,3 @@
-// CSAT (Iran)
-
 _costs append [
 
     // Anti-Air
@@ -130,6 +128,7 @@ _costs append [
     ["O_support_Mort_F", 7], // Gunner (Mk6)
     ["O_support_AMort_F", 3], // Asst. Gunner (Mk6)
     ["O_crew_F", 0.5], // Crewman
+    ["Aegis_O_BoatCrew_EF", 0.5], // Boat Crewman
     ["O_helicrew_F", 0.5], // Helicopter Crew
     ["O_helipilot_F", 0.5], // Helicopter Pilot
     ["O_Pilot_F", 0.5], // Pilot
@@ -153,8 +152,8 @@ _costs append [
     // Men (Special Forces)
     ["O_recon_F", 2], // Recon Scout
     ["O_recon_CQ_F", 2], // Recon Scout (Shotgun)
-    ["O_Pathfinder_F", 2.5], // Recon Pathfinder
     ["O_recon_M_F", 2.5], // Recon Marksman
+    ["O_Pathfinder_F", 2.8], // Recon Pathfinder
     ["O_recon_AR_F", 2.5], // Recon Autorifleman
     ["O_recon_GL_F", 3], // Recon Grenadier
     ["O_recon_LAT_F", 5], // Recon Scout (AT)
@@ -232,22 +231,6 @@ _costs append [
     ["Atlas_O_C_Marine_Crew_F", 0.5], // Crewman
     ["Atlas_O_C_Marine_TL_F", 1.3], // Team Leader
     ["Atlas_O_C_Marine_SL_F", 1.6], // Squad Leader
-
-    // Men (Viper)
-    ["O_V_Soldier_hex_F", 4], // Viper Operative
-    ["O_V_Soldier_Medic_hex_F", 4], // Viper Paramedic
-    ["O_V_Soldier_JTAC_hex_F", 5], // Viper JTAC
-    ["O_V_Soldier_Exp_hex_F", 6], // Viper Demo Specialist
-    ["O_V_Soldier_M_hex_F", 4.5], // Viper Marksman
-    ["O_V_Soldier_LAT_hex_F", 7], // Viper Operative (AT)
-    ["O_V_Soldier_TL_hex_F", 4.3], // Viper Team Leader
-    ["Atlas_O_V_Soldier_whex_F", 4], // Viper Operative
-    ["Atlas_O_V_Soldier_Medic_whex_F", 4], // Viper Paramedic
-    ["Atlas_O_V_Soldier_JTAC_whex_F", 5], // Viper JTAC
-    ["Atlas_O_V_Soldier_Exp_whex_F", 6], // Viper Demo Specialist
-    ["Atlas_O_V_Soldier_M_whex_F", 4.5], // Viper Marksman
-    ["Atlas_O_V_Soldier_LAT_whex_F", 7], // Viper Operative (AT)
-    ["Atlas_O_V_Soldier_TL_whex_F", 4.3], // Viper Team Leader
 
     // Planes
     ["O_Plane_Transport_01_infantry_F", 35], // Iran-150 (Infantry)
