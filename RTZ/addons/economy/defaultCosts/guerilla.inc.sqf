@@ -397,7 +397,7 @@ _costs append [
     ["I_PMC_Story_Gustavo_lxWS", 1], // Gustavo Dimitrovich
     ["I_Story_Colonel_F", 1], // Akhanteros
     ["I_Captain_Hladas_F", 1], // Dr. Hladik
-    ["I_Story_Officer_01_F", 20] // Major Gavras
+    ["I_Story_Officer_01_F", 20], // Major Gavras
 
     // AAF - Planes
     ["I_Plane_Transport_01_infantry_F", 35], // C-192 Samson (Infantry)
@@ -435,5 +435,5 @@ _costs append [
 
 
     // SFIA - Men (Story)
-    ["I_SFIA_Said_lxWS", 1], // Arib Said
+    ["I_SFIA_Said_lxWS", 1] // Arib Said
 ];
