@@ -20,6 +20,11 @@
 
 // Zeus display
 #define IDD_RSCDISPLAYCURATOR 312
+#define IDC_RSCDISPLAYCURATOR_MAINMAP 50
+
+// Zeus selected entities (ZEN's script_curator.hpp convention)
+#define SELECTED_OBJECTS (curatorSelected select 0)
+#define SELECTED_GROUPS (curatorSelected select 1)
 
 #ifdef DISABLE_COMPILE_CACHE
     #undef PREP

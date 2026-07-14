@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Common">
+        <Key ID="STR_RTZ_Common_CameraToCursor">
+            <English>Camera to Map Cursor</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_CameraToCursor_Description">
+            <English>Teleport the Zeus camera to the position under the map cursor. Works inside curator editing areas, where the native middle-click map teleport is blocked.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_DisplayName">
+            <English>Common</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_EnableUnitTeleport">
+            <English>Unit Teleport to Cursor</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_EnableUnitTeleport_Description">
+            <English>Allow curators to teleport the selected units to the cursor with a keybind (default Shift+T). Units in combat are never moved.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_HeliHeightDown">
+            <English>Helicopter Fly Height Down</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_HeliHeightDown_Description">
+            <English>Lower the selected helicopters' AI fly-in height by the step setting.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_HeliHeightStep">
+            <English>Helicopter Fly Height Step</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_HeliHeightStep_Description">
+            <English>Metres the fly-height keybinds add or subtract per press.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_HeliHeightUp">
+            <English>Helicopter Fly Height Up</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_HeliHeightUp_Description">
+            <English>Raise the selected helicopters' AI fly-in height by the step setting.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_MsgBeyondRange">
+            <English>Beyond %1 m</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_MsgCooldown">
+            <English>%1s Cooldown</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_MsgFlyHeight">
+            <English>Fly Height %1%2 m</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_MsgInCombat">
+            <English>In Combat</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_MsgTeleported">
+            <English>Teleported</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_PreviewHint">
+            <English>LMB place  |  ESC cancel</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_PreviewHintRotate">
+            <English>LMB place  |  hold rotate modifier to turn  |  ESC cancel</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_StanceAuto">
+            <English>Stance Auto</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_StanceAuto_Description">
+            <English>Let the selected AI infantry choose their own stance again.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_StanceDown">
+            <English>Stance Down</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_StanceDown_Description">
+            <English>Set the selected AI infantry's stance to prone.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_StanceMiddle">
+            <English>Stance Middle</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_StanceMiddle_Description">
+            <English>Set the selected AI infantry's stance to crouched.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_StanceUp">
+            <English>Stance Up</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_StanceUp_Description">
+            <English>Set the selected AI infantry's stance to standing.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_TeleportCooldown">
+            <English>Unit Teleport Cooldown</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_TeleportCooldown_Description">
+            <English>Seconds before the teleport keybind can be used again after a successful teleport. 0 disables the cooldown.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_TeleportRange">
+            <English>Unit Teleport Range</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_TeleportRange_Description">
+            <English>Maximum distance in metres between a unit and the cursor position for the teleport keybind to move it.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_TeleportToCursor">
+            <English>Teleport Units to Cursor</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_TeleportToCursor_Description">
+            <English>Teleport the selected units to the cursor position, preserving their formation. Units in combat are skipped; the Unit Teleport settings control range and cooldown.</English>
+        </Key>
+    </Package>
+</Project>

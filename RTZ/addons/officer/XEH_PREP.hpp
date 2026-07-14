@@ -1,0 +1,9 @@
+PREP(applyArea);
+PREP(getOfficers);
+PREP(hasEnemyNearby);
+PREP(isOnCooldown);
+PREP(isOfficer);
+PREP(modifyAction);
+PREP(monitorAreas);
+PREP(setArea);
+PREP(toggleArea);

@@ -15,9 +15,6 @@
 
 #include "\x\rtz\addons\main\script_macros.hpp"
 
-// Zeus map control
-#define IDC_RSCDISPLAYCURATOR_MAINMAP 50
-
 // How close a unit must get before planting a mine (meters)
 #define PLACE_DISTANCE 2
 

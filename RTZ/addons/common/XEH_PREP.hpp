@@ -1,2 +1,9 @@
+PREP(adjustHeliHeight);
 PREP(applySkill);
+PREP(classInfo);
+PREP(curatorMapTeleport);
 PREP(initMan);
+PREP(placementPreview);
+PREP(sideColor);
+PREP(switchStance);
+PREP(teleportToCursor);

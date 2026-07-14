@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Spotting">
+        <Key ID="STR_RTZ_Spotting_CheckInterval">
+            <English>Spotting Interval</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_CheckInterval_Description">
+            <English>Seconds between spot-detection passes on the server. Lower is snappier, higher reduces server load. Read live — can be retuned mid-mission.</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_ChevronNames">
+            <English>Chevron Names</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_ChevronNames_Description">
+            <English>Show unit display names when hovering near a chevron within 50 m. Disable to hide names entirely.</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_DisplayName">
+            <English>Spotting</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_EnableRC">
+            <English>Remote Control Indicator</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_EnableRC_Description">
+            <English>Highlight units currently under remote control by another curator.</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_EnableSpotting">
+            <English>Spotting System</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_EnableSpotting_Description">
+            <English>Show enemies detected by your AI units as world icons in the Zeus interface, with radio contact reports on first sighting.</English>
+        </Key>
+    </Package>
+</Project>

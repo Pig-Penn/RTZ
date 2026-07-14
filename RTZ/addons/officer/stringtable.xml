@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Officer">
+        <Key ID="STR_RTZ_Officer_ActionAdd">
+            <English>Add Editing Area</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_ActionCooldown">
+            <English>Add Editing Area (%1s)</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_ActionRemove">
+            <English>Remove Editing Area</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_AreaRadius">
+            <English>Zone Radius</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_AreaRadius_Description">
+            <English>Radius, in metres, of an officer's editing area. Applied when a zone is created.</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_DisplayName">
+            <English>Officer Zones</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_Enable">
+            <English>Officer Zoning</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_Enable_Description">
+            <English>Let curators anchor their editing rights to officers: an officer can be given a circular editing area on demand through the context menu. A Zeus with at least one zone can only edit inside their zones.</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_FollowOfficer">
+            <English>Zone Follows Officer</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_FollowOfficer_Description">
+            <English>Re-centre a zone on its officer as they move.</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_MsgAreaAdded">
+            <English>Editing zone created (%1 m)</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_MsgAreaBlocked">
+            <English>Cannot create zone: enemy nearby</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_MsgAreaCooldown">
+            <English>%1s Cooldown</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_MsgAreaRemoved">
+            <English>Editing zone removed</English>
+        </Key>
+    </Package>
+</Project>

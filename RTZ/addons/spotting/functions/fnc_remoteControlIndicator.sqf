@@ -1,0 +1,216 @@
+#include "script_component.hpp"
+/*
+ * rtz_fnc_remoteControlIndicator
+ *
+ * When any curator takes direct ("remote") control of a unit, every OTHER
+ * curator sees a remote-control icon hovering over that unit in their Zeus
+ * view (drawIcon3D) - a tell that the unit is being puppeteered by a rival
+ * game master rather than running on AI. The controlling Zeus sees nothing
+ * (they are already in first person). Side- and spotting-agnostic: all other
+ * curators always see it.
+ *
+ * Detection signal: the engine has no global getter for "who is remote
+ * controlling X" - remoteControlled / isRemoteControlling are locality-bound
+ * (must be read where the unit is local, which is the controller's machine),
+ * so the server can't trust them. Instead we read the
+ * "bis_fnc_moduleRemoteControl_owner" object variable, which the vanilla BI
+ * Remote Control module - and ACE3 and Zeus Enhanced alike - set on the
+ * controlled unit with the global (publicVariable) flag. That value is the
+ * controlling player and is synced to every machine, including the server.
+ *
+ * Architecture: the server polls on a CBA per-frame handler (unscheduled -
+ * immune to script-scheduler starvation, unlike a spawned sleep loop) and
+ * pushes viewer-diffed QGVAR(rcDetected)/QGVAR(rcLost) target events keyed by
+ * the unit's netId. Clients keep one hashmap, GVAR(rcDisplay): netId ->
+ * [unit, color]; the spotting system suppresses its chevron for a unit by
+ * testing `netId _unit in GVAR(rcDisplay)`.
+ *
+ * Requirements: CBA_A3
+ * Loading: called by XEH_postInit after CBA_settingsInitialized. Self-guards
+ * locality; registers handlers and returns (no scheduled loop).
+ */
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CLIENT - register event handlers
+// Runs on every machine with a screen: MP clients, listen-server host,
+// and singleplayer (where isServer and hasInterface are both true).
+// ─────────────────────────────────────────────────────────────────────────────
+
+if (hasInterface) then {
+
+    // Per-player storage: unitNetId → [unit, colorArray]. Side colour is
+    // pre-resolved on the server; position, size, and fade alpha are computed
+    // client-side each frame so the icon tracks the unit smoothly between the
+    // server's check cycles. Also read by the spotting system (`netId in`)
+    // to suppress its chevron while the RC icon is showing.
+    GVAR(rcDisplay) = createHashMap;
+
+    addMissionEventHandler ["Draw3D", {
+        // Empty-map test first: it is the overwhelmingly common case and the
+        // cheapest check. Then curator-view-only gates - no Zeus interface
+        // (display 312) or the Zeus map is open (drawIcon3D invisible anyway).
+        if (count GVAR(rcDisplay) == 0) exitWith {};
+        if (isNull (findDisplay 312) || {visibleMap}) exitWith {};
+
+        private _camPos   = positionCameraToWorld [0,0,0];   // Zeus cursor camera, for fade
+        private _viewDist = getObjectViewDistance select 0;
+        // Slow colour shift (~0.5 Hz): lerps 0→25% toward white so the icon brightens
+        // cyclically without touching alpha (distance fade stays clean).
+        private _shift = 0.25 * ((sin (time * 180) + 1) / 2);
+        {
+            // _x = unitNetId (HashMap key); _y = stored display data.
+            _y params ["_unit", "_colorArray"];
+            if (isNull _unit || {!alive _unit}) then { continue };
+            private _anchor = vehicle _unit;
+            private _dist   = _camPos distance _anchor;
+
+            // On foot: chevron recipe, head + 1 m (identical to spotting chevrons).
+            // Mounted: head + 1 m sits inside the hull, so anchor to the vehicle's
+            // bounding-box roof + 1 m instead.
+            private _iconPos = if (isNull objectParent _unit) then {
+                (_unit modelToWorldVisual (_unit selectionPosition "Head")) vectorAdd [0, 0, 1]
+            } else {
+                _anchor modelToWorldVisual [0, 0, ((boundingBoxReal _anchor) select 1 select 2) + 1]
+            };
+            // ~1/4 of the chevron size table (the portrait texture fills its full
+            // bounding box whereas the thin wedge does not), as a smooth ramp.
+            private _iconW = linearConversion [500, 3000, _dist, 1.2, 0.7, true];
+
+            // Distance fade; RGB shifted toward white on each cycle.
+            private _alpha = ((_viewDist - _dist) / _viewDist) max 0;
+            private _col   = [
+                ((_colorArray#0) + _shift * (1 - _colorArray#0)) min 1,
+                ((_colorArray#1) + _shift * (1 - _colorArray#1)) min 1,
+                ((_colorArray#2) + _shift * (1 - _colorArray#2)) min 1,
+                _alpha
+            ];
+
+            drawIcon3D [
+                "\a3\modules_f_curator\data\portraitremotecontrol_ca.paa",
+                _col, _iconPos, _iconW, _iconW, 0, "", 0, 0, "RobotoCondensed", "center", false, 0, 0
+            ];
+        } forEach GVAR(rcDisplay);
+    }];
+
+    // Store/update the controlled unit and colour (idempotent re-sends are cheap).
+    [QGVAR(rcDetected), {
+        params ["_id", "_unit", "_colorArray"];
+        GVAR(rcDisplay) set [_id, [_unit, _colorArray]];
+    }] call CBA_fnc_addEventHandler;
+
+    // Remove the icon when the unit is released, or when this player should no
+    // longer see it (became the controller, or stopped being a curator).
+    [QGVAR(rcLost), {
+        GVAR(rcDisplay) deleteAt (_this select 0);
+    }] call CBA_fnc_addEventHandler;
+
+    // Handlers are registered — ask the server to force-resend every active
+    // indicator on its next scan. Covers JIP/rejoin where the viewer-diffed send
+    // fired before this machine could listen (the viewer is then recorded in
+    // _activeRC and never re-sent). Same pattern as the spotting system's
+    // spotResync; harmless no-op when nothing is under remote control.
+    [QGVAR(rcResync), []] call CBA_fnc_serverEvent;
+};
+
+if (!isServer) exitWith {};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SERVER — detection loop (unscheduled CBA per-frame handler)
+// ─────────────────────────────────────────────────────────────────────────────
+
+#define CHECK_INTERVAL 1                                    // Seconds between scans (RC changes are infrequent).
+#define OWNER_VAR "bis_fnc_moduleRemoteControl_owner"       // Set globally by BI/ACE/ZEN → readable on the server.
+
+// Force a re-send of every active indicator to its current viewers on the next
+// scan. Set by QGVAR(rcResync), fired by each client once its handlers are
+// registered — closing the JIP race where a viewer-diffed send happened before
+// the client could listen. Re-sends are idempotent (the client `set` overwrites).
+GVAR(rcForceResend) = false;
+[QGVAR(rcResync), { GVAR(rcForceResend) = true }] call CBA_fnc_addEventHandler;
+
+[{
+    // Active indicators: unitNetId → [viewerPlayers, colorArray]. viewerPlayers
+    // is the set of curator players currently shown the icon for this unit;
+    // tracking it lets us send QGVAR(rcDetected) only to newly-eligible viewers
+    // and QGVAR(rcLost) to viewers who dropped out (released control ends up in
+    // the cleanup pass; role changes in the per-unit diff). The colour is
+    // resolved once per takeover and cached. State lives in the PFH args
+    // hashmap, mutated in place across ticks.
+    (_this select 0) params ["_activeRC"];
+
+    // Every unit presently under remote control. allUnits is global (all
+    // machines) and contains only the living, so death self-cleans next tick;
+    // the owner variable is global too, so this is authoritative on the server.
+    // The owner is always set on a man (effectiveCommander), so a crewed-vehicle
+    // takeover is covered via that man's vehicle anchor client-side.
+    private _rcUnits = allUnits select { !isNull (_x getVariable [OWNER_VAR, objNull]) };
+
+    // Consume the pending resync flag BEFORE the early exit — with nothing
+    // active there is nothing to resend, and a new takeover reaches every
+    // viewer as newly-eligible anyway, so letting it linger would only force
+    // a pointless re-send later.
+    private _force = GVAR(rcForceResend);
+    GVAR(rcForceResend) = false;
+
+    // Common case: nothing controlled now or last tick — skip the curator scan.
+    if (_rcUnits isEqualTo [] && {count _activeRC == 0}) exitWith {};
+
+    // Current Zeus players — the only possible viewers (a player object is the
+    // required CBA_fnc_targetEvent destination). getAssignedCuratorLogic is the
+    // reliable "is this player a curator right now?" test.
+    private _curatorPlayers = allPlayers select { !isNull getAssignedCuratorLogic _x };
+
+    // netIds controlled this tick, for the cleanup pass below.
+    private _currentIds = [];
+
+    {
+        private _unit       = _x;
+        private _controller = _unit getVariable [OWNER_VAR, objNull];
+        private _id         = netId _unit;
+        _currentIds pushBack _id;
+
+        private _prev        = _activeRC getOrDefault [_id, []];
+        private _prevViewers = _prev param [0, []];
+        private _color       = _prev param [1, []];
+
+        // Side colour of the controlled unit — shared palette with the spotting
+        // markers, brighter NCO variant for "leader" display names. Class test
+        // and colour both come from the cached shared helpers; resolved once
+        // when the takeover is first seen.
+        if (_color isEqualTo []) then {
+            _color = [side _unit, ([_unit] call EFUNC(common,classInfo)) select 1] call EFUNC(common,sideColor);
+        };
+
+        // Show to every curator EXCEPT the one doing the controlling.
+        private _viewers = _curatorPlayers select { _x != _controller };
+
+        // Newly-eligible viewers (incl. JIP / mid-takeover joiners) get the icon;
+        // on a forced resync every current viewer is re-sent (idempotent set).
+        {
+            [QGVAR(rcDetected), [_id, _unit, _color], _x] call CBA_fnc_targetEvent;
+        } forEach (_viewers - ([_prevViewers, []] select _force));
+
+        // Viewers who dropped out since last tick get it retracted. A viewer who
+        // disconnected entirely is a null object — no client to notify, skip it.
+        {
+            if (!isNull _x) then {
+                [QGVAR(rcLost), [_id], _x] call CBA_fnc_targetEvent;
+            };
+        } forEach (_prevViewers - _viewers);
+
+        _activeRC set [_id, [_viewers, _color]];
+    } forEach _rcUnits;
+
+    // ── Cleanup: units no longer under remote control ─────────────────────────
+    // `keys` returns a copy, so deleting from the map mid-iteration is safe.
+    {
+        if !(_x in _currentIds) then {
+            private _id = _x;
+            {
+                if (!isNull _x) then {
+                    [QGVAR(rcLost), [_id], _x] call CBA_fnc_targetEvent;
+                };
+            } forEach ((_activeRC deleteAt _id) param [0, []]);
+        };
+    } forEach keys _activeRC;
+}, CHECK_INTERVAL, [createHashMap]] call CBA_fnc_addPerFrameHandler;
