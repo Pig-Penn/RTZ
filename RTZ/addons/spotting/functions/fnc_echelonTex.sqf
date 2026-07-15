@@ -32,13 +32,13 @@ private _count = call {
     { alive _x && { _x isKindOf "CAManBase" } && { ((assignedVehicleRole _x) param [0, ""]) == "cargo" } } count (crew _veh)
 };
 
-// Dots scale by squads (~8 men/squad — adjust the 8 / 15 if your squads differ):
+// Dots scale by squads (breakpoints #defined in script_component.hpp):
 //   1 squad → 1 dot, 1–2 squads → 2 dots, 2+ squads → 3 dots.
 private _n = call {
-    if (_count <= 1)  exitWith { -1 };   // lone — no dot
-    if (_count <= 4)  exitWith {  0 };   // fire team (sub-squad)
-    if (_count <= 8)  exitWith {  1 };   // ~1 squad → 1 dot
-    if (_count <= 15) exitWith {  2 };   // 1–2 squads → 2 dots
+    if (_count <= 1)                     exitWith { -1 };   // lone — no dot
+    if (_count <= ECHELON_FIRETEAM_MAX)  exitWith {  0 };   // fire team (sub-squad)
+    if (_count <= ECHELON_SQUAD_MAX)     exitWith {  1 };   // ~1 squad → 1 dot
+    if (_count <= ECHELON_MULTI_SQUAD_MAX) exitWith { 2 };   // 1–2 squads → 2 dots
     3                                    // 2+ squads → 3 dots
 };
 

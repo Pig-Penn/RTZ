@@ -17,4 +17,10 @@ private _costs = [];
 #include "defaultCosts\syndikat.inc.sqf"
 #include "defaultCosts\tura.inc.sqf"
 
-GVAR(defaultCosts) = createHashMapFromArray _costs;
+// Keys are lowercased so lookups are immune to classname case differences
+// between the hand-typed table and the engine's config names (same convention
+// as rtz_common's defaultSkills table)
+GVAR(defaultCosts) = createHashMapFromArray (_costs apply {
+    _x params ["_class", "_cost"];
+    [toLowerANSI _class, _cost]
+});

@@ -1,0 +1,137 @@
+#include "script_component.hpp"
+/*
+ * rtz_fnc_gatherUnitInfo
+ *
+ * SERVER ONLY. Reads one infantry unit's state into a compact packet mirroring
+ * the LAMBS Danger debug overlay: behaviour, unit state, current command,
+ * current task/tactic, danger cause + range + timeout, current target +
+ * visibility, known-enemy and group-memory counts, morale, suppression, health,
+ * and status flags.
+ *
+ * AI fields are only meaningful where the unit is LOCAL, so they are read under
+ * an `if (local _unit)` guard; for a non-local unit — owned by a Headless
+ * Client, or currently remote-controlled by another curator's client — they
+ * stay at their defaults and `_isLocal` is sent false, so the client shows an
+ * honest "no live data" note instead of misleading zeros. Identity (netId,
+ * leader, group, role, name, side, behaviour, health, MOUNTED/WOUNDED flags)
+ * is valid on every machine and always filled in.
+ *
+ * Packet layout (index → field) — kept in lockstep with rtz_fnc_buildSelectionRows:
+ *   0 netId  1 isLdr  2 grpId  3 role  4 sideNum  5 name
+ *   6 behaviour  7 unitState  8 currentCommand  9 morale  10 suppression
+ *   11 flags[]  12 downed  13 task  14 tactic
+ *   15 dangerType  16 dangerDist(m)  17 dangerTimeout(s)
+ *   18 targetType  19 targetVisibility  20 knownEnemies  21 groupMemory
+ *   22 isLocal  23 healthPct  24 stance  25 grpNetId  26 primaryAmmo
+ *   27 primaryAmmoCap
+ *
+ * grpNetId is the bucketing key client-side; grpId (2) is display-only —
+ * two groups can share a groupId string (copy-pasted compositions).
+ *
+ * Arguments:
+ *   0: Unit to read <OBJECT>
+ *
+ * Returns: packet <ARRAY>
+ */
+
+params ["_unit"];
+
+private _grp     = group _unit;
+private _isLdr   = _unit isEqualTo (leader _grp);
+private _isLocal = local _unit;
+private _sideNum = SIDE_NUM(side _unit);
+// Cached per-class display name (mission-long cache in rtz_common) — avoids a config
+// read on every unit on every gather tick. Element 0 is the display name.
+private _role    = (_unit call EFUNC(common,classInfo)) select 0;
+
+// Locality-bound fields, defaulted for the non-local case.
+private _morale        = -1;
+private _supp          = -1;
+private _state         = "";
+private _cmd           = "";
+private _flags         = [];
+private _downed        = false;
+private _task          = "";
+private _tactic        = "";
+private _dangerType    = -1;
+private _dangerDist    = -1;
+private _dangerTimeout = -1;
+private _tgtType       = "";
+private _tgtVis        = -1;
+private _known         = -1;
+private _groupMem      = -1;
+private _stance        = "";
+private _ammo          = -1;
+private _ammoCap       = -1;
+
+if (_isLocal) then {
+    _morale = morale _unit;
+    _supp   = getSuppression _unit;
+    _state  = getUnitState _unit;
+    _cmd    = currentCommand _unit;
+    _downed = lifeState _unit isEqualTo "INCAPACITATED";
+    _stance = stance _unit;
+
+    // Rounds left in the current primary-weapon magazine and its capacity
+    // (-1: no primary / no mag loaded / non-local) — consumed by the unit head
+    // tags and the dialog tooltip. Capacity is a per-magazine-class config read,
+    // cached mission-long in GVAR(magCapCache).
+    private _wpn = primaryWeapon _unit;
+    if (_wpn != "") then {
+        _ammo = _unit ammo _wpn;
+        private _mag = primaryWeaponMagazine _unit param [0, ""];
+        if (_mag != "") then {
+            _ammoCap = GVAR(magCapCache) getOrDefaultCall [_mag, {
+                getNumber (configFile >> "CfgMagazines" >> _mag >> "count")
+            }, true];
+        };
+    };
+
+    // LAMBS danger snapshot: [dangerType, dangerPos, dangerTime, currentTarget].
+    private _dc = _unit getVariable ["lambs_main_FSMDangerCauseData", [-1, [0, 0, 0], -1]];
+    _dangerType = _dc param [0, -1];
+    private _dPos = _dc param [1, [0, 0, 0]];
+    if (_dPos isNotEqualTo [0, 0, 0]) then { _dangerDist = round (_unit distance _dPos) };
+    private _dTime = _dc param [2, -1];
+    if (_dTime > 0) then { _dangerTimeout = round ((_dTime - time) max 0) };
+
+    // Current target — prefer the LAMBS-tracked target, fall back to the engine's.
+    private _tgt = _dc param [3, objNull];
+    if (!(_tgt isEqualType objNull) || { isNull _tgt }) then { _tgt = getAttackTarget _unit };
+    if (!isNull _tgt && { _tgt isNotEqualTo _unit }) then {
+        _tgtType = getText (configOf _tgt >> "displayName");
+        _tgtVis  = [objNull, "VIEW", objNull] checkVisibility [eyePos _unit, eyePos _tgt];
+    };
+
+    // Status tags (mirrors the flags drawn by the LAMBS debug overlay).
+    if !(_unit checkAIFeature "PATH") then { _flags pushBack "PATH OFF" };
+    if !(_unit checkAIFeature "MOVE") then { _flags pushBack "MOVE OFF" };
+    if (_unit getVariable ["lambs_danger_forceMove", false]) then { _flags pushBack "FORCED" };
+    if (fleeing _unit)                    then { _flags pushBack "FLEEING" };
+    if (isHidden _unit)                   then { _flags pushBack "HIDDEN" };
+    if (insideBuilding _unit isEqualTo 1) then { _flags pushBack "INSIDE" };
+    if !(unitReady _unit)                 then { _flags pushBack "BUSY" };
+
+    // LAMBS enrichment — "" / -1 (omitted client-side) when LAMBS isn't loaded.
+    _task   = _unit getVariable ["lambs_main_currentTask", ""];
+    _tactic = _grp  getVariable ["lambs_main_currentTactic", ""];
+    if (_isLdr) then {
+        _groupMem = count (_grp getVariable ["lambs_main_groupMemory", []]);
+        _known = count ((_unit targetsQuery [objNull, sideUnknown, "", [], 0]) select {
+            ((side _unit) isNotEqualTo (side (_x select 1))) || { side (_x select 1) isEqualTo civilian }
+        });
+    };
+};
+
+// Mounted state and health are global (objectParent / damage read on any machine).
+if !(isNull objectParent _unit) then { _flags pushBack "MOUNTED" };
+private _hp = (round ((1 - damage _unit) * 100)) max 0;
+if (_hp <= 65) then { _flags pushBack "WOUNDED" };
+
+[
+    netId _unit, _isLdr, groupId _grp, _role, _sideNum, name _unit,
+    behaviour _unit, _state, _cmd, _morale, _supp, _flags, _downed,
+    _task, _tactic, _dangerType, _dangerDist, _dangerTimeout,
+    _tgtType, _tgtVis, _known, _groupMem, _isLocal, _hp, _stance,
+    netId _grp, _ammo, _ammoCap
+]

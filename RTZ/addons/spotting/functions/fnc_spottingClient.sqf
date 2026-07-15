@@ -59,28 +59,17 @@ addMissionEventHandler ["Draw3D", {
     if (count GVAR(spotGroups) == 0 && { count GVAR(spotChevrons) == 0 }) exitWith {};
     private _camPos   = positionCameraToWorld [0,0,0];   // Zeus cursor camera, for fade
     private _viewDist = getObjectViewDistance select 0;
-    // Absolute outer cap on chevrons — never shown beyond this regardless of hover.
-    // Matches the top of the wedge size table. Tune 2500.
-    private _WEDGE_MAX_DIST     = 2500;
-    // Normal chevron display range; past this a group's chevrons hide and only its
-    // group icon remains, UNLESS the mouse is hovering near that group icon (below).
-    private _CHEVRON_MAX_DIST   = 500;
-    // Hover tooltip: show a chevron's unit display name (Rifleman, Marksman, …) when
-    // the curator's mouse is in its general vicinity AND the camera is close enough
-    // to be looking at it up close, not just passing the cursor over a distant cluster.
-    // Radii are in SafeZone screen-space units (worldToScreen format), compared
-    // SQUARED so the per-icon test needs no sqrt.
-    private _HOVER_MAX_DIST     = 50;              // metres, camera → unit
-    private _HOVER_HIT_R2       = 0.05 * 0.05;     // loose "vicinity" test, tune in-game
-    // Vicinity test for "hover near the group icon" — reveals that group's chevrons past _CHEVRON_MAX_DIST.
-    private _GROUP_HOVER_R2     = 0.05 * 0.05;
+    // Distance/size tunables (WEDGE_MAX_DIST, CHEVRON_MAX_DIST, HOVER_MAX_DIST,
+    // HOVER_HIT_R2, GROUP_HOVER_R2) are #defined in script_component.hpp.
+    // HOVER_HIT_R2 / GROUP_HOVER_R2 are SafeZone screen-space radii (worldToScreen
+    // format), compared SQUARED so the per-icon test needs no sqrt.
     private _mousePos = getMousePosition;
 
     // Echelon amplifier vertical gap above the group icon, indexed by the payload's
     // side index (0 = BLUFOR rectangle, 1 = OPFOR diamond — peaks highest so needs
     // the most lift, 2 = independent/civilian square). World-space fraction scaled
-    // by camera distance (constant screen gap at any zoom). Tune per side in-game.
-    private _AMP_GAPS = [0.002, 0.006, 0.004];
+    // by camera distance (constant screen gap at any zoom).
+    private _AMP_GAPS = AMP_GAPS_WORLD;
 
     // Hoisted once per frame: does the RC-indicator display map exist at all?
     private _hasRC = !isNil QGVAR(rcDisplay);
@@ -106,24 +95,24 @@ addMissionEventHandler ["Draw3D", {
         private _dist   = _camPos distance _anchor;
 
         // Native Zeus group-icon recipe: world-space height offset grows with camera
-        // distance (5→20 m over 180→360 m, floored close in), holding a roughly constant
-        // screen gap above the unit as you zoom. Aim pos from the VEHICLE, not the
-        // crewman (else it skews out along the gun).
-        private _zMod = linearConversion [180, 360, _dist, 5, 20, true];
-        if (_dist >= 180) then { _zMod = _zMod * 0.88 };
+        // distance (GROUP_ZMOD_MIN→MAX over GROUP_ZMOD_NEAR→FAR m, floored close in),
+        // holding a roughly constant screen gap above the unit as you zoom. Aim pos
+        // from the VEHICLE, not the crewman (else it skews out along the gun).
+        private _zMod = linearConversion [GROUP_ZMOD_NEAR, GROUP_ZMOD_FAR, _dist, GROUP_ZMOD_MIN, GROUP_ZMOD_MAX, true];
+        if (_dist >= GROUP_ZMOD_NEAR) then { _zMod = _zMod * GROUP_ZMOD_FLOOR_SCALE };
         private _iconPos = (unitAimPositionVisual _anchor) vectorAdd [0, 0, _zMod];
         // Size amplifier lifted in world space (drawIcon3D offsetY is clamped); scaled
         // by _dist (not _zMod, which floors close up) for a constant screen gap. Each
         // side's frame peaks at a different height, so the gap comes from the per-side
         // table above via the payload's side index.
         private _ampPos = _iconPos vectorAdd [0, 0, _dist * (_AMP_GAPS select _sideIdx)];
-        private _iconW  = 1.3;
+        private _iconW  = GROUP_ICON_WIDTH;
 
         private _scr = worldToScreen _iconPos;
         if (_scr isNotEqualTo []) then {
             private _dx = (_scr#0) - (_mousePos#0);
             private _dy = (_scr#1) - (_mousePos#1);
-            if ((_dx * _dx) + (_dy * _dy) <= _GROUP_HOVER_R2) then {
+            if ((_dx * _dx) + (_dy * _dy) <= GROUP_HOVER_R2) then {
                 _groupHoverByLeader set [_ldrId, true];
             };
         };
@@ -141,12 +130,12 @@ addMissionEventHandler ["Draw3D", {
         if (isNull _unit || !alive _unit) then { continue };
         private _anchor = vehicle _unit;
         private _dist   = _camPos distance _anchor;
-        if (_dist > _WEDGE_MAX_DIST) then { continue };
+        if (_dist > WEDGE_MAX_DIST) then { continue };
 
         // Past the normal cutoff, only show this chevron if its group's icon is
         // currently hovered — lets the curator "peek" at squad composition from afar.
         // Leader netId is pre-resolved server-side, so no group traversal per frame.
-        if (_dist > _CHEVRON_MAX_DIST && { !(_groupHoverByLeader getOrDefault [_ldrId, false]) }) then { continue };
+        if (_dist > CHEVRON_MAX_DIST && { !(_groupHoverByLeader getOrDefault [_ldrId, false]) }) then { continue };
 
         // Suppress chevron when the RC indicator is already showing for this unit.
         if (_hasRC && { (netId _unit) in GVAR(rcDisplay) }) then { continue };
@@ -165,12 +154,12 @@ addMissionEventHandler ["Draw3D", {
         private _col = [_dist, _colorArray, _x] call _fnc_drawColor;
         drawIcon3D [_texture, _col, _iconPos, _iconW, _iconW, 0, "", 0, 0.03, "RobotoCondensed", "center", false, 0, 0];
 
-        if (GVAR(chevronNames) && { _dist <= _HOVER_MAX_DIST }) then {
+        if (GVAR(chevronNames) && { _dist <= HOVER_MAX_DIST }) then {
             private _scr = worldToScreen _iconPos;
             if (_scr isNotEqualTo []) then {
                 private _dx = (_scr#0) - (_mousePos#0);
                 private _dy = (_scr#1) - (_mousePos#1);
-                if ((_dx * _dx) + (_dy * _dy) <= _HOVER_HIT_R2) then {
+                if ((_dx * _dx) + (_dy * _dy) <= HOVER_HIT_R2) then {
                     // Display name pre-resolved server-side — no configOf per frame.
                     drawIcon3D ["", _col, _iconPos vectorAdd [0, 0, 0.6], 0, 0, 0, _name, 1, 0.025, "RobotoCondensed", "center", false, 0, 0];
                 };
@@ -230,7 +219,7 @@ addMissionEventHandler ["Draw3D", {
 // Flash a wedge white for a moment — fired by the server when the spotted unit shoots.
 [QGVAR(blink), {
     params ["_markerName"];
-    GVAR(blinkUntil) set [_markerName, time + 0.15];
+    GVAR(blinkUntil) set [_markerName, time + BLINK_DURATION];
 }] call CBA_fnc_addEventHandler;
 
 // Zeus map overlay: normally attached by FUNC(initCuratorDisplay) via the XEH

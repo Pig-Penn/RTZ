@@ -31,15 +31,18 @@ private _officer = _officers select 0;
 
 if (netId _officer in GVAR(areas)) exitWith {
     _action set [1, LLSTRING(ActionRemove)];
-    _action set [2, [ICON_REMOVE, COLOR_REMOVE]];
+    _action set [2, ICON_REMOVE];
+    _action set [3, COLOR_REMOVE];
 };
 
 private _cooldown = [_officer] call FUNC(isOnCooldown);
 
 if (_cooldown > 0) then {
     _action set [1, format [LLSTRING(ActionCooldown), ceil _cooldown]];
-    _action set [2, [ICON_ADD, COLOR_COOLDOWN]];
+    _action set [2, ICON_ADD];
+    _action set [3, COLOR_COOLDOWN];
 } else {
     _action set [1, LLSTRING(ActionAdd)];
-    _action set [2, [ICON_ADD, COLOR_ADD]];
+    _action set [2, ICON_ADD];
+    _action set [3, COLOR_ADD];
 };

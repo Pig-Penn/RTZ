@@ -49,8 +49,8 @@ private _bases = [
 
 _classes apply {
     private _index = _categories getOrDefaultCall [_x, {_x call FUNC(categorize)}, true];
-    // Precedence: mission override -> built-in table -> category default
-    private _base = _defaults getOrDefault [_x, if (_index == INDEX_FREE) then {0} else {_bases select _index}];
+    // Precedence: mission override -> built-in table (lowercased keys) -> category default
+    private _base = _defaults getOrDefault [toLowerANSI _x, if (_index == INDEX_FREE) then {0} else {_bases select _index}];
     private _cost = (_overrides getOrDefault [_x, _base]) / POINTS_MAX;
 
     // A vehicle costs the same placed with or without its crew, so a single

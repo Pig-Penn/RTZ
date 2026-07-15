@@ -37,5 +37,8 @@ switch (_side) do {
     case west:        { [0.00, 0.30, 0.60, 1.00] };
     case east:        { [0.50, 0.00, 0.00, 1.00] };
     case independent: { [0.00, 0.50, 0.00, 1.00] };
-    default           { [0.00, 0.50, 0.00, 1.00] };
+    // Civilian/unknown: purple (Arma convention), the darker sibling of the
+    // leader palette's default — previously duplicated independent's green,
+    // making civilian and independent markers indistinguishable
+    default           { [0.40, 0.00, 0.50, 1.00] };
 }

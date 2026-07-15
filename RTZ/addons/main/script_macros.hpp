@@ -15,8 +15,20 @@
 #define SETVAR(var1,var2,var3) var1 SETVAR_SYS(var2,var3)
 #define SETMVAR(var1,var2) missionNamespace SETVAR_SYS(var1,var2)
 
+#define GETUVAR(var1,var2) (uiNamespace GETVAR_SYS(var1,var2))
+#define SETUVAR(var1,var2) uiNamespace SETVAR_SYS(var1,var2)
+
+// setVariable with the public (broadcast + JIP) flag
+#define SETPVAR_SYS(var1,var2) setVariable [ARR_3(QUOTE(var1),var2,true)]
+#define SETPVAR(var1,var2,var3) var1 SETPVAR_SYS(var2,var3)
+
 #define GETGVAR(var1,var2) GETMVAR(GVAR(var1),var2)
 #define GETEGVAR(var1,var2,var3) GETMVAR(EGVAR(var1,var2),var3)
+
+// CfgWeapons >> type — engine weapon slot flags
+#define TYPE_WEAPON_PRIMARY 1
+#define TYPE_WEAPON_HANDGUN 2
+#define TYPE_WEAPON_SECONDARY 4
 
 // Zeus display
 #define IDD_RSCDISPLAYCURATOR 312

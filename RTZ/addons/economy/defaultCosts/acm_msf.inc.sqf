@@ -14,6 +14,10 @@ _costs append [
     ["ACM_B_MSF_V_RescueBoat", 2],
     ["ACM_B_MSF_V_Police_Boat", 3],
     ["ACM_B_MSF_V_ArmedBoat", 15],
+    ["vn_b_boat_06_02", 25], // PTF Nasty Boat 
+    ["vn_b_boat_06_01", 25],
+    ["vn_b_boat_05_02", 30],
+    ["vn_b_boat_05_01", 30],
 
     // Cars
     ["ACM_B_MSF_V_UAZ", 3],

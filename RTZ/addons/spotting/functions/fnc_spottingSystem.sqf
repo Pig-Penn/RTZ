@@ -54,12 +54,8 @@ if (!isServer) exitWith {};
 // Seconds between full spot-check passes comes from the CBA setting
 // QGVAR(spotCheckInterval) (default 3), read live each loop so admins can retune
 // a running mission.
-private _GROUP_CALLOUT_COOLDOWN  = 600;  // Seconds before re-alerting about the same group after contact is lost.
-private _SOFT_THRESHOLD  = 1.0;  // knowsAbout >= this → NATO marker above squad leader (heard).
-private _HARD_THRESHOLD  = 1.5;  // knowsAbout >= this → wedge marker above individual (visually confirmed).
-private _MKR_PREFIX      = "rtz_spot_";
-private _WEDGE_TEXTURE   = "\a3\ui_f\data\gui\rsc\RscDisplayEGSpectator\UnitIcon_ca.paa";
-private _WEDGE_ALPHA     = 0.60; // Base alpha of individual chevrons (distance fade multiplies on top). Group icons unaffected.
+// Tunables (GROUP_CALLOUT_COOLDOWN, SOFT/HARD_THRESHOLD, MKR_PREFIX,
+// WEDGE_TEXTURE, WEDGE_ALPHA) are #defined in script_component.hpp.
 
 // Human-readable contact category for radio reports — "infantry", "armor", etc.
 // Returns a mass/plural noun so it reads cleanly as "Enemy <x> spotted".
@@ -119,7 +115,7 @@ GVAR(spotDebugLast)      = createHashMap;   // curatorNetId → last-logged reso
     // Throttle: cap to one blink event per 0.1 s per unit (slightly under the blink
     // duration so sustained auto-fire stays lit) to bound network cost in a firefight.
     private _now = CBA_missionTime;
-    if (_now - (GVAR(blinkThrottle) getOrDefault [_id, 0]) < 0.1) exitWith {};
+    if (_now - (GVAR(blinkThrottle) getOrDefault [_id, 0]) < FIRE_BLINK_THROTTLE) exitWith {};
     GVAR(blinkThrottle) set [_id, _now];
     {
         _x params ["_mrkr", "_player"];
@@ -284,14 +280,14 @@ while { true } do {
                     if (_k > _uKnows) then { _uKnows = _k; _uBest = _x; };
                 } forEach _spotterReps;
                 if (_uKnows > _groupKnows) then { _groupKnows = _uKnows; _grpReporter = _uBest; };
-                if (_uKnows >= _HARD_THRESHOLD && { _member isKindOf "CAManBase" }) then {
+                if (_uKnows >= HARD_THRESHOLD && { _member isKindOf "CAManBase" }) then {
                     _chevrons pushBack [_member, netId _member];
                 };
             } forEach _members;
 
             // Nothing known about this group → no icon and (since chevrons need a
             // higher bar than the group) no chevrons either.
-            if (_groupKnows < _SOFT_THRESHOLD) then { continue };
+            if (_groupKnows < SOFT_THRESHOLD) then { continue };
 
             // HQ: any member whose class display name says "officer" / "HQ" makes the
             // whole group a command element, so the group frame becomes the staff symbol.
@@ -318,10 +314,10 @@ while { true } do {
                 private _base = if (_isLeaderName)
                     then { [side _member, true] call EFUNC(common,sideColor) }
                     else { _mrkrColor };
-                private _wedgeColor = [_base#0, _base#1, _base#2, _WEDGE_ALPHA];
+                private _wedgeColor = [_base#0, _base#1, _base#2, WEDGE_ALPHA];
                 // Incapacitated (BIS revive / setUnconscious) overrides → civilian-purple chevron.
                 if (lifeState _member isEqualTo "INCAPACITATED") then {
-                    _wedgeColor = [0.5, 0.0, 0.5, _WEDGE_ALPHA];
+                    _wedgeColor = COLOR_INCAPACITATED;
                 };
                 // Officer zone ring: 0 for the overwhelming majority (non-officers,
                 // or officers with no active area) — one O(1) lookup, no extra pass.
@@ -337,7 +333,7 @@ while { true } do {
                 _currentKeys set [_leaderKey, true];
                 [
                     _leaderKey,
-                    [_MKR_PREFIX + _leaderKey, _leader, _leaderTex, _mrkrColor, true, _echelonTex, _sideIdx, _leaderNetId, ""],
+                    [MKR_PREFIX + _leaderKey, _leader, _leaderTex, _mrkrColor, true, _echelonTex, _sideIdx, _leaderNetId, ""],
                     _grpBaseSig + _playerId,
                     _player, _activeSpots, _drawGroup, _forceResend
                 ] call FUNC(emitSpot);
@@ -346,11 +342,11 @@ while { true } do {
                 {
                     _x params ["_member", "_memberId", "_wedgeColor", "_memberName", "_zoneRadius", "_wedgeBaseSig"];
                     private _wedgeKey  = "w_" + _memberId + "_" + _curId;
-                    private _wedgeMrkr = _MKR_PREFIX + _wedgeKey;
+                    private _wedgeMrkr = MKR_PREFIX + _wedgeKey;
                     _currentKeys set [_wedgeKey, true];
                     [
                         _wedgeKey,
-                        [_wedgeMrkr, _member, _WEDGE_TEXTURE, _wedgeColor, false, "", _sideIdx, _leaderNetId, _memberName, _zoneRadius],
+                        [_wedgeMrkr, _member, WEDGE_TEXTURE, _wedgeColor, false, "", _sideIdx, _leaderNetId, _memberName, _zoneRadius],
                         _wedgeBaseSig + _playerId,
                         _player, _activeSpots, true, _forceResend
                     ] call FUNC(emitSpot);
@@ -371,9 +367,9 @@ while { true } do {
             // cooldown — not new-spot detection — dedupes, so a contact that ramps up
             // gradually (1.0 → 1.5 over several ticks) still gets announced when it
             // crosses HARD, and re-announces after being lost and re-acquired.
-            if (_groupKnows >= _HARD_THRESHOLD) then {
+            if (_groupKnows >= HARD_THRESHOLD) then {
                 private _sideGroupKey = str _spotterSide + "_" + _leaderNetId;
-                if (time - (GVAR(spotGroupCooldowns) getOrDefault [_sideGroupKey, -1e10]) >= _GROUP_CALLOUT_COOLDOWN) then {
+                if (time - (GVAR(spotGroupCooldowns) getOrDefault [_sideGroupKey, -1e10]) >= GROUP_CALLOUT_COOLDOWN) then {
                     GVAR(spotGroupCooldowns) set [_sideGroupKey, time];
                     (_sideNewReport select 1) pushBackUnique ([_leader] call _fnc_contactCategory);
                     if (isNull (_sideNewReport select 0)) then {
@@ -423,14 +419,14 @@ while { true } do {
     // ── Housekeeping: keep the long-lived rate-limit maps bounded ──────────
     // Entries for dead/deleted units would otherwise accumulate for the whole
     // mission. Collect-then-delete — never deleteAt inside a HashMap forEach.
-    if (count GVAR(blinkThrottle) > 128) then {
-        private _cutoff = CBA_missionTime - 5;   // blink throttle window is 0.1 s — anything older is dead weight
+    if (count GVAR(blinkThrottle) > BLINK_THROTTLE_CAP) then {
+        private _cutoff = CBA_missionTime - BLINK_THROTTLE_WINDOW;   // blink throttle window is FIRE_BLINK_THROTTLE — anything older is dead weight
         private _old = [];
         { if (_y < _cutoff) then { _old pushBack _x } } forEach GVAR(blinkThrottle);
         { GVAR(blinkThrottle) deleteAt _x } forEach _old;
     };
-    if (count GVAR(spotGroupCooldowns) > 256) then {
-        private _cutoff = time - _GROUP_CALLOUT_COOLDOWN;   // expired cooldowns re-fire anyway
+    if (count GVAR(spotGroupCooldowns) > SPOT_COOLDOWN_CAP) then {
+        private _cutoff = time - GROUP_CALLOUT_COOLDOWN;   // expired cooldowns re-fire anyway
         private _old = [];
         { if (_y < _cutoff) then { _old pushBack _x } } forEach GVAR(spotGroupCooldowns);
         { GVAR(spotGroupCooldowns) deleteAt _x } forEach _old;

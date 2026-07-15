@@ -54,9 +54,9 @@ if (hasInterface) then {
 
         private _camPos   = positionCameraToWorld [0,0,0];   // Zeus cursor camera, for fade
         private _viewDist = getObjectViewDistance select 0;
-        // Slow colour shift (~0.5 Hz): lerps 0→25% toward white so the icon brightens
-        // cyclically without touching alpha (distance fade stays clean).
-        private _shift = 0.25 * ((sin (time * 180) + 1) / 2);
+        // Slow colour shift (~0.5 Hz): lerps 0→RC_COLOR_SHIFT_MAX toward white so the
+        // icon brightens cyclically without touching alpha (distance fade stays clean).
+        private _shift = RC_COLOR_SHIFT_MAX * ((sin (time * RC_COLOR_SHIFT_FREQ) + 1) / 2);
         {
             // _x = unitNetId (HashMap key); _y = stored display data.
             _y params ["_unit", "_colorArray"];
@@ -74,7 +74,7 @@ if (hasInterface) then {
             };
             // ~1/4 of the chevron size table (the portrait texture fills its full
             // bounding box whereas the thin wedge does not), as a smooth ramp.
-            private _iconW = linearConversion [500, 3000, _dist, 1.2, 0.7, true];
+            private _iconW = linearConversion [RC_ICON_NEAR, RC_ICON_FAR, _dist, RC_ICON_MAX_WIDTH, RC_ICON_MIN_WIDTH, true];
 
             // Distance fade; RGB shifted toward white on each cycle.
             private _alpha = ((_viewDist - _dist) / _viewDist) max 0;
@@ -86,7 +86,7 @@ if (hasInterface) then {
             ];
 
             drawIcon3D [
-                "\a3\modules_f_curator\data\portraitremotecontrol_ca.paa",
+                RC_TEXTURE,
                 _col, _iconPos, _iconW, _iconW, 0, "", 0, 0, "RobotoCondensed", "center", false, 0, 0
             ];
         } forEach GVAR(rcDisplay);
@@ -118,8 +118,9 @@ if (!isServer) exitWith {};
 // SERVER — detection loop (unscheduled CBA per-frame handler)
 // ─────────────────────────────────────────────────────────────────────────────
 
-#define CHECK_INTERVAL 1                                    // Seconds between scans (RC changes are infrequent).
-#define OWNER_VAR "bis_fnc_moduleRemoteControl_owner"       // Set globally by BI/ACE/ZEN → readable on the server.
+// RC_CHECK_INTERVAL (seconds between scans, RC changes are infrequent) and
+// RC_OWNER_VAR (set globally by BI/ACE/ZEN → readable on the server) are
+// #defined in script_component.hpp.
 
 // Force a re-send of every active indicator to its current viewers on the next
 // scan. Set by QGVAR(rcResync), fired by each client once its handlers are
@@ -143,7 +144,7 @@ GVAR(rcForceResend) = false;
     // the owner variable is global too, so this is authoritative on the server.
     // The owner is always set on a man (effectiveCommander), so a crewed-vehicle
     // takeover is covered via that man's vehicle anchor client-side.
-    private _rcUnits = allUnits select { !isNull (_x getVariable [OWNER_VAR, objNull]) };
+    private _rcUnits = allUnits select { !isNull (_x getVariable [RC_OWNER_VAR, objNull]) };
 
     // Consume the pending resync flag BEFORE the early exit — with nothing
     // active there is nothing to resend, and a new takeover reaches every
@@ -165,7 +166,7 @@ GVAR(rcForceResend) = false;
 
     {
         private _unit       = _x;
-        private _controller = _unit getVariable [OWNER_VAR, objNull];
+        private _controller = _unit getVariable [RC_OWNER_VAR, objNull];
         private _id         = netId _unit;
         _currentIds pushBack _id;
 
@@ -213,4 +214,4 @@ GVAR(rcForceResend) = false;
             } forEach ((_activeRC deleteAt _id) param [0, []]);
         };
     } forEach keys _activeRC;
-}, CHECK_INTERVAL, [createHashMap]] call CBA_fnc_addPerFrameHandler;
+}, RC_CHECK_INTERVAL, [createHashMap]] call CBA_fnc_addPerFrameHandler;
