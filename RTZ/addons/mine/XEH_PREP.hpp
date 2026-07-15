@@ -1,0 +1,14 @@
+PREP(approach);
+PREP(canDisarm);
+PREP(demine);
+PREP(draw3D);
+PREP(drawMap);
+PREP(getDeminers);
+PREP(orderDisarm);
+PREP(orderPlace);
+PREP(placeActions);
+PREP(placeMine);
+PREP(plantMine);
+PREP(refreshMines);
+PREP(start);
+PREP(stop);

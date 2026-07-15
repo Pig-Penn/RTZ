@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Unit_Info">
+        <Key ID="STR_RTZ_Unit_Info_ActionHide">
+            <English>Hide Unit Info</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ActionShow">
+            <English>Show Unit Info</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_DisplayName">
+            <English>Unit Info</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_Enabled">
+            <English>Enable Unit Info</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_Enabled_Description">
+            <English>Enable the legacy Unit Info overlay and its Zeus context menu toggle. Disabled by default — superseded by the Dog Tags from the Selection component.</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_KIA">
+            <English>KIA</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_MaxDistance">
+            <English>Draw Distance</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_MaxDistance_Description">
+            <English>Maximum distance from the camera at which unit info is drawn.</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_RemoveOnDeath">
+            <English>Remove on Death</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_RemoveOnDeath_Description">
+            <English>Stop tracking units when they die instead of showing a KIA marker.</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_Scale">
+            <English>Size</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_Scale_Description">
+            <English>Overall size of the health bar and info text.</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowAmmo">
+            <English>Show Ammo Bar</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowAmmo_Description">
+            <English>Display a bar below the health bar showing the remaining ammunition in the unit's current magazine. Hidden while the unit is in a vehicle.</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowCommand">
+            <English>Show Current Command</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowCommand_Description">
+            <English>Display the unit's current AI command (e.g. MOVE, ATTACKFIRE). Hidden when the unit has no active command.</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowDistance">
+            <English>Show Distance</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowDistance_Description">
+            <English>Display the distance from the Zeus camera to the unit.</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowGroup">
+            <English>Show Group</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowGroup_Description">
+            <English>Display the unit's group ID.</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowHealth">
+            <English>Show Health Percentage</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowHealth_Description">
+            <English>Display the unit's health as a percentage.</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowName">
+            <English>Show Name</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowName_Description">
+            <English>Display the unit's name.</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowTactic">
+            <English>Show LAMBS Tactic</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowTactic_Description">
+            <English>Display the group's current LAMBS Danger FSM tactic on the group leader. Requires LAMBS Danger FSM.</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowTask">
+            <English>Show LAMBS Task</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowTask_Description">
+            <English>Display the current LAMBS Danger FSM task on the group leader. Requires LAMBS Danger FSM.</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowUnitState">
+            <English>Show Unit State</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowUnitState_Description">
+            <English>Display the execution state of the unit's current AI command (e.g. PLANNING, EXECUTING, COMPLETED).</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowVehicle">
+            <English>Show Vehicle</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_ShowVehicle_Description">
+            <English>Display the name of the vehicle the unit is crewing.</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_Unconscious">
+            <English>UNC</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_UseSideColor">
+            <English>Color Text by Side</English>
+        </Key>
+        <Key ID="STR_RTZ_Unit_Info_UseSideColor_Description">
+            <English>Color the info text using the unit's side color.</English>
+        </Key>
+    </Package>
+</Project>
