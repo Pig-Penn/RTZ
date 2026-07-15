@@ -21,16 +21,16 @@ _costs append [
     ["Opf_I_I_Soldier_1_F", 1], // Militiaman (Rifle)
     ["Opf_I_I_Soldier_9_F", 1], // Operative (Rifle)
     ["Opf_I_I_tribal_scout", 1], // Scout (Rifle)
-    ["Opf_I_I_Soldier_6_F", 2], // Militiaman (UGL)
-    ["Opf_I_I_Soldier_4_F", 1.5], // Militiaman (Machine Gun)
-    ["Opf_I_I_tribal_hireling", 4], // Hireling (Launcher)
-    ["Opf_I_I_Soldier_5_F", 4], // Militiaman (Launcher)
+    ["Opf_I_I_Soldier_6_F", 1.5], // Militiaman (UGL)
+    ["Opf_I_I_Soldier_4_F", 1.3], // Militiaman (Machine Gun)
+    ["Opf_I_I_tribal_hireling", 3], // Hireling (Launcher)
+    ["Opf_I_I_Soldier_5_F", 3], // Militiaman (Launcher)
     ["Opf_I_I_Soldier_3_F", 1], // Bonesetter (Medikit)
     ["Opf_I_I_tribal_medic", 1], // Snatcher (Medikit)
     ["Opf_I_I_tribal_sapper", 3], // Thug (Mines)
     ["Opf_I_I_Soldier_8_F", 3], // Trapper (Explosives)
     ["Opf_I_I_Soldier_UAV_lxWS", 9], // UAV Operator (IED Drone)
-    ["Opf_I_I_Soldier_2_F", 1.3], // Militia Leader (Rifle)
+    ["Opf_I_I_Soldier_2_F", 1.2], // Militia Leader (Rifle)
     ["Opf_I_I_Officer_F", 20], // Warlord
 
     // Turrets

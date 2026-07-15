@@ -41,24 +41,24 @@ _costs append [
     ["I_G_Soldier_unarmed_F", 0.2], // Rifleman (Unarmed)
     ["I_G_Soldier_lite_F", 0.8], // Rifleman (Light)
     ["I_G_Soldier_F", 1], // Rifleman
-    ["I_G_Soldier_M_F", 1.5], // Marksman
-    ["I_G_Scout_RF", 1.5], // Scout
-    ["I_G_Sharpshooter_F", 1.8], // Sharpshooter
-    ["I_G_Soldier_AR_F", 1.5], // Autorifleman
-    ["Aegis_I_G_HeavyGunner_F", 2], // Heavy Gunner
-    ["I_G_Soldier_GL_F", 2], // Grenadier
-    ["I_G_Soldier_LAT2_F", 3.5], // Rifleman (Light AT)
-    ["I_G_Soldier_LAT_F", 4], // Rifleman (AT)
-    ["I_G_Soldier_LAT_RF", 4], // Rifleman (Launcher)
+    ["I_G_Soldier_M_F", 1.1], // Marksman
+    ["I_G_Scout_RF", 1.2], // Scout
+    ["I_G_Sharpshooter_F", 1.3], // Sharpshooter
+    ["I_G_Soldier_AR_F", 1.3], // Autorifleman
+    ["Aegis_I_G_HeavyGunner_F", 1.5], // Heavy Gunner
+    ["I_G_Soldier_GL_F", 1.5], // Grenadier
+    ["I_G_Soldier_LAT2_F", 2.5], // Rifleman (Light AT)
+    ["I_G_Soldier_LAT_F", 3], // Rifleman (AT)
+    ["I_G_Soldier_LAT_RF", 3], // Rifleman (Launcher)
     ["I_G_medic_F", 1], // Combat Life Saver
-    ["I_G_Soldier_A_F", 1.2], // Ammo Bearer
+    ["I_G_Soldier_A_F", 1.1], // Ammo Bearer
     ["I_G_Soldier_TechSpec_F", 1.5], // Technical Specialist
     ["I_G_Soldier_exp_F", 3], // Explosive Specialist
     ["I_G_engineer_F", 4], // Engineer
     ["I_G_Soldier_UAV_lxWS", 9], // UAV Operator (IED)
     ["I_G_support_CMort_RF", 8], // Gunner (Light Mortar)
-    ["I_G_Soldier_TL_F", 1.3], // Team Leader
-    ["I_G_Soldier_SL_F", 1.6], // Squad Leader
+    ["I_G_Soldier_TL_F", 1.2], // Team Leader
+    ["I_G_Soldier_SL_F", 1.2], // Squad Leader
     ["I_G_officer_F", 20], // Officer
     ["I_G_crew_F", 0.5], // Crewman
 

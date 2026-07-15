@@ -17,7 +17,7 @@
  * Public: No
  */
 
-params ["_objects"];
+params [["_objects", [], [[]]]];
 
 private _groups = [];
 

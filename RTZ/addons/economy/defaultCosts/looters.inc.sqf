@@ -13,7 +13,7 @@ _costs append [
     ["I_L_Militiaman_SMG_F", 1], // Militiaman (SMG)
     ["I_L_Deserter_Rifle_F", 1], // Deserter (Rifle)
     ["I_L_Militiaman_Rifle_F", 1], // Militiaman (Rifle)
-    ["I_L_Deserter_AR_F", 1.5], // Deserter (Machine Gun)
-    ["I_L_Deserter_GL_F", 2], // Deserter (UGL)
-    ["I_L_Militiaman_Leader_F", 1.6] // Militia Leader
+    ["I_L_Deserter_AR_F", 1.3], // Deserter (Machine Gun)
+    ["I_L_Deserter_GL_F", 1.5], // Deserter (UGL)
+    ["I_L_Militiaman_Leader_F", 1.2] // Militia Leader
 ];

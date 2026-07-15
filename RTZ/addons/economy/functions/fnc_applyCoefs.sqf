@@ -22,10 +22,10 @@ params ["_curator"];
 {
     _curator setCuratorCoef _x;
 } forEach [
-    ["place", 1],
+    ["place", -1],
     ["edit", 0],
     ["destroy", 0],
     ["group", 0],
     ["synchronize", 0],
-    ["delete", -(GVAR(deleteRefund) / 100)]
+    ["delete", (GVAR(deleteRefund) / 100)]
 ];
