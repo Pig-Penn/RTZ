@@ -43,7 +43,7 @@ if (_enable) then {
     if (_key in GVAR(areas)) exitWith {false};            // already has an area
     if (!alive _officer) exitWith {false};                // never anchor to a corpse
     if ([_officer] call FUNC(isOnCooldown) > 0) exitWith {false}; // just torn down, not re-plantable yet
-    if ([_officer] call FUNC(hasEnemyNearby)) exitWith {false}; // don't hand out editing rights over a contested position
+ //   if ([_officer] call FUNC(hasEnemyNearby)) exitWith {false}; // don't hand out editing rights over a contested position
 
     private _areaId = GVAR(nextAreaId);
     GVAR(nextAreaId) = _areaId + 1;

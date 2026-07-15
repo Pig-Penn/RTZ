@@ -22,6 +22,6 @@ params ["_officer"];
 private _side = side _officer;
 private _pos = getPosWorld _officer;
 
-(_pos nearEntities [["CAManBase", "LandVehicle", "Air", "Ship"], GVAR(areaRadius)]) findIf {
-    alive _x && {side _x getFriend _side < HOSTILE_THRESHOLD}
-} != -1
+//(_pos nearEntities [["CAManBase", "LandVehicle", "Air", "Ship"], GVAR(areaRadius)]) findIf {
+//    alive _x && {side _x getFriend _side < HOSTILE_THRESHOLD}
+//} != -1
