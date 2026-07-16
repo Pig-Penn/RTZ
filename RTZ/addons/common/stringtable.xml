@@ -7,6 +7,18 @@
         <Key ID="STR_RTZ_Common_CameraToCursor_Description">
             <English>Teleport the Zeus camera to the position under the map cursor. Works inside curator editing areas, where the native middle-click map teleport is blocked.</English>
         </Key>
+        <Key ID="STR_RTZ_Common_CleanContextMenu">
+            <English>Clean Context Menu</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_CleanContextMenu_Description">
+            <English>Remove cluttered ZEN and LAMBS entries from the Zeus context menu.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_DeploySmoke">
+            <English>Deploy Countermeasures</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_DeploySmoke_Description">
+            <English>Add a context menu action to fire a selected vehicle's smoke launcher or flare/chaff dispenser.</English>
+        </Key>
         <Key ID="STR_RTZ_Common_DisplayName">
             <English>Common</English>
         </Key>

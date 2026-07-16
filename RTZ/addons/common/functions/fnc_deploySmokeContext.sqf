@@ -1,8 +1,8 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_deploySmokeContext
+ * rtz_common_fnc_deploySmokeContext
  *
- * Registers the "Deploy Countermeasures" action at the context menu root:
+ * Registers the "Deploy Countermeasures" action under the Real-Time Zeus submenu:
  * fires the smoke launcher / flare / chaff dispenser of every selected
  * vehicle that has one (FUNC(findCountermeasureWeapons)).
  *
@@ -41,4 +41,4 @@ private _action = [
     }
 ] call zen_context_menu_fnc_createAction;
 
-[_action, [], 1] call zen_context_menu_fnc_addAction;
+[_action, ["RTZ_RealTimeZeus"], 1] call zen_context_menu_fnc_addAction;

@@ -17,7 +17,7 @@
  */
 
 params ["_objects"];
-private _grps = [_objects] call FUNC(collectSquads);
+private _grps = [_objects] call EFUNC(common,collectSquads);
 if (_grps isEqualTo []) exitWith {
     ["No units selected"] call zen_common_fnc_showMessage;
 };

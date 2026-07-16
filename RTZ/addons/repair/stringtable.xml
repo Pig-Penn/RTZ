@@ -7,6 +7,12 @@
         <Key ID="STR_RTZ_Repair_DisplayName">
             <English>Repair</English>
         </Key>
+        <Key ID="STR_RTZ_Repair_Enabled">
+            <English>Enable Repair</English>
+        </Key>
+        <Key ID="STR_RTZ_Repair_Enabled_Description">
+            <English>Enable the Repair Vehicle Zeus context menu action.</English>
+        </Key>
         <Key ID="STR_RTZ_Repair_RepairDuration">
             <English>Repair Duration</English>
         </Key>

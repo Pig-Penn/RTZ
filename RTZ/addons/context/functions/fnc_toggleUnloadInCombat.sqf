@@ -9,7 +9,7 @@
  *   0: Array — objects from curatorSelected or a keybind handler
  */
 params ["_objects"];
-private _vehicles = [_objects] call FUNC(collectVehicles);
+private _vehicles = [_objects] call EFUNC(common,collectVehicles);
 if (_vehicles isEqualTo []) exitWith {
     ["Select a vehicle to lock its crew in"] call zen_common_fnc_showMessage;
 };

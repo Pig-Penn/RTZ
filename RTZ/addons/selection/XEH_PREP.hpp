@@ -1,6 +1,7 @@
 PREP(selectionInfo);
 PREP(buildSelectionRows);
 PREP(gatherUnitInfo);
+PREP(loadTagLabels);
 PREP(openSelectionInfo);
 PREP(tagsContext);
 PREP(textWidth);

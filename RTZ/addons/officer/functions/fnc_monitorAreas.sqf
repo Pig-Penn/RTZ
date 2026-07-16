@@ -14,7 +14,11 @@
  *    them. The server-side registry in FUNC(applyArea) knows which IDs to
  *    remove.
  * 2. Pruning — areas whose officer has died or been deleted are removed, so
- *    an area never lingers after its anchor is gone.
+ *    an area never lingers after its anchor is gone. An area is also torn
+ *    down the moment its officer enters COMBAT behaviour (mirrors the entry
+ *    block in FUNC(setArea): a Zeus should not keep editing rights over a
+ *    position once his anchor is in a firefight), arming the same
+ *    COOLDOWN_DURATION so it cannot be instantly re-planted once combat ends.
  * 3. Follow (Zone Follows Officer setting) — an area is re-centred on its
  *    officer once they have moved past FOLLOW_MOVE_THRESHOLD.
  *
@@ -62,6 +66,14 @@ if (!hasInterface) exitWith {};
         if (isNull _officer || {!alive _officer}) then {
             [QGVAR(applyArea), ["remove", _curator, [_areaId]]] call CBA_fnc_serverEvent;
             _toDelete pushBack _x;
+            continue;
+        };
+
+        if (behaviour _officer == "COMBAT") then {
+            [QGVAR(applyArea), ["remove", _curator, [_areaId]]] call CBA_fnc_serverEvent;
+            GVAR(cooldowns) set [_x, CBA_missionTime + COOLDOWN_DURATION];
+            _toDelete pushBack _x;
+            [LSTRING(MsgAreaCombatRemoved)] call zen_common_fnc_showMessage;
             continue;
         };
     } forEach GVAR(areas);

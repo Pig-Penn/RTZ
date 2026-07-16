@@ -23,13 +23,13 @@ private _groups = [];
 
 {
     if (
-        _x isKindOf "CAManBase" && {alive _x} && {isNull objectParent _x}
+        alive _x && {isNull objectParent _x}
         && {!isPlayer _x} && {!isPlayer leader _x}
         && {_x getUnitTrait "engineer" || {_x getUnitTrait "explosiveSpecialist"}}
         && {"MineDetector" in items _x}
     ) then {
         _groups pushBackUnique group _x;
     };
-} forEach _objects;
+} forEach ([_objects] call EFUNC(common,collectUnits));
 
 _groups

@@ -16,7 +16,7 @@
 params ["_action", "_actionParams"];
 _actionParams params ["", "_objects", "", "", "", "_hoveredEntity"];
 
-private _grps = [_objects + [_hoveredEntity]] call FUNC(collectSquads);
+private _grps = [_objects + [_hoveredEntity]] call EFUNC(common,collectSquads);
 if (_grps isEqualTo []) exitWith {};
 
 private _hidden = (_grps select 0) getVariable [QGVAR(squadHidden), false];

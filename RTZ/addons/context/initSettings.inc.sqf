@@ -6,16 +6,6 @@
 // never existed (or a value the executing machine never sees). Purely local
 // UI preferences stay client-side (0).
 
-// Client-side: removes ZEN's own entries from THIS curator's menu only.
-[
-    QGVAR(enableZenContextMenu),
-    "CHECKBOX",
-    ["Clean Context Menu", "Remove cluttered context menu entries."],
-    ["Real-Time Zeus", "Context Menu"],
-    true,
-    0
-] call CBA_fnc_addSetting;
-
 // Global: the apply handler runs where the vehicle is local.
 [
     QGVAR(enableDismountControl),
@@ -46,16 +36,6 @@
     true
 ] call CBA_fnc_addSetting;
 
-// Global: the waypoint handler runs where each group is local.
-[
-    QGVAR(enableAttackOrder),
-    "CHECKBOX",
-    ["Attack Order", "Add a context menu action ordering selected units to destroy a desired target."],
-    ["Real-Time Zeus", "Context Menu"],
-    false,
-    true
-] call CBA_fnc_addSetting;
-
 // Global: the assemble/disassemble receivers run on the server.
 [
     QGVAR(enableAssembleWeapon),
@@ -71,26 +51,6 @@
     QGVAR(instantAssemble),
     "CHECKBOX",
     ["Instant Assembly", "Assemble and disassemble static weapons instantly: skip the walk to the picked spot and the kneel-and-assemble animation, spawning (or packing) the weapon at once. Drones are already instant either way."],
-    ["Real-Time Zeus", "Context Menu"],
-    false,
-    true
-] call CBA_fnc_addSetting;
-
-// Global: the walk-and-plant queue lives on the server.
-[
-    QGVAR(enableLayMine),
-    "CHECKBOX",
-    ["Lay Mines", "Add a context menu action ordering a selected mine-carrying unit to plant one of its mines at a desired location."],
-    ["Real-Time Zeus", "Context Menu"],
-    false,
-    true
-] call CBA_fnc_addSetting;
-
-// Global: the fire handler runs where each vehicle is local.
-[
-    QGVAR(enableDeploySmoke),
-    "CHECKBOX",
-    ["Deploy Countermeasures", "Add a context menu action to fire a selected vehicle's smoke launcher or flare/chaff dispenser."],
     ["Real-Time Zeus", "Context Menu"],
     false,
     true

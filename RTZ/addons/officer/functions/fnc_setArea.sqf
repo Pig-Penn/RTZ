@@ -23,8 +23,8 @@
  * 1: Enable — true adds an area, false removes it <BOOLEAN>
  *
  * Return Value:
- * Success — false if a requested add/remove did not happen, e.g. an enemy is
- * inside the would-be area or there was nothing to remove <BOOLEAN>
+ * Success — false if a requested add/remove did not happen, e.g. the officer
+ * is in combat or there was nothing to remove <BOOLEAN>
  *
  * Example:
  * [_officer, true] call rtz_officer_fnc_setArea
@@ -43,7 +43,7 @@ if (_enable) then {
     if (_key in GVAR(areas)) exitWith {false};            // already has an area
     if (!alive _officer) exitWith {false};                // never anchor to a corpse
     if ([_officer] call FUNC(isOnCooldown) > 0) exitWith {false}; // just torn down, not re-plantable yet
- //   if ([_officer] call FUNC(hasEnemyNearby)) exitWith {false}; // don't hand out editing rights over a contested position
+    if (behaviour _officer == "COMBAT") exitWith {false};         // don't hand out editing rights while the officer is in a firefight
 
     private _areaId = GVAR(nextAreaId);
     GVAR(nextAreaId) = _areaId + 1;

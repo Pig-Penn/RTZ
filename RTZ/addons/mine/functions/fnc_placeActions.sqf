@@ -19,6 +19,8 @@
 
 params ["_position", "_objects"];
 
+if (!GVAR(enabled)) exitWith {[]};
+
 private _units = _objects select {_x isKindOf "CAManBase" && {alive _x} && {isNull objectParent _x}};
 if (_units isEqualTo []) exitWith {[]};
 

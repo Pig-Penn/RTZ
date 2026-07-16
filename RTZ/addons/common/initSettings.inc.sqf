@@ -33,3 +33,21 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     [1, 10, 5, 0],
     true
 ] call CBA_fnc_addSetting;
+
+// Client-side: removes ZEN's own entries from THIS curator's menu only.
+[
+    QGVAR(enableCleanContextMenu), "CHECKBOX",
+    [LSTRING(CleanContextMenu), LSTRING(CleanContextMenu_Description)],
+    _category,
+    true,
+    0
+] call CBA_fnc_addSetting;
+
+// Global: the fire handler runs where each vehicle is local.
+[
+    QGVAR(enableDeploySmoke), "CHECKBOX",
+    [LSTRING(DeploySmoke), LSTRING(DeploySmoke_Description)],
+    _category,
+    false,
+    true
+] call CBA_fnc_addSetting;

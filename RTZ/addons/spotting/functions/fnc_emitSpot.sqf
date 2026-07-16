@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_emitSpot
- *
+ * Author: Maxim
  * Send/refresh one spot to its spotter Zeus. The client samples icon position
  * live every frame, so position never needs re-sending. spotDetected is sent
  * only when the payload signature changed (or _force is set). The signature
@@ -15,15 +14,21 @@
  * squad worn down to a single survivor loses its group marker cleanly.
  *
  * Arguments:
- *   0: Spot key <STRING>
- *   1: spotDetected event payload (payload select 0 = marker name) <ARRAY>
- *   2: Payload signature <STRING>
- *   3: Destination curator player <OBJECT>
- *   4: Active-spots map, spotKey → [markerName, spotterPlayer, sig] — mutated <HASHMAP>
- *   5: Draw an icon for this contact <BOOL>
- *   6: Force re-send even when the signature is unchanged <BOOL>
+ * 0: Spot key <STRING>
+ * 1: spotDetected event payload (payload select 0 = marker name) <ARRAY>
+ * 2: Payload signature <STRING>
+ * 3: Destination curator player <OBJECT>
+ * 4: Active-spots map, spotKey → [markerName, spotterPlayer, sig] — mutated <HASHMAP>
+ * 5: Draw an icon for this contact <BOOL>
+ * 6: Force re-send even when the signature is unchanged <BOOL>
  *
- * Return: true only when the spot was brand new for this spotter <BOOL>
+ * Return Value:
+ * true only when the spot was brand new for this spotter <BOOL>
+ *
+ * Example:
+ * [_key, _payload, _sig, _player, _activeSpots, true, false] call rtz_spotting_fnc_emitSpot
+ *
+ * Public: No
  */
 
 params ["_key", "_payload", "_sig", "_player", "_activeSpots", "_draw", "_force"];

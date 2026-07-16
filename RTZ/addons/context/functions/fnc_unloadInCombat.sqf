@@ -122,7 +122,7 @@ private _action = [
         // Static weapons (HMGs, mortars, GMGs) have no dismount concept — exclude them
         // so the toggle never shows on a bare static turret selection.
         params ["", "_objects"];
-        (([_objects] call FUNC(collectVehicles)) findIf { !(_x isKindOf "StaticWeapon") }) != -1
+        (([_objects] call EFUNC(common,collectVehicles)) findIf { !(_x isKindOf "StaticWeapon") }) != -1
     },
     [],                          // args
     {},                          // insertChildren

@@ -5,7 +5,7 @@
  * Registers the root-level "Reload" action in the Zeus context menu: orders
  * every unit in the selected group(s) to reload its current weapon. The
  * entry only shows when the selection or hovered entity resolves to at
- * least one group (FUNC(collectSquads)).
+ * least one group (EFUNC(common,collectSquads)).
  *
  * The reload itself must run where each unit is local (units share their
  * group's locality — server, HC, or a player leading AI), so the whole
@@ -23,7 +23,7 @@ private _action = [
     {
         // ZEN passes [_position, _objects, _groups, _waypoints, _markers, _hoveredEntity, _args]
         params ["", "_objects", "", "", "", "_hoveredEntity"];
-        private _grps = [_objects + [_hoveredEntity]] call FUNC(collectSquads);
+        private _grps = [_objects + [_hoveredEntity]] call EFUNC(common,collectSquads);
         if (_grps isEqualTo []) exitWith {};
 
         [QGVAR(reloadSquad), [_grps], _grps] call CBA_fnc_targetEvent;
@@ -34,7 +34,7 @@ private _action = [
     },
     {
         params ["", "_objects", "", "", "", "_hoveredEntity"];
-        ([_objects + [_hoveredEntity]] call FUNC(collectSquads)) isNotEqualTo []
+        ([_objects + [_hoveredEntity]] call EFUNC(common,collectSquads)) isNotEqualTo []
     }
 ] call zen_context_menu_fnc_createAction;
 

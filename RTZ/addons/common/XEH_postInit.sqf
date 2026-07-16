@@ -23,3 +23,30 @@
     _heli setVariable [QGVAR(flyHeight), _height];
     _heli flyInHeight [_height, true];
 }] call CBA_fnc_addEventHandler;
+
+// Curator feedback toast for errands driven by FUNC(approach) (e.g. a unit that
+// couldn't reach the picked spot). Fired at the ordering curator's player.
+if (hasInterface) then {
+    [QGVAR(approachMsg), { _this call zen_common_fnc_showMessage }] call CBA_fnc_addEventHandler;
+};
+
+// Setting-gated context features. Deferred to CBA_settingsInitialized so each
+// synced setting holds the server's value before it is read (see rtz_context /
+// rtz_officer for the same pattern), and — for the menu clean-up — so ZEN's own
+// postInit has already registered the actions it removes.
+["CBA_settingsInitialized", {
+    // Strip ZEN's cluttered built-in context entries (client-side only).
+    if (hasInterface && {GVAR(enableCleanContextMenu)}) then {
+        [] call FUNC(removeContextActions);
+    };
+
+    // Deploy smoke screen / countermeasures. The context action is client-only;
+    // the weapon fire runs where each vehicle is local (the server for AI armor,
+    // a player's machine for a player-crewed vehicle), so the whole selection
+    // goes into a single QGVAR(deploySmoke) event targeted at the vehicles and
+    // the receiver registers on every machine.
+    if (GVAR(enableDeploySmoke)) then {
+        if (hasInterface) then { [] call FUNC(deploySmokeContext); };
+        [QGVAR(deploySmoke), LINKFUNC(deploySmokeApply)] call CBA_fnc_addEventHandler;
+    };
+}] call CBA_fnc_addEventHandler;

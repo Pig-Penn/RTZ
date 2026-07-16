@@ -14,11 +14,11 @@ diag_log text format ["[RTZ] spotting postInit — version %1, machine [isServer
 // NOTE: CBA has no CBA_fnc_runAfterSettingsInit — that helper is ACE3/ZEN only
 // (ace_common_fnc_/zen_common_fnc_); calling the CBA_ name is a silent nil no-op.
 ["CBA_settingsInitialized", {
+    // Both register handlers + a CBA PFH and return — no scheduled loops.
     if (GVAR(enableSpottingSystem)) then {
-        [] spawn FUNC(spottingSystem);
+        call FUNC(spottingSystem);
     };
 
-    // No scheduled loop inside — registers handlers + a CBA PFH and returns.
     if (GVAR(enableRemoteControlIndicator)) then {
         call FUNC(remoteControlIndicator);
     };

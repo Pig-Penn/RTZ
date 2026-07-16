@@ -5,7 +5,7 @@
  * Registers the "Reset" action in the Real-Time Zeus context menu (category
  * root-level RTZ_Control): clears the LAMBS Danger FSM state of every AI group in
  * the selection via lambs_wp_fnc_taskReset. A selected/hovered man contributes
- * his group, a vehicle the groups of its crew (FUNC(collectSquads)); groups
+ * his group, a vehicle the groups of its crew (EFUNC(common,collectSquads)); groups
  * with no AI members are skipped.
  *
  * LAMBS task functions must run where each group is local (not necessarily
@@ -33,7 +33,7 @@ private _action = [
         params ["", "_objects", "_groups", "", "", "_hoveredEntity"];
 
         private _grps = +_groups;
-        { _grps pushBackUnique _x } forEach ([_objects + [_hoveredEntity]] call FUNC(collectSquads));
+        { _grps pushBackUnique _x } forEach ([_objects + [_hoveredEntity]] call EFUNC(common,collectSquads));
         _grps = _grps select { units _x findIf { !isPlayer _x } != -1 };
         if (_grps isEqualTo []) exitWith {};
 
@@ -56,7 +56,7 @@ private _action = [
     {
         params ["", "_objects", "_groups", "", "", "_hoveredEntity"];
         _groups findIf { units _x findIf { !isPlayer _x } != -1 } != -1
-        || { ([_objects + [_hoveredEntity]] call FUNC(collectSquads)) findIf { units _x findIf { !isPlayer _x } != -1 } != -1 }
+        || { ([_objects + [_hoveredEntity]] call EFUNC(common,collectSquads)) findIf { units _x findIf { !isPlayer _x } != -1 } != -1 }
     }
 ] call zen_context_menu_fnc_createAction;
 

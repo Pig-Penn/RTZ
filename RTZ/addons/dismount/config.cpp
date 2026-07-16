@@ -6,7 +6,7 @@ class CfgPatches {
         units[] = {};
         weapons[] = {};
         requiredVersion = REQUIRED_VERSION;
-        requiredAddons[] = {"rtz_main", "zen_context_menu"};
+        requiredAddons[] = {"rtz_main", "rtz_common", "zen_context_menu"};
         author = "Maxim";
         authors[] = {"Maxim"};
         url = "";
@@ -15,4 +15,3 @@ class CfgPatches {
 };
 
 #include "CfgEventHandlers.hpp"
-#include "CfgContext.hpp"

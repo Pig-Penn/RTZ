@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_echelonTex
- *
+ * Author: Maxim
  * Echelon/size amplifier texture (group_N.paa, the same set High Command uses;
  * the scale runs 0 = fire team … 11 = army group), or "" for none. Only combat
  * infantry get a dot: on foot, riding as cargo, or — for a vehicle crew — when
@@ -10,10 +9,16 @@
  * tuned for AI group sizes.
  *
  * Arguments:
- *   0: Unit (group leader) <OBJECT>
- *   1: Group member count <NUMBER>
+ * 0: Unit (group leader) <OBJECT>
+ * 1: Group member count <NUMBER>
  *
- * Return: texture path <STRING>, or "" for no amplifier
+ * Return Value:
+ * Texture path <STRING>, or "" for no amplifier
+ *
+ * Example:
+ * [_leader, count units group _leader] call rtz_spotting_fnc_echelonTex
+ *
+ * Public: No
  */
 
 params ["_unit", "_grpCount"];

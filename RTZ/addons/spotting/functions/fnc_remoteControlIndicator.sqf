@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_remoteControlIndicator
- *
+ * Author: Maxim
  * When any curator takes direct ("remote") control of a unit, every OTHER
  * curator sees a remote-control icon hovering over that unit in their Zeus
  * view (drawIcon3D) - a tell that the unit is being puppeteered by a rival
@@ -25,9 +24,19 @@
  * [unit, color]; the spotting system suppresses its chevron for a unit by
  * testing `netId _unit in GVAR(rcDisplay)`.
  *
- * Requirements: CBA_A3
- * Loading: called by XEH_postInit after CBA_settingsInitialized. Self-guards
- * locality; registers handlers and returns (no scheduled loop).
+ * Called by XEH_postInit after CBA_settingsInitialized. Self-guards locality;
+ * registers handlers and returns (no scheduled loop).
+ *
+ * Arguments:
+ * None
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * call rtz_spotting_fnc_remoteControlIndicator
+ *
+ * Public: No
  */
 
 // ─────────────────────────────────────────────────────────────────────────────

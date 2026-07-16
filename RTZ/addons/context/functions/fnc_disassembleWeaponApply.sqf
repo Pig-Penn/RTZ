@@ -83,10 +83,14 @@ if (GETGVAR(instantAssemble,false)) exitWith {
 
 // Walk the assistant to the weapon, then pack (FUNC(disassemblePack)). On timeout
 // pack anyway, so a Zeus command always completes.
+// Arrival radius 4 m; walk timeout 12 s scaled by distance. Pack on arrival, or
+// in place on the assistant's death/timeout, so a Zeus command always completes.
 [
-    [_assistant], getPosATL _weapon,
+    [_assistant], getPosATL _weapon, 4, 12 + (_assistant distance2D _weapon) * 0.5,
+    LINKFUNC(disassemblePack),
     LINKFUNC(disassemblePack),
     [_weapon, _gunner, _weaponBag, _baseBag, _assistant, _curator],
-    "Assistant couldn't reach - packing in place",
-    _curator
-] call FUNC(walkToSpot);
+    true,
+    _curator,
+    "Assistant couldn't reach - packing in place"
+] call EFUNC(common,approach);

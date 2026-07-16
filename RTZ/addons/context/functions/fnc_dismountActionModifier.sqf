@@ -13,7 +13,7 @@
  */
 params ["_action", "_actionParams"];
 _actionParams params ["", "_objects", "", "", "", "_hoveredEntity"];
-private _vehs = [_objects + [_hoveredEntity]] call FUNC(collectVehicles);
+private _vehs = [_objects + [_hoveredEntity]] call EFUNC(common,collectVehicles);
 if (_vehs isEqualTo []) exitWith {};
 if ((_vehs select 0) getVariable [QGVAR(unloadInCombat), true]) then {
     _action set [1, "Forbid Dismount"];

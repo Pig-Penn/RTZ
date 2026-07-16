@@ -1,10 +1,8 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_unitMarker
- *
- * Returns [texturePath, colorArray, sideIdx] for the NATO map-marker symbol of a
- * group. sideIdx (0 = west, 1 = east, 2 = other) indexes the client's per-side
- * tuning tables.
+ * Author: Maxim
+ * NATO map-marker symbol classification for a group. sideIdx (0 = west,
+ * 1 = east, 2 = other) indexes the client's per-side tuning tables.
  *
  * There is no engine command that yields a unit's military symbol (the MARTA /
  * Military Symbols system assigns them internally but exposes no getter), so the
@@ -15,10 +13,16 @@
  * (e.g. b_naval) resolve to "".
  *
  * Arguments:
- *   0: Unit — pass the GROUP LEADER so the symbol represents the whole group <OBJECT>
- *   1: Headquarters/command element — forces the staff symbol <BOOL> (default false)
+ * 0: Unit — pass the GROUP LEADER so the symbol represents the whole group <OBJECT>
+ * 1: Headquarters/command element — forces the staff symbol <BOOL> (default: false)
  *
- * Return: [texturePath <STRING>, colorArray <ARRAY>, sideIdx <NUMBER>]
+ * Return Value:
+ * [texturePath <STRING>, colorArray <ARRAY>, sideIdx <NUMBER>]
+ *
+ * Example:
+ * [_leader, false] call rtz_spotting_fnc_unitMarker
+ *
+ * Public: No
  */
 
 params ["_unit", ["_isHQ", false]];

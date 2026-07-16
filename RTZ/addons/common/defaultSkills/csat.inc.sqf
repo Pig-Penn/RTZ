@@ -86,5 +86,5 @@ _skills append [
     ["O_V_Soldier_Exp_hex_F", 1], // Viper Demo Specialist
     ["O_V_Soldier_M_hex_F", 1], // Viper Marksman
     ["O_V_Soldier_LAT_hex_F", 1], // Viper Operative (AT)
-    ["O_V_Soldier_TL_hex_F", 1], // Viper Team Leader
+    ["O_V_Soldier_TL_hex_F", 1] // Viper Team Leader
 ];

@@ -1,20 +1,25 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_spotCallout
- *
+ * Author: Maxim
  * Dispatches a radio contact-report to every spotter Zeus's client.
- * Called server-side by rtz_fnc_spottingSystem when a side newly spots a group
- * and the per-group 10-minute cooldown (managed by the caller) has expired.
+ * Called server-side by FUNC(spotCheck) when a side newly spots a group
+ * and the per-group cooldown (managed by the caller) has expired.
  * The location lookup and phrasing run once; every curator on the side gets
  * the identical message.
  *
- * Parameters:
- *   0: Object  — unit that authors the report (resolved to a man by the caller)
- *   1: Array   — contact category strings built during detection (e.g. ["infantry","armor"])
- *   2: Array   — spotter Zeus player objects (CBA targetEvent destinations)
- *   3: Array   — [optional] world position of the first new contact; used for location lookup
+ * Arguments:
+ * 0: Unit that authors the report (resolved to a man by the caller) <OBJECT>
+ * 1: Contact category strings built during detection (e.g. ["infantry","armor"]) <ARRAY>
+ * 2: Spotter Zeus player objects (CBA targetEvent destinations) <ARRAY>
+ * 3: World position of the first new contact, for the location lookup <ARRAY> (default: [])
  *
- * Requirements: CBA_A3
+ * Return Value:
+ * None
+ *
+ * Example:
+ * [_reporter, ["infantry"], [_player], getPos _leader] call rtz_spotting_fnc_spotCallout
+ *
+ * Public: No
  */
 params ["_reporter", "_reportCats", "_spotterPlayers", ["_contactPos", []]];
 

@@ -19,13 +19,9 @@
 private _groups = [];
 
 {
-    private _units = if (_x isKindOf "CAManBase") then {[_x]} else {crew _x};
-
-    {
-        if (alive _x && {!isPlayer _x} && {!isPlayer leader _x}) then {
-            _groups pushBackUnique group _x;
-        };
-    } forEach _units;
-} forEach _this;
+    if (alive _x && {!isPlayer _x} && {!isPlayer leader _x}) then {
+        _groups pushBackUnique group _x;
+    };
+} forEach ([_this] call EFUNC(common,collectUnits));
 
 _groups

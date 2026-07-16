@@ -3,7 +3,7 @@
  * rtz_fnc_collectAssembleSets
  *
  * Resolves a Zeus selection to the list of assemble-able static weapons the
- * selected squads are carrying. Mirrors FUNC(collectSquads) but returns one
+ * selected squads are carrying. Mirrors EFUNC(common,collectSquads) but returns one
  * entry per group that has a complete disassembled weapon.
  *
  * Parameters:
@@ -14,4 +14,4 @@
 
 params ["_objects"];
 
-(([_objects] call FUNC(collectSquads)) apply { [_x] call FUNC(findAssembleSet) }) select { _x isNotEqualTo [] }
+(([_objects] call EFUNC(common,collectSquads)) apply { [_x] call FUNC(findAssembleSet) }) select { _x isNotEqualTo [] }

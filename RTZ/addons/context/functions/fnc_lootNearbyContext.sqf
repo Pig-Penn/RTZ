@@ -26,7 +26,7 @@
 // walk over and loot. Shared by the condition and the statement.
 private _collectGroups = {
     params ["_objects", "_hoveredEntity"];
-    ([_objects + [_hoveredEntity]] call FUNC(collectSquads)) select {
+    ([_objects + [_hoveredEntity]] call EFUNC(common,collectSquads)) select {
         (units _x) findIf { !isPlayer _x && {isNull objectParent _x} } != -1
     }
 };

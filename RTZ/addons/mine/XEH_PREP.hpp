@@ -1,4 +1,3 @@
-PREP(approach);
 PREP(canDisarm);
 PREP(demine);
 PREP(draw3D);

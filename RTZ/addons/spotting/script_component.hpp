@@ -7,7 +7,7 @@
 
 #include "\x\rtz\addons\main\script_macros.hpp"
 
-// Detection thresholds (fnc_spottingSystem): knowsAbout value at/above which a
+// Detection thresholds (fnc_spotCheck): knowsAbout value at/above which a
 // group counts as heard/known (NATO marker on the leader) vs. individually
 // confirmed (wedge chevron on the member).
 #define SOFT_THRESHOLD 1.0
@@ -23,7 +23,7 @@
 #define WEDGE_ALPHA 0.60
 #define COLOR_INCAPACITATED [0.5, 0.0, 0.5, WEDGE_ALPHA]
 
-// Housekeeping: bound the long-lived rate-limit maps (fnc_spottingSystem).
+// Housekeeping: bound the long-lived rate-limit maps (fnc_spotCheck).
 #define BLINK_THROTTLE_CAP 128
 #define BLINK_THROTTLE_WINDOW 5
 #define FIRE_BLINK_THROTTLE 0.1
@@ -35,7 +35,7 @@
 #define ECHELON_SQUAD_MAX 8
 #define ECHELON_MULTI_SQUAD_MAX 15
 
-// Client draw distances/sizes (fnc_spottingClient).
+// Client draw distances/sizes (fnc_draw3D).
 #define WEDGE_MAX_DIST 2500
 #define CHEVRON_MAX_DIST 500
 #define HOVER_MAX_DIST 50
@@ -46,14 +46,14 @@
 
 // Echelon amplifier vertical gap above the group icon, indexed by side idx
 // (0 = BLUFOR rectangle, 1 = OPFOR diamond — peaks highest, 2 = independent/
-// civilian square). World-space (fnc_spottingClient) vs. map screen-space
+// civilian square). World-space (fnc_draw3D) vs. map screen-space
 // (fnc_initCuratorDisplay) use different scales.
 #define AMP_GAPS_WORLD [0.002, 0.008, 0.004]
 #define AMP_GAPS_MAP [0.005, 0.011, 0.005]
 #define MAP_ICON_SIZE 24
 
 // Group icon world-space height offset over camera distance — native Zeus
-// group-icon recipe (fnc_spottingClient).
+// group-icon recipe (fnc_draw3D).
 #define GROUP_ZMOD_NEAR 180
 #define GROUP_ZMOD_FAR 360
 #define GROUP_ZMOD_MIN 5

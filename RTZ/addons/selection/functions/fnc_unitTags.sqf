@@ -136,6 +136,10 @@ GVAR(fnc_buildTagEntry) = {
         "", ["_ammo", -1], ["_ammoCap", -1]
     ];
 
+    // Display-label remap (rtz_fnc_loadTagLabels) — re-words LAMBS task/tactic
+    // strings, RTZ status words, and flags at build time (cached).
+    private _labels = GVAR(tagLabels);
+
     private _segs = [];
     if (GVAR(tagShowName)) then { _segs pushBack _name };
     if (GVAR(tagShowRole)) then { _segs pushBack _role };
@@ -148,16 +152,18 @@ GVAR(fnc_buildTagEntry) = {
         if (GVAR(tagShowSuppression) && { _suppPct > 0 }) then {
             _segs pushBack format ["SUP %1", _suppPct];
         };
-        if (GVAR(tagShowAmmo) && { _ammo >= 0 }) then {
+        if (GVAR(tagShowAmmo) && { _ammo >= 0 } && { _ammo != _ammoCap }) then {
             // "<current>/<capacity>"; capacity can be unknown (-1: no mag
             // loaded, or a pre-capacity server build) — degrade to bare count.
+            // A full magazine (_ammo == _ammoCap) is dropped entirely — only
+            // partial/depleted mags are worth flagging.
             _segs pushBack ([str _ammo, format ["%1/%2", _ammo, _ammoCap]] select (_ammoCap > 0));
         };
         // Group-wide facts — leader's tag only, so a squad doesn't repeat the
         // same line on every member.
         if (_isLdr) then {
             if (GVAR(tagShowTactic) && { _tactic != "" }) then {
-                _segs pushBack format ["TAC %1", _tactic];
+                _segs pushBack format ["TAC %1", _labels getOrDefault [_tactic, _tactic]];
             };
             if (GVAR(tagShowIntel)) then {
                 _segs pushBack format ["ENEMY %1 · MEM %2", _known max 0, _groupMem max 0];
@@ -174,6 +180,7 @@ GVAR(fnc_buildTagEntry) = {
         case (GVAR(tagShowStatus)): { _task };   // "" without LAMBS
         default                     { "" };
     };
+    _status = _labels getOrDefault [_status, _status];   // re-word DOWN/FLEEING/task
 
     // Static colour — side tint when enabled, otherwise the normal tag colour.
     private _urgent = _downed || { "FLEEING" in _flags };
@@ -265,7 +272,7 @@ GVAR(fnc_buildTagEntry) = {
         _status,
         _statusCol select [0, 3],
         _sep,
-        _flags joinString " · ",
+        (_flags apply { _labels getOrDefault [_x, _x] }) joinString " · ",
         _stateIcon,
         _stateIconColFull select [0, 3],
         _stateHover,
@@ -347,9 +354,15 @@ GVAR(fnc_toggleTags) = {
         // objectParent re-check: the unit can mount between server pushes.
         if (isNull _unit || { !alive _unit } || { !isNull objectParent _unit }) then { continue };
 
-        private _pos = (_unit modelToWorldVisual (_unit selectionPosition "Head")) vectorAdd [0, 0, _zOff];
-        private _dist = _camPos distance _pos;
+        private _head = _unit modelToWorldVisual (_unit selectionPosition "Head");
+        private _dist = _camPos distance _head;
         if (_dist > _maxDist) then { continue };
+        // Screen-space vertical lift: offset along camera-up, NOT world +Z
+        // (which projects to nothing from a top-down camera, collapsing the tag
+        // onto its icon). Scaled by camera distance so the on-screen gap above
+        // the icon stays constant at any pitch/zoom; below ~30 m it holds the
+        // literal "metres above head" the Tag Height setting promises.
+        private _pos = _head vectorAdd (_camUp vectorMultiply (_zOff * (1 max (_dist / 30))));
 
         private _scr = worldToScreen _pos;
         if (_scr isEqualTo []) then { continue };                  // unit off-screen
@@ -424,13 +437,16 @@ GVAR(fnc_toggleTags) = {
         // Main line — split so the status word carries its own colour while the
         // combined line stays centred on the unit. Boundary = centre + halfFull
         // - statusWidth (measured), converted from UI-x to world via _perMetre.
+        // drawIcon3D textAlign names the SIDE of the anchor the text sits on
+        // (not typographic alignment): "left" ends at the anchor, "right"
+        // starts there.
         if (_statusText == "") then {
             drawIcon3D ["", _rgbMain + [_alpha], _dpos, 0, 0, 0, _mainText + _sep, 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
         } else {
             private _boundaryUI  = _halfFull - _wStatus;
             private _boundaryPos = _dpos vectorAdd (_camRight vectorMultiply (_boundaryUI / _perMetre));
-            drawIcon3D ["", _rgbMain   + [_alpha], _boundaryPos, 0, 0, 0, _mainText + _sep, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
-            drawIcon3D ["", _rgbStatus + [_alpha], _boundaryPos, 0, 0, 0, _statusText,      2, _size, "RobotoCondensedBold", "left",  false, 0, 0];
+            drawIcon3D ["", _rgbMain   + [_alpha], _boundaryPos, 0, 0, 0, _mainText + _sep, 2, _size, "RobotoCondensedBold", "left",  false, 0, 0];
+            drawIcon3D ["", _rgbStatus + [_alpha], _boundaryPos, 0, 0, 0, _statusText,      2, _size, "RobotoCondensedBold", "right", false, 0, 0];
         };
 
         // Icons ride the flush centre offsets measured at cache-build time (UI-x
@@ -442,20 +458,18 @@ GVAR(fnc_toggleTags) = {
         if (_threatIcon != "") then {
             private _iconPos = _dpos vectorAdd (_camRight vectorMultiply (_threatCenterUI / _perMetre));
             if ([_scrX + _threatCenterUI, _scrY] distance2D _mouse < ICON_HOVER_RADIUS) then {
-                drawIcon3D [_threatIcon, _rgbThreat + [_alpha], _iconPos, _iconDraw, _iconDraw, 0, _threatHover, 2, _size, "RobotoCondensedBold", "left", false, 0, 0];
+                drawIcon3D [_threatIcon, _rgbThreat + [_alpha], _iconPos, _iconDraw, _iconDraw, 0, _threatHover, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
             } else {
                 drawIcon3D [_threatIcon, _rgbThreat + [_alpha], _iconPos, _iconDraw, _iconDraw, 0, "", 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
             };
         };
 
         // Flag-inventory icon — flush past the threat icon when both show, else
-        // flush to the text. Hovering expands the full flag list rightward
-        // ("left" align: text starts at the icon), away from the tag line —
-        // "right" align would print the list back over the tag text.
+        // flush to the text. Hovering expands the full flag list.
         if (_showFlags && { _flagsText != "" }) then {
             private _iconPos = _dpos vectorAdd (_camRight vectorMultiply (_flagCenterUI / _perMetre));
             if ([_scrX + _flagCenterUI, _scrY] distance2D _mouse < ICON_HOVER_RADIUS) then {
-                drawIcon3D [FLAG_ICON, COL_GOLD, _iconPos, _iconDraw, _iconDraw, 0, _flagsText, 2, _size, "RobotoCondensedBold", "left", false, 0, 0];
+                drawIcon3D [FLAG_ICON, COL_GOLD, _iconPos, _iconDraw, _iconDraw, 0, _flagsText, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
             } else {
                 drawIcon3D [FLAG_ICON, _rgbMain + [_alpha], _iconPos, _iconDraw, _iconDraw, 0, "", 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
             };
@@ -466,7 +480,7 @@ GVAR(fnc_toggleTags) = {
         if (_stateIcon != "") then {
             private _iconPos = _dpos vectorAdd (_camRight vectorMultiply (_stateCenterUI / _perMetre));
             if ([_scrX + _stateCenterUI, _scrY] distance2D _mouse < ICON_HOVER_RADIUS) then {
-                drawIcon3D [_stateIcon, _rgbState + [_alpha], _iconPos, _iconDraw, _iconDraw, 0, _stateHover, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
+                drawIcon3D [_stateIcon, _rgbState + [_alpha], _iconPos, _iconDraw, _iconDraw, 0, _stateHover, 2, _size, "RobotoCondensedBold", "left", false, 0, 0];
             } else {
                 drawIcon3D [_stateIcon, _rgbState + [_alpha], _iconPos, _iconDraw, _iconDraw, 0, "", 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
             };

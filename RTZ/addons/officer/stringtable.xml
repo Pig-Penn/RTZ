@@ -26,7 +26,10 @@
             <English>Editing zone created (%1 m)</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaBlocked">
-            <English>Cannot create zone: enemy nearby</English>
+            <English>Cannot create zone: officer in combat</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_MsgAreaCombatRemoved">
+            <English>Editing zone removed: officer in combat</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaCooldown">
             <English>%1s Cooldown</English>

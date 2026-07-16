@@ -23,7 +23,7 @@ private _action = [
     },
     {
         params ["", "_objects", "", "", "", "_hoveredEntity"];
-        ([_objects + [_hoveredEntity]] call FUNC(collectSquads)) isNotEqualTo []
+        ([_objects + [_hoveredEntity]] call EFUNC(common,collectSquads)) isNotEqualTo []
     },
     [],                             // args
     {},                             // insertChildren

@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_initCuratorDisplay
- *
+ * Author: Maxim
  * Runs every time the Zeus curator display (RscDisplayCurator, IDD 312) is created,
  * via CBA's Extended_DisplayLoad_EventHandlers (see CfgEventHandlers.hpp) — the same
  * pattern ZEN uses. The curator display and its map control are destroyed and
@@ -11,15 +10,23 @@
  *
  * Attaches two independent overlays to the curator map (control 50), each gated on
  * its own system having initialized on this machine and its own per-display guard:
- *   - spotting overlay     (GVAR(spotGroups), set up by FUNC(spottingSystem))
- *   - officer zone overlay (GVAR(officerZones), set up by FUNC(spottingSystem))
+ *   - spotting overlay     (GVAR(spotGroups), set up by FUNC(spottingClient))
+ *   - officer zone overlay (GVAR(officerZones), set up by FUNC(spottingClient))
  *
- * Also called directly by FUNC(spottingSystem)'s client half if the display already
- * exists when the (settings-deferred) client half starts; the per-display guards
+ * Also called directly by FUNC(spottingClient) if the display already exists
+ * when the (settings-deferred) client half starts; the per-display guards
  * make the two paths safe to overlap.
  *
  * Arguments:
- *   0: Display — the freshly created curator display
+ * 0: The freshly created curator display <DISPLAY>
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * [findDisplay 312] call rtz_spotting_fnc_initCuratorDisplay
+ *
+ * Public: No
  */
 
 params ["_display"];

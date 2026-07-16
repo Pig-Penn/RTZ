@@ -54,10 +54,14 @@ if (GETGVAR(instantAssemble,false)) exitWith {
 // timeout build where the gunner got to, so a Zeus command always completes.
 private _crew = [_gunner];
 if (!isNull _assistant && {alive _assistant}) then { _crew pushBack _assistant; };
+// Arrival radius 4 m; walk timeout 12 s scaled by distance. Build on arrival, or
+// in place on the gunner's death/timeout, so a Zeus command always completes.
 [
-    _crew, _pos,
+    _crew, _pos, 4, 12 + (_gunner distance2D _pos) * 0.5,
+    LINKFUNC(assembleBuild),
     LINKFUNC(assembleBuild),
     [_gunner, _staticClass, _assistant, _dir, _curator],
-    "Crew couldn't reach the spot - building in place",
-    _curator
-] call FUNC(walkToSpot);
+    true,
+    _curator,
+    "Crew couldn't reach the spot - building in place"
+] call EFUNC(common,approach);

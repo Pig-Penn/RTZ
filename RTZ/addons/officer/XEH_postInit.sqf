@@ -16,7 +16,7 @@
         // Cross-addon contract (plain global, not GVAR — rtz_spotting reads it
         // without depending on rtz_officer): officerNetId -> zone radius, so a
         // spotted enemy officer's zone ring can ride his chevron payload
-        // (see rtz_spotting's fnc_spottingSystem).
+        // (see rtz_spotting's fnc_spotCheck).
         RTZ_officerZoneRadiusMap = createHashMap;
 
         [QGVAR(applyArea), LINKFUNC(applyArea)] call CBA_fnc_addEventHandler;

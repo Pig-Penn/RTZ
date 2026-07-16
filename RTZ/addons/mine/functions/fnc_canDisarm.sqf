@@ -20,6 +20,7 @@
 
 params ["_position", "_objects"];
 
+if (!GVAR(enabled)) exitWith {false};
 if ((_objects call FUNC(getDeminers)) isEqualTo []) exitWith {false};
 
 private _pos = ASLToAGL _position;

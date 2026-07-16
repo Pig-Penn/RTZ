@@ -16,6 +16,12 @@
         <Key ID="STR_RTZ_Mine_DisplayName">
             <English>Mines</English>
         </Key>
+        <Key ID="STR_RTZ_Mine_Enabled">
+            <English>Enable Mines</English>
+        </Key>
+        <Key ID="STR_RTZ_Mine_Enabled_Description">
+            <English>Enable the Place Mine and Clear Mines Zeus context menu actions.</English>
+        </Key>
         <Key ID="STR_RTZ_Mine_Mark3D">
             <English>Mark Spotted Mines in 3D</English>
         </Key>

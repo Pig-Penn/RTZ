@@ -20,10 +20,20 @@
 
 params ["_unit", "_pos", "_magazine"];
 
-[_unit, _pos, PLACE_DISTANCE, {
-    params ["_unit", "_magazine"];
+[
+    [_unit], _pos, PLACE_DISTANCE, GVAR(placeTimeout),
+    {
+        params ["_unit", "_magazine"];
 
-    if (_magazine in magazines _unit) then {
-        [_unit, _magazine] call FUNC(plantMine);
-    };
-}, [_unit, _magazine]] call FUNC(approach);
+        if (_magazine in magazines _unit) then {
+            [_unit, _magazine] call FUNC(plantMine);
+        };
+    },
+    {
+        // Errand expired — release the stale move order (skipped when a newer
+        // order superseded this one; EFUNC(common,approach) skips onFail then).
+        params ["_unit"];
+        if (alive _unit) then { _unit doMove getPosATL _unit };
+    },
+    [_unit, _magazine]
+] call EFUNC(common,approach);

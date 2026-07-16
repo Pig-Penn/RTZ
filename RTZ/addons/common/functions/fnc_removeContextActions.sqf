@@ -1,6 +1,21 @@
 #include "script_component.hpp"
-
-if (!hasInterface) exitWith {};
+/*
+ * Author: Maxim
+ * Removes ZEN's own cluttered entries (and the LAMBS Danger FSM groups) from
+ * this curator's Zeus context menu, leaving room for the RTZ actions. Purely
+ * client-side: zen_context_menu_fnc_removeAction only affects the local menu.
+ *
+ * Arguments:
+ * None
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * [] call rtz_common_fnc_removeContextActions
+ *
+ * Public: No
+ */
 
 // ZEN built-in actions
 ["Formation"]    call zen_context_menu_fnc_removeAction;

@@ -94,6 +94,10 @@ GVAR(fnc_buildVtagEntry) = {
         "", ["_seatCnt", -1], ["_flyHeight", -1], ["_selAmmo", -1]
     ];
 
+    // Display-label remap (rtz_fnc_loadTagLabels) — re-words LAMBS task/
+    // tactic strings and RTZ warning flags at build time (cached).
+    private _labels = GVAR(tagLabels);
+
     private _segs = [];
     if (GVAR(vtagShowName)) then { _segs pushBack _dName };
     if (GVAR(vtagShowSpeed) && { _speedKmh > 0 }) then {
@@ -125,15 +129,15 @@ GVAR(fnc_buildVtagEntry) = {
         if (!isNull _ec && { alive _ec }) then { _segs pushBack format ["CDR %1", name _ec] };
     };
     if (GVAR(vtagShowTactic) && { _tactic != "" }) then {
-        _segs pushBack format ["TAC %1", _tactic];
+        _segs pushBack format ["TAC %1", _labels getOrDefault [_tactic, _tactic]];
     };
 
     // Status: warning flags always surface; the LAMBS task only when enabled.
     // Kept out of _segs — it's rendered as its own coloured drawIcon3D so
     // LOW FUEL / DAMAGED can be amber/red without recolouring the line.
     private _status = switch (true) do {
-        case (_flags isNotEqualTo []): { _flags joinString " · " };
-        case (GVAR(vtagShowStatus)):   { _task };   // "" without LAMBS
+        case (_flags isNotEqualTo []): { (_flags apply { _labels getOrDefault [_x, _x] }) joinString " · " };
+        case (GVAR(vtagShowStatus)):   { _labels getOrDefault [_task, _task] };   // "" without LAMBS
         default                        { "" };
     };
 
@@ -192,6 +196,9 @@ GVAR(fnc_toggleVehTags) = {
     // Camera-right unit vector in world space — the axis the status split is
     // offset along so "right of the text" holds for any camera orientation.
     private _camRight = (positionCameraToWorld [1, 0, 0]) vectorDiff _camPos;
+    // Camera-up unit vector — the tag's vertical lift rides this (not world +Z)
+    // so it floats above the icon on screen even from a top-down camera.
+    private _camUp    = (positionCameraToWorld [0, 1, 0]) vectorDiff _camPos;
 
     {
         private _entry = _cache get _x;
@@ -210,9 +217,12 @@ GVAR(fnc_toggleVehTags) = {
         // vehicle's effective side) — same filter the overlay cards apply.
         if (!_anySide && { side (group _veh) != side player }) then { continue };
 
-        private _pos = (unitAimPositionVisual _veh) vectorAdd [0, 0, _zOff];
-        private _dist = _camPos distance _pos;
+        private _base = unitAimPositionVisual _veh;
+        private _dist = _camPos distance _base;
         if (_dist > _maxDist) then { continue };
+        // Screen-space vertical lift (see rtz_fnc_unitTags): along camera-up and
+        // distance-scaled, so the tag clears the icon from a top-down camera too.
+        private _pos = _base vectorAdd (_camUp vectorMultiply (_zOff * (1 max (_dist / 30))));
         private _alpha = linearConversion [_fadeIn, _maxDist, _dist, 0.85, 0, true];
 
         if (_statusText == "") then {
@@ -244,8 +254,10 @@ GVAR(fnc_toggleVehTags) = {
             private _gapUI       = _size * STATUS_GAP;
             private _mainPos   = _pos vectorAdd (_camRight vectorMultiply ((_boundaryUI - _gapUI) / _perMetre));
             private _statusPos = _pos vectorAdd (_camRight vectorMultiply ((_boundaryUI + _gapUI) / _perMetre));
-            drawIcon3D ["", _rgbMain   + [_alpha], _mainPos,   0, 0, 0, _mainText + _sep, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
-            drawIcon3D ["", _rgbStatus + [_alpha], _statusPos, 0, 0, 0, _statusText,      2, _size, "RobotoCondensedBold", "left",  false, 0, 0];
+            // textAlign names the SIDE of the anchor the text sits on (not
+            // typographic alignment): "left" ends at the anchor, "right" starts there.
+            drawIcon3D ["", _rgbMain   + [_alpha], _mainPos,   0, 0, 0, _mainText + _sep, 2, _size, "RobotoCondensedBold", "left",  false, 0, 0];
+            drawIcon3D ["", _rgbStatus + [_alpha], _statusPos, 0, 0, 0, _statusText,      2, _size, "RobotoCondensedBold", "right", false, 0, 0];
         };
     } forEach _ids;
 }] call CBA_fnc_addBISEventHandler;

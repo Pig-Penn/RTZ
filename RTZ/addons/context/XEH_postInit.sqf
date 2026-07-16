@@ -34,10 +34,6 @@ if (isClass (configFile >> "CfgPatches" >> "lambs_wp")) then {
         [] spawn FUNC(unloadInCombat);
     };
 
-    if (GVAR(enableZenContextMenu)) then {
-        [] call FUNC(zenContextMenu);
-    };
-
     #include "initKeybinds.inc.sqf"
 
     // Squad hide/freeze. The context action is client-only; the actual global
@@ -61,31 +57,6 @@ if (isClass (configFile >> "CfgPatches" >> "lambs_wp")) then {
             [] call FUNC(reloadSquadContext);
         };
         [QGVAR(reloadSquad), LINKFUNC(reloadSquadApply)] call CBA_fnc_addEventHandler;
-    };
-
-    // Attack order (destroy the hovered target). The context action is
-    // client-only; reveal + DESTROY waypoint must run where each group is
-    // local. The action fires QGVAR(attackOrder) TARGETED AT THE GROUPS
-    // (one delivery per owning machine) and the handler filters to its
-    // local groups, so it registers on every machine.
-    if (GVAR(enableAttackOrder)) then {
-        if (hasInterface) then {
-            [] call FUNC(attackOrderContext);
-        };
-        [QGVAR(attackOrder), LINKFUNC(attackOrderApply)] call CBA_fnc_addEventHandler;
-    };
-
-    // Deploy smoke screen / countermeasures. The context action is client-only;
-    // the actual weapon fire must run where the vehicle is local (the server
-    // for AI armor, a player's machine for a player-crewed vehicle), so the
-    // whole selection goes into a single QGVAR(deploySmoke) event TARGETED AT
-    // THE VEHICLES: CBA delivers it once per owning machine and the handler
-    // filters to its local vehicles, so it registers on every machine.
-    if (GVAR(enableDeploySmoke)) then {
-        if (hasInterface) then {
-            [] call FUNC(deploySmokeContext);
-        };
-        [QGVAR(deploySmoke), LINKFUNC(deploySmokeApply)] call CBA_fnc_addEventHandler;
     };
 
     // Squad loot sweep. The context action is client-only; the sweep itself
@@ -121,22 +92,6 @@ if (isClass (configFile >> "CfgPatches" >> "lambs_wp")) then {
             [] call FUNC(targetContext);
         };
         [] spawn FUNC(targetDisplay);
-    };
-
-    // Lay a mine at a picked location. The context action is client-only: it
-    // chooses the mine-carrying unit nearest the cursor and queues the spot; the
-    // walk + createMine must run where the AI is local (the server, for AI in Zeus
-    // PvP), so the server holds the per-unit queue and drains it. layMineMsg
-    // toasts the ordering curator on failure (out of mines / couldn't reach).
-    if (GVAR(enableLayMine)) then {
-        if (hasInterface) then {
-            [] call FUNC(layMineContext);
-            [QGVAR(layMineMsg), { _this call zen_common_fnc_showMessage }] call CBA_fnc_addEventHandler;
-        };
-        if (isServer) then {
-            GVAR(mineQueues) = createHashMap;
-            [QGVAR(layMine), LINKFUNC(layMineApply)] call CBA_fnc_addEventHandler;
-        };
     };
 
     // Assemble a disassembled static weapon a squad carries as backpacks (and the

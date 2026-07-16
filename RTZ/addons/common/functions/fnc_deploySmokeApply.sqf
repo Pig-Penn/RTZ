@@ -1,6 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_deploySmokeApply
+ * rtz_common_fnc_deploySmokeApply
  *
  * Handler body for QGVAR(deploySmoke) (registered on EVERY machine in
  * XEH_postInit). Fires one of the vehicle's countermeasure weapons

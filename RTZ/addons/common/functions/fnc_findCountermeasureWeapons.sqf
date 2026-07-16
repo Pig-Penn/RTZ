@@ -1,6 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_findCountermeasureWeapons
+ * rtz_common_fnc_findCountermeasureWeapons
  *
  * Resolves the turret weapon classes on a vehicle that can be fired as
  * countermeasures. Matches two families:
