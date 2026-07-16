@@ -17,11 +17,3 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     [25, 500, 150, 0],
     true
 ] call CBA_fnc_addSetting;
-
-[
-    QGVAR(followOfficer), "CHECKBOX",
-    [LSTRING(FollowOfficer), LSTRING(FollowOfficer_Description)],
-    _category,
-    true,
-    true
-] call CBA_fnc_addSetting;

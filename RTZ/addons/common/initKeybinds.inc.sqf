@@ -31,7 +31,7 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 
 // Helicopter fly-height keybinds
 [_category, QGVAR(heliHeightUp), [LSTRING(HeliHeightUp), LSTRING(HeliHeightUp_Description)],
-    {[1] call FUNC(adjustHeliHeight)}, {}, [0xC9, [false, false, false]]] call CBA_fnc_addKeybind; // Default: PageUp
+    {[1] call FUNC(flyHeight)}, {}, [0xC9, [false, false, false]]] call CBA_fnc_addKeybind; // Default: PageUp
 
 [_category, QGVAR(heliHeightDown), [LSTRING(HeliHeightDown), LSTRING(HeliHeightDown_Description)],
-    {[-1] call FUNC(adjustHeliHeight)}, {}, [0xD1, [false, false, false]]] call CBA_fnc_addKeybind; // Default: PageDown
+    {[-1] call FUNC(flyHeight)}, {}, [0xD1, [false, false, false]]] call CBA_fnc_addKeybind; // Default: PageDown

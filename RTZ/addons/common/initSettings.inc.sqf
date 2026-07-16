@@ -30,6 +30,6 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     QGVAR(heliHeightStep), "SLIDER",
     [LSTRING(HeliHeightStep), LSTRING(HeliHeightStep_Description)],
     _category,
-    [5, 100, 20, 0],
+    [1, 10, 5, 0],
     true
 ] call CBA_fnc_addSetting;

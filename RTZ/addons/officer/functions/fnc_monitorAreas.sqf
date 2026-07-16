@@ -64,16 +64,6 @@ if (!hasInterface) exitWith {};
             _toDelete pushBack _x;
             continue;
         };
-
-        if (GVAR(followOfficer)) then {
-            private _pos = getPosWorld _officer;
-
-            if (_pos distance2D _lastPos > FOLLOW_MOVE_THRESHOLD) then {
-                // "add" with the same ID re-centres the area (see FUNC(applyArea))
-                [QGVAR(applyArea), ["add", _curator, [_areaId, _pos, _radius]]] call CBA_fnc_serverEvent;
-                _y set [1, _pos];
-            };
-        };
     } forEach GVAR(areas);
 
     {GVAR(areas) deleteAt _x} forEach _toDelete;

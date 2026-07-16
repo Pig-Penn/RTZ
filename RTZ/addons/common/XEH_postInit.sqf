@@ -21,5 +21,5 @@
 
     private _height = ((_heli getVariable [QGVAR(flyHeight), round ((getPosATL _heli) select 2)]) + _delta) max FLY_HEIGHT_MIN;
     _heli setVariable [QGVAR(flyHeight), _height];
-    _heli flyInHeight _height;
+    _heli flyInHeight [_height, true];
 }] call CBA_fnc_addEventHandler;

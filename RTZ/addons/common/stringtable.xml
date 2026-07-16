@@ -41,7 +41,7 @@
             <English>%1s Cooldown</English>
         </Key>
         <Key ID="STR_RTZ_Common_MsgFlyHeight">
-            <English>Fly Height %1%2 m</English>
+            <English>Altitude %1%2 m</English>
         </Key>
         <Key ID="STR_RTZ_Common_MsgInCombat">
             <English>In Combat</English>

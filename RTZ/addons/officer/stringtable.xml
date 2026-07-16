@@ -22,15 +22,6 @@
         <Key ID="STR_RTZ_Officer_Enable">
             <English>Officer Zoning</English>
         </Key>
-        <Key ID="STR_RTZ_Officer_Enable_Description">
-            <English>Let curators anchor their editing rights to officers: an officer can be given a circular editing area on demand through the context menu. A Zeus with at least one zone can only edit inside their zones.</English>
-        </Key>
-        <Key ID="STR_RTZ_Officer_FollowOfficer">
-            <English>Zone Follows Officer</English>
-        </Key>
-        <Key ID="STR_RTZ_Officer_FollowOfficer_Description">
-            <English>Re-centre a zone on its officer as they move.</English>
-        </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaAdded">
             <English>Editing zone created (%1 m)</English>
         </Key>
