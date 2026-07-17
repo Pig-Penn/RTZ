@@ -1,6 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_openUnitInventory
+ * rtz_common_fnc_openUnitInventory
  *
  * Opens the gear / inventory of a single Zeus-selected unit (or vehicle) so the
  * curator can arrange its loadout and loot anything around it. Once the gear
@@ -39,7 +39,7 @@ if (isNull _unit) then {
 };
 
 if (isNull _unit) exitWith {
-    ["No unit selected"] call zen_common_fnc_showMessage;
+    [LLSTRING(MsgNoUnitSelected)] call zen_common_fnc_showMessage;
 };
 
 // ── Vehicle: open its cargo through a crew member ───────────────────────────────
@@ -47,7 +47,7 @@ if !(_unit isKindOf "CAManBase") exitWith {
     private _veh  = _unit;
     private _crew = crew _veh;
     if (_crew isEqualTo []) exitWith {
-        ["Vehicle has no crew to access its cargo"] call zen_common_fnc_showMessage;
+        [LLSTRING(MsgNoCrew)] call zen_common_fnc_showMessage;
     };
     (_crew select 0) actionNow ["Gear", _veh];
 };

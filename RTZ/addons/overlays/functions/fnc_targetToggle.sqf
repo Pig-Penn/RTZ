@@ -1,6 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_targetToggle
+ * rtz_overlays_fnc_targetToggle
  *
  * Context-menu statement: master on/off switch for the engagement-target
  * overlay. While ON, FUNC(targetDisplay)'s Draw3D handler tracks the curator's
@@ -23,4 +23,4 @@ if (!GVAR(tgtEnabled)) then {
 // While ON, nothing to subscribe here: the Draw3D selection sync sees the
 // (reset) cached selection differ from the live one and subscribes next frame.
 
-[["Targets hidden", "Targets shown"] select GVAR(tgtEnabled)] call zen_common_fnc_showMessage;
+[[LLSTRING(MsgTargetsHidden), LLSTRING(MsgTargetsShown)] select GVAR(tgtEnabled)] call zen_common_fnc_showMessage;

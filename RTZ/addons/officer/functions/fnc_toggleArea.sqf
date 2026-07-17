@@ -39,7 +39,11 @@ if (_enable) then {
         if (_cooldown > 0) then {
             [LSTRING(MsgAreaCooldown), ceil _cooldown] call zen_common_fnc_showMessage;
         } else {
-            [LSTRING(MsgAreaBlocked)] call zen_common_fnc_showMessage;
+            if (GETVAR(_officers select 0,GVAR(auraActive),false)) then {
+                [LSTRING(MsgAreaAuraBlocked)] call zen_common_fnc_showMessage;
+            } else {
+                [LSTRING(MsgAreaBlocked)] call zen_common_fnc_showMessage;
+            };
         };
     };
 } else {

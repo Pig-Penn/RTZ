@@ -1,9 +1,13 @@
 PREP(applyArea);
+PREP(applyAura);
+PREP(auraApply);
 PREP(getOfficers);
-PREP(hasEnemyNearby);
 PREP(isOnCooldown);
 PREP(isOfficer);
 PREP(modifyAction);
+PREP(modifyAuraAction);
 PREP(monitorAreas);
+PREP(monitorAuras);
 PREP(setArea);
 PREP(toggleArea);
+PREP(toggleAura);

@@ -1,31 +1,30 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_squadHideActionModifier
+ * rtz_control_fnc_squadHideActionModifier
  *
- * ZEN context-menu modifierFunction for the squad hide/freeze toggle. Sets the
- * action's label (index 1) and tint (index 3) to reflect whether the first
- * selected group is currently hidden:
- *   visible → orange "Enable Simulation"
- *   hidden  → green  "Disable Simulation"
+ * CfgContext modifierFunction for the squad hide/freeze toggle (see
+ * CfgContext.hpp). Sets the action's label, icon and tint to reflect whether
+ * the first selected group is currently hidden:
+ *   visible → orange "Disable Simulation"
+ *   hidden  → green  "Enable Simulation"
  *
- * Parameters (passed by ZEN as [_action, ACTION_PARAMS]):
- *   0: Array — the action array (mutated in place)
- *   1: Array — [_position, _objects, _groups, _waypoints, _markers, _hoveredEntity, _args]
+ * Parameters:
+ *   0: Array  — the action array (mutated in place)
+ *   1: Array  — selection objects + hovered entity (pre-combined by the caller)
  */
 
-params ["_action", "_actionParams"];
-_actionParams params ["", "_objects", "", "", "", "_hoveredEntity"];
+params ["_action", "_objects"];
 
-private _grps = [_objects + [_hoveredEntity]] call EFUNC(common,collectSquads);
+private _grps = [_objects] call EFUNC(common,collectSquads);
 if (_grps isEqualTo []) exitWith {};
 
 private _hidden = (_grps select 0) getVariable [QGVAR(squadHidden), false];
 if (_hidden) then {
-    _action set [1, "Enable Simulation"];
-    _action set [2, "\x\rtz\addons\context\ui\play_ca.paa"];
-    _action set [3, [0.40, 1.00, 0.40, 1]];   // green — currently hidden, will restore
+    _action set [1, LLSTRING(ActionEnableSimulation)];
+    _action set [2, ICON_SHOW];
+    _action set [3, COLOR_SHOW];   // green — currently hidden, will restore
 } else {
-    _action set [1, "Disable Simulation"];
-    _action set [2, "\x\rtz\addons\context\ui\pause_ca.paa"];
-    _action set [3, [1.00, 0.60, 0.20, 1]];   // orange — will hide & freeze
+    _action set [1, LLSTRING(ActionDisableSimulation)];
+    _action set [2, ICON_HIDE];
+    _action set [3, COLOR_HIDE];   // orange — will hide & freeze
 };

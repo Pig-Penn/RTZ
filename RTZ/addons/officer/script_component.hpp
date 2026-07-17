@@ -12,16 +12,13 @@
 #define AREA_ID_BASE 1000
 
 // Seconds between lifecycle/prune/follow passes of FUNC(monitorAreas)
-#define MONITOR_INTERVAL 2
-
-// Metres an officer must move before his area is re-centred (follow mode)
-#define FOLLOW_MOVE_THRESHOLD 10
-
-// Sides are hostile below this getFriend value (engine threshold, matches rtz_attack)
-#define HOSTILE_THRESHOLD 0.6
+#define MONITOR_INTERVAL 5
 
 // Seconds an officer must wait after his area is removed before a new one can be placed
 #define COOLDOWN_DURATION 15
+
+// Seconds between hold/release passes of FUNC(monitorAuras) (server-side)
+#define AURA_INTERVAL 3
 
 // Context-menu icon and tint per toggle state
 #define ICON_ADD "\x\zen\addons\context_actions\ui\add_ca.paa"

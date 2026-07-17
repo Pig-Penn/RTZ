@@ -1,6 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_squadHideApply
+ * rtz_control_fnc_squadHideApply
  *
  * SERVER handler body for QGVAR(squadHideApply) (registered in XEH_postInit).
  * Hides/unhides and freezes/unfreezes one group. hideObjectGlobal /

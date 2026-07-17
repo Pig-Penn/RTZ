@@ -1,6 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_reloadSquadApply
+ * rtz_control_fnc_reloadSquadApply
  *
  * Handler body for QGVAR(reloadSquad) (registered on EVERY machine in
  * XEH_postInit). Orders every alive AI unit in each group to reload its

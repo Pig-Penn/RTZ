@@ -10,6 +10,7 @@ PREP(applySkill);
 PREP(classInfo);
 PREP(curatorMapTeleport);
 PREP(initMan);
+PREP(openUnitInventory);
 PREP(placementPreview);
 PREP(removeContextActions);
 PREP(sideColor);

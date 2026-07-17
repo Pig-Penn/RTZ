@@ -94,39 +94,11 @@
 if (!hasInterface) exitWith {};
 
 // ─────────────────────────────────────────────────────────────────────────────
-// INTERFACE MACHINES — context action + keybind (curator-facing)
+// INTERFACE MACHINES — context action (curator-facing)
 // The helper functions (collectVehicles, setUnloadInCombat, toggleUnloadInCombat,
-// dismountActionModifier) are compiled via PREP and called here by name rather
-// than defined inline; feedback toasts go through zen_common_fnc_showMessage.
+// dismountContext, dismountActionModifier) are compiled via PREP and called
+// here by name rather than defined inline; feedback toasts go through
+// zen_common_fnc_showMessage.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Zeus Enhanced right-click context action
-//
-// A single toggle entry at the top of the Control submenu (RTZ_Control)
-// whose label and icon tint track the hovered/selected vehicle's current
-// state (ZEN's own pattern for toggle actions): amber padlock "Forbid
-// Dismount" while vanilla, cyan "Allow Dismount" once locked.
-// ─────────────────────────────────────────────────────────────────────────────
-
-private _action = [
-    "RTZ_ToggleDismount",
-    "Forbid Dismount",                                              // default label/icon; replaced by modifier
-    ["\a3\modules_f\data\iconlock_ca.paa", [1.00, 0.78, 0.22, 1]],
-    {
-        // ZEN passes [_position, _objects, _groups, _waypoints, _markers, _hoveredEntity, _args]
-        params ["", "_objects"];
-        [_objects] call FUNC(toggleUnloadInCombat);
-    },
-    {
-        // Static weapons (HMGs, mortars, GMGs) have no dismount concept — exclude them
-        // so the toggle never shows on a bare static turret selection.
-        params ["", "_objects"];
-        (([_objects] call EFUNC(common,collectVehicles)) findIf { !(_x isKindOf "StaticWeapon") }) != -1
-    },
-    [],                          // args
-    {},                          // insertChildren
-    FUNC(dismountActionModifier) // modifierFunction
-] call zen_context_menu_fnc_createAction;
-
-[_action, ["RTZ_Control"], 0] call zen_context_menu_fnc_addAction;
+[] call FUNC(dismountContext);

@@ -2,10 +2,10 @@
 <Project name="RTZ">
     <Package name="Economy">
         <Key ID="STR_RTZ_Economy_DeleteRefund">
-            <English>Delete Refund</English>
+            <English>Refund</English>
         </Key>
         <Key ID="STR_RTZ_Economy_DeleteRefund_Description">
-            <English>Percentage of an object's cost refunded when Zeus deletes it. Note that deleting corpses and wrecks also refunds.</English>
+            <English>The percentage of an object's cost refunded when it is deleted. Note that deleting corpses and wrecks also refunds.</English>
         </Key>
         <Key ID="STR_RTZ_Economy_DisplayName">
             <English>Economy</English>
@@ -20,13 +20,7 @@
             <English>Income</English>
         </Key>
         <Key ID="STR_RTZ_Economy_Income_Description">
-            <English>Points gained per minute. 100 points is a full resource bar.</English>
-        </Key>
-        <Key ID="STR_RTZ_Economy_StartingPoints">
-            <English>Starting Points</English>
-        </Key>
-        <Key ID="STR_RTZ_Economy_StartingPoints_Description">
-            <English>Points each Zeus begins the mission with. 100 points is a full resource bar.</English>
+            <English>Points gained per minute.</English>
         </Key>
     </Package>
 </Project>

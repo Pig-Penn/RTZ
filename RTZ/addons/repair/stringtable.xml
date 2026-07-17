@@ -25,11 +25,5 @@
         <Key ID="STR_RTZ_Repair_RepairTimeout_Description">
             <English>Time in seconds an engineer has to reach the vehicle before a repair order expires.</English>
         </Key>
-        <Key ID="STR_RTZ_Repair_RequireToolkit">
-            <English>Require Toolkit</English>
-        </Key>
-        <Key ID="STR_RTZ_Repair_RequireToolkit_Description">
-            <English>Only let engineers carrying a toolkit repair vehicles. Disable to allow any engineer to repair.</English>
-        </Key>
     </Package>
 </Project>

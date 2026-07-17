@@ -27,6 +27,6 @@ _curator addEventHandler ["CuratorObjectRegistered", {_this call FUNC(registerCo
 if (!isServer) exitWith {};
 
 // Points and action coefficients live on the server
-_curator addCuratorPoints (GVAR(startingPoints) / POINTS_MAX - curatorPoints _curator);
+_curator addCuratorPoints (1 - curatorPoints _curator);
 _curator setCuratorWaypointCost 0;
 _curator call FUNC(applyCoefs);

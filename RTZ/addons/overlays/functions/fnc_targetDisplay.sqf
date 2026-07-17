@@ -1,6 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_targetDisplay
+ * rtz_overlays_fnc_targetDisplay
  *
  * Renders the current engagement target of the units the local curator has
  * SELECTED while the overlay is toggled on (FUNC(targetToggle)): a side-coloured

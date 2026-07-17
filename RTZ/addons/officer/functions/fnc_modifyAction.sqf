@@ -35,6 +35,14 @@ if (netId _officer in GVAR(areas)) exitWith {
     _action set [3, COLOR_REMOVE];
 };
 
+// Command aura active — an area cannot be added (see FUNC(setArea));
+// cosmetic grey like the cooldown state below
+if (GETVAR(_officer,GVAR(auraActive),false)) exitWith {
+    _action set [1, LLSTRING(ActionAdd)];
+    _action set [2, ICON_ADD];
+    _action set [3, COLOR_COOLDOWN];
+};
+
 private _cooldown = [_officer] call FUNC(isOnCooldown);
 
 if (_cooldown > 0) then {

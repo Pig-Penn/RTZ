@@ -31,7 +31,7 @@ if (hasInterface) then {
 };
 
 // Setting-gated context features. Deferred to CBA_settingsInitialized so each
-// synced setting holds the server's value before it is read (see rtz_context /
+// synced setting holds the server's value before it is read (see rtz_overlays /
 // rtz_officer for the same pattern), and — for the menu clean-up — so ZEN's own
 // postInit has already registered the actions it removes.
 ["CBA_settingsInitialized", {

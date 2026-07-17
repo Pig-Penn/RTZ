@@ -58,8 +58,20 @@
         <Key ID="STR_RTZ_Common_MsgInCombat">
             <English>In Combat</English>
         </Key>
+        <Key ID="STR_RTZ_Common_MsgNoCrew">
+            <English>Vehicle has no crew to access its cargo</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_MsgNoUnitSelected">
+            <English>No unit selected</English>
+        </Key>
         <Key ID="STR_RTZ_Common_MsgTeleported">
             <English>Teleported</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_OpenUnitInventory">
+            <English>Open Unit Inventory</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_OpenUnitInventory_Description">
+            <English>Open selected unit's inventory (loot nearby crates, vehicles, bodies).</English>
         </Key>
         <Key ID="STR_RTZ_Common_PreviewHint">
             <English>LMB place  |  ESC cancel</English>
@@ -108,6 +120,12 @@
         </Key>
         <Key ID="STR_RTZ_Common_TeleportToCursor_Description">
             <English>Teleport the selected units to the cursor position, preserving their formation. Units in combat are skipped; the Unit Teleport settings control range and cooldown.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_UnitInventory">
+            <English>Unit Inventory</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_UnitInventory_Description">
+            <English>Add a keybind to arrange the inventory of the selected unit or vehicle.</English>
         </Key>
     </Package>
 </Project>

@@ -20,7 +20,7 @@
             <English>Remote Control Indicator</English>
         </Key>
         <Key ID="STR_RTZ_Spotting_EnableRC_Description">
-            <English>Highlight units currently under remote control by another curator.</English>
+            <English>Highlight units currently being remote controlled by another curator.</English>
         </Key>
         <Key ID="STR_RTZ_Spotting_EnableSpotting">
             <English>Spotting System</English>

@@ -1,6 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_lambsResetApply
+ * rtz_control_fnc_lambsResetApply
  *
  * Handler body for QGVAR(lambsReset) (registered on EVERY machine in
  * XEH_postInit). Clears the LAMBS Danger FSM state of each group via
@@ -20,7 +20,7 @@
  * blanket enableAI / setUnitPos / playMove silently un-does three of them. So
  * once it returns we restore what a reset should NOT have disturbed, in the same
  * synchronous pass (the units are local here, same as the group — no flicker):
- *   1. Vehicle dismount locks (QGVAR(unloadInCombat)) — taskReset wipes the LAMBS
+ *   1. Vehicle dismount locks (EGVAR(dismount,unloadInCombat)) — taskReset wipes the LAMBS
  *      bail-out guard, which would silently re-enable dismount-in-combat; re-tag
  *      every locked vehicle in the group.
  *   2. Surrendered / captured units (EGVAR(captive,surrendered) — captured units
@@ -56,8 +56,8 @@ params ["_grps"];
             if (!isNull _v) then { _vehs pushBackUnique _v };
         } forEach _units;
         {
-            if !(_x getVariable [QGVAR(unloadInCombat), true]) then {
-                [QGVAR(applyUnloadFlags), [_x, false], _x] call CBA_fnc_targetEvent;
+            if !(_x getVariable [QEGVAR(dismount,unloadInCombat), true]) then {
+                [QEGVAR(dismount,applyUnloadFlags), [_x, false], _x] call CBA_fnc_targetEvent;
             };
         } forEach _vehs;
 

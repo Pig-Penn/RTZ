@@ -19,8 +19,6 @@
  *    block in FUNC(setArea): a Zeus should not keep editing rights over a
  *    position once his anchor is in a firefight), arming the same
  *    COOLDOWN_DURATION so it cannot be instantly re-planted once combat ends.
- * 3. Follow (Zone Follows Officer setting) — an area is re-centred on its
- *    officer once they have moved past FOLLOW_MOVE_THRESHOLD.
  *
  * Areas are only ever added on demand by FUNC(setArea) via the context-menu
  * toggle; there is deliberately no auto-add on officer placement.
@@ -57,7 +55,7 @@ if (!hasInterface) exitWith {};
 
     if (isNull _curator || {count GVAR(areas) == 0}) exitWith {};
 
-    // Prune dead/deleted anchors, re-centre live ones that moved
+    // Prune dead/deleted anchors
     private _toDelete = [];
     {
         _y params ["_areaId", "_lastPos", "_radius"];

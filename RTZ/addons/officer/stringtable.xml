@@ -4,8 +4,14 @@
         <Key ID="STR_RTZ_Officer_ActionAdd">
             <English>Add Editing Area</English>
         </Key>
+        <Key ID="STR_RTZ_Officer_ActionAuraAdd">
+            <English>Add Command Aura</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_ActionAuraRemove">
+            <English>Remove Command Aura</English>
+        </Key>
         <Key ID="STR_RTZ_Officer_ActionCooldown">
-            <English>Add Editing Area (%1s)</English>
+            <English>Add Editing Area (%1 s)</English>
         </Key>
         <Key ID="STR_RTZ_Officer_ActionRemove">
             <English>Remove Editing Area</English>
@@ -14,7 +20,19 @@
             <English>Zone Radius</English>
         </Key>
         <Key ID="STR_RTZ_Officer_AreaRadius_Description">
-            <English>Radius, in metres, of an officer's editing area. Applied when a zone is created.</English>
+            <English>Radius, in metres, of an officer's editing area.</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_AuraEnable">
+            <English>Command Aura</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_AuraEnable_Description">
+            <English>Officers can project a command aura; groups of their side inside it will not flee.</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_AuraRadius">
+            <English>Aura Radius</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_AuraRadius_Description">
+            <English>Radius, in metres, of an officer's command aura.</English>
         </Key>
         <Key ID="STR_RTZ_Officer_DisplayName">
             <English>Officer Zones</English>
@@ -22,20 +40,38 @@
         <Key ID="STR_RTZ_Officer_Enable">
             <English>Officer Zoning</English>
         </Key>
+        <Key ID="STR_RTZ_Officer_Enable_Description">
+            <English>Officers can anchor curator editing areas, confining Zeus editing to their surroundings.</English>
+        </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaAdded">
             <English>Editing zone created (%1 m)</English>
         </Key>
+        <Key ID="STR_RTZ_Officer_MsgAreaAuraBlocked">
+            <English>Command Aura Active</English>
+        </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaBlocked">
-            <English>Cannot create zone: officer in combat</English>
+            <English>Officer Engaged</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaCombatRemoved">
-            <English>Editing zone removed: officer in combat</English>
+            <English>Officer Engaged</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaCooldown">
-            <English>%1s Cooldown</English>
+            <English>%1 s Cooldown</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaRemoved">
             <English>Editing zone removed</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_MsgAuraAdded">
+            <English>Command aura active (%1 m)</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_MsgAuraBlockedArea">
+            <English>Editing Area Active</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_MsgAuraRemoved">
+            <English>Command aura removed</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_MsgAuraUnavailable">
+            <English>Aura Unavailable</English>
         </Key>
     </Package>
 </Project>

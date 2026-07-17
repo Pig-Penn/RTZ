@@ -1,6 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_squadHideToggle
+ * rtz_control_fnc_squadHideToggle
  *
  * Context-menu statement: flips the "hidden & frozen" state of every group in
  * the selection. Reads the current state from the FIRST group and applies the
@@ -19,7 +19,7 @@
 params ["_objects"];
 private _grps = [_objects] call EFUNC(common,collectSquads);
 if (_grps isEqualTo []) exitWith {
-    ["No units selected"] call zen_common_fnc_showMessage;
+    [LLSTRING(MsgNoUnitsSelected)] call zen_common_fnc_showMessage;
 };
 
 // New state derived from the first group, so a mixed selection follows the
@@ -28,6 +28,6 @@ private _hide = !((_grps select 0) getVariable [QGVAR(squadHidden), false]);
 
 { [QGVAR(squadHideApply), [_x, _hide]] call CBA_fnc_serverEvent; } forEach _grps;
 
-private _msg = ["Enabled simulation", "Disabled simulation"] select _hide;
+private _msg = [LLSTRING(MsgSimulationEnabled), LLSTRING(MsgSimulationDisabled)] select _hide;
 if (count _grps > 1) then { _msg = format ["%1  x%2", _msg, count _grps]; };
 [_msg] call zen_common_fnc_showMessage;

@@ -35,3 +35,15 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 
 [_category, QGVAR(heliHeightDown), [LSTRING(HeliHeightDown), LSTRING(HeliHeightDown_Description)],
     {[-1] call FUNC(flyHeight)}, {}, [0xD1, [false, false, false]]] call CBA_fnc_addKeybind; // Default: PageDown
+
+// Open selected unit's inventory. Client-only: the gear dialog is a UI action,
+// and the engine's networked inventory sync carries the item transfers even when
+// the unit/container is remote (see fnc_openUnitInventory).
+[_category, QGVAR(openUnitInventory), [LSTRING(OpenUnitInventory), LSTRING(OpenUnitInventory_Description)],
+    {
+        if (!GVAR(enableUnitInventory)) exitWith { false };
+        if (isNull getAssignedCuratorLogic player) exitWith { false };
+        if (isNull (findDisplay 312)) exitWith { false };
+        [] call FUNC(openUnitInventory);
+        true
+    }, {}, [23, [false, false, false]]] call CBA_fnc_addKeybind; // Default: I

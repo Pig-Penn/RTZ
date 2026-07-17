@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Loot">
+        <Key ID="STR_RTZ_Loot_ActionLoot">
+            <English>Loot Nearby</English>
+        </Key>
+        <Key ID="STR_RTZ_Loot_DisplayName">
+            <English>Looting</English>
+        </Key>
+        <Key ID="STR_RTZ_Loot_Enabled">
+            <English>Enable Looting</English>
+        </Key>
+        <Key ID="STR_RTZ_Loot_Enabled_Description">
+            <English>Enable the Loot Nearby Zeus context menu action, which orders selected squads to sweep nearby bodies, dropped weapons, crates and unmanned vehicles and improve their loadout.</English>
+        </Key>
+        <Key ID="STR_RTZ_Loot_Looting">
+            <English>Looting</English>
+        </Key>
+        <Key ID="STR_RTZ_Loot_Radius">
+            <English>Loot Radius</English>
+        </Key>
+        <Key ID="STR_RTZ_Loot_Radius_Description">
+            <English>How far around a squad's leader the Loot Nearby action searches for lootable bodies, crates and vehicles (meters).</English>
+        </Key>
+    </Package>
+</Project>

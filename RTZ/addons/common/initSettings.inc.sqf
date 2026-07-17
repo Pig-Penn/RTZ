@@ -51,3 +51,12 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     false,
     true
 ] call CBA_fnc_addSetting;
+
+// Client-side: the gear dialog is a purely local UI action.
+[
+    QGVAR(enableUnitInventory), "CHECKBOX",
+    [LSTRING(UnitInventory), LSTRING(UnitInventory_Description)],
+    _category,
+    true,
+    0
+] call CBA_fnc_addSetting;

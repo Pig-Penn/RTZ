@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Control">
+        <Key ID="STR_RTZ_Control_ActionDisableSimulation">
+            <English>Disable Simulation</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_ActionEnableSimulation">
+            <English>Enable Simulation</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_ActionReload">
+            <English>Reload</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_ActionReset">
+            <English>Reset</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_DisplayName">
+            <English>Control</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_MsgNoUnitsSelected">
+            <English>No units selected</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_MsgReloading">
+            <English>Reloading</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_MsgReset">
+            <English>Reset</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_MsgSimulationDisabled">
+            <English>Disabled simulation</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_MsgSimulationEnabled">
+            <English>Enabled simulation</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_ReloadSquad">
+            <English>Reload Squad</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_ReloadSquad_Description">
+            <English>Add a context menu action ordering selected units to reload their current weapon.</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_SquadHide">
+            <English>Simulation Control</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_SquadHide_Description">
+            <English>Add a context menu action to toggle the simulation and visibility of selected units.</English>
+        </Key>
+    </Package>
+</Project>

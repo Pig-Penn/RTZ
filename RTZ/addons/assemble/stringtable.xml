@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Assemble">
+        <Key ID="STR_RTZ_Assemble_Aborted">
+            <English>Aborted</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_ActionAssemble">
+            <English>Assemble</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_ActionDisassemble">
+            <English>Disassemble</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_Assembling">
+            <English>Assembling</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_BuildInPlace">
+            <English>Crew couldn't reach the spot - building in place</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_Disassembling">
+            <English>Disassembling</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_DisplayName">
+            <English>Assembly</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_Enabled">
+            <English>Enable Assembly</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_Enabled_Description">
+            <English>Enable the Assemble and Disassemble Zeus context menu actions, which raise or pack a static weapon or drone a squad carries as backpacks.</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_GunnerNotLocal">
+            <English>Gunner is not on this machine</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_Instant">
+            <English>Instant Assembly</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_Instant_Description">
+            <English>Assemble and disassemble static weapons instantly: skip the walk to the picked spot and the kneel-and-assemble animation, spawning (or packing) the weapon at once. Drones are already instant either way.</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_PackInPlace">
+            <English>Assistant couldn't reach - packing in place</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_Packed">
+            <English>Packed</English>
+        </Key>
+        <Key ID="STR_RTZ_Assemble_WeaponNotLocal">
+            <English>Weapon is not on this machine</English>
+        </Key>
+    </Package>
+</Project>

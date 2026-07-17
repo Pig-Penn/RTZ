@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Overlays">
+        <Key ID="STR_RTZ_Overlays_ActionDrawDestinations">
+            <English>Draw Destinations</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_ActionDrawTargets">
+            <English>Draw Targets</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_ActionHideDestinations">
+            <English>Hide Destinations</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_ActionHideTargets">
+            <English>Hide Targets</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_DestinationIconScaling">
+            <English>Destination Icon Scaling</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_DestinationIconScaling_Description">
+            <English>Scale the destination move icon with the unit's speed — larger the faster it moves (the LAMBS debug look). When off, the icon stays a fixed size.</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_DisplayName">
+            <English>Overlays</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_DrawDestinations">
+            <English>Draw Destinations</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_DrawDestinations_Description">
+            <English>Add a context menu action to show where a selected squad's units are moving.</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_DrawTargets">
+            <English>Draw Targets</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_DrawTargets_Description">
+            <English>Add a context menu action to show what a selected squad's units are aiming at (a line to where the AI believes its target is).</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_MsgDestinationsHidden">
+            <English>Destinations hidden</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_MsgDestinationsShown">
+            <English>Destinations shown</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_MsgTargetsHidden">
+            <English>Targets hidden</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_MsgTargetsShown">
+            <English>Targets shown</English>
+        </Key>
+    </Package>
+</Project>

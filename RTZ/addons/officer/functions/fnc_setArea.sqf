@@ -44,6 +44,7 @@ if (_enable) then {
     if (!alive _officer) exitWith {false};                // never anchor to a corpse
     if ([_officer] call FUNC(isOnCooldown) > 0) exitWith {false}; // just torn down, not re-plantable yet
     if (behaviour _officer == "COMBAT") exitWith {false};         // don't hand out editing rights while the officer is in a firefight
+    if (GETVAR(_officer,GVAR(auraActive),false)) exitWith {false}; // command aura active — the two officer zones are mutually exclusive (see FUNC(applyAura))
 
     private _areaId = GVAR(nextAreaId);
     GVAR(nextAreaId) = _areaId + 1;

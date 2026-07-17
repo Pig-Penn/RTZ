@@ -1,6 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_destinationToggle
+ * rtz_overlays_fnc_destinationToggle
  *
  * Context-menu statement: master on/off switch for the expected-destination
  * overlay. While ON, FUNC(destinationDisplay)'s Draw3D handler tracks the
@@ -23,4 +23,4 @@ if (!GVAR(destEnabled)) then {
 // While ON, nothing to subscribe here: the Draw3D selection sync sees the
 // (reset) cached selection differ from the live one and subscribes next frame.
 
-[["Destinations hidden", "Destinations shown"] select GVAR(destEnabled)] call zen_common_fnc_showMessage;
+[[LLSTRING(MsgDestinationsHidden), LLSTRING(MsgDestinationsShown)] select GVAR(destEnabled)] call zen_common_fnc_showMessage;

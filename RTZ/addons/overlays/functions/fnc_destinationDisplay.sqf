@@ -1,6 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_destinationDisplay
+ * rtz_overlays_fnc_destinationDisplay
  *
  * Renders the expected movement destination of the units the local curator has
  * SELECTED while the overlay is toggled on (FUNC(destinationToggle)): a white
