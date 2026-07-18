@@ -1,10 +1,5 @@
 #include "script_component.hpp"
 
-// Build stamp — logged on every machine so a stale/mismatched client PBO is visible
-// in the RPT. This is a separate PBO from main; it can be stale independently.
-diag_log text format ["[RTZ] spotting postInit — version %1, machine [isServer=%2 hasInterface=%3 clientOwner=%4]",
-    QUOTE(VERSION_STR), isServer, hasInterface, clientOwner];
-
 // Everything setting-gated is deferred until the CBA_settingsInitialized event.
 // Reading a setting straight from postInit is a race: a CLIENT's values arrive
 // from the server a frame or more later, so a bare read is nil (and `if (nil)

@@ -23,7 +23,7 @@
  * 6: Force re-send even when the signature is unchanged <BOOL>
  *
  * Return Value:
- * true only when the spot was brand new for this spotter <BOOL>
+ * None
  *
  * Example:
  * [_key, _payload, _sig, _player, _activeSpots, true, false] call rtz_spotting_fnc_emitSpot
@@ -51,5 +51,3 @@ if (_draw) then {
     };
     _activeSpots set [_key, [_mrkr, _player, "_off_"]];
 };
-
-_isNew

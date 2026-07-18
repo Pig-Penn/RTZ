@@ -92,7 +92,7 @@ if (!hasInterface) exitWith {};
 #define ICON_TEXT_GAP  0.9
 #define ICON_GAP       0.3
 
-// Runtime visibility switch (keybind / context menu). The master CBA setting
+// Runtime visibility switch (context menu). The master CBA setting
 // gates whether this system exists at all; this flips it mid-mission. Read
 // defensively by the selection poll — while true, the poll reports the
 // selection so the server streams packets.
@@ -266,13 +266,20 @@ GVAR(fnc_buildTagEntry) = {
     private _leftExtent  = [_halfFull, _flush + (_iconW / 2)] select (_stateIcon != "");
     private _hwLayout    = _rightExtent max _leftExtent;
 
+    private _flagsText = (_flags apply { _labels getOrDefault [_x, _x] }) joinString " · ";
+    // Precomputed "anything to draw at all" flag (index 18) — the per-frame
+    // resolve pass reads this single boolean instead of unpacking the entry to
+    // re-derive it every frame for every unit.
+    private _hasContent = _mainText != "" || { _status != "" } || { _flagsText != "" }
+        || { _stateIcon != "" } || { _threatIcon != "" };
+
     [
         _mainText,
         _col select [0, 3],
         _status,
         _statusCol select [0, 3],
         _sep,
-        (_flags apply { _labels getOrDefault [_x, _x] }) joinString " · ",
+        _flagsText,
         _stateIcon,
         _stateIconColFull select [0, 3],
         _stateHover,
@@ -284,11 +291,12 @@ GVAR(fnc_buildTagEntry) = {
         _stateCenterUI,
         _threatCenterUI,
         _flagCenterUI,
-        _hwLayout
+        _hwLayout,
+        _hasContent
     ]
 };
 
-// ── Runtime toggle (shared by the keybind and the context menu entry) ───────
+// ── Runtime toggle (driven by the shared context menu entry) ────────────────
 GVAR(fnc_toggleTags) = {
     GVAR(tagsVisible) = !GVAR(tagsVisible);
     [format ["Unit tags %1", ["hidden", "shown"] select GVAR(tagsVisible)]] call zen_common_fnc_showMessage;
@@ -329,11 +337,13 @@ GVAR(fnc_toggleTags) = {
     private _camUp     = (positionCameraToWorld [0, 1, 0]) vectorDiff _camPos;
 
     // ── Pass 1: resolve each selected unit to a render record ────────────────
-    // [_scr, _perMetreRight, _perMetreUp, _pos, _alpha, _entry, _yShift]. Every
-    // skip condition from the old single loop lives here; only survivors reach
-    // the layout and draw passes. _perMetre{Right,Up} are UI-x/UI-y per metre of
-    // camera-right/up at this unit's depth — exact for any FOV, no formula
-    // guesswork — used to convert measured UI offsets back to world metres.
+    // [_scr, _perMetreRight, _pos, _alpha, _entry, _yShift]. Every skip
+    // condition from the old single loop lives here; only survivors reach the
+    // layout and draw passes. _perMetreRight is UI-x per metre of camera-right
+    // at this unit's depth — exact for any FOV, no formula guesswork — used to
+    // convert measured UI offsets back to world metres. (The camera-up
+    // equivalent is only needed for the rare de-conflicted tag, so the draw
+    // pass measures it on demand instead of here for every unit.)
     private _records = [];
     {
         private _entry = _cache get _x;
@@ -344,11 +354,7 @@ GVAR(fnc_toggleTags) = {
             _entry = [_pkt] call GVAR(fnc_buildTagEntry);
             _cache set [_x, _entry];
         };
-        _entry params [
-            "_mainText", "", "_statusText", "", "", "_flagsText", "_stateIcon", "", "", "_threatIcon"
-        ];
-        if (_mainText == "" && { _statusText == "" } && { _flagsText == "" }
-            && { _stateIcon == "" } && { _threatIcon == "" }) then { continue };  // every field/icon toggled off
+        if !(_entry select 18) then { continue };                  // every field/icon toggled off
 
         private _unit = objectFromNetId _x;
         // objectParent re-check: the unit can mount between server pushes.
@@ -367,14 +373,12 @@ GVAR(fnc_toggleTags) = {
         private _scr = worldToScreen _pos;
         if (_scr isEqualTo []) then { continue };                  // unit off-screen
         private _oneRight = worldToScreen (_pos vectorAdd _camRight);
-        private _oneUp    = worldToScreen (_pos vectorAdd _camUp);
-        if (_oneRight isEqualTo [] || { _oneUp isEqualTo [] }) then { continue };
+        if (_oneRight isEqualTo []) then { continue };
         private _perMetreRight = (_oneRight select 0) - (_scr select 0);
-        private _perMetreUp    = (_oneUp    select 1) - (_scr select 1);
         if (_perMetreRight <= 1e-6) then { continue };
 
         private _alpha = linearConversion [_fadeIn, _maxDist, _dist, 0.85, 0, true];
-        _records pushBack [_scr, _perMetreRight, _perMetreUp, _pos, _alpha, _entry, 0];
+        _records pushBack [_scr, _perMetreRight, _pos, _alpha, _entry, 0];
     } forEach _ids;
 
     if (_records isEqualTo []) exitWith {};
@@ -392,7 +396,7 @@ GVAR(fnc_toggleTags) = {
     private _placed = [];                                          // [xCentre, halfWidth, finalY]
     {
         private _rec = _records select (_x select 1);
-        private _e   = _rec select 5;
+        private _e   = _rec select 4;
         private _scr = _rec select 0;
         private _xC  = _scr select 0;
         private _hw  = _e select 17;   // true composed half-width (text + present icons)
@@ -411,15 +415,17 @@ GVAR(fnc_toggleTags) = {
             _pass = _pass + 1;
         };
         _placed pushBack [_xC, _hw, _finalY];
-        _rec set [6, _finalY - (_scr select 1)];
+        _rec set [5, _finalY - (_scr select 1)];
     } forEach _order;
 
     // ── Pass 3: draw ─────────────────────────────────────────────────────────
     // The de-confliction shift is a screen-space UI-y offset converted to a
-    // world nudge along camera-up (via _perMetreUp), applied to the base
-    // position so text and icons of one tag move together.
+    // world nudge along camera-up, applied to the base position so text and
+    // icons of one tag move together. The UI-y-per-metre-of-camera-up scale is
+    // measured here, only for the (rare) shifted tags — unshifted tags never
+    // pay for the extra worldToScreen.
     {
-        _x params ["_scr", "_perMetre", "_perMetreUp", "_pos", "_alpha", "_entry", "_yShift"];
+        _x params ["_scr", "_perMetre", "_pos", "_alpha", "_entry", "_yShift"];
         _entry params [
             "_mainText", "_rgbMain", "_statusText", "_rgbStatus", "_sep", "_flagsText",
             "_stateIcon", "_rgbState", "_stateHover", "_threatIcon", "_rgbThreat", "_threatHover",
@@ -427,8 +433,14 @@ GVAR(fnc_toggleTags) = {
         ];
 
         private _dpos = _pos;
-        if (_yShift != 0 && { abs _perMetreUp > 1e-6 }) then {
-            _dpos = _pos vectorAdd (_camUp vectorMultiply (_yShift / _perMetreUp));
+        if (_yShift != 0) then {
+            private _oneUp = worldToScreen (_pos vectorAdd _camUp);
+            if (_oneUp isNotEqualTo []) then {
+                private _perMetreUp = (_oneUp select 1) - (_scr select 1);
+                if (abs _perMetreUp > 1e-6) then {
+                    _dpos = _pos vectorAdd (_camUp vectorMultiply (_yShift / _perMetreUp));
+                };
+            };
         };
         private _scrX = _scr select 0;
         private _scrY = (_scr select 1) + _yShift;

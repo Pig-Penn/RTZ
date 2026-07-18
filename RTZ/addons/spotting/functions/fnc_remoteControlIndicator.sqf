@@ -69,7 +69,7 @@ if (hasInterface) then {
         {
             // _x = unitNetId (HashMap key); _y = stored display data.
             _y params ["_unit", "_colorArray"];
-            if (isNull _unit || {!alive _unit}) then { continue };
+            if (!alive _unit) then { continue };   // alive objNull is false — covers deleted units too
             private _anchor = vehicle _unit;
             private _dist   = _camPos distance _anchor;
 

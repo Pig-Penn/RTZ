@@ -4,9 +4,13 @@ ADDON = false;
 
 #include "initSettings.inc.sqf"
 
-// Magazine-class → capacity config-read cache for the server-side gather
-// (fnc_gatherUnitInfo), filled lazily per magazine class.
-if (isServer) then { GVAR(magCapCache) = createHashMap };
+// Server-side gather caches, filled lazily: magazine class → capacity
+// (fnc_gatherUnitInfo) and vehicle class → total seat count
+// (fnc_vehicleDataStream).
+if (isServer) then {
+    GVAR(magCapCache)   = createHashMap;
+    GVAR(seatCntCache)  = createHashMap;
+};
 
 // Display-label remap table (fnc_loadTagLabels — the one place to re-word tag
 // text). Consumed only by the unit/vehicle tags, which are client-only, so

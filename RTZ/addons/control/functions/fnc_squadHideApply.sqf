@@ -11,7 +11,9 @@
  *   0: Group   — group to toggle
  *   1: Boolean — true = hide & freeze; false = restore
  */
+
 params ["_grp", "_hide"];
+
 if (isNull _grp) exitWith {};
 
 // Broadcast the group state so every client's modifier reads the right label.

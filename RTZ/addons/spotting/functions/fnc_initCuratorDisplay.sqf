@@ -48,7 +48,7 @@ if (!isNil QGVAR(spotGroups) && {!(_display getVariable [QGVAR(spotDrawAttached)
             // _y = [unit, texture, colorArray, echelonTex, sideIdx, leaderNetId] —
             // GVAR(spotGroups) holds group icons only (chevrons live in spotChevrons).
             _y params ["_unit", "_texture", "_colorArray", "_echelonTex", "_sideIdx"];
-            if (isNull _unit || !alive _unit) then { continue };
+            if (!alive _unit) then { continue };   // alive objNull is false — covers deleted units too
             private _pos = getPosVisual _unit;
             _map drawIcon [_texture, _colorArray, _pos, MAP_ICON_SIZE, MAP_ICON_SIZE, 0, "", 0, 0.03, "RobotoCondensed"];
             if (_echelonTex != "") then {
@@ -82,7 +82,7 @@ if (!isNil QGVAR(officerZones) && {!(_display getVariable [QGVAR(zoneDrawAttache
             // officer between spot ticks (matches the follow behaviour of the
             // real editing area, which re-centres on the same officer).
             _y params ["_unit", "_radius"];
-            if (isNull _unit || !alive _unit) then { continue };
+            if (!alive _unit) then { continue };
             _map drawEllipse [getPosVisual _unit, _radius, _radius, 0, COLOR_ZONE_RING, ""];
         } forEach GVAR(officerZones);
     }];

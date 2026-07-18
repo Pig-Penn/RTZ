@@ -44,34 +44,56 @@ if (_veh == _unit
     || { _veh isKindOf "StaticWeapon" && { !(_veh isKindOf "StaticMortar") } }
 ) then { _veh = objNull };
 
-// A headquarters / command element takes the staff symbol outright, whatever it's in.
-private _suffix = if (_isHQ) then { "hq" } else { call {
+// Everything below the HQ and cargo tests is class-invariant, so the resolved
+// suffix is cached per class in GVAR(markerSuffixCache) (created by
+// FUNC(spottingSystem)) — each man/vehicle class pays its config lookups once
+// per mission instead of once per spotted group per tick.
+private _suffix = call {
+    // A headquarters / command element takes the staff symbol outright, whatever it's in.
+    if (_isHQ) exitWith { "hq" };
+
     // On foot (also static-weapon crew & parachutists, via _veh = objNull above).
     if (isNull _veh) exitWith {
-        if !(_unit isKindOf "CAManBase") then { "unknown" } else {
-            // Recon: stealthy, high-detection, or diver units (ACE getMarkerType heuristic).
-            ["inf", "recon"] select (getNumber (configOf _unit >> "detectSkill") > 20
-                || { getNumber (configOf _unit >> "camouflage") < 1 }
-                || { getText (configOf _unit >> "textsingular") == "diver" })
-        }
+        private _key = "m" + typeOf _unit;
+        private _s   = GVAR(markerSuffixCache) get _key;
+        if (isNil "_s") then {
+            _s = if !(_unit isKindOf "CAManBase") then { "unknown" } else {
+                // Recon: stealthy, high-detection, or diver units (ACE getMarkerType heuristic).
+                ["inf", "recon"] select (getNumber (configOf _unit >> "detectSkill") > 20
+                    || { getNumber (configOf _unit >> "camouflage") < 1 }
+                    || { getText (configOf _unit >> "textsingular") == "diver" })
+            };
+            GVAR(markerSuffixCache) set [_key, _s];
+        };
+        _s
     };
+
     if (((assignedVehicleRole _unit) param [0, ""]) == "cargo") exitWith { "inf" };        // passengers being transported
-    if (unitIsUAV _veh)                                         exitWith { "uav" };
-    if (getNumber (configOf _veh >> "attendant") == 1)          exitWith { "med" };         // medical vehicle
-    if (getNumber (configOf _veh >> "transportRepair") > 0
-        || { getNumber (configOf _veh >> "transportFuel") > 0 }
-        || { getNumber (configOf _veh >> "transportAmmo")  > 0 }) exitWith { "maint" };     // repair / fuel / ammo support
-    if (_veh isKindOf "Plane")                                  exitWith { "plane" };
-    if (_veh isKindOf "Air")                                    exitWith { "air" };         // helicopters / rotary
-    if (_veh isKindOf "StaticMortar")                           exitWith { "mortar" };
-    if (getNumber (configOf _veh >> "artilleryScanner") == 1)   exitWith { "art" };         // self-propelled artillery
-    if (_veh isKindOf "Car")                                    exitWith { "motor_inf" };   // wheeled transport (incl. wheeled APCs)
-    if (_veh isKindOf "Tank") exitWith {
-        // Tracked: troop-carrying IFV/APC → mechanised; otherwise an MBT → armour.
-        ["armor", "mech_inf"] select (getNumber (configOf _veh >> "transportSoldier") > 0)
+
+    private _key = "v" + typeOf _veh;
+    private _s   = GVAR(markerSuffixCache) get _key;
+    if (isNil "_s") then {
+        _s = call {
+            if (unitIsUAV _veh)                                         exitWith { "uav" };
+            if (getNumber (configOf _veh >> "attendant") == 1)          exitWith { "med" };         // medical vehicle
+            if (getNumber (configOf _veh >> "transportRepair") > 0
+                || { getNumber (configOf _veh >> "transportFuel") > 0 }
+                || { getNumber (configOf _veh >> "transportAmmo")  > 0 }) exitWith { "maint" };     // repair / fuel / ammo support
+            if (_veh isKindOf "Plane")                                  exitWith { "plane" };
+            if (_veh isKindOf "Air")                                    exitWith { "air" };         // helicopters / rotary
+            if (_veh isKindOf "StaticMortar")                           exitWith { "mortar" };
+            if (getNumber (configOf _veh >> "artilleryScanner") == 1)   exitWith { "art" };         // self-propelled artillery
+            if (_veh isKindOf "Car")                                    exitWith { "motor_inf" };   // wheeled transport (incl. wheeled APCs)
+            if (_veh isKindOf "Tank") exitWith {
+                // Tracked: troop-carrying IFV/APC → mechanised; otherwise an MBT → armour.
+                ["armor", "mech_inf"] select (getNumber (configOf _veh >> "transportSoldier") > 0)
+            };
+            if (_veh isKindOf "Ship")                                   exitWith { "naval" };
+            "unknown"
+        };
+        GVAR(markerSuffixCache) set [_key, _s];
     };
-    if (_veh isKindOf "Ship")                                   exitWith { "naval" };
-    "unknown"
-} };
+    _s
+};
 
 [format ["\a3\ui_f\data\map\markers\nato\%1%2.paa", _prefix, _suffix], _color, _sideIdx]

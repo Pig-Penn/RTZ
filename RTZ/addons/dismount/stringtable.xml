@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Dismount">
-        <Key ID="STR_RTZ_Dismount_DisplayName">
-            <English>Dismount</English>
-        </Key>
         <Key ID="STR_RTZ_Dismount_DismountControl">
             <English>Dismount Control</English>
         </Key>
         <Key ID="STR_RTZ_Dismount_DismountControl_Description">
             <English>Add a context menu action that either forbids or allows units to bail-out of a selected vehicle.</English>
+        </Key>
+        <Key ID="STR_RTZ_Dismount_DisplayName">
+            <English>Dismount</English>
         </Key>
     </Package>
 </Project>

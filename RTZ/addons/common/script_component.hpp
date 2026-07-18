@@ -22,7 +22,7 @@
 #define HINT_DURATION 3
 
 // Minimum helicopter fly-in height orderable by the fly-height keybinds
-#define FLY_HEIGHT_MIN 10
+#define FLY_HEIGHT_MIN 0
 
 // Move-order icon drawn by the unit teleport (ZEN's expected-destination texture)
 #define ICON_TELEPORT "\a3\ui_f\data\igui\cfg\simpleTasks\types\move_ca.paa"

@@ -9,16 +9,17 @@
  *    the group's value), so the server queries ONE representative unit per local AI
  *    group instead of every unit — the knowsAbout matrix shrinks from units x hostiles
  *    to groups x hostiles.
- *  - All units + vehicles are classified into per-side buckets in a single pass per
- *    tick; curators on the same side share one detection pass.
+ *  - All units + vehicles are classified into per-side buckets once per tick;
+ *    curators on the same side share one detection pass.
  *  - spotDetected is only sent when the rendered payload actually changes. The change
  *    signature embeds the destination player's netId, so a rejoined player (new player
  *    object) forces a one-shot full re-send with no JIP machinery. Clients additionally
  *    request a resync (QGVAR(spotResync)) once their handlers are registered, closing
  *    the "event sent before the client registered" race.
- *  - Per-class config lookups (display names, NCO/HQ name tests) are cached for the
- *    whole mission; chevron colours/names are pre-resolved server-side and shipped in
- *    the payload so the client Draw3D does no config or group traversal per frame.
+ *  - Per-class config lookups (display names, NCO/HQ name tests, NATO symbol
+ *    suffixes) are cached for the whole mission; chevron colours/names are
+ *    pre-resolved server-side and shipped in the payload so the client Draw3D
+ *    does no config or group traversal per frame.
  *
  * Tunables (GROUP_CALLOUT_COOLDOWN, SOFT/HARD_THRESHOLD, MKR_PREFIX,
  * WEDGE_TEXTURE, WEDGE_ALPHA) are #defined in script_component.hpp.
@@ -66,9 +67,9 @@ private _officerZoneRadii = GETMVAR(RTZ_officerZoneRadiusMap,createHashMap);
 
 // ── Classify every unit and vehicle ONCE per tick ────────────────────────
 // _sideEntities:    sideStr → [side, entities[]] — spottable hostile candidates
-//                   (alive, non-player, of a spottable kind; locality NOT filtered:
-//                   knowsAbout only requires the SPOTTER to be local, and targets
-//                   may sit on a client, e.g. under curator remote control).
+//                   (alive, non-player; locality NOT filtered: knowsAbout only
+//                   requires the SPOTTER to be local, and targets may sit on a
+//                   client, e.g. under curator remote control).
 // _sideSpotterReps: sideStr → HashMap(group netId → representative unit).
 //                   Target knowledge is stored per GROUP, so one member answers
 //                   knowsAbout for the whole group; crewed vehicles are covered by
@@ -80,26 +81,59 @@ private _officerZoneRadii = GETMVAR(RTZ_officerZoneRadiusMap,createHashMap);
 //                   server-local AI (not just curatorEditableObjects) so that
 //                   dynamically-spawned units from a late-joining curator are
 //                   never missed due to editable-object list lag.
+// Men and vehicles are looped separately — allUnits is alive-only and all
+// CAManBase, so the men's loop needs no alive/kind checks and no merged array
+// is allocated. Buckets are fetched with get + isNil (not getOrDefault) so the
+// default array/hashmap isn't allocated per entity on the hit path.
 private _sideEntities    = createHashMap;
 private _sideSpotterReps = createHashMap;
 {
-    private _e = _x;
-    if (!alive _e || { isPlayer _e }) then { continue };
-    if !(_e isKindOf "CAManBase"
-        || { _e isKindOf "LandVehicle" }
-        || { _e isKindOf "Air" }
-        || { _e isKindOf "Ship" }) then { continue };
-    private _eSide = side _e;
-    private _sk    = str _eSide;
-    ((_sideEntities getOrDefault [_sk, [_eSide, []], true]) select 1) pushBack _e;
+    if (isPlayer _x) then { continue };
+    private _eSide  = side _x;
+    private _sk     = str _eSide;
+    private _bucket = _sideEntities get _sk;
+    if (isNil "_bucket") then {
+        _bucket = [_eSide, []];
+        _sideEntities set [_sk, _bucket];
+    };
+    (_bucket select 1) pushBack _x;
 
-    if (local _e) then {
-        private _rep = if (_e isKindOf "CAManBase") then { _e } else { effectiveCommander _e };
+    if (local _x && { !isNull group _x }) then {
+        private _reps = _sideSpotterReps get _sk;
+        if (isNil "_reps") then {
+            _reps = createHashMap;
+            _sideSpotterReps set [_sk, _reps];
+        };
+        _reps set [netId group _x, _x];
+    };
+} forEach allUnits;
+
+{
+    if (!alive _x || { isPlayer _x }) then { continue };
+    if !(_x isKindOf "LandVehicle"
+        || { _x isKindOf "Air" }
+        || { _x isKindOf "Ship" }) then { continue };
+    private _eSide  = side _x;
+    private _sk     = str _eSide;
+    private _bucket = _sideEntities get _sk;
+    if (isNil "_bucket") then {
+        _bucket = [_eSide, []];
+        _sideEntities set [_sk, _bucket];
+    };
+    (_bucket select 1) pushBack _x;
+
+    if (local _x) then {
+        private _rep = effectiveCommander _x;
         if (!isNull _rep && { !isPlayer _rep } && { !isNull group _rep }) then {
-            (_sideSpotterReps getOrDefault [_sk, createHashMap, true]) set [netId group _rep, _rep];
+            private _reps = _sideSpotterReps get _sk;
+            if (isNil "_reps") then {
+                _reps = createHashMap;
+                _sideSpotterReps set [_sk, _reps];
+            };
+            _reps set [netId group _rep, _rep];
         };
     };
-} forEach (allUnits + vehicles);
+} forEach vehicles;
 
 // ── Group manned curators by side ─────────────────────────────────────────
 // Only manned curators can be spotters — a player object is required as the
@@ -158,8 +192,13 @@ private _currentKeys = createHashMap;
     {
         private _ldr = leader group _x;
         if (isNull _ldr) then { continue };
-        private _gk  = netId _ldr;
-        ((_grpMap getOrDefault [_gk, [_ldr, [], _gk], true]) select 1) pushBack _x;
+        private _gk    = netId _ldr;
+        private _tuple = _grpMap get _gk;
+        if (isNil "_tuple") then {
+            _tuple = [_ldr, [], _gk];
+            _grpMap set [_gk, _tuple];
+        };
+        (_tuple select 1) pushBack _x;
     } forEach _allHostile;
 
     // Side-level new contact accumulation: one callout per tick fires to all

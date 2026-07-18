@@ -2,7 +2,7 @@
 /*
  * rtz_fnc_selectionInfo
  *
- * When a curator opens the context menu (or presses the keybind), a ZEN-styled
+ * When a curator uses the context menu action, a ZEN-styled
  * dialog lists every selected friendly infantry unit with a live snapshot of the
  * same data the LAMBS Danger debug overlay shows:
  *   — behaviour / AI unit state and current command
@@ -55,19 +55,9 @@ if (hasInterface) then {
     // poll and the dialog never double-send or strand a report server-side.
     GVAR(selReported)   = [];
 
-    // Diagnostic: confirm the context client half ran on this machine (set
-    // RTZ_debug = true in the console to enable; default off, zero cost otherwise).
-    if (GETMVAR(RTZ_debug,false)) then {
-        diag_log text format ["[RTZ] selectionInfo CLIENT half started (clientOwner=%1, hasInterface=%2)", clientOwner, hasInterface];
-    };
-
     // Replace the whole infantry data set with the server's latest gather.
     [QGVAR(selData), {
         params ["_packets"];
-        // Diagnostic: confirm the server's gather is reaching THIS client.
-        if (GETMVAR(RTZ_debug,false)) then {
-            diag_log text format ["[RTZ] client received selData: %1 packet(s)", count _packets];
-        };
         private _m = createHashMap;
         { _m set [_x select 0, _x] } forEach _packets;
         GVAR(selData) = _m;
@@ -95,13 +85,15 @@ if (hasInterface) then {
             // A virtual Zeus (VirtualMan_F) has no real side — it is the game
             // master, not a PvP officer, so the own-side filter must not apply.
             private _anySide = player isKindOf "VirtualMan_F";
-            _ids = (_units select { !isNull _x && { alive _x } && { _x isKindOf "CAManBase" } && { _anySide || { side _x == side player } } }) apply { netId _x };
+            // alive covers null too, and every entry is already a CAManBase
+            // (the pushBack filter and group expansion both guarantee it).
+            _ids = (_units select { alive _x && { _anySide || { side _x == side player } } }) apply { netId _x };
             _ids = _ids select [0, SEL_MAX_UNITS];
             // AllVehicles-not-man: without the kind check, selected props /
             // ammo crates pass the "not a man" filter (they always did for a
             // virtual Zeus, whom the side filter exempts) and get gathered,
             // carded and tagged as if they were vehicles.
-            _vehs = (_objs select { !isNull _x && { alive _x } && { _x isKindOf "AllVehicles" } && { !(_x isKindOf "CAManBase") } && { _anySide || { side (group _x) == side player } } }) apply { netId _x };
+            _vehs = (_objs select { alive _x && { _x isKindOf "AllVehicles" } && { !(_x isKindOf "CAManBase") } && { _anySide || { side (group _x) == side player } } }) apply { netId _x };
             _vehs = _vehs select [0, SEL_MAX_VEHICLES];
         };
         GVAR(selCurrent)    = _ids;

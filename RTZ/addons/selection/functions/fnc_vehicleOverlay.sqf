@@ -12,9 +12,8 @@
  *   — FUEL and HULL readout bars, colour-stepped white/green → amber → red
  * A faint side-coloured world line links each card to its vehicle.
  *
- * Cards minimize to accent strip + title bar (and back) at runtime via a CBA
- * keybind (unbound by default) and a ZEN context menu entry — same toggle
- * pattern as the unit tags (rtz_fnc_unitTags).
+ * Cards minimize to accent strip + title bar (and back) at runtime via a ZEN
+ * context menu entry — same toggle pattern as the unit tags (rtz_fnc_unitTags).
  *
  * rtz_fnc_selectionInfo's poll tracks which vehicles are selected and sets
  * GVAR(selVehicleIds). The actual per-vehicle data (netId → packet) is fed by
@@ -52,7 +51,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 if (hasInterface) then {
 
-    // Runtime minimize switch (keybind / context menu, registered below): true
+    // Runtime minimize switch (context menu, registered below): true
     // collapses every card to its accent strip + title bar. The master CBA
     // setting gates whether this system exists at all; this flips presentation
     // mid-mission. Dirty flag forces a relayout on the next draw.
@@ -78,11 +77,14 @@ if (hasInterface) then {
         private _disp = findDisplay 312;
 
         // Zeus closed or curator lost — the controls died with the display;
-        // just drop our references.
+        // just drop our references. Once only: while Zeus stays closed this
+        // handler must not keep rewriting uiNamespace every frame.
         if (isNull _disp || { isNull (getAssignedCuratorLogic player) }) exitWith {
-            uiNamespace setVariable [QGVAR(veh_pool),    []];
-            uiNamespace setVariable [QGVAR(veh_disp),    displayNull];
-            uiNamespace setVariable [QGVAR(veh_lastIds), []];
+            if ((GETUVAR(GVAR(veh_pool),[])) isNotEqualTo []) then {
+                uiNamespace setVariable [QGVAR(veh_pool),    []];
+                uiNamespace setVariable [QGVAR(veh_disp),    displayNull];
+                uiNamespace setVariable [QGVAR(veh_lastIds), []];
+            };
         };
 
         // Display instance changed (Zeus reopened) — flush the stale pool.
@@ -96,9 +98,13 @@ if (hasInterface) then {
         private _pool = GETUVAR(GVAR(veh_pool),[]);
 
         // Nothing selected (also guards nil before selectionInfo initialises).
+        // Cards are hidden once on the transition; idle frames after that skip
+        // the pool sweep entirely.
         if (isNil QGVAR(selVehicleIds) || { GVAR(selVehicleIds) isEqualTo [] }) exitWith {
-            { (_x select 0) ctrlShow false } forEach _pool;
-            uiNamespace setVariable [QGVAR(veh_lastIds), []];
+            if ((GETUVAR(GVAR(veh_lastIds),[])) isNotEqualTo []) then {
+                { (_x select 0) ctrlShow false } forEach _pool;
+                uiNamespace setVariable [QGVAR(veh_lastIds), []];
+            };
         };
 
         private _ids = GVAR(selVehicleIds) select [0, SEL_MAX_VEHICLES];

@@ -29,4 +29,5 @@ if (!isServer) exitWith {};
 // Points and action coefficients live on the server
 _curator addCuratorPoints (1 - curatorPoints _curator);
 _curator setCuratorWaypointCost 0;
+_curator allowCuratorLogicIgnoreAreas true;
 _curator call FUNC(applyCoefs);

@@ -6,7 +6,7 @@
 [
     QGVAR(enableUnitTags),
     "CHECKBOX",
-    ["Dog Tags", "Show a small floating status tag above each selected infantry unit in Zeus. Requires Selection Info enabled. Toggle in-mission via keybind or the RTZ context menu."],
+    ["Dog Tags", "Show a small floating status tag above each selected infantry unit in Zeus. Requires Selection Info enabled. Toggle in-mission via the RTZ context menu."],
     ["Real-Time Zeus", "Dog Tags"],
     true,
     0

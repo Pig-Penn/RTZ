@@ -5,7 +5,7 @@
  * the cursor, RTS-style. A unit is only moved if it is not in COMBAT
  * behaviour and the cursor position is within GVAR(teleportMaxDistance)
  * metres of it — a short tactical reposition, not a free map-wide teleport.
- * Successful use arms a GVAR(teleportCooldown)-second cooldown per curator.
+ * Successful use arms a distance-scaled cooldown per curator (see below).
  *
  * Applies to men on foot and to vehicles selected as a whole; individually
  * selected crew members are skipped (select the vehicle itself to move it).
@@ -15,6 +15,10 @@
  *
  * Cursor resolution: ZEN's getPosFromScreen — it also intersects objects, so
  * pointing at a roof teleports onto it, and it handles the Zeus map view.
+ *
+ * Cooldown scales with distance travelled: 0 at zero distance up to
+ * GVAR(teleportCooldown) seconds at GVAR(teleportMaxDistance) — a short hop
+ * costs little, a full-range teleport costs the whole cooldown.
  *
  * Landing height: ground units get a vertical surface trace at their own
  * target x/y (the same "flush to any mostly-flat surface" test
@@ -75,6 +79,12 @@ private _centre = [0, 0, 0];
 {_centre = _centre vectorAdd getPos _x} forEach _units;
 _centre = _centre vectorMultiply (1 / count _units);
 
+// Every unit keeps its offset from centre, so cursor-to-centre distance is
+// exactly how far each one travels — one range check and one cooldown
+// scale for the whole group instead of per-unit work.
+private _travelDistance = _centre distance2D _pos;
+private _tooFarFlag = _travelDistance > _maxDistance;
+
 // Vertical surface trace at a world x/y: the highest mostly-flat surface —
 // roof, bridge, terrain — falling back to bare terrain height when the ray
 // finds nothing usable (e.g. over water).
@@ -108,15 +118,12 @@ private _tooFar = 0;
         continue;
     };
 
-    private _target = _pos vectorAdd (getPos _x vectorDiff _centre);
-    if (_x distance2D _target > _maxDistance) then {
+    if (_tooFarFlag) then {
         _tooFar = _tooFar + 1;
         continue;
     };
 
-    // Snapshot the pre-teleport spot (ASL) so the feedback line can trail
-    // back to it — the unit itself is about to jump straight to _target
-    private _startPos = getPosASL _x;
+    private _target = _pos vectorAdd (getPos _x vectorDiff _centre);
 
     // ~0 AGL means a ground unit: surface-trace the target x/y so it lands on
     // top of whatever is there (terrain, a roof, ...) instead of falling
@@ -129,17 +136,15 @@ private _tooFar = 0;
     };
     _moved = _moved + 1;
 
-    // Move-order feedback: ZEN's expected-destination icon plus a line back
-    // to the unit's pre-teleport position
-    [[
-        ["ICON", [_x, ICON_TELEPORT]],
-        ["LINE", [_startPos, _x]]
-    ], HINT_DURATION, _x] call zen_common_fnc_drawHint;
+    // Move-order feedback: ZEN's expected-destination icon
+    [[["ICON", [_x, ICON_TELEPORT]]], HINT_DURATION, _x] call zen_common_fnc_drawHint;
 } forEach _units;
 
-// Something moved → arm the cooldown from now
+// Something moved → arm the cooldown from now, scaled by how far the group
+// actually travelled relative to the configured maximum
 if (_moved > 0) then {
-    GVAR(teleportReadyAt) = CBA_missionTime + GETGVAR(teleportCooldown,10);
+    private _cooldown = GETGVAR(teleportCooldown,10) * (_travelDistance / _maxDistance);
+    GVAR(teleportReadyAt) = CBA_missionTime + _cooldown;
 };
 
 private _messages = [];

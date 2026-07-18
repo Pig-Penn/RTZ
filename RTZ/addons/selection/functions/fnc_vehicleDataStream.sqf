@@ -125,7 +125,9 @@ private _fnc_gatherVehicle = {
         _ecNet, _flags,
         _state, _task, _tactic,
         count (magazinesAllTurrets _veh),
-        count (fullCrew [_veh, "", true]),  // total positions incl. cargo/FFV
+        // Total positions incl. cargo/FFV — class-static, so counted once per
+        // vehicle class (fullCrew allocates the whole position list every call).
+        GVAR(seatCntCache) getOrDefaultCall [typeOf _veh, { count (fullCrew [_veh, "", true]) }, true],
         // Commanded AI fly-in height set by the fly-height keybinds (broadcast
         // public by rtz_fnc_adjustHeliHeight); -1 for a vehicle never adjusted.
         _veh getVariable [QEGVAR(common,flyHeight), -1],

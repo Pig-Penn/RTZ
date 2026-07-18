@@ -30,6 +30,6 @@ private _units = [];
     ) then {
         _units pushBackUnique _x;
     };
-} forEach _objects;
+} forEach ([_objects] call EFUNC(common,collectUnits));
 
 _units

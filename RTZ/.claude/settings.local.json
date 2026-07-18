@@ -226,7 +226,13 @@
       "Bash(sed -i -e 3s/rtz_fnc_destinationActionModifier/rtz_overlays_fnc_destinationActionModifier/ fnc_destinationActionModifier.sqf)",
       "Bash(sed -i -e 3s/rtz_fnc_targetDisplay/rtz_overlays_fnc_targetDisplay/ fnc_targetDisplay.sqf)",
       "Bash(sed -i -e 3s/rtz_fnc_targetToggle/rtz_overlays_fnc_targetToggle/ fnc_targetToggle.sqf)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(file addons/attack/*.hpp addons/attank/*.sqf)",
+      "Bash(file addons/attack/*.hpp addons/attack/*.sqf)",
+      "Bash(file addons/attack/functions/*.sqf)",
+      "Bash(rg -o -N --no-heading -e '\\\\b\\(__TRACKED_VAR__\\)\\\\b' addons -g *.sqf -g *.hpp)",
+      "Bash(rg -n \"^\\\\s*//\\\\s*\\(private|params|forEach|if\\\\s*\\\\\\(|_[a-zA-Z]+ = |call FUNC\\)\" addons -g '*.sqf')",
+      "Bash(find / -iname \"*zen*\" -type d 2>/dev/null | grep -vi \"OneDrive/1D Documents/Modding/Real-Time Zeus\" | head -30)"
     ],
     "additionalDirectories": [
       "C:\\Users\\Maxim\\Documents\\Arma 3",

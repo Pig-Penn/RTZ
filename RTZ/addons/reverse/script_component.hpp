@@ -21,8 +21,9 @@
 // A reverse maneuver completes within this distance of the destination (meters)
 #define ARRIVAL_DISTANCE 4
 
-// Interval at which the reverse command is reissued to the vehicle (seconds)
-#define COMMAND_INTERVAL 0.5
+// AI cannot be commanded to drive backward, so the maneuver is driven
+// directly via setVelocity at this speed (km/h)
+#define REVERSE_SPEED 8
 
 // Speed below which a vehicle counts as not moving (km/h) and how long
 // it may stay that slow before the maneuver is aborted as stuck (seconds)

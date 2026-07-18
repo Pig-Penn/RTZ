@@ -75,8 +75,7 @@ private _pending      = [];
     } else {
         // Bucket by group netId, NOT the groupId string: copy-pasted compositions
         // duplicate callsigns, and distinct groups must not merge under one header.
-        // Fall back to the string for old packets.
-        private _grpKey = _packet param [PKT_GRPNET, _packet select PKT_GRPID];
+        private _grpKey = _packet select PKT_GRPNET;
         if !(_grpKey in _groupOrder) then {
             _groupOrder   pushBack _grpKey;
             _groupMembers set [_grpKey, []];
@@ -114,21 +113,23 @@ private _fnc_join = { (_this select { _x != "" }) joinString SEP };
 // Average clamped 0-100% morale across a group's local members (-1 if none).
 private _fnc_avgMorale = {
     params ["_members"];
-    private _vals = (_members select { _x select PKT_ISLOCAL }) apply {
-        round (linearConversion [-1, 1, _x select PKT_MORALE, 0, 100, true])
-    };
-    if (_vals isEqualTo []) exitWith { -1 };
     private _sum = 0;
-    { _sum = _sum + _x } forEach _vals;
-    round (_sum / count _vals)
+    private _n   = 0;
+    {
+        if (_x select PKT_ISLOCAL) then {
+            _sum = _sum + linearConversion [-1, 1, _x select PKT_MORALE, 0, 100, true];
+            _n = _n + 1;
+        };
+    } forEach _members;
+    if (_n == 0) exitWith { -1 };
+    round (_sum / _n)
 };
 
 // First non-empty LAMBS tactic among a group's members ("" if none / no LAMBS).
 private _fnc_groupTactic = {
     params ["_members"];
-    private _t = "";
-    { if ((_x select PKT_TACTIC) != "") exitWith { _t = _x select PKT_TACTIC } } forEach _members;
-    _t
+    private _i = _members findIf { (_x select PKT_TACTIC) != "" };
+    if (_i < 0) then { "" } else { (_members select _i) select PKT_TACTIC }
 };
 
 // Builds the shared "GRP · N units · Morale x% · Tactic: y · z down" descriptor.

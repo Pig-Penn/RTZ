@@ -54,11 +54,14 @@ private _fnc_drawColor = {
 
 // ── Pass 1: group icons. Also records which group leaders the mouse is
 // currently near, so pass 2 can reveal that group's chevrons past the cutoff.
+// The hover test only feeds pass 2 — with no chevrons stored, skip the
+// per-icon worldToScreen entirely.
+private _anyChevrons        = count GVAR(spotChevrons) > 0;
 private _groupHoverByLeader = createHashMap;
 {
     // _x = markerName (HashMap key); _y = stored display data.
     _y params ["_unit", "_texture", "_colorArray", "_echelonTex", "_sideIdx", "_ldrId"];
-    if (isNull _unit || !alive _unit) then { continue };
+    if (!alive _unit) then { continue };   // alive objNull is false — covers deleted units too
     // Anchor on the vehicle so a mounted leader is handled (vehicle = unit on foot).
     private _anchor = vehicle _unit;
     private _dist   = _camPos distance _anchor;
@@ -77,12 +80,14 @@ private _groupHoverByLeader = createHashMap;
     private _ampPos = _iconPos vectorAdd [0, 0, _dist * (_AMP_GAPS select _sideIdx)];
     private _iconW  = GROUP_ICON_WIDTH;
 
-    private _scr = worldToScreen _iconPos;
-    if (_scr isNotEqualTo []) then {
-        private _dx = (_scr#0) - (_mousePos#0);
-        private _dy = (_scr#1) - (_mousePos#1);
-        if ((_dx * _dx) + (_dy * _dy) <= GROUP_HOVER_R2) then {
-            _groupHoverByLeader set [_ldrId, true];
+    if (_anyChevrons) then {
+        private _scr = worldToScreen _iconPos;
+        if (_scr isNotEqualTo []) then {
+            private _dx = (_scr#0) - (_mousePos#0);
+            private _dy = (_scr#1) - (_mousePos#1);
+            if ((_dx * _dx) + (_dy * _dy) <= GROUP_HOVER_R2) then {
+                _groupHoverByLeader set [_ldrId, true];
+            };
         };
     };
 
@@ -96,7 +101,7 @@ private _groupHoverByLeader = createHashMap;
 // ── Pass 2: individual chevrons.
 {
     _y params ["_unit", "_texture", "_colorArray", "_ldrId", "_name"];
-    if (isNull _unit || !alive _unit) then { continue };
+    if (!alive _unit) then { continue };
     private _anchor = vehicle _unit;
     private _dist   = _camPos distance _anchor;
     if (_dist > WEDGE_MAX_DIST) then { continue };
