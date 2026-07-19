@@ -38,6 +38,7 @@ Current components:
 | `officer` | Officer auras and area buffs with cooldowns and monitors |
 | `overlays` | Destination and target line overlays for groups |
 | `repair` | AI orders to repair vehicles |
+| `restrict` | Locks servicing attribute edits (health/fuel/ammo/skill) outside officer editing zones; sliders stay visible as info |
 | `reverse` | Order vehicles to reverse to a position (keybind) |
 | `selection` | Selection info panel, unit/vehicle tags, vehicle data overlay |
 | `spotting` | AI spotting system: contact callouts, 3D contact markers, curator display |

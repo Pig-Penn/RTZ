@@ -22,6 +22,13 @@
 // Income tick and new curator module detection interval (seconds)
 #define TICK_INTERVAL 5
 
+// Poll interval of the placement cost message watcher (seconds)
+#define TOAST_INTERVAL 0.25
+
+// RscDisplayCurator_sections modes whose create tree holds one class per entry
+#define CURATOR_MODE_UNITS 0
+#define CURATOR_MODE_RECENT 4
+
 // Cost category indices, order matches the base cost array in fnc_registerCosts
 #define INDEX_FREE -1
 #define INDEX_INFANTRY 0

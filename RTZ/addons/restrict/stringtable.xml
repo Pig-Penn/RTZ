@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Restrict">
+        <Key ID="STR_RTZ_Restrict_DisplayName">
+            <English>Restrictions</English>
+        </Key>
+        <Key ID="STR_RTZ_Restrict_Enabled">
+            <English>Restrict Servicing to Editing Zones</English>
+        </Key>
+        <Key ID="STR_RTZ_Restrict_Enabled_Description">
+            <English>Healing, repairing, rearming, refueling and skill changes are only possible while every affected unit is inside one of the curator's editing zones.</English>
+        </Key>
+        <Key ID="STR_RTZ_Restrict_MsgOutsideZone">
+            <English>Unit is outside an editing zone</English>
+        </Key>
+    </Package>
+</Project>

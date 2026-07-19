@@ -47,8 +47,6 @@ if (!isServer) exitWith {};
 // Defines rather than privates: they are read inside the gather PFH's stored code,
 // which runs long after this registration scope is gone (same as rtz_fnc_selectionInfo).
 
-#define GATHER_INTERVAL 0.3   // Seconds between vehicle gathers (~3 Hz).
-#define OWN_ONLY true         // Only read out a curator's OWN-side vehicles.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SERVER — state
@@ -129,7 +127,8 @@ private _fnc_gatherVehicle = {
         // vehicle class (fullCrew allocates the whole position list every call).
         GVAR(seatCntCache) getOrDefaultCall [typeOf _veh, { count (fullCrew [_veh, "", true]) }, true],
         // Commanded AI fly-in height set by the fly-height keybinds (broadcast
-        // public by rtz_fnc_adjustHeliHeight); -1 for a vehicle never adjusted.
+        // public by rtz_common's adjustHeliHeight event handler); -1 for a
+        // vehicle never adjusted.
         _veh getVariable [QEGVAR(common,flyHeight), -1],
         _selAmmo
     ]
@@ -159,13 +158,13 @@ private _fnc_gatherVehicle = {
         };
         private _cSide    = side _player;
         // Virtual Zeus (VirtualMan_F) is the game master, not a PvP officer —
-        // exempt from OWN_ONLY (mirrors the infantry gather's exemption).
+        // exempt from the own-side filter below (mirrors the infantry gather's exemption).
         private _anySide  = _player isKindOf "VirtualMan_F";
         private _vpackets = [];
         {
             private _v = objectFromNetId _x;
             if (isNull _v || { !alive _v }) then { continue };
-            if (OWN_ONLY && { !_anySide } && { side (group _v) != _cSide }) then { continue };
+            if (!_anySide && { side (group _v) != _cSide }) then { continue };
             _vpackets pushBack ([_v] call _fnc_gatherVehicle);
         } forEach (_y select [0, SEL_MAX_VEHICLES]);
         [QGVAR(selVehicleData), [_vpackets], _player] call CBA_fnc_targetEvent;

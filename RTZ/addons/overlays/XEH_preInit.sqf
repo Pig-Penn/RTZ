@@ -8,22 +8,20 @@ PREP_RECOMPILE_END;
 
 #include "initSettings.inc.sqf"
 
-// Destination-overlay client state. Initialized here so the context action,
-// toggle and display halves can all assume the containers exist regardless of
-// their registration order in postInit.
+// Overlay client state, per overlay: master toggle (context action), last
+// synced curator selection, watched unit netIds and the latest server
+// snapshot. Initialized here so the context action, toggle and display halves
+// can all assume the containers exist regardless of registration order.
 if (hasInterface) then {
-    GVAR(destEnabled) = false;                  // master toggle (context action)
-    GVAR(destSelection) = [];                   // last curator selection synced
-    GVAR(destWatchedUnits) = createHashMap;     // unit netId -> true
-    GVAR(destDisplay) = [];                     // latest server snapshot
+    GVAR(destEnabled) = false;
+    GVAR(destSelection) = [];
+    GVAR(destWatchedUnits) = createHashMap;
+    GVAR(destDisplay) = [];
 
-    // Target-overlay client state — mirrors the destination containers above so
-    // the target context action, toggle and display halves can all assume the
-    // containers exist regardless of their registration order in postInit.
-    GVAR(tgtEnabled) = false;                   // master toggle (context action)
-    GVAR(tgtSelection) = [];                    // last curator selection synced
-    GVAR(tgtWatchedUnits) = createHashMap;      // unit netId -> true
-    GVAR(tgtDisplay) = [];                      // latest server snapshot
+    GVAR(tgtEnabled) = false;
+    GVAR(tgtSelection) = [];
+    GVAR(tgtWatchedUnits) = createHashMap;
+    GVAR(tgtDisplay) = [];
 };
 
 ADDON = true;

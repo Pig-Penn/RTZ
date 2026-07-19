@@ -20,6 +20,14 @@
  *    suffixes) are cached for the whole mission; chevron colours/names are
  *    pre-resolved server-side and shipped in the payload so the client Draw3D
  *    does no config or group traversal per frame.
+ *  - Once a member's knowsAbout crosses HARD_THRESHOLD (its chevron is shown),
+ *    that result is latched per (spotter side, unit) for CHEVRON_LATCH_DURATION
+ *    seconds: the per-spotter knowsAbout loop — the O(spotterReps) part of this
+ *    pass — is skipped entirely for that unit while the latch is live, and its
+ *    contribution to the group's aggregate knowledge is assumed unchanged. This
+ *    trades a short (10s) lag in noticing a spotted unit go fully unknown again
+ *    for not re-running the expensive check on every already-confirmed contact
+ *    every tick.
  *
  * Tunables (GROUP_CALLOUT_COOLDOWN, SOFT/HARD_THRESHOLD, MKR_PREFIX,
  * WEDGE_TEXTURE, WEDGE_ALPHA) are #defined in script_component.hpp.
@@ -171,6 +179,7 @@ private _currentKeys = createHashMap;
 // ── Spot detection: one pass per curator side ─────────────────────────────
 {
     _y params ["_spotterSide", "_curatorsData"];
+    private _spotterSideStr = str _spotterSide;
 
     // One representative per local AI group on this side — the spotter set.
     private _spotterReps = values (_sideSpotterReps getOrDefault [_x, createHashMap]);
@@ -218,15 +227,31 @@ private _currentKeys = createHashMap;
         {
             private _member = _x;
             if !(alive _member) then { continue };
+            private _memberId = netId _member;
+            // Sticky chevron latch: a member that crossed HARD_THRESHOLD recently
+            // skips the knowsAbout loop entirely for CHEVRON_LATCH_DURATION seconds —
+            // that per-spotter loop is the expensive part of this pass, and a unit
+            // just confirmed spotted is assumed still known for a short memory window
+            // rather than re-verified every tick.
+            private _latchKey = _spotterSideStr + "_" + _memberId;
+            private _latch    = GVAR(chevronLatch) get _latchKey;
             private _uKnows = 0;
             private _uBest  = objNull;
-            {
-                private _k = _x knowsAbout _member;
-                if (_k > _uKnows) then { _uKnows = _k; _uBest = _x; };
-            } forEach _spotterReps;
+            if (!isNil "_latch" && { (_latch select 0) > CBA_missionTime }) then {
+                _uKnows = HARD_THRESHOLD;
+                _uBest  = _latch select 1;
+            } else {
+                {
+                    private _k = _x knowsAbout _member;
+                    if (_k > _uKnows) then { _uKnows = _k; _uBest = _x; };
+                } forEach _spotterReps;
+                if (_uKnows >= HARD_THRESHOLD) then {
+                    GVAR(chevronLatch) set [_latchKey, [CBA_missionTime + CHEVRON_LATCH_DURATION, _uBest]];
+                };
+            };
             if (_uKnows > _groupKnows) then { _groupKnows = _uKnows; _grpReporter = _uBest; };
             if (_uKnows >= HARD_THRESHOLD && { _member isKindOf "CAManBase" }) then {
-                _chevrons pushBack [_member, netId _member];
+                _chevrons pushBack [_member, _memberId];
             };
         } forEach _members;
 
@@ -375,4 +400,9 @@ if (count GVAR(spotGroupCooldowns) > SPOT_COOLDOWN_CAP) then {
     private _old = [];
     { if (_y < _cutoff) then { _old pushBack _x } } forEach GVAR(spotGroupCooldowns);
     { GVAR(spotGroupCooldowns) deleteAt _x } forEach _old;
+};
+if (count GVAR(chevronLatch) > CHEVRON_LATCH_CAP) then {
+    private _old = [];
+    { if ((_y select 0) < CBA_missionTime) then { _old pushBack _x } } forEach GVAR(chevronLatch);   // already-expired latches are dead weight
+    { GVAR(chevronLatch) deleteAt _x } forEach _old;
 };

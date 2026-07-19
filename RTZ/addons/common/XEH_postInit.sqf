@@ -13,14 +13,15 @@
 
 // Fly-height orders are executed where the aircraft is local (flyInHeight is
 // a local-effect command). The engine exposes no flyInHeight getter, so the
-// ordered height is tracked in a per-vehicle variable, seeded from the
-// aircraft's current altitude on the first adjustment (and re-seeded if the
-// aircraft changes locality — it starts again from where it is flying).
+// ordered height is tracked in a public per-vehicle variable, seeded from the
+// aircraft's current altitude on the first adjustment. Broadcast so the height
+// survives locality changes (remote control) and the server-side vehicle
+// overlay (rtz_selection's vehicleDataStream) can read it.
 [QGVAR(adjustHeliHeight), {
     params ["_heli", "_delta"];
 
     private _height = ((_heli getVariable [QGVAR(flyHeight), round ((getPosATL _heli) select 2)]) + _delta) max FLY_HEIGHT_MIN;
-    _heli setVariable [QGVAR(flyHeight), _height];
+    _heli setVariable [QGVAR(flyHeight), _height, true];
     _heli flyInHeight [_height, true];
 }] call CBA_fnc_addEventHandler;
 

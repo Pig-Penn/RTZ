@@ -32,7 +32,25 @@
             <English>Draw Targets</English>
         </Key>
         <Key ID="STR_RTZ_Overlays_DrawTargets_Description">
-            <English>Add a context menu action to show what a selected squad's units are aiming at (a line to where the AI believes its target is).</English>
+            <English>Add a context menu action to show what selected units are aiming at.</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_LabelInSight">
+            <English>in sight</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_LabelSeenAgo">
+            <English>seen %1s ago</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_ModeDirect">
+            <English>Direct</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_ModeFormation">
+            <English>Formation</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_ModePlanned">
+            <English>Planned</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_ModeReplanning">
+            <English>Replanning</English>
         </Key>
         <Key ID="STR_RTZ_Overlays_MsgDestinationsHidden">
             <English>Destinations hidden</English>

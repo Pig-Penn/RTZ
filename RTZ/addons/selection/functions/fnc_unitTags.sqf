@@ -59,18 +59,9 @@
 
 if (!hasInterface) exitWith {};
 
-// Flag-inventory icon (mil_flag marker texture — direct path; CfgMarkers
-// lookups can silently return ""). State/threat icons reuse the same BIS
-// simpletask textures the selection dialog uses (fnc_buildSelectionRows.sqf) —
-// already proven non-blank there.
-#define FLAG_ICON   "\a3\ui_f\data\map\markers\military\flag_ca.paa"
-#define ICON_ATTACK "\a3\ui_f\data\igui\cfg\simpletasks\types\attack_ca.paa"
-#define ICON_SEARCH "\a3\ui_f\data\igui\cfg\simpletasks\types\search_ca.paa"
-#define ICON_MOVE   "\a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa"
-#define ICON_HEAL   "\a3\ui_f\data\igui\cfg\simpletasks\types\heal_ca.paa"
-#define ICON_RUN    "\a3\ui_f\data\igui\cfg\simpletasks\types\run_ca.paa"
-#define ICON_DANGER "\a3\ui_f\data\igui\cfg\simpletasks\types\danger_ca.paa"
-#define ICON_TARGET "\a3\ui_f\data\igui\cfg\simpletasks\types\target_ca.paa"
+// State/threat/flag icon textures (FLAG_ICON, ICON_*) come from
+// script_component.hpp — the same BIS simpletask set the selection dialog's
+// row icons use, so tag and dialog always agree.
 
 // ICON_HOVER_RADIUS is the Zeus-cursor pick distance (UI coordinates) for an
 // icon's hover-expand. The text widths that place the icons and split the

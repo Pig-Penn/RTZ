@@ -26,6 +26,10 @@
 ["HealUnits"]    call zen_context_menu_fnc_removeAction;
 ["TeleportZeus"] call zen_context_menu_fnc_removeAction;
 
+["VehicleLogistics", "Repair"] call zen_context_menu_fnc_removeAction;
+["VehicleLogistics", "Rearm"]  call zen_context_menu_fnc_removeAction;
+["VehicleLogistics", "Refuel"] call zen_context_menu_fnc_removeAction;
+
 // LAMBS Danger FSM context groups
 ["lambs_danger"]    call zen_context_menu_fnc_removeAction;
 ["lambs_wp"]        call zen_context_menu_fnc_removeAction;

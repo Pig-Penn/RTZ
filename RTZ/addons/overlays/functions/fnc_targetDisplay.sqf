@@ -1,49 +1,38 @@
 #include "script_component.hpp"
 /*
- * rtz_overlays_fnc_targetDisplay
- *
- * Renders the current engagement target of the units the local curator has
- * SELECTED while the overlay is toggled on (FUNC(targetToggle)): a side-coloured
- * line from the unit to where it BELIEVES its target is, capped with an impact
- * icon, labelled with the target's name and knowledge freshness when the cursor
- * is near it — modelled on the LAMBS Danger debug renderer
- * (lambs_main_fnc_debugDraw, targetKnowledge lines), same architecture as
- * FUNC(destinationDisplay).
+ * Author: Maxim
+ * Engagement-target overlay: while toggled on (FUNC(targetToggle)), draws a
+ * side-coloured line from each unit the local curator has SELECTED to where
+ * it BELIEVES its target is, capped with an impact icon, labelled with the
+ * target's name and knowledge freshness when the cursor is near it (modelled
+ * on the LAMBS debug renderer; same architecture as FUNC(destinationDisplay)).
  *
  * The line ends at the AI's ESTIMATED target position (targetKnowledge), not
  * the target's true position — stale knowledge visibly points at where the
- * target was last seen, and the whole overlay dims as the sighting ages.
+ * target was last seen, and the overlay dims as the sighting ages.
  *
- * The watch set follows the live Zeus selection: selecting units draws their
- * targets, deselecting removes them, closing Zeus counts as an empty selection.
- * The toggle is just a master switch for this behaviour.
+ * assignedTarget / targetKnowledge read AI sensor state, which only exists
+ * where the unit is local. Normal AI is server-local, so the SERVER polls
+ * each curator's watched units and streams per-curator snapshots via
+ * CBA_fnc_targetEvent; non-server-local units (remote control, headless
+ * clients) are skipped. Per-curator streams also keep it PvP-fair — a Zeus
+ * only watches units they can select, and only sees what those units know.
  *
- * Locality: assignedTarget / targetKnowledge read AI sensor state, which only
- * exists on the machine that owns the unit (LAMBS guards its debug draw the
- * same way). Normal AI is server-local, so the SERVER polls targets for each
- * curator's watched units and streams per-curator snapshots via
- * CBA_fnc_targetEvent; units that are not server-local (Zeus remote control,
- * headless clients) are skipped. Per-curator streams also keep it PvP-fair —
- * a Zeus can only watch units they can select, i.e. their own, and only sees
- * what those units actually know.
+ * Runs once per machine from XEH_postInit (after CBA_settingsInitialized),
+ * gated on GVAR(enableTargetDisplay); client state comes from XEH_preInit,
+ * draw/poll constants from script_component.hpp.
  *
- * Requirements: CBA_A3 (drawing needs no ZEN, but toggling does — see
- * FUNC(targetContext)).
- * Loading: spawned from XEH_postInit after CBA_settingsInitialized, gated on
- * GVAR(enableTargetDisplay). Self-guards locality like the main addon's
- * spottingSystem. Client state containers come from XEH_preInit.
+ * Arguments:
+ * None
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * call rtz_overlays_fnc_targetDisplay
+ *
+ * Public: No
  */
-
-// Camera cull and fade, matching the destination overlay so the two read as one
-// system. STALE_DIM_TIME is how long after the last sighting the overlay bottoms
-// out at its dimmest — old intel visibly recedes. Labels only render while the
-// cursor is within LABEL_CURSOR_RADIUS of the icon (GUI screen units). Macros,
-// not privates — event handler code blocks don't see this scope.
-#define MAX_DRAW_DIST       2500
-#define FADE_NEAR           800
-#define LABEL_CURSOR_RADIUS 0.05
-#define STALE_DIM_TIME      30
-#define ICON_TARGET         "\a3\ui_f\data\igui\cfg\targeting\impactpoint_ca.paa"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CLIENT — selection sync + draw handler + snapshot receiver
@@ -55,13 +44,12 @@ if (hasInterface) then {
 
         // The live selection drives the watch set: sync on change (covers
         // select, deselect and Zeus closing, which reads as an empty selection).
+        // Watched entities are hulls — a man on foot fights for himself; a
+        // crewman or a vehicle resolves to the vehicle, which engages as one.
         private _inZeus = !isNull (findDisplay 312);
         private _sel = if (_inZeus) then { SELECTED_OBJECTS } else { [] };
         if (_sel isNotEqualTo GVAR(tgtSelection)) then {
             GVAR(tgtSelection) = _sel;
-            // Resolve to the entities that actually hold a target: a man on
-            // foot fights for himself; a crewman or a vehicle resolves to the
-            // vehicle, which engages as one (dedupes whole selected crews).
             private _units = [];
             {
                 if (!isNull _x) then { _units pushBackUnique (vehicle _x) };
@@ -84,7 +72,7 @@ if (hasInterface) then {
         {
             _x params ["_unit", "_target", "_estPos", "_rgb", "_freshAlpha", "_label"];
             if (isNull _unit || { !alive _unit }) then { continue };
-            // A kill between 2 s server ticks drops the line on the spot rather
+            // A kill between server ticks drops the line on the spot rather
             // than pointing at the corpse until the next snapshot.
             if (isNull _target || { !alive _target }) then { continue };
 
@@ -111,9 +99,9 @@ if (hasInterface) then {
                 ICON_TARGET,
                 _color,
                 _estPos,
-                0.9, 0.9, 0,
+                ICON_SIZE_TARGET, ICON_SIZE_TARGET, 0,
                 _text,
-                1, 0.03, "RobotoCondensed"
+                1, LABEL_TEXT_SIZE, LABEL_FONT
             ];
         } forEach GVAR(tgtDisplay);
     }];
@@ -136,8 +124,8 @@ if (hasInterface) then {
             private _freshAlpha = linearConversion [0, STALE_DIM_TIME, _seenAgo, 1, 0.45, true];
 
             private _name    = ([_target] call EFUNC(common,classInfo)) select 0;
-            private _seenTxt = if (_seenAgo < 1) then { "in sight" } else {
-                format ["seen %1s ago", round _seenAgo]
+            private _seenTxt = if (_seenAgo < 1) then { LLSTRING(LabelInSight) } else {
+                format [LLSTRING(LabelSeenAgo), round _seenAgo]
             };
             private _label = format ["%1 — %2", _name, _seenTxt];
             if (_posError > 5) then {
@@ -155,10 +143,6 @@ if (!isServer) exitWith {};
 // ─────────────────────────────────────────────────────────────────────────────
 // SERVER — watcher registry + target poll loop
 // ─────────────────────────────────────────────────────────────────────────────
-
-private _CHECK_INTERVAL = 2;   // Seconds between snapshots. Targets switch
-                               // constantly in contact; 2 s tracks that without
-                               // flooding the network (one event/watcher/tick).
 
 // Subscribed curators: player netId → [player, units, sentEmpty] where units is
 // the client's resolved selection (replaced wholesale on every selection change)
@@ -184,77 +168,73 @@ GVAR(tgtWatchers) = createHashMap;
     GVAR(tgtWatchers) set [_pk, [_player, _units, false]];
 }] call CBA_fnc_addEventHandler;
 
-// Unscheduled per-frame handler (RTZ server-loop convention, cf.
-// FUNC(destinationDisplay) / remoteControlIndicator) rather than a spawned
-// while/sleep: no scheduler starvation, and the send cadence is exactly
-// _CHECK_INTERVAL. Bails cheaply when nobody is subscribed. The body uses no
-// suspending commands, so it is safe in the unscheduled per-frame context.
+// Unscheduled per-frame handler (RTZ server-loop convention) rather than a
+// spawned while/sleep: no scheduler starvation, and the send cadence is exactly
+// POLL_INTERVAL. Bails cheaply when nobody is subscribed; no suspending
+// commands in the body.
 [{
-    if (count GVAR(tgtWatchers) > 0) then {
-        private _toDrop = [];
+    if (count GVAR(tgtWatchers) == 0) exitWith {};
+
+    private _toDrop = [];
+    {
+        // _x = player netId (key), _y = [player, units, sentEmpty] (value).
+        _y params ["_player", "_units", "_sentEmpty"];
+        // Disconnected players can't receive targetEvents — drop them here so
+        // a vanished watcher can never null-error the send below.
+        if (isNull _player) then { _toDrop pushBack _x; continue };
+
+        private _entries = [];
+        // A watched man may have mounted a watched vehicle since the selection
+        // sync — both resolve to the same hull, which fights as one.
+        private _vehSeen = createHashMap;
         {
-            // _x = player netId (key), _y = [player, units, sentEmpty] (value).
-            _y params ["_player", "_units", "_sentEmpty"];
-            // Disconnected players can't receive targetEvents — drop them here so
-            // a vanished watcher can never null-error the send below.
-            if (isNull _player) then { _toDrop pushBack _x; continue };
+            if (isNull _x || { !alive _x }) then { continue };
+            private _veh = vehicle _x;
+            private _vk  = netId _veh;
+            if (_vk in _vehSeen) then { continue };
+            _vehSeen set [_vk, true];
+            // assignedTarget / targetKnowledge are only meaningful where the
+            // unit is local; skips remote-controlled and HC-offloaded.
+            if (!local _veh) then { continue };
 
-            private _entries = [];
-            // A watched man may have mounted a watched vehicle since the
-            // selection sync — both resolve to the same hull, which fights as
-            // one, so only the first draws.
-            private _vehSeen = createHashMap;
-            {
-                if (isNull _x || { !alive _x }) then { continue };
-                // Crews engage through their vehicle (seats can change between
-                // selection syncs, so re-resolve here every tick).
-                private _veh = vehicle _x;
-                private _vk  = netId _veh;
-                if (_vk in _vehSeen) then { continue };
-                _vehSeen set [_vk, true];
-                // assignedTarget / targetKnowledge are only meaningful where
-                // the unit is local; skips remote-controlled and HC-offloaded.
-                if (!local _veh) then { continue };
-
-                // Whoever aims the weapon holds the sensor knowledge: the man
-                // himself on foot, the gunner (or failing that the commander /
-                // driver) for a vehicle. Player judgement isn't AI state.
-                private _kUnit = if (_veh isKindOf "CAManBase") then { _veh } else {
-                    private _g = gunner _veh;
-                    if (isNull _g) then { effectiveCommander _veh } else { _g }
-                };
-                if (isNull _kUnit || { isPlayer _kUnit }) then { continue };
-
-                private _target = assignedTarget _kUnit;
-                if (isNull _target || { !alive _target }) then { continue };
-                // Friendly "targets" (watch/cover assignments) are noise.
-                private _tSide = side _target;
-                if (_tSide isEqualTo side group _kUnit) then { continue };
-
-                // Where the AI believes the target is: index 2 = time of the
-                // last sighting, 5 = position error (m), 6 = estimated position
-                // ASL (indices per the LAMBS debug renderer).
-                private _kn = _kUnit targetKnowledge _target;
-                private _estPos = ASLToAGL (_kn select 6);
-                // Degenerate knowledge position while actively suppressing —
-                // fall back to the true position (same fix as LAMBS).
-                if (_estPos distanceSqr [0, 0, 0] < 1) then {
-                    _estPos = getPosATL _target;
-                };
-                if (_veh distance _estPos > 6000) then { continue };   // LAMBS sanity cap
-
-                private _seenAgo = (time - (_kn select 2)) max 0;
-                _entries pushBack [_x, _target, _estPos, _seenAgo, _kn select 5, _tSide];
-            } forEach _units;
-
-            // One empty snapshot clears the client; resending "nothing to draw"
-            // every tick while the units hold fire is wasted traffic.
-            if (_entries isNotEqualTo [] || { !_sentEmpty }) then {
-                [QGVAR(tgtUpdate), [_entries], _player] call CBA_fnc_targetEvent;
-                _y set [2, _entries isEqualTo []];
+            // Whoever aims the weapon holds the sensor knowledge: the man
+            // himself on foot, the gunner (or failing that the commander /
+            // driver) for a vehicle. Player judgement isn't AI state.
+            private _kUnit = if (_veh isKindOf "CAManBase") then { _veh } else {
+                private _g = gunner _veh;
+                if (isNull _g) then { effectiveCommander _veh } else { _g }
             };
-        } forEach GVAR(tgtWatchers);
+            if (isNull _kUnit || { isPlayer _kUnit }) then { continue };
 
-        { GVAR(tgtWatchers) deleteAt _x } forEach _toDrop;
-    };
-}, _CHECK_INTERVAL] call CBA_fnc_addPerFrameHandler;
+            private _target = assignedTarget _kUnit;
+            if (isNull _target || { !alive _target }) then { continue };
+            // Friendly "targets" (watch/cover assignments) are noise.
+            private _tSide = side _target;
+            if (_tSide isEqualTo side group _kUnit) then { continue };
+
+            // Where the AI believes the target is: index 2 = time of the
+            // last sighting, 5 = position error (m), 6 = estimated position
+            // ASL (indices per the LAMBS debug renderer).
+            private _kn = _kUnit targetKnowledge _target;
+            private _estPos = ASLToAGL (_kn select 6);
+            // Degenerate knowledge position while actively suppressing —
+            // fall back to the true position (same fix as LAMBS).
+            if (_estPos distanceSqr [0, 0, 0] < 1) then {
+                _estPos = getPosATL _target;
+            };
+            if (_veh distance _estPos > KNOWLEDGE_MAX_DIST) then { continue };
+
+            private _seenAgo = (time - (_kn select 2)) max 0;
+            _entries pushBack [_x, _target, _estPos, _seenAgo, _kn select 5, _tSide];
+        } forEach _units;
+
+        // One empty snapshot clears the client; resending "nothing to draw"
+        // every tick while the units hold fire is wasted traffic.
+        if (_entries isNotEqualTo [] || { !_sentEmpty }) then {
+            [QGVAR(tgtUpdate), [_entries], _player] call CBA_fnc_targetEvent;
+            _y set [2, _entries isEqualTo []];
+        };
+    } forEach GVAR(tgtWatchers);
+
+    { GVAR(tgtWatchers) deleteAt _x } forEach _toDrop;
+}, POLL_INTERVAL] call CBA_fnc_addPerFrameHandler;

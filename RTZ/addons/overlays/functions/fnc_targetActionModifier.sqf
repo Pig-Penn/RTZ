@@ -1,16 +1,21 @@
 #include "script_component.hpp"
 /*
- * rtz_overlays_fnc_targetActionModifier
+ * Author: Maxim
+ * CfgContext modifierFunction for the target-display toggle: sets the
+ * action's label (index 1) and tint (index 3) to reflect whether the overlay
+ * master switch is currently on FOR THIS CLIENT (the state is per-curator,
+ * so no broadcast variable is involved).
  *
- * CfgContext modifierFunction for the target-display toggle (see
- * CfgContext.hpp). Sets the action's label (index 1) and tint (index 3) to
- * reflect whether the overlay master switch is currently on FOR THIS CLIENT
- * (the state is per-curator, so no broadcast variable is involved):
- *   off → white "Draw Targets"
- *   on  → green "Hide Targets"
+ * Arguments:
+ * 0: Action array, mutated in place <ARRAY>
  *
- * Parameters:
- *   0: Array — the action array (mutated in place)
+ * Return Value:
+ * None
+ *
+ * Example:
+ * [_action] call rtz_overlays_fnc_targetActionModifier
+ *
+ * Public: No
  */
 
 params ["_action"];

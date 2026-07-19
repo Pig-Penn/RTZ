@@ -10,7 +10,7 @@
  * Applies to whole aircraft from the current selection (an individually
  * selected crew member is skipped; select the aircraft to order it).
  * flyInHeight is a local-effect command, so each helicopter gets a
- * QGVAR(flyHeight) event targeted at the aircraft itself — CBA
+ * QGVAR(adjustHeliHeight) event targeted at the aircraft itself — CBA
  * delivers it to whatever machine the vehicle is local to (server, headless
  * client, or a remote-controlling player), so no locality checks or server
  * round-trip are needed; handler registered on
@@ -48,7 +48,7 @@ if (_aircraft isEqualTo []) exitWith {false};
 private _delta = _dir * GETGVAR(heliHeightStep,5);
 
 {
-    [QGVAR(setFlyHeight), [_x, _delta], _x] call CBA_fnc_targetEvent;
+    [QGVAR(adjustHeliHeight), [_x, _delta], _x] call CBA_fnc_targetEvent;
 } forEach _aircraft;
 
 [LSTRING(MsgFlyHeight), ["", "+"] select (_delta > 0), _delta] call zen_common_fnc_showMessage;

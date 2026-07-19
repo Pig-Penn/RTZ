@@ -13,6 +13,13 @@
 #define SOFT_THRESHOLD 1.0
 #define HARD_THRESHOLD 1.5
 
+// Once a member's knowsAbout crosses HARD_THRESHOLD (chevron shown), that
+// result is latched per (spotter side, unit) for this many seconds — the
+// per-spotter knowsAbout loop for that unit is skipped entirely while the
+// latch is live, since it's the expensive part of fnc_spotCheck (fnc_spotCheck).
+#define CHEVRON_LATCH_DURATION 10
+#define CHEVRON_LATCH_CAP 256
+
 // Seconds before the same group can trigger another radio contact report
 // after contact on it is lost.
 #define GROUP_CALLOUT_COOLDOWN 600

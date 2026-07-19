@@ -146,8 +146,6 @@ if (!isServer) exitWith {};
 // Defines rather than privates: they are read inside stored code (event handler,
 // PFH, push function) that runs long after this registration scope is gone.
 
-#define GATHER_INTERVAL 0.3   // Seconds between data gathers per curator (~3 Hz + event-driven).
-#define OWN_ONLY true         // Only read out a curator's OWN-side units (no enemy recon cheat).
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SERVER — state
@@ -164,13 +162,13 @@ GVAR(fnc_pushSelData) = {
     params ["_player", "_sel"];
     private _cSide   = side _player;
     // Virtual Zeus (VirtualMan_F) is the game master, not a PvP officer —
-    // exempt from OWN_ONLY (mirrors the client poll's _anySide filter).
+    // exempt from the own-side filter below (mirrors the client poll's _anySide filter).
     private _anySide = _player isKindOf "VirtualMan_F";
     private _packets = [];
     {
         private _unit = objectFromNetId _x;
         if (isNull _unit || { !alive _unit }) then { continue };
-        if (OWN_ONLY && { !_anySide } && { side _unit != _cSide }) then { continue };
+        if (!_anySide && { side _unit != _cSide }) then { continue };
         _packets pushBack ([_unit] call FUNC(gatherUnitInfo));
     } forEach (_sel select [0, SEL_MAX_UNITS]);
     [QGVAR(selData), [_packets], _player] call CBA_fnc_targetEvent;

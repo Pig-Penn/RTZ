@@ -42,6 +42,25 @@
 #define HEX_WARN   "#FFC74D"
 #define HEX_BAD    "#FF6161"
 
+// BIS simpletask icon family shared by the selection dialog rows
+// (rtz_fnc_buildSelectionRows) and the unit head tags (rtz_fnc_unitTags) —
+// direct texture paths; CfgMarkers lookups can silently return "". FLAG_ICON
+// is the flag-inventory marker texture (unit tags only).
+#define ICON_ATTACK  "\a3\ui_f\data\igui\cfg\simpletasks\types\attack_ca.paa"
+#define ICON_SEARCH  "\a3\ui_f\data\igui\cfg\simpletasks\types\search_ca.paa"
+#define ICON_MOVE    "\a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa"
+#define ICON_HEAL    "\a3\ui_f\data\igui\cfg\simpletasks\types\heal_ca.paa"
+#define ICON_RUN     "\a3\ui_f\data\igui\cfg\simpletasks\types\run_ca.paa"
+#define ICON_GETIN   "\a3\ui_f\data\igui\cfg\simpletasks\types\getin_ca.paa"
+#define ICON_DANGER  "\a3\ui_f\data\igui\cfg\simpletasks\types\danger_ca.paa"
+#define ICON_TARGET  "\a3\ui_f\data\igui\cfg\simpletasks\types\target_ca.paa"
+#define ICON_UNKNOWN "\a3\ui_f\data\igui\cfg\simpletasks\types\unknown_ca.paa"
+#define FLAG_ICON    "\a3\ui_f\data\map\markers\military\flag_ca.paa"
+
+// Server gather cadence (s), shared by the infantry gather (rtz_fnc_selectionInfo)
+// and the vehicle gather (rtz_fnc_vehicleDataStream): ~3 Hz + event-driven.
+#define GATHER_INTERVAL 0.3
+
 // LAMBS danger-cause labels, indexed by dangerType + 2 (-2 Forced AI … 10
 // Assessing; out of range → ""). Mirrors lambs_main_fnc_debugDangerType,
 // inlined so the addon never hard-depends on LAMBS.

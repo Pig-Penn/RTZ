@@ -22,5 +22,11 @@
         <Key ID="STR_RTZ_Economy_Income_Description">
             <English>Points gained per minute.</English>
         </Key>
+        <Key ID="STR_RTZ_Economy_PlacementToast">
+            <English>Placement Cost Messages</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_PlacementToast_Description">
+            <English>Show a Zeus feedback message with the point cost of the selected asset when choosing something to place.</English>
+        </Key>
     </Package>
 </Project>

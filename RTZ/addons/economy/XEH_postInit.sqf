@@ -18,3 +18,18 @@ if (!isServer && {!hasInterface}) exitWith {};
         };
     }, TICK_INTERVAL] call CBA_fnc_addPerFrameHandler;
 }] call CBA_fnc_addEventHandler;
+
+if (!hasInterface) exitWith {};
+
+// Cost feedback while the curator is choosing something to place
+["zen_curatorDisplayLoaded", {
+    GVAR(toastClass) = "";
+    GVAR(toastPFH) = [LINKFUNC(placementToast), TOAST_INTERVAL] call CBA_fnc_addPerFrameHandler;
+}] call CBA_fnc_addEventHandler;
+
+["zen_curatorDisplayUnloaded", {
+    if (GVAR(toastPFH) == -1) exitWith {};
+
+    [GVAR(toastPFH)] call CBA_fnc_removePerFrameHandler;
+    GVAR(toastPFH) = -1;
+}] call CBA_fnc_addEventHandler;

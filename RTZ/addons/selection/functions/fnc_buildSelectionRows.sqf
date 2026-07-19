@@ -27,19 +27,10 @@
  * Requirements: CBA_A3
  */
 
-#define ICON_ATTACK  "\a3\ui_f\data\igui\cfg\simpletasks\types\attack_ca.paa"
-#define ICON_SEARCH  "\a3\ui_f\data\igui\cfg\simpletasks\types\search_ca.paa"
-#define ICON_MOVE    "\a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa"
-#define ICON_HEAL    "\a3\ui_f\data\igui\cfg\simpletasks\types\heal_ca.paa"
-#define ICON_RUN     "\a3\ui_f\data\igui\cfg\simpletasks\types\run_ca.paa"
-#define ICON_GETIN   "\a3\ui_f\data\igui\cfg\simpletasks\types\getin_ca.paa"
-#define ICON_DANGER  "\a3\ui_f\data\igui\cfg\simpletasks\types\danger_ca.paa"
-#define ICON_TARGET  "\a3\ui_f\data\igui\cfg\simpletasks\types\target_ca.paa"
-#define ICON_UNKNOWN "\a3\ui_f\data\igui\cfg\simpletasks\types\unknown_ca.paa"
-
-// Row colours (COL_*), group separator tint (SIDE_TINTS), and the LAMBS
-// danger-cause labels (DANGER_LABELS) all come from script_component.hpp —
-// one palette/label system shared with the unit head tags and vehicle cards.
+// Row colours (COL_*), group separator tint (SIDE_TINTS), row icons (ICON_*),
+// and the LAMBS danger-cause labels (DANGER_LABELS) all come from
+// script_component.hpp — one palette/icon/label system shared with the unit
+// head tags and vehicle cards.
 
 // Spaced middot separator between the segments of a row / header line.
 #define SEP "   ·   "

@@ -29,31 +29,6 @@ params ["", "_classes"];
 // Disabled: keep the full asset tree and make everything free
 if (!GVAR(enable)) exitWith {_classes apply {[true, 0]}};
 
-private _categories = GVAR(categories);
-private _overrides = GETGVAR(overrides,createHashMap);
-private _defaults = GVAR(defaultCosts);
-
-// In points, indexed by cost category
-private _bases = [
-    COST_INFANTRY,
-    COST_STATIC,
-    COST_CAR,
-    COST_APC,
-    COST_TRACKED,
-    COST_HELICOPTER,
-    COST_PLANE,
-    COST_BOAT,
-    COST_TRUCK,
-    COST_OFFICER
-];
-
-_classes apply {
-    private _index = _categories getOrDefaultCall [_x, {_x call FUNC(categorize)}, true];
-    // Precedence: mission override -> built-in table (lowercased keys) -> category default
-    private _base = _defaults getOrDefault [toLowerANSI _x, if (_index == INDEX_FREE) then {0} else {_bases select _index}];
-    private _cost = (_overrides getOrDefault [_x, _base]) / POINTS_MAX;
-
-    // A vehicle costs the same placed with or without its crew, so a single
-    // cost (charged for both cases by the engine) is enough for every class
-    [true, _cost]
-}
+// A vehicle costs the same placed with or without its crew, so a single
+// cost (charged for both cases by the engine) is enough for every class
+_classes apply {[true, (_x call FUNC(getCost)) / POINTS_MAX]}

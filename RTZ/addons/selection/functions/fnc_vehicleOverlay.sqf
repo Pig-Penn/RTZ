@@ -360,5 +360,5 @@ if (hasInterface) then {
         }
     ] call zen_context_menu_fnc_createAction;
 
-    [_action, ["RTZ_RealTimeZeus"], 7] call zen_context_menu_fnc_addAction;
+    [_action, [], 5] call zen_context_menu_fnc_addAction;
 };

@@ -63,6 +63,7 @@ GVAR(blinkThrottle)      = createHashMap;   // netId → last blink-send time (r
 GVAR(spotGroupCooldowns) = createHashMap;   // (sideStr + "_" + leaderNetId) → time of last callout
 GVAR(spotDebugLast)      = createHashMap;   // curatorNetId → last-logged resolution sig (diagnostic, on-change only)
 GVAR(markerSuffixCache)  = createHashMap;   // "m"/"v" + class → NATO symbol suffix, mission-lifetime (fnc_unitMarker)
+GVAR(chevronLatch)       = createHashMap;   // (spotterSideStr + "_" + memberNetId) → [expiryTime, lastBestSpotter] (fnc_spotCheck)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SERVER — fire-blink (white flash on the wedge when a spotted unit shoots)
