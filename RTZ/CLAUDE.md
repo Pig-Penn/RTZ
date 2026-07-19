@@ -8,29 +8,56 @@ Real-Time Zeus (RTZ) is an Arma 3 mod written in SQF that adds real-time strateg
 
 ## References
 
-Zeus Enhanced (ZEN), Community Base Addons (CBA), and LAMBS Danger FSM (LAMBS) will always be loaded alongisde Real-Time Zeus (RTZ). Thus, you may utilize and reference their systems.
+Zeus Enhanced (ZEN), Community Base Addons (CBA), and LAMBS Danger FSM (LAMBS) will always be loaded alongside Real-Time Zeus (RTZ). Thus, you may utilize and reference their systems.
 
 All other Arma 3 mods that are developed and structured correctly can be utilized as references for the development of Real-Time Zeus (RTZ). Advanced Combat Environment 3 (ACE3) is an example of a great reference.
 
-## Commands
+## Environment & Verification
 
-Building uses [HEMTT](https://hemtt.dev):
-
-```
-hemtt check
-```
+- **Arma 3 is NOT installed on this development machine.** The game runs on a separate computer; changes cannot be tested in-game here. Never claim in-game behavior was verified — `hemtt check` is the only verification available locally.
+- A Stop hook (`.claude/settings.json`) runs `hemtt check` automatically at the end of every session and blocks with the error output if it fails. Fix any reported errors before finishing.
+- Building/linting uses [HEMTT](https://hemtt.dev) (installed via winget, on PATH): `hemtt check`
 
 ## Architecture
 
-**Component structure.** The mod is split into `addons/` components, each an independent PBO: `main` is the framework core (prefix, version, CBA/ZEN dependency declarations in `CfgSettings.hpp`). New features should be added as new components under `addons/`, each depending on `rtz_main`, following the same skeleton:
+**Component structure.** The mod is split into `addons/` components, each an independent PBO. `main` is the framework core (prefix, version macros, CBA/ZEN dependency declarations, `script_macros.hpp`); `common` holds shared functions and the shared ZEN context-menu root (`CfgZenContext.hpp`); every other component depends on `rtz_main` (and usually `rtz_common`).
+
+Current components:
+
+| Component | Purpose |
+|---|---|
+| `main` | Framework core: prefix, version, macros, CBA/ZEN/LAMBS dependencies |
+| `common` | Shared helpers: unit/squad/vehicle collection, skills, smoke deployment, stance, teleport, placement preview |
+| `assemble` | AI orders to assemble/disassemble static weapons and UAVs from backpacks |
+| `attack` | Order groups to find and destroy a target via waypoints |
+| `control` | Squad control: LAMBS reset, squad reload, squad hide toggle |
+| `dismount` | Unload-in-combat behavior for vehicle passengers |
+| `economy` | Zeus point costs: categorization, cost registration, per-curator coefficients (`defaultCosts/`) |
+| `loot` | AI orders to loot bodies/objects |
+| `mine` | Mine placement, detection drawing, and disarm orders |
+| `officer` | Officer auras and area buffs with cooldowns and monitors |
+| `overlays` | Destination and target line overlays for groups |
+| `repair` | AI orders to repair vehicles |
+| `reverse` | Order vehicles to reverse to a position (keybind) |
+| `selection` | Selection info panel, unit/vehicle tags, vehicle data overlay |
+| `spotting` | AI spotting system: contact callouts, 3D contact markers, curator display |
+| `unit_info` | Per-unit 3D info overlay, toggled via ZEN context menu |
+| `vehicle_info` | Per-vehicle 3D info overlay, toggled via ZEN context menu |
+
+**Component skeleton.** New features are added as new components under `addons/`, following the same skeleton:
 - `config.cpp` — `CfgPatches` (name, `requiredAddons`, version) plus includes for `CfgEventHandlers.hpp` / `CfgContext.hpp` / settings
 - `script_component.hpp` — defines `COMPONENT`/`COMPONENT_BEAUTIFIED`, includes `script_mod.hpp` then `script_macros.hpp`, and holds that component's visual/tunable `#define`s
 - `XEH_PREP.hpp` — `PREP(fncName)` for every function in `functions/`, compiled once via `XEH_preInit.sqf`
 - `XEH_preStart.sqf` / `XEH_preInit.sqf` / `XEH_postInit.sqf` — CBA Extended Event Handler lifecycle hooks (declared in `CfgEventHandlers.hpp`)
 - `functions/fnc_*.sqf` — one function per file, standard SQF header comment (Author/Arguments/Return Value/Example/Public)
+- `initSettings.inc.sqf` — CBA settings (included from `config.cpp`); `initKeybinds.inc.sqf` for CBA keybinds
+- `stringtable.xml` — ALL user-facing text goes through stringtable entries (`CSTRING`/`LSTRING` macros), never hardcoded strings
 
-**Macro conventions** (from CBA's `script_macros_common.hpp`, included via `addons/main/script_macros.hpp`): `GVAR(x)` / `QGVAR(x)` for component-namespaced globals, `FUNC(x)` / `QFUNC(x)` for component-namespaced functions, `EGVAR`/`GETGVAR` for reaching into another component's globals, `LSTRING`/`CSTRING`/`LLSTRING` for stringtable lookups. `PREP(fncName)` compiles via `CBA_fnc_compileFunction` (cached) unless `DISABLE_COMPILE_CACHE` is defined in that component's `script_component.hpp`, in which case it falls back to a plain `compile preprocessFileLineNumbers`.
+**ZEN integration.** Context menu actions are declared per-component in `CfgContext.hpp` (`zen_context_menu_actions`); `common/CfgZenContext.hpp` holds the shared RTZ context-menu root. Toggle-style actions keep their label in sync (Show ↔ Hide) via a `fnc_modifyAction` in their component. `common` provides the selection-normalization helpers (`fnc_collectUnits`, `fnc_collectSquads`, `fnc_collectVehicles`) that expand ZEN selections (e.g. vehicles → crew) into flat lists — entry points should go through them.
 
-**ZEN integration**: the context menu action is declared in `CfgContext.hpp` (`zen_context_menu_actions`), calls `fnc_toggleUnits` on the selected/hovered objects, and its label is kept in sync (Show ↔ Hide) by `fnc_modifyAction`. `fnc_getUnits` normalizes the ZEN selection — expanding vehicles to their crew — into a flat unit list; every entry point into `unit_info` goes through it.
+## Conventions
 
-**Settings**: all settings are CBA settings (`CBA_fnc_addSetting`, client-side) registered in `initSettings.inc.sqf`, read at draw-time via `GVAR(...)`.
+- Use the CBA/ACE3 macro family from `script_macros.hpp`: `GVAR`/`QGVAR`/`EGVAR`, `FUNC`/`EFUNC`, `LLSTRING`/`CSTRING`, `PREP`, etc. Never hand-roll `rtz_component_name` identifiers.
+- One function per `fnc_*.sqf` file, registered in `XEH_PREP.hpp`.
+- Update the component's `stringtable.xml` whenever adding user-facing text; `hemtt check` validates stringtables.
+- Mind locality: orders are typically initiated on the curator's client and executed where the unit is local (CBA target events / remoteExec patterns already used throughout the codebase).

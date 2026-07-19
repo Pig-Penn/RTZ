@@ -30,6 +30,9 @@
 // Default 3D icon drawn at the spot by the placement preview picker
 #define ICON_PREVIEW "\a3\ui_f\data\igui\cfg\cursors\select_target_ca.paa"
 
+// Context action icon for the deploy-countermeasures order (ZEN's smoke module texture)
+#define ICON_SMOKE "\x\zen\addons\modules\ui\smoke_pillar_ca.paa"
+
 // 3DEN stance attribute icons drawn by the stance keybinds
 #define STANCE_ICON_UP "\a3\3DEN\Data\Attributes\Stance\up_ca.paa"
 #define STANCE_ICON_MIDDLE "\a3\3DEN\Data\Attributes\Stance\middle_ca.paa"

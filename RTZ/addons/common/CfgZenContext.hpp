@@ -3,14 +3,27 @@
 // zen_context_menu_actions from configFile at preInit, and all scripted
 // zen_context_menu_fnc_addAction calls across the RTZ addons target these
 // parent paths — addAction logs an error and drops the action if the parent
-// node is missing. The actions themselves are registered at runtime by each
-// feature addon, so these classes intentionally define no children.
+// node is missing. Feature-addon actions are declared in each addon's own
+// CfgContext.hpp (or registered at runtime); only rtz_common's own actions
+// hang off the anchors here.
 class zen_context_menu_actions {
     // Primary submenu for RTS-style order actions (reload, attack, assemble, ...).
     class RTZ_RealTimeZeus {
         displayName = "Real-Time Zeus";
         icon = "\a3\Ui_F_Curator\Data\Logos\arma3_curator_eye_256_ca.paa";
         priority = 3;
+
+        // Deploy countermeasures: fires the smoke launcher / flare / chaff
+        // dispenser of every selected vehicle that has one. The condition
+        // carries the QGVAR(enableDeploySmoke) master switch, so the setting
+        // can be toggled mid-mission.
+        class GVAR(deploySmoke) {
+            displayName = CSTRING(ActionDeploySmoke);
+            icon = ICON_SMOKE;
+            statement = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(orderDeploySmoke));
+            condition = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(canDeploySmoke));
+            priority = 1;
+        };
     };
 
     // Submenu for the toggleable draw overlays (vehicle tags, unit tags,

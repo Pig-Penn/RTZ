@@ -5,3 +5,6 @@ releases/
 .hemttprivatekey
 *.bikey
 texHeaders.bin
+
+# Claude Code personal settings
+.claude/settings.local.json

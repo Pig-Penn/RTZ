@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Common">
+        <Key ID="STR_RTZ_Common_ActionDeploySmoke">
+            <English>Countermeasures</English>
+        </Key>
         <Key ID="STR_RTZ_Common_CameraToCursor">
             <English>Camera to Map Cursor</English>
         </Key>
@@ -78,6 +81,9 @@
         </Key>
         <Key ID="STR_RTZ_Common_PreviewHintRotate">
             <English>LMB place  |  hold rotate modifier to turn  |  ESC cancel</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_SmokeScreen">
+            <English>Smoke Screen</English>
         </Key>
         <Key ID="STR_RTZ_Common_StanceAuto">
             <English>Stance Auto</English>

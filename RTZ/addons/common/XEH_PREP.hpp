@@ -1,10 +1,11 @@
 PREP(approach);
+PREP(canDeploySmoke);
 PREP(collectUnits);
 PREP(collectSquads);
 PREP(collectVehicles);
 PREP(deploySmokeApply);
-PREP(deploySmokeContext);
 PREP(findCountermeasureWeapons);
+PREP(orderDeploySmoke);
 PREP(flyHeight);
 PREP(applySkill);
 PREP(classInfo);

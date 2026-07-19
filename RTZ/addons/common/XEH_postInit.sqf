@@ -30,23 +30,22 @@ if (hasInterface) then {
     [QGVAR(approachMsg), { _this call zen_common_fnc_showMessage }] call CBA_fnc_addEventHandler;
 };
 
+// Deploy smoke screen / countermeasures. The context action is declared in
+// CfgZenContext.hpp and gated by FUNC(canDeploySmoke); the weapon fire runs
+// where each vehicle is local (the server for AI armor, a player's machine for
+// a player-crewed vehicle), so FUNC(orderDeploySmoke) sends the selection in a
+// single QGVAR(deploySmoke) event targeted at the vehicles. The receiver
+// registers unconditionally on every machine (it only runs when an order was
+// sent, and the setting is read live by the action condition).
+[QGVAR(deploySmoke), LINKFUNC(deploySmokeApply)] call CBA_fnc_addEventHandler;
+
 // Setting-gated context features. Deferred to CBA_settingsInitialized so each
 // synced setting holds the server's value before it is read (see rtz_overlays /
-// rtz_officer for the same pattern), and — for the menu clean-up — so ZEN's own
-// postInit has already registered the actions it removes.
+// rtz_officer for the same pattern), and so ZEN's own postInit has already
+// registered the actions the menu clean-up removes.
 ["CBA_settingsInitialized", {
     // Strip ZEN's cluttered built-in context entries (client-side only).
     if (hasInterface && {GVAR(enableCleanContextMenu)}) then {
         [] call FUNC(removeContextActions);
-    };
-
-    // Deploy smoke screen / countermeasures. The context action is client-only;
-    // the weapon fire runs where each vehicle is local (the server for AI armor,
-    // a player's machine for a player-crewed vehicle), so the whole selection
-    // goes into a single QGVAR(deploySmoke) event targeted at the vehicles and
-    // the receiver registers on every machine.
-    if (GVAR(enableDeploySmoke)) then {
-        if (hasInterface) then { [] call FUNC(deploySmokeContext); };
-        [QGVAR(deploySmoke), LINKFUNC(deploySmokeApply)] call CBA_fnc_addEventHandler;
     };
 }] call CBA_fnc_addEventHandler;

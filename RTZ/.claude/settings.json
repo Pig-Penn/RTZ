@@ -1,0 +1,57 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(hemtt *)",
+      "PowerShell(hemtt *)",
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git show *)",
+      "Bash(git branch *)",
+      "Bash(git remote *)",
+      "Bash(git ls-files *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(file *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(diff *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Get-Item *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(Select-String *)",
+      "WebSearch",
+      "WebFetch(domain:community.bistudio.com)",
+      "WebFetch(domain:community.bohemia.net)",
+      "WebFetch(domain:forums.bohemia.net)",
+      "WebFetch(domain:ace3.acemod.org)",
+      "WebFetch(domain:cbateam.github.io)",
+      "WebFetch(domain:zen-mod.github.io)",
+      "WebFetch(domain:hemtt.dev)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:arma.fandom.com)",
+      "WebFetch(domain:docs.claude.com)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v hemtt >/dev/null 2>&1 || exit 0; out=$(hemtt check 2>&1) || { echo \"$out\" >&2; exit 2; }",
+            "timeout": 120,
+            "statusMessage": "Running hemtt check..."
+          }
+        ]
+      }
+    ]
+  }
+}
