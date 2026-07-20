@@ -25,6 +25,7 @@
 ["Stance"]       call zen_context_menu_fnc_removeAction;
 ["HealUnits"]    call zen_context_menu_fnc_removeAction;
 ["TeleportZeus"] call zen_context_menu_fnc_removeAction;
+["VehicleAppearance"] call zen_context_menu_fnc_removeAction;
 
 ["VehicleLogistics", "Repair"] call zen_context_menu_fnc_removeAction;
 ["VehicleLogistics", "Rearm"]  call zen_context_menu_fnc_removeAction;

@@ -44,7 +44,7 @@
             <English>Officers can anchor curator editing areas, confining Zeus editing to their surroundings.</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaAdded">
-            <English>Editing zone created (%1 m)</English>
+            <English>%1 m Zone Created</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaAuraBlocked">
             <English>Command Aura Active</English>
@@ -62,7 +62,7 @@
             <English>Editing zone removed</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAuraAdded">
-            <English>Command aura active (%1 m)</English>
+            <English>%1 m Aura Active</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAuraBlockedArea">
             <English>Editing Area Active</English>

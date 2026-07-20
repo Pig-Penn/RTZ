@@ -13,8 +13,7 @@
  *
  * The line is assembled from the fields enabled in CBA settings (name, speed,
  * crew/seats, fuel, hull, fly height, ammo, commander, LAMBS task, tactic) and drawn
- * in a static colour — side-tinted when GVAR(vtagSideColors) is set, the
- * normal tag colour otherwise. Only the trailing status word gets its own
+ * in a static colour. Only the trailing status word gets its own
  * colour: the warning flags (LOW FUEL amber, DAMAGED red) always show
  * regardless of the status field setting, rendered as a second drawIcon3D
  * split at a measured text-width boundary from the rest of the line
@@ -89,7 +88,7 @@ GVAR(vtagCacheDirty) = true;
 GVAR(fnc_buildVtagEntry) = {
     params ["_pkt"];
     _pkt params [
-        "", "_sideNum", "_dName", "_speedKmh", "_fuelPct", "_healthPct",
+        "_vNet", "", "_dName", "_speedKmh", "_fuelPct", "_healthPct",
         "_crewCnt", "_ecNet", "_flags", "", "_task", "_tactic",
         "", ["_seatCnt", -1], ["_flyHeight", -1], ["_selAmmo", -1]
     ];
@@ -103,7 +102,10 @@ GVAR(fnc_buildVtagEntry) = {
     if (GVAR(vtagShowSpeed) && { _speedKmh > 0 }) then {
         _segs pushBack format ["%1 km/h", _speedKmh];
     };
-    if (GVAR(vtagShowCrew)) then {
+    // Static weapons (mortars, HMGs, AT launchers on tripods) have a single
+    // gunner slot — a crew count adds nothing a player doesn't already see.
+    private _isStatic = (objectFromNetId _vNet) isKindOf "StaticWeapon";
+    if (GVAR(vtagShowCrew) && { !_isStatic }) then {
         // "CREW <aboard>/<positions>"; positions can be unknown (-1: a
         // pre-seat-count server build) — degrade to the bare aboard count.
         _segs pushBack ([format ["CREW %1", _crewCnt],
@@ -141,8 +143,7 @@ GVAR(fnc_buildVtagEntry) = {
         default                        { "" };
     };
 
-    // Static colour — side tint when enabled, otherwise the normal tag colour.
-    private _col = [COL_NORMAL, SIDE_TINTS select _sideNum] select GVAR(vtagSideColors);
+    private _col = COL_NORMAL;
     // DAMAGED beats LOW FUEL for the status colour (worst condition wins);
     // a LAMBS task name stays the same colour as the rest of the line.
     private _statusCol = switch (true) do {
@@ -167,7 +168,7 @@ GVAR(fnc_buildVtagEntry) = {
 // ── Runtime toggle (shared by the context menu entry) ────────────────────────
 GVAR(fnc_toggleVehTags) = {
     GVAR(vtagsVisible) = !GVAR(vtagsVisible);
-    [format ["Vehicle tags %1", ["hidden", "shown"] select GVAR(vtagsVisible)]] call zen_common_fnc_showMessage;
+    [[LLSTRING(MsgVehicleTagsHidden), LLSTRING(MsgVehicleTagsShown)] select GVAR(vtagsVisible)] call zen_common_fnc_showMessage;
 };
 
 // ── Draw pass ────────────────────────────────────────────────────────────────

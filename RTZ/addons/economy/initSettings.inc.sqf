@@ -9,19 +9,19 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 ] call CBA_fnc_addSetting;
 
 [
-    QGVAR(income), "SLIDER",
-    [LSTRING(Income), LSTRING(Income_Description)],
-    _category,
-    [0, 60, 5, 1],
-    true
-] call CBA_fnc_addSetting;
-
-[
     QGVAR(placementToast), "CHECKBOX",
     [LSTRING(PlacementToast), LSTRING(PlacementToast_Description)],
     _category,
     true,
     false
+] call CBA_fnc_addSetting;
+
+[
+    QGVAR(income), "SLIDER",
+    [LSTRING(Income), LSTRING(Income_Description)],
+    _category,
+    [0, 60, 5, 1],
+    true
 ] call CBA_fnc_addSetting;
 
 [

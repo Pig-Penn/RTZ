@@ -216,7 +216,7 @@ if (hasInterface) then {
                 // alive check: `name` returns garbage for dead units, so a
                 // commander killed between server pushes drops the line.
                 if (!isNull _ec && { alive _ec }) then {
-                    _t = _t + "<br/><t font='RobotoCondensed' size='0.80' color='" + HEX_DIM + "'" + _s + ">CDR  </t>"
+                    _t = _t + "<br/><t font='RobotoCondensed' size='0.80' color='" + HEX_DIM + "'" + _s + ">" + LLSTRING(CardCommander) + "  </t>"
                         + "<t font='RobotoCondensed' size='0.80' color='" + HEX_BODY + "'" + _s + ">" + name _ec + "</t>";
                 };
             };
@@ -283,14 +283,14 @@ if (hasInterface) then {
                     case (_fuelPct < 40): { [1.00, 0.78, 0.30, 0.90] };
                     default               { [0.72, 0.78, 0.84, 0.90] };
                 };
-                [_fuelBg, _fuelFill, _fuelLbl, _innerX, _yBar, _innerW, "FUEL", _fuelPct, _fuelCol] call _fnc_layoutBar;
+                [_fuelBg, _fuelFill, _fuelLbl, _innerX, _yBar, _innerW, LLSTRING(CardFuel), _fuelPct, _fuelCol] call _fnc_layoutBar;
 
                 private _hullCol = switch (true) do {
                     case (_healthPct < 40): { [1.00, 0.38, 0.38, 0.90] };
                     case (_healthPct < 70): { [1.00, 0.78, 0.30, 0.90] };
                     default                 { [0.55, 0.80, 0.42, 0.90] };
                 };
-                [_hullBg, _hullFill, _hullLbl, _innerX, _yBar + BAR_H + BAR_GAP, _innerW, "HULL", _healthPct, _hullCol] call _fnc_layoutBar;
+                [_hullBg, _hullFill, _hullLbl, _innerX, _yBar + BAR_H + BAR_GAP, _innerW, LLSTRING(CardHull), _healthPct, _hullCol] call _fnc_layoutBar;
 
                 _cardH = _yBar + BAR_H + BAR_GAP + BAR_H + 0.0075;
             };
@@ -342,7 +342,7 @@ if (hasInterface) then {
     // ── ZEN context menu toggle (label/tint mirror the current state) ────────
     private _action = [
         "RTZ_MinimizeVehCards",
-        "Vehicle Cards: FULL",
+        LLSTRING(ActionVehCardsFull),
         ["\a3\ui_f\data\igui\cfg\simpletasks\types\car_ca.paa", [1, 1, 1, 1]],
         { [] call GVAR(fnc_toggleVehMini) },
         { true },
@@ -351,10 +351,10 @@ if (hasInterface) then {
         {
             params ["_action"];
             if (GVAR(vehCardsMini)) then {
-                _action set [1, "Vehicle Cards: MIN"];
+                _action set [1, LLSTRING(ActionVehCardsMin)];
                 _action set [3, [0.60, 0.60, 0.60, 1]];
             } else {
-                _action set [1, "Vehicle Cards: FULL"];
+                _action set [1, LLSTRING(ActionVehCardsFull)];
                 _action set [3, [0.40, 1.00, 0.40, 1]];
             };
         }

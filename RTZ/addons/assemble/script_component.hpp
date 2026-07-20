@@ -48,6 +48,8 @@
 // [name, displayName, icon, iconColor, statement, condition, args, insertChildren, modifierFunction]
 #define ACTION_INDEX_ICON 2
 
-// Ghost-model placement preview marker
-#define ICON_PREVIEW "\a3\ui_f\data\igui\cfg\actions\repair_ca.paa"
-#define COLOR_PREVIEW [0.2, 1, 0.2, 1]
+// Ghost-model placement preview marker. Matches vanilla Zeus create-menu placement:
+// the static's own tree icon (resolved per class in fnc_orderAssemble) drawn plain
+// white with no hint text, so the ghost static reads the same as any entry dragged
+// out of the curator tree
+#define COLOR_PREVIEW [1, 1, 1, 1]

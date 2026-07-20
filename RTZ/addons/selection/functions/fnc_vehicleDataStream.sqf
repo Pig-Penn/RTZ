@@ -108,7 +108,13 @@ private _fnc_gatherVehicle = {
             private _turret = _veh unitTurret _shooter;
             private _muzzle = _veh currentWeaponTurret _turret;
             if (_muzzle != "") then {
-                _selAmmo = (weaponState [_veh, _turret, _muzzle]) param [4, -1];
+                private _wstate = weaponState [_veh, _turret, _muzzle];
+                // Magazine-less "weapons" (e.g. a car horn) report a muzzle with no
+                // magazine (index 3) — skip those rather than showing a false AMMO 0,
+                // matching rtz_vehicle_info_fnc_draw3D's magazine check.
+                if ((_wstate param [3, ""]) != "") then {
+                    _selAmmo = _wstate param [4, -1];
+                };
             };
         };
     };

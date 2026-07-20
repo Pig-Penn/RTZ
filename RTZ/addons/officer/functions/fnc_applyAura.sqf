@@ -22,6 +22,13 @@
  * Curator feedback is sent from here via QGVAR(auraMsg) to the requester —
  * only the server knows whether a request actually applied.
  *
+ * Every add/remove also broadcasts QGVAR(auraZone) to ALL clients (keyed by
+ * officer netId, same key GVAR(auras) uses) so each client's GVAR(auraZones)
+ * mirror stays in sync — that mirror is what FUNC(initCuratorDisplay) draws as
+ * a hollow ring on the Zeus map. Visible to every curator regardless of side;
+ * unlike the editing-area zone ring in rtz_spotting there is no spotted-only
+ * gate here.
+ *
  * Arguments:
  * 0: Mode — "add" or "remove" <STRING>
  * 1: Officers <ARRAY>
@@ -55,11 +62,13 @@ private _areaBlocked = false;
         GVAR(auras) set [_key, GVAR(auraRadius)];
         SETPVAR(_x,GVAR(auraActive),true);
         _applied = _applied + 1;
+        [QGVAR(auraZone), ["add", _key, _x, GVAR(auraRadius)]] call CBA_fnc_globalEvent;
     } else {
         if (isNil {GVAR(auras) deleteAt _key}) then {continue};
 
         SETPVAR(_x,GVAR(auraActive),nil);
         _applied = _applied + 1;
+        [QGVAR(auraZone), ["remove", _key]] call CBA_fnc_globalEvent;
     };
 } forEach _officers;
 

@@ -19,7 +19,7 @@
 
 params ["_position", "_objects"];
 
-private _groups = _objects call FUNC(getDeminers);
+private _groups = [_objects] call FUNC(getDeminers);
 if (_groups isEqualTo []) exitWith {};
 
 private _pos = ASLToAGL _position;

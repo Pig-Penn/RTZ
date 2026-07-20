@@ -29,10 +29,14 @@ private _order = (_vehicle getVariable [QGVAR(order), 0]) + 1;
 _vehicle setVariable [QGVAR(order), _order];
 
 // Take the driver off the AI navigation stack for the duration so it stops
-// fighting (or simply ignoring) the scripted movement below
+// fighting (or simply ignoring) the scripted movement below. The parking
+// brake must also be released: doStop leaves it engaged since the AI has no
+// active move order, which otherwise locks the wheel-rotation animation
+// while setVelocity physically slides the vehicle backward.
 doStop driver _vehicle;
 driver _vehicle disableAI "MOVE";
 driver _vehicle disableAI "PATH";
+_vehicle disableBrakes true;
 
 [{
     params ["_args", "_handle"];
@@ -65,6 +69,7 @@ driver _vehicle disableAI "PATH";
         [_handle] call CBA_fnc_removePerFrameHandler;
 
         _vehicle setVelocity [0, 0, (velocity _vehicle) select 2];
+        _vehicle disableBrakes false;
 
         // Release the driver back to formation movement
         if (!isNull _driver && {alive _driver} && {!isPlayer _driver}) then {

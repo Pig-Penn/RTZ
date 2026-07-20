@@ -50,9 +50,6 @@ if (isNull curatorCamera) exitWith {false};
 // Typing in the Zeus search box (ZEN sets this flag): don't hijack the keystroke
 if (GETMVAR(RscDisplayCurator_search,false)) exitWith {false};
 
-// Disabled by the mission's settings: let the key behave normally
-if (!GETGVAR(enableUnitTeleport,false)) exitWith {false};
-
 // Men on foot and whole vehicles from the current Zeus selection. objectParent
 // is objNull for both; a crewed-in man fails the test and is skipped.
 private _units = SELECTED_OBJECTS select {

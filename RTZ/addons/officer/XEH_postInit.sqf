@@ -42,10 +42,33 @@
         // the event at each group and CBA routes it to the owner.
         [QGVAR(auraApply), LINKFUNC(auraApply)] call CBA_fnc_addEventHandler;
 
-        // Server → curator feedback for aura toggles: only the server owns the
-        // aura registry, so only it knows whether a request actually applied.
         if (hasInterface) then {
+            // Server → curator feedback for aura toggles: only the server owns the
+            // aura registry, so only it knows whether a request actually applied.
             [QGVAR(auraMsg), {(_this select 0) call zen_common_fnc_showMessage}] call CBA_fnc_addEventHandler;
+
+            // Client-side mirror of GVAR(auras) for the map ring overlay: officerNetId
+            // -> [officer, radius], kept in sync by QGVAR(auraZone) broadcasts from
+            // FUNC(applyAura) (toggle on/off) and FUNC(monitorAuras) (death/delete prune).
+            // Drawn by FUNC(initCuratorDisplay).
+            GVAR(auraZones) = createHashMap;
+
+            [QGVAR(auraZone), {
+                params ["_mode", "_key", ["_officer", objNull], ["_radius", 0]];
+                if (_mode isEqualTo "add") then {
+                    GVAR(auraZones) set [_key, [_officer, _radius]];
+                } else {
+                    GVAR(auraZones) deleteAt _key;
+                };
+            }] call CBA_fnc_addEventHandler;
+
+            // Normally attached by FUNC(initCuratorDisplay) via the XEH DisplayLoad
+            // event each time the curator display is created. If Zeus is somehow
+            // already open when this (settings-deferred) block runs, attach now.
+            private _curatorDisplay = findDisplay 312;
+            if (!isNull _curatorDisplay) then {
+                [_curatorDisplay] call FUNC(initCuratorDisplay);
+            };
         };
     };
 

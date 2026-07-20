@@ -52,6 +52,11 @@ GVAR(blinkUntil) = createHashMap;
 // it with the real synced value once settings initialize.
 if (isNil QGVAR(chevronNames)) then { GVAR(chevronNames) = false };
 
+// Runtime visibility switch for the individual chevrons themselves (context-menu
+// toggle, FUNC(toggleChevrons)); defaults on. Per-client — group icons are
+// unaffected. Initialized here for the same reason as chevronNames above.
+GVAR(chevronsEnabled) = true;
+
 // Diagnostic: confirm the client half actually ran on this machine (set
 // RTZ_debug = true in the console to enable; default off, zero cost otherwise).
 if (GETMVAR(RTZ_debug,false)) then {

@@ -108,9 +108,9 @@ private _pairs = [
     ["taskCQB - Rush enemy",        "taskCQB - Rush enemy"],
     ["taskCQB - Clearing rooms",    "taskCQB - Clearing rooms"],
     // Support actions
-    ["Shoot UGL",                   "Shoot UGL"],
+    ["Shoot UGL",                   "Flushing"],
     ["Throwing smoke grenade",      "Smoking"],
-    ["Checking bodies",             "Loot"],
+    ["Checking bodies",             "Looting"],
     ["Checking bodies (unknown)",   "Loot (Unknown)"],
     ["Leader Artillery",            "Leader Artillery"],
     ["Deploy Static Weapon",        "Assemble"],

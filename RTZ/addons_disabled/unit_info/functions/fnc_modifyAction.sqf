@@ -18,7 +18,7 @@
 
 params ["_action", "_objects"];
 
-private _units = _objects call FUNC(getUnits);
+private _units = [_objects] call FUNC(getUnits);
 private _allTracked = _units isNotEqualTo []
     && {_units findIf {!(_x getVariable [QGVAR(tracked), false])} == -1};
 

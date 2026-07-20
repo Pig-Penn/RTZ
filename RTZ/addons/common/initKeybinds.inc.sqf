@@ -41,7 +41,6 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 // the unit/container is remote (see fnc_openUnitInventory).
 [_category, QGVAR(openUnitInventory), [LSTRING(OpenUnitInventory), LSTRING(OpenUnitInventory_Description)],
     {
-        if (!GVAR(enableUnitInventory)) exitWith { false };
         if (isNull getAssignedCuratorLogic player) exitWith { false };
         if (isNull (findDisplay 312)) exitWith { false };
         [] call FUNC(openUnitInventory);

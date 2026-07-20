@@ -23,7 +23,7 @@
 
 // AI cannot be commanded to drive backward, so the maneuver is driven
 // directly via setVelocity at this speed (km/h)
-#define REVERSE_SPEED 8
+#define REVERSE_SPEED 10
 
 // Speed below which a vehicle counts as not moving (km/h) and how long
 // it may stay that slow before the maneuver is aborted as stuck (seconds)

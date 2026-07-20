@@ -1,3 +1,4 @@
+PREP(chevronsActionModifier);
 PREP(contactCategory);
 PREP(draw3D);
 PREP(echelonTex);
@@ -8,4 +9,5 @@ PREP(spotCallout);
 PREP(spotCheck);
 PREP(spottingClient);
 PREP(spottingSystem);
+PREP(toggleChevrons);
 PREP(unitMarker);

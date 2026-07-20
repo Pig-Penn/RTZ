@@ -18,7 +18,7 @@
 
 params ["_action", "_objects"];
 
-private _vehicles = _objects call FUNC(getVehicles);
+private _vehicles = [_objects] call FUNC(getVehicles);
 private _allTracked = _vehicles isNotEqualTo []
     && {_vehicles findIf {!(_x getVariable [QGVAR(tracked), false])} == -1};
 

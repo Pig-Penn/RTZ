@@ -80,3 +80,5 @@
 #define RC_ICON_MIN_WIDTH 0.7
 #define RC_COLOR_SHIFT_MAX 0.25
 #define RC_COLOR_SHIFT_FREQ 180
+
+#define ICON_TOGGLE_CHEVRONS "\a3\ui_f\data\igui\cfg\simpletasks\types\meet_ca.paa"

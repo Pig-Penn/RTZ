@@ -13,9 +13,10 @@
  * confirm while out of zone applies nothing and shows FUNC(showBlocked)'s
  * toast. ZEN runs the stored statement from zen_attributes_fnc_confirm, so
  * this holds even when the unit leaves the zone after the window opened.
- * FUNC(lockControls) additionally greys the gated rows out at open time — the
- * labels recorded in GVAR(gatedLabels) (displayType -> row labels, true = all
- * rows) are its lookup table.
+ * FUNC(lockControls) additionally greys the gated rows out at open time — it
+ * recognizes them by the wrapped statement code recorded in
+ * GVAR(gatedStatements) (ZEN stores each row's statement next to its controls
+ * group on the display).
  *
  * The one exception is the vehicle Damage button (zen_damage hitpoint editor):
  * it opens its own display whose apply path cannot be statement-wrapped, so
@@ -45,8 +46,9 @@ if (isNil "_displays") exitWith {
     WARNING("ZEN attribute display registry missing, attribute gate not installed.");
 };
 
-// displayType -> gated row labels (true = every row), read by FUNC(lockControls)
-GVAR(gatedLabels) = createHashMap;
+// Every statement wrapped below, read by FUNC(lockControls) to recognize
+// gated rows on an open attribute window
+GVAR(gatedStatements) = [];
 
 // _labels: array of display names to match, or true to wrap every entry.
 // Original statements read _entity/_value from ZEN's confirm scope; nested
@@ -57,13 +59,12 @@ private _fnc_wrapStatements = {
     {
         if (_labels isEqualTo true || {(_x select 0) in _labels}) then {
             private _orig = _x select 4;
-            _x set [
-                4,
-                compile format [
-                    "if (_entity call %1) then {call %2} else {call %3}",
-                    QFUNC(canEditSelection), str _orig, QFUNC(showBlocked)
-                ]
+            private _wrapped = compile format [
+                "if (_entity call %1) then {call %2} else {call %3}",
+                QFUNC(canEditSelection), str _orig, QFUNC(showBlocked)
             ];
+            _x set [4, _wrapped];
+            GVAR(gatedStatements) pushBack _wrapped;
         };
     } forEach _rows;
 };
@@ -93,7 +94,6 @@ private _skillLabel = localize "STR_3DEN_Object_Attribute_Skill_displayName";
     if (isNil "_data") then {continue};
 
     [_data select 2, _rowLabels] call _fnc_wrapStatements;
-    GVAR(gatedLabels) set [_type, _rowLabels];
 } forEach [
     ["Object", [
         _skillLabel,

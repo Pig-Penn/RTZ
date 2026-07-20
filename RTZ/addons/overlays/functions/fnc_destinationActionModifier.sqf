@@ -21,9 +21,9 @@
 params ["_action"];
 
 if (GVAR(destEnabled)) then {
-    _action set [1, LLSTRING(ActionHideDestinations)];
-    _action set [3, [0.40, 1.00, 0.40, 1]];   // green — currently on, will switch off
+    _action set [1, LLSTRING(ActionHideDestinations)]; // Off
+    _action set [3, [0.50, 0.50, 0.50, 1]]; // Grey
 } else {
-    _action set [1, LLSTRING(ActionDrawDestinations)];
-    _action set [3, [1, 1, 1, 1]];            // white — will switch on
+    _action set [1, LLSTRING(ActionDrawDestinations)]; // On
+    _action set [3, [1.00, 0.80, 0.40, 1]]; // Gold
 };

@@ -70,12 +70,13 @@ if (isNull _gunner || {!alive _gunner}) exitWith {
     [_curator, LLSTRING(Packed)] call FUNC(notifyCurator);
 };
 
-// One transient context var on the gunner: [state, assistant, curator, EH id]. SQF
-// arrays are by reference, so the EH id slot set below is seen by the stored copy.
-// "pending" until the event handler or the fallback claims the pack, the assistant
-// and curator ride along because the event handler's own scope can't capture them
-// from here
-private _ctx = ["pending", _assistant, _curator, -1];
+// One transient context var on the gunner: [state, assistant, curator, EH id, weapon].
+// SQF arrays are by reference, so the EH id slot set below is seen by the stored copy.
+// "pending" until the event handler or the fallback claims the pack, the assistant,
+// curator and weapon ride along because the event handler's own scope can't capture
+// them from here - and unlike WeaponAssembled, WeaponDisassembled doesn't pass the
+// static back as an argument, so the handler has no other way to reach it for cleanup
+private _ctx = ["pending", _assistant, _curator, -1, _weapon];
 _gunner setVariable [QGVAR(packCtx), _ctx];
 
 // Deterministic pack: delete the static and hand the bags back directly, no engine
@@ -160,6 +161,11 @@ private _eh = _gunner addEventHandler ["WeaponDisassembled", {
         if (!isNull _assistant && {!isNull _baseBagObject}) then {
             _assistant action ["TakeBag", _baseBagObject];
         };
+
+        // The engine's own action doesn't reliably remove the static once the gunner
+        // was dismounted ahead of it (see moveOut/leaveVehicle/unassignVehicle above) -
+        // clean it up here rather than trust the animation to do it
+        deleteVehicle (_ctx param [4, objNull]);
 
         [_unit, _assistant] call FUNC(finishPack);
     };

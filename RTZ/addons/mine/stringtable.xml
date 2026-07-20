@@ -2,10 +2,10 @@
 <Project name="RTZ">
     <Package name="Mine">
         <Key ID="STR_RTZ_Mine_ActionDisarm">
-            <English>Clear Mines</English>
+            <English>Demine</English>
         </Key>
         <Key ID="STR_RTZ_Mine_ActionPlace">
-            <English>Place Mine</English>
+            <English>Mine</English>
         </Key>
         <Key ID="STR_RTZ_Mine_ClearHidden">
             <English>Clear Undetected Mines</English>
@@ -34,12 +34,6 @@
         <Key ID="STR_RTZ_Mine_MarkMap_Description">
             <English>Draw an icon on spotted mines on the Zeus map.</English>
         </Key>
-        <Key ID="STR_RTZ_Mine_MarkSide">
-            <English>Mine Spotting Side</English>
-        </Key>
-        <Key ID="STR_RTZ_Mine_MarkSide_Description">
-            <English>Mines detected by units of this side are marked in the Zeus interface.</English>
-        </Key>
         <Key ID="STR_RTZ_Mine_MaxDistance">
             <English>Marker Draw Distance</English>
         </Key>
@@ -51,24 +45,6 @@
         </Key>
         <Key ID="STR_RTZ_Mine_PlaceTimeout_Description">
             <English>Time in seconds a unit has to reach the ordered position before a place order expires.</English>
-        </Key>
-        <Key ID="STR_RTZ_Mine_SideAll">
-            <English>All Sides</English>
-        </Key>
-        <Key ID="STR_RTZ_Mine_SideBLUFOR">
-            <English>BLUFOR</English>
-        </Key>
-        <Key ID="STR_RTZ_Mine_SideCivilian">
-            <English>Civilian</English>
-        </Key>
-        <Key ID="STR_RTZ_Mine_SideIndependent">
-            <English>Independent</English>
-        </Key>
-        <Key ID="STR_RTZ_Mine_SideOPFOR">
-            <English>OPFOR</English>
-        </Key>
-        <Key ID="STR_RTZ_Mine_SidePlayer">
-            <English>Player's Side</English>
         </Key>
     </Package>
 </Project>

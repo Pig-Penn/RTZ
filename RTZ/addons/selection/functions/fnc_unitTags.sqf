@@ -9,8 +9,7 @@
  *
  * The line is assembled from the fields enabled in CBA settings (role, name,
  * health, morale, suppression, magazine rounds, status, LAMBS tactic, leader
- * intel) and drawn in a static colour — side-tinted when GVAR(tagSideColors)
- * is set, the normal tag colour otherwise — so urgency never recolours the
+ * intel) and drawn in a static colour so urgency never recolours the
  * whole line. Only the trailing status word (DOWN / FLEEING) gets its own
  * colour (red), rendered as a second drawIcon3D split at a measured
  * text-width boundary from the rest of the line (same screen-space
@@ -120,7 +119,7 @@ GVAR(tagCacheDirty) = true;
 GVAR(fnc_buildTagEntry) = {
     params ["_pkt"];
     _pkt params [
-        "", "_isLdr", "", "_role", "_sideNum", "_name",
+        "", "_isLdr", "", "_role", "", "_name",
         "_behaviour", "_state", "_cmd", "_morale", "_supp", "_flags", "_downed",
         "_task", "_tactic", ["_dangerType", -1], ["_dangerDist", -1], ["_dangerTimeout", -1],
         "_tgtType", ["_tgtVis", -1], ["_known", -1], ["_groupMem", -1], "_isLocal", ["_hp", 100], "",
@@ -173,13 +172,8 @@ GVAR(fnc_buildTagEntry) = {
     };
     _status = _labels getOrDefault [_status, _status];   // re-word DOWN/FLEEING/task
 
-    // Static colour — side tint when enabled, otherwise the normal tag colour.
     private _urgent = _downed || { "FLEEING" in _flags };
-    private _col = [COL_NORMAL, SIDE_TINTS select _sideNum] select GVAR(tagSideColors);
-    // Urgency wins over the side tint: when the unit is downed/fleeing the red
-    // status word carries the alarm, so the rest of the line drops back to the
-    // neutral colour instead of clashing red-on-red against a red side tint.
-    if (_urgent) then { _col = COL_NORMAL };
+    private _col = COL_NORMAL;
     private _statusCol = [_col, COL_BAD] select _urgent;
 
     private _mainText = _segs joinString " · ";
@@ -290,7 +284,7 @@ GVAR(fnc_buildTagEntry) = {
 // ── Runtime toggle (driven by the shared context menu entry) ────────────────
 GVAR(fnc_toggleTags) = {
     GVAR(tagsVisible) = !GVAR(tagsVisible);
-    [format ["Unit tags %1", ["hidden", "shown"] select GVAR(tagsVisible)]] call zen_common_fnc_showMessage;
+    [[LLSTRING(MsgUnitTagsHidden), LLSTRING(MsgUnitTagsShown)] select GVAR(tagsVisible)] call zen_common_fnc_showMessage;
 };
 
 // ── Draw pass ────────────────────────────────────────────────────────────────

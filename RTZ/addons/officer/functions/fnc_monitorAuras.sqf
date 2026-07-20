@@ -5,7 +5,10 @@
  * perFrameHandler (AURA_INTERVAL) shared by every aura. Each pass:
  *
  * 1. Prunes auras whose officer died or was deleted, clearing his public
- *    GVAR(auraActive) flag so client menus recover.
+ *    GVAR(auraActive) flag so client menus recover and broadcasting a
+ *    QGVAR(auraZone) removal so the map ring (FUNC(initCuratorDisplay)) does
+ *    not linger on a dead anchor — normal toggle-off already does this in
+ *    FUNC(applyAura); this is the death/delete path it can't reach.
  * 2. Builds the union of groups currently inside ANY aura. The zone is
  *    derived live from each officer's position — that is what makes the aura
  *    follow him for free. Only groups of the officer's own side count, and a
@@ -53,6 +56,7 @@ if (!isServer) exitWith {};
         if (isNull _officer || {!alive _officer}) then {
             if (!isNull _officer) then {SETPVAR(_officer,GVAR(auraActive),nil)};
             _gone pushBack _x;
+            [QGVAR(auraZone), ["remove", _x]] call CBA_fnc_globalEvent;
             continue;
         };
 

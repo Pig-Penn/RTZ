@@ -1,13 +1,19 @@
 private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 
-// All global (server-synced): these gate and bound what a curator's keybinds
-// may do, so every machine must agree on the limits
 [
-    QGVAR(enableUnitTeleport), "CHECKBOX",
-    [LSTRING(EnableUnitTeleport), LSTRING(EnableUnitTeleport_Description)],
+    QGVAR(enableCleanContextMenu), "CHECKBOX",
+    [LSTRING(CleanContextMenu), LSTRING(CleanContextMenu_Description)],
     _category,
     true,
-    true
+    false // Local
+] call CBA_fnc_addSetting;
+
+[
+    QGVAR(enableDeploySmoke), "CHECKBOX",
+    [LSTRING(DeploySmoke), LSTRING(DeploySmoke_Description)],
+    _category,
+    true,
+    true // Global
 ] call CBA_fnc_addSetting;
 
 [
@@ -15,7 +21,7 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     [LSTRING(TeleportRange), LSTRING(TeleportRange_Description)],
     _category,
     [10, 500, 100, 0],
-    true
+    true // Global
 ] call CBA_fnc_addSetting;
 
 [
@@ -23,7 +29,7 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     [LSTRING(TeleportCooldown), LSTRING(TeleportCooldown_Description)],
     _category,
     [0, 60, 10, 0],
-    true
+    true // Global
 ] call CBA_fnc_addSetting;
 
 [
@@ -31,32 +37,5 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     [LSTRING(HeliHeightStep), LSTRING(HeliHeightStep_Description)],
     _category,
     [1, 10, 5, 0],
-    true
-] call CBA_fnc_addSetting;
-
-// Client-side: removes ZEN's own entries from THIS curator's menu only.
-[
-    QGVAR(enableCleanContextMenu), "CHECKBOX",
-    [LSTRING(CleanContextMenu), LSTRING(CleanContextMenu_Description)],
-    _category,
-    true,
-    0
-] call CBA_fnc_addSetting;
-
-// Global: the fire handler runs where each vehicle is local.
-[
-    QGVAR(enableDeploySmoke), "CHECKBOX",
-    [LSTRING(DeploySmoke), LSTRING(DeploySmoke_Description)],
-    _category,
-    false,
-    true
-] call CBA_fnc_addSetting;
-
-// Client-side: the gear dialog is a purely local UI action.
-[
-    QGVAR(enableUnitInventory), "CHECKBOX",
-    [LSTRING(UnitInventory), LSTRING(UnitInventory_Description)],
-    _category,
-    true,
-    0
+    false // Local
 ] call CBA_fnc_addSetting;

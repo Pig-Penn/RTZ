@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Selection">
+        <Key ID="STR_RTZ_Selection_ActionBehavior">
+            <English>Behavior</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_ActionDrawTags">
+            <English>Draw Tags</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_ActionHideTags">
+            <English>Hide Tags</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_ActionVehCardsFull">
+            <English>Vehicle Cards: FULL</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_ActionVehCardsMin">
+            <English>Vehicle Cards: MIN</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_CardCommander">
+            <English>CDR</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_CardFuel">
+            <English>FUEL</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_CardHull">
+            <English>HULL</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_CategoryDogTags">
+            <English>Dog Tags</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_CategoryOverlays">
+            <English>Overlays</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_CategoryVehicleTags">
+            <English>Vehicle Tags</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_EnableSelectionInfo">
+            <English>Selection Info</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_EnableSelectionInfo_Description">
+            <English>Show unit state panel (behaviour, morale, suppression, LAMBS task) when infantry is selected in Zeus.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_EnableUnitTags">
+            <English>Dog Tags</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_EnableUnitTags_Description">
+            <English>Show a small floating status tag above each selected infantry unit in Zeus. Requires Selection Info enabled. Toggle in-mission via the RTZ context menu.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_EnableVehicleOverlay">
+            <English>Vehicle Overlay</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_EnableVehicleOverlay_Description">
+            <English>Show stat cards (speed, fuel, ammo, crew, LAMBS task) for selected vehicles in Zeus. Requires Selection Info enabled.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_EnableVehicleTags">
+            <English>Vehicle Tags</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_EnableVehicleTags_Description">
+            <English>Show a small floating status tag above each selected vehicle in Zeus. Requires Selection Info enabled. Toggle in-mission via the RTZ context menu.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_MsgNoUnitsSelected">
+            <English>No units selected</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_MsgTagsHidden">
+            <English>Tags hidden</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_MsgTagsShown">
+            <English>Tags shown</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_MsgUnitTagsHidden">
+            <English>Unit tags hidden</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_MsgUnitTagsShown">
+            <English>Unit tags shown</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_MsgVehicleTagsHidden">
+            <English>Vehicle tags hidden</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_MsgVehicleTagsShown">
+            <English>Vehicle tags shown</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagHeight">
+            <English>Tag Height</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagHeight_Description">
+            <English>Metres above the unit's head.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagMaxDistance">
+            <English>Tag Draw Distance</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagMaxDistance_Description">
+            <English>Camera distance, in metres, beyond which tags fade out.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowAmmo">
+            <English>Show Ammo</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowAmmo_Description">
+            <English>Include rounds left in the current primary-weapon magazine.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowFlagIcon">
+            <English>Show Flag Icon</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowFlagIcon_Description">
+            <English>Show a flag icon at the right end of the tag when the unit carries status flags (WOUNDED, HIDDEN, BUSY, PATH OFF, ...). Hover the Zeus cursor over it to list them.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowHealth">
+            <English>Show Health</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowHealth_Description">
+            <English>Include HP percentage (only shown when below 100).</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowIntel">
+            <English>Show Leader Intel</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowIntel_Description">
+            <English>Include known-enemy and group-memory counts (leader's tag only).</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowMorale">
+            <English>Show Morale</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowMorale_Description">
+            <English>Include morale percentage.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowName">
+            <English>Show Name</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowName_Description">
+            <English>Include the unit's name.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowRole">
+            <English>Show Role</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowRole_Description">
+            <English>Include the unit's role (class display name).</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowStateIcon">
+            <English>Show AI State Icon</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowStateIcon_Description">
+            <English>Show a small icon left of the tag for the unit's behaviour/combat mode (mirrors the selection dialog's icon). Hover to see behaviour, state, and current command.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowStatus">
+            <English>Show Status</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowStatus_Description">
+            <English>Include the current LAMBS task. DOWN / FLEEING always shows regardless.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowSuppression">
+            <English>Show Suppression</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowSuppression_Description">
+            <English>Include suppression percentage while the unit is suppressed.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowTactic">
+            <English>Show Tactic</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowTactic_Description">
+            <English>Include the group's current LAMBS tactic (leader's tag only).</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowThreatIcon">
+            <English>Show Threat Icon</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowThreatIcon_Description">
+            <English>Show a danger or target-lock icon right of the tag (danger cause wins over a target lock). Hover for the full detail.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagSize">
+            <English>Tag Size</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagSize_Description">
+            <English>Text size of the unit tags.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagHeight">
+            <English>Tag Height</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagHeight_Description">
+            <English>Metres above the vehicle.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagMaxDistance">
+            <English>Tag Draw Distance</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagMaxDistance_Description">
+            <English>Camera distance (metres) beyond which vehicle tags fade out.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowAmmo">
+            <English>Show Ammo</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowAmmo_Description">
+            <English>Include rounds left in the crew's currently selected weapon.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowCommander">
+            <English>Show Commander</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowCommander_Description">
+            <English>Include the effective commander's name.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowCrew">
+            <English>Show Crew</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowCrew_Description">
+            <English>Include aboard/total seat counts.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowFlyHeight">
+            <English>Show Fly Height</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowFlyHeight_Description">
+            <English>Include a helicopter's commanded AI fly-in height (set with the fly-height keybinds). Only shown once ordered.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowFuel">
+            <English>Show Fuel</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowFuel_Description">
+            <English>Include fuel percentage (only shown when below 100).</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowHull">
+            <English>Show Hull</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowHull_Description">
+            <English>Include hull integrity percentage (only shown when below 100).</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowName">
+            <English>Show Name</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowName_Description">
+            <English>Include the vehicle's name (class display name).</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowSpeed">
+            <English>Show Speed</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowSpeed_Description">
+            <English>Include the current speed (only shown while moving).</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowStatus">
+            <English>Show Status</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowStatus_Description">
+            <English>Include the crew's current LAMBS task. LOW FUEL / DAMAGED warnings always show regardless.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowTactic">
+            <English>Show Tactic</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagShowTactic_Description">
+            <English>Include the crew group's current LAMBS tactic.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagSize">
+            <English>Tag Size</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagSize_Description">
+            <English>Text size of the vehicle tags.</English>
+        </Key>
+    </Package>
+</Project>

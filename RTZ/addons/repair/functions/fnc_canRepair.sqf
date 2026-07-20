@@ -21,6 +21,6 @@
 params ["_position", "_objects"];
 
 if (!GVAR(enabled)) exitWith {false};
-if ((_objects call FUNC(getRepairers)) isEqualTo []) exitWith {false};
+if (([_objects] call FUNC(getRepairers)) isEqualTo []) exitWith {false};
 
 !isNull ([_position] call FUNC(findVehicle))

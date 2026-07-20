@@ -2,6 +2,7 @@ PREP(applyArea);
 PREP(applyAura);
 PREP(auraApply);
 PREP(getOfficers);
+PREP(initCuratorDisplay);
 PREP(isOnCooldown);
 PREP(isOfficer);
 PREP(modifyAction);

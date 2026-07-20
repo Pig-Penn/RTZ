@@ -27,6 +27,9 @@
  * 3: 3D icon texture drawn at the spot <STRING> (default: select target cursor)
  * 4: Icon color <ARRAY> (default: [1, 1, 1, 1])
  * 5: Allow rotation and report facing <BOOL> (default: false)
+ * 6: Hint text drawn under the icon <STRING> (default: the standard place/cancel
+ *    hint, picking up the rotate wording when rotation is on; "" draws no text,
+ *    for callers that want vanilla Zeus' silent ghost placement)
  *
  * Return Value:
  * None
@@ -100,7 +103,9 @@ private _keyEH = _display displayAddEventHandler ["KeyDown", {
     true
 }];
 
-private _hint = [LLSTRING(PreviewHint), LLSTRING(PreviewHintRotate)] select _allowRotate;
+// Read separately from params so an explicitly passed "" survives as "no text" —
+// the default has to be computed from _allowRotate, which params can't express
+private _hint = param [6, [LLSTRING(PreviewHint), LLSTRING(PreviewHintRotate)] select _allowRotate, [""]];
 
 // Per-frame: drive the helper to the cursor, draw feedback, finish on a result
 [{
@@ -140,8 +145,10 @@ private _hint = [LLSTRING(PreviewHint), LLSTRING(PreviewHintRotate)] select _all
             _helper setVectorUp _vectorUp;
         };
 
-        // Feedback marker + hint at the spot
-        drawIcon3D [_icon, _color, ASLToAGL getPosASL _helper, 1.2, 1.2, getDir _helper, _hint, 1, 0.03, "RobotoCondensed"];
+        // Feedback marker + hint at the spot. Drawn upright (angle 0) rather than
+        // spun to the ghost's facing — the ghost model already shows the direction,
+        // and a fixed icon reads like vanilla Zeus instead of a tumbling reticle
+        drawIcon3D [_icon, _color, ASLToAGL getPosASL _helper, 1.2, 1.2, 0, _hint, 1, 0.03, "RobotoCondensed"];
     };
 
     // Finish: click confirmed, Escape cancelled, or the Zeus display went away

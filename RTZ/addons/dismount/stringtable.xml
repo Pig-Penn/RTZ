@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Dismount">
+        <Key ID="STR_RTZ_Dismount_ActionAllowDismount">
+            <English>Allow Dismount</English>
+        </Key>
+        <Key ID="STR_RTZ_Dismount_ActionForbidDismount">
+            <English>Forbid Dismount</English>
+        </Key>
         <Key ID="STR_RTZ_Dismount_DismountControl">
             <English>Dismount Control</English>
         </Key>

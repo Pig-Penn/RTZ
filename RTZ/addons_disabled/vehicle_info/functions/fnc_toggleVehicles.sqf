@@ -18,7 +18,7 @@
 
 params [["_objects", [], [[]]]];
 
-private _vehicles = _objects call FUNC(getVehicles);
+private _vehicles = [_objects] call FUNC(getVehicles);
 if (_vehicles isEqualTo []) exitWith {};
 
 private _enable = _vehicles findIf {!(_x getVariable [QGVAR(tracked), false])} != -1;

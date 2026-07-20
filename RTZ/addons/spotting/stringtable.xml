@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Spotting">
+        <Key ID="STR_RTZ_Spotting_ActionHideChevrons">
+            <English>Hide Chevrons</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_ActionShowChevrons">
+            <English>Show Chevrons</English>
+        </Key>
         <Key ID="STR_RTZ_Spotting_CheckInterval">
             <English>Spotting Interval</English>
         </Key>
@@ -11,7 +17,7 @@
             <English>Chevron Names</English>
         </Key>
         <Key ID="STR_RTZ_Spotting_ChevronNames_Description">
-            <English>Show unit display names when hovering near a chevron within 50 m. Disable to hide names entirely.</English>
+            <English>Show a unit's display name when hovering your mouse near a chevron.</English>
         </Key>
         <Key ID="STR_RTZ_Spotting_DisplayName">
             <English>Spotting</English>
@@ -27,6 +33,12 @@
         </Key>
         <Key ID="STR_RTZ_Spotting_EnableSpotting_Description">
             <English>Show enemies detected by your AI units as world icons in the Zeus interface, with radio contact reports on first sighting.</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_MsgChevronsHidden">
+            <English>Chevrons hidden</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_MsgChevronsShown">
+            <English>Chevrons shown</English>
         </Key>
     </Package>
 </Project>

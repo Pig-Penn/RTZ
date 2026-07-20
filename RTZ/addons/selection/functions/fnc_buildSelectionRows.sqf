@@ -146,7 +146,7 @@ private _fnc_groupDesc = {
 private _header = "";
 switch (true) do {
     case (_totalUnits == 0): {
-        _header = "No units selected";
+        _header = LLSTRING(MsgNoUnitsSelected);
     };
     case (_numGroups == 0): {
         _header = format ["Awaiting data%1%2 unit%3",
@@ -192,7 +192,7 @@ private _keys = [];
             "_behaviour", "_state", "_cmd", "_morale", "_supp", "_flags", "_downed",
             "_task", "_tactic", "_dangerType", "_dangerDist", "_dangerTimeout",
             "_tgtType", "_tgtVis", "_known", "_groupMem", "_isLocal",
-            ["_hp", 100], ["_stance", ""], "", ["_ammo", -1]
+            ["_hp", 100], "", "", ""
         ];
 
         // "»" leader marker — NOT "★": the star glyph is outside the Windows-1252
@@ -280,12 +280,7 @@ private _keys = [];
             };
 
             // ── Full LAMBS-style detail, packed into the hover tooltip ──
-            _tip = _tip + format ["\nHealth %1%%%2%3",
-                _hp,
-                ["", format ["   Stance %1", _stance]] select (_stance != "" && { _stance != "UNDEFINED" }),
-                ["", format ["   Mag %1 rnd", _ammo]] select (_ammo >= 0)];
-            _tip = _tip + format ["\nBehaviour %1   State %2",
-                _behaviour, [_state, "—"] select (_state == "")];
+            _tip = _tip + format ["\nState %1", [_state, "—"] select (_state == "")];
             _tip = _tip + format ["\nTask %1", [_task, "—"] select (_task == "")];
             if (_isLdr && { _tactic != "" }) then {
                 _tip = _tip + format ["   Tactic %1", _tactic];

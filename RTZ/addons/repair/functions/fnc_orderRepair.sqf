@@ -20,7 +20,7 @@
 
 params ["_position", "_objects"];
 
-private _units = _objects call FUNC(getRepairers);
+private _units = [_objects] call FUNC(getRepairers);
 if (_units isEqualTo []) exitWith {};
 
 private _vehicle = [_position] call FUNC(findVehicle);

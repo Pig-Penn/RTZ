@@ -2,7 +2,7 @@
 <Project name="RTZ">
     <Package name="Attack">
         <Key ID="STR_RTZ_Attack_ActionDestroy">
-            <English>Destroy Target</English>
+            <English>Attack</English>
         </Key>
         <Key ID="STR_RTZ_Attack_NoTarget">
             <English>No Target</English>

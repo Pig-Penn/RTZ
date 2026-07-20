@@ -21,9 +21,9 @@
 params ["_action"];
 
 if (GVAR(tgtEnabled)) then {
-    _action set [1, LLSTRING(ActionHideTargets)];
-    _action set [3, [0.40, 1.00, 0.40, 1]];   // green — currently on, will switch off
+    _action set [1, LLSTRING(ActionHideTargets)]; // Off
+    _action set [3, [0.50, 0.50, 0.50, 1]]; // Grey
 } else {
-    _action set [1, LLSTRING(ActionDrawTargets)];
-    _action set [3, [1, 1, 1, 1]];            // white — will switch on
+    _action set [1, LLSTRING(ActionDrawTargets)]; // On
+    _action set [3, [0.5, 0, 0, 1]]; // Red
 };

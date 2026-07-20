@@ -1,8 +1,5 @@
 private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 
-// All settings are global (server-synced): the server registers the apply
-// handlers based on the enable flags, and every curator should agree on zone
-// size/behavior.
 [
     QGVAR(enable), "CHECKBOX",
     [LSTRING(Enable), LSTRING(Enable_Description)],

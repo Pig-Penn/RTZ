@@ -2,10 +2,10 @@
 <Project name="RTZ">
     <Package name="Control">
         <Key ID="STR_RTZ_Control_ActionDisableSimulation">
-            <English>Disable Simulation</English>
+            <English>Dissimulate</English>
         </Key>
         <Key ID="STR_RTZ_Control_ActionEnableSimulation">
-            <English>Enable Simulation</English>
+            <English>Simulate</English>
         </Key>
         <Key ID="STR_RTZ_Control_ActionReload">
             <English>Reload</English>
@@ -26,10 +26,10 @@
             <English>Reset</English>
         </Key>
         <Key ID="STR_RTZ_Control_MsgSimulationDisabled">
-            <English>Disabled simulation</English>
+            <English>Simulation Disabled</English>
         </Key>
         <Key ID="STR_RTZ_Control_MsgSimulationEnabled">
-            <English>Enabled simulation</English>
+            <English>Simulation Enabled</English>
         </Key>
         <Key ID="STR_RTZ_Control_ReloadSquad">
             <English>Reload Squad</English>

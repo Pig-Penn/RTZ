@@ -18,7 +18,7 @@
 
 params [["_objects", [], [[]]]];
 
-private _units = _objects call FUNC(getUnits);
+private _units = [_objects] call FUNC(getUnits);
 if (_units isEqualTo []) exitWith {};
 
 private _enable = _units findIf {!(_x getVariable [QGVAR(tracked), false])} != -1;

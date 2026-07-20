@@ -18,25 +18,7 @@
 
 if (!GVAR(mark3D) && {!GVAR(markMap)}) exitWith {GVAR(mines) = []};
 
-private _sides = switch (GVAR(markSide)) do {
-    case "west": {[west]};
-    case "east": {[east]};
-    case "independent": {[independent]};
-    case "civilian": {[civilian]};
-    case "all": {[west, east, independent, civilian]};
-    default {[side group player]};
-};
-
-private _mines = [];
-
-{
-    _mines append detectedMines _x;
-} forEach _sides;
-
-// Mines spotted by several sides appear once per side
-if (count _sides > 1) then {
-    _mines = _mines arrayIntersect _mines;
-};
+private _mines = detectedMines (side group player);
 
 GVAR(mines) = (_mines select {mineActive _x}) apply {
     private _pos = ASLToAGL getPosASL _x;

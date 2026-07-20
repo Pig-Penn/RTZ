@@ -3,11 +3,15 @@
 // master switch takes effect at mission start (postInit gate); flipping it
 // mid-mission still shows/hides tags via the CBA_SettingChanged sync.
 
+private _catTags     = [ELSTRING(main,DisplayName), LSTRING(CategoryDogTags)];
+private _catVehTags  = [ELSTRING(main,DisplayName), LSTRING(CategoryVehicleTags)];
+private _catOverlays = [ELSTRING(main,DisplayName), LSTRING(CategoryOverlays)];
+
 [
     QGVAR(enableUnitTags),
     "CHECKBOX",
-    ["Dog Tags", "Show a small floating status tag above each selected infantry unit in Zeus. Requires Selection Info enabled. Toggle in-mission via the RTZ context menu."],
-    ["Real-Time Zeus", "Dog Tags"],
+    [LSTRING(EnableUnitTags), LSTRING(EnableUnitTags_Description)],
+    _catTags,
     true,
     0
 ] call CBA_fnc_addSetting;
@@ -16,30 +20,29 @@
     _x params ["_name", "_title", "_tooltip", "_default"];
     [
         _name, "CHECKBOX", [_title, _tooltip],
-        ["Real-Time Zeus", "Dog Tags"],
+        _catTags,
         _default, 0
     ] call CBA_fnc_addSetting;
 } forEach [
-    [QGVAR(tagShowRole),        "Show Role",        "Include the unit's role (class display name).", false],
-    [QGVAR(tagShowName),        "Show Name",        "Include the unit's name.", false],
-    [QGVAR(tagShowHealth),      "Show Health",      "Include HP percentage (only shown when below 100).", true],
-    [QGVAR(tagShowMorale),      "Show Morale",      "Include morale percentage.", false],
-    [QGVAR(tagShowSuppression), "Show Suppression", "Include suppression percentage while the unit is suppressed.", false],
-    [QGVAR(tagShowAmmo),        "Show Ammo",        "Include rounds left in the current primary-weapon magazine.", false],
-    [QGVAR(tagShowStatus),      "Show Status",      "Include the current LAMBS task. DOWN / FLEEING always shows regardless.", true],
-    [QGVAR(tagShowTactic),      "Show Tactic",      "Include the group's current LAMBS tactic (leader's tag only).", true],
-    [QGVAR(tagShowIntel),       "Show Leader Intel","Include known-enemy and group-memory counts (leader's tag only).", false],
-    [QGVAR(tagShowFlagIcon),    "Show Flag Icon",   "Show a flag icon at the right end of the tag when the unit carries status flags (WOUNDED, HIDDEN, BUSY, PATH OFF, ...). Hover the Zeus cursor over it to list them.", true],
-    [QGVAR(tagShowStateIcon),   "Show AI State Icon","Show a small icon left of the tag for the unit's behaviour/combat mode (mirrors the selection dialog's icon). Hover to see behaviour, state, and current command.", false],
-    [QGVAR(tagShowThreatIcon),  "Show Threat Icon", "Show a danger or target-lock icon right of the tag (danger cause wins over a target lock). Hover for the full detail.", false],
-    [QGVAR(tagSideColors),      "Side Colors",      "Tint calm units' tags with their side colour instead of white. Urgency colours (amber/red) always win.", false]
+    [QGVAR(tagShowRole),        LSTRING(TagShowRole),        LSTRING(TagShowRole_Description),        false],
+    [QGVAR(tagShowName),        LSTRING(TagShowName),        LSTRING(TagShowName_Description),        false],
+    [QGVAR(tagShowHealth),      LSTRING(TagShowHealth),      LSTRING(TagShowHealth_Description),       true],
+    [QGVAR(tagShowMorale),      LSTRING(TagShowMorale),      LSTRING(TagShowMorale_Description),       false],
+    [QGVAR(tagShowSuppression), LSTRING(TagShowSuppression), LSTRING(TagShowSuppression_Description),  false],
+    [QGVAR(tagShowAmmo),        LSTRING(TagShowAmmo),        LSTRING(TagShowAmmo_Description),         false],
+    [QGVAR(tagShowStatus),      LSTRING(TagShowStatus),      LSTRING(TagShowStatus_Description),       true],
+    [QGVAR(tagShowTactic),      LSTRING(TagShowTactic),      LSTRING(TagShowTactic_Description),       true],
+    [QGVAR(tagShowIntel),       LSTRING(TagShowIntel),       LSTRING(TagShowIntel_Description),        false],
+    [QGVAR(tagShowFlagIcon),    LSTRING(TagShowFlagIcon),    LSTRING(TagShowFlagIcon_Description),     false],
+    [QGVAR(tagShowStateIcon),   LSTRING(TagShowStateIcon),   LSTRING(TagShowStateIcon_Description),    false],
+    [QGVAR(tagShowThreatIcon),  LSTRING(TagShowThreatIcon),  LSTRING(TagShowThreatIcon_Description),   false]
 ];
 
 [
     QGVAR(tagSize),
     "SLIDER",
-    ["Tag Size", "Text size of the unit tags."],
-    ["Real-Time Zeus", "Dog Tags"],
+    [LSTRING(TagSize), LSTRING(TagSize_Description)],
+    _catTags,
     [0.02, 0.05, 0.03, 3],
     0
 ] call CBA_fnc_addSetting;
@@ -47,8 +50,8 @@
 [
     QGVAR(tagHeight),
     "SLIDER",
-    ["Tag Height", "Metres above the unit's head."],
-    ["Real-Time Zeus", "Dog Tags"],
+    [LSTRING(TagHeight), LSTRING(TagHeight_Description)],
+    _catTags,
     [0, 2, 0.5, 2],
     0
 ] call CBA_fnc_addSetting;
@@ -56,9 +59,9 @@
 [
     QGVAR(tagMaxDistance),
     "SLIDER",
-    ["Tag Draw Distance", "Camera distance, in metres, beyond which tags fade out."],
-    ["Real-Time Zeus", "Dog Tags"],
-    [200, 5000, 1500, 0],
+    [LSTRING(TagMaxDistance), LSTRING(TagMaxDistance_Description)],
+    _catTags,
+    [100, 500, 200, 0],
     0
 ] call CBA_fnc_addSetting;
 
@@ -70,8 +73,8 @@
 [
     QGVAR(enableVehicleTags),
     "CHECKBOX",
-    ["Vehicle Tags", "Show a small floating status tag above each selected vehicle in Zeus. Requires Selection Info enabled. Toggle in-mission via the RTZ context menu."],
-    ["Real-Time Zeus", "Vehicle Tags"],
+    [LSTRING(EnableVehicleTags), LSTRING(EnableVehicleTags_Description)],
+    _catVehTags,
     true,
     0
 ] call CBA_fnc_addSetting;
@@ -80,28 +83,27 @@
     _x params ["_name", "_title", "_tooltip", "_default"];
     [
         _name, "CHECKBOX", [_title, _tooltip],
-        ["Real-Time Zeus", "Vehicle Tags"],
+        _catVehTags,
         _default, 0
     ] call CBA_fnc_addSetting;
 } forEach [
-    [QGVAR(vtagShowName),      "Show Name",       "Include the vehicle's name (class display name).", false],
-    [QGVAR(vtagShowSpeed),     "Show Speed",      "Include the current speed (only shown while moving).", true],
-    [QGVAR(vtagShowCrew),      "Show Crew",       "Include aboard/total seat counts.", true],
-    [QGVAR(vtagShowFuel),      "Show Fuel",       "Include fuel percentage (only shown when below 100).", false],
-    [QGVAR(vtagShowHull),      "Show Hull",       "Include hull integrity percentage (only shown when below 100).", true],
-    [QGVAR(vtagShowFlyHeight), "Show Fly Height", "Include a helicopter's commanded AI fly-in height (set with the fly-height keybinds). Only shown once ordered.", true],
-    [QGVAR(vtagShowAmmo),      "Show Ammo",       "Include rounds left in the crew's currently selected weapon.", false],
-    [QGVAR(vtagShowCommander), "Show Commander",  "Include the effective commander's name.", false],
-    [QGVAR(vtagShowStatus),    "Show Status",     "Include the crew's current LAMBS task. LOW FUEL / DAMAGED warnings always show regardless.", true],
-    [QGVAR(vtagShowTactic),    "Show Tactic",     "Include the crew group's current LAMBS tactic.", true],
-    [QGVAR(vtagSideColors),    "Side Colors",     "Tint tags with the vehicle's side colour instead of white. Warning colours (amber/red) always win.", false]
+    [QGVAR(vtagShowName),      LSTRING(VtagShowName),      LSTRING(VtagShowName_Description),      false],
+    [QGVAR(vtagShowSpeed),     LSTRING(VtagShowSpeed),     LSTRING(VtagShowSpeed_Description),      true],
+    [QGVAR(vtagShowCrew),      LSTRING(VtagShowCrew),      LSTRING(VtagShowCrew_Description),       true],
+    [QGVAR(vtagShowFuel),      LSTRING(VtagShowFuel),      LSTRING(VtagShowFuel_Description),      false],
+    [QGVAR(vtagShowHull),      LSTRING(VtagShowHull),      LSTRING(VtagShowHull_Description),       true],
+    [QGVAR(vtagShowFlyHeight), LSTRING(VtagShowFlyHeight), LSTRING(VtagShowFlyHeight_Description),  true],
+    [QGVAR(vtagShowAmmo),      LSTRING(VtagShowAmmo),      LSTRING(VtagShowAmmo_Description),      false],
+    [QGVAR(vtagShowCommander), LSTRING(VtagShowCommander), LSTRING(VtagShowCommander_Description), false],
+    [QGVAR(vtagShowStatus),    LSTRING(VtagShowStatus),    LSTRING(VtagShowStatus_Description),     true],
+    [QGVAR(vtagShowTactic),    LSTRING(VtagShowTactic),    LSTRING(VtagShowTactic_Description),     true]
 ];
 
 [
     QGVAR(vtagSize),
     "SLIDER",
-    ["Tag Size", "Text size of the vehicle tags."],
-    ["Real-Time Zeus", "Vehicle Tags"],
+    [LSTRING(VtagSize), LSTRING(VtagSize_Description)],
+    _catVehTags,
     [0.02, 0.05, 0.03, 3],
     0
 ] call CBA_fnc_addSetting;
@@ -109,8 +111,8 @@
 [
     QGVAR(vtagHeight),
     "SLIDER",
-    ["Tag Height", "Metres above the vehicle."],
-    ["Real-Time Zeus", "Vehicle Tags"],
+    [LSTRING(VtagHeight), LSTRING(VtagHeight_Description)],
+    _catVehTags,
     [0, 6, 2.5, 2],
     0
 ] call CBA_fnc_addSetting;
@@ -118,8 +120,8 @@
 [
     QGVAR(vtagMaxDistance),
     "SLIDER",
-    ["Tag Draw Distance", "Camera distance (metres) beyond which vehicle tags fade out."],
-    ["Real-Time Zeus", "Vehicle Tags"],
+    [LSTRING(VtagMaxDistance), LSTRING(VtagMaxDistance_Description)],
+    _catVehTags,
     [200, 5000, 1500, 0],
     0
 ] call CBA_fnc_addSetting;
@@ -127,8 +129,8 @@
 [
     QGVAR(enableSelectionInfo),
     "CHECKBOX",
-    ["Selection Info", "Show unit state panel (behaviour, morale, suppression, LAMBS task) when infantry is selected in Zeus."],
-    ["Real-Time Zeus", "Overlays"],
+    [LSTRING(EnableSelectionInfo), LSTRING(EnableSelectionInfo_Description)],
+    _catOverlays,
     true,
     0
 ] call CBA_fnc_addSetting;
@@ -136,8 +138,8 @@
 [
     QGVAR(enableVehicleOverlay),
     "CHECKBOX",
-    ["Vehicle Overlay", "Show stat cards (speed, fuel, ammo, crew, LAMBS task) for selected vehicles in Zeus. Requires Selection Info enabled."],
-    ["Real-Time Zeus", "Overlays"],
+    [LSTRING(EnableVehicleOverlay), LSTRING(EnableVehicleOverlay_Description)],
+    _catOverlays,
     false,
     0
 ] call CBA_fnc_addSetting;

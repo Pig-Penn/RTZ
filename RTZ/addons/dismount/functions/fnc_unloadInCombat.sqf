@@ -90,15 +90,3 @@
         };
     };
 }] call CBA_fnc_addEventHandler;
-
-if (!hasInterface) exitWith {};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// INTERFACE MACHINES — context action (curator-facing)
-// The helper functions (collectVehicles, setUnloadInCombat, toggleUnloadInCombat,
-// dismountContext, dismountActionModifier) are compiled via PREP and called
-// here by name rather than defined inline; feedback toasts go through
-// zen_common_fnc_showMessage.
-// ─────────────────────────────────────────────────────────────────────────────
-
-[] call FUNC(dismountContext);

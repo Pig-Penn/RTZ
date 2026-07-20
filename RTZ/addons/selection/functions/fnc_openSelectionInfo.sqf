@@ -24,7 +24,7 @@
 #define ZEN_IDC_ROW_LIST  1003
 
 if (isNil QGVAR(selCurrent) || { count GVAR(selCurrent) == 0 }) exitWith {
-    ["No units selected"] call zen_common_fnc_showMessage;
+    [LLSTRING(MsgNoUnitsSelected)] call zen_common_fnc_showMessage;
 };
 
 // Don't stack a second dialog on top of an open one.
@@ -58,7 +58,7 @@ private _visRows = (((count _rows) max 6) min _maxRows) max 3;
 // does not set _forEachIndex (only `forEach` does), so the values come back nil
 // and zen_dialog_fnc_create aborts with "could not find default value".
 private _created = [
-    "Selection Info",
+    LLSTRING(EnableSelectionInfo),
     [["LIST", _header, [[], _labels, 0, _visRows, false], true]],
     { GVAR(selDialogOpen) = false },
     { GVAR(selDialogOpen) = false },

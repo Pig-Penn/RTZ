@@ -45,4 +45,4 @@ if (netId _officer in GVAR(areas)) exitWith {
 
 _action set [1, LLSTRING(ActionAuraAdd)];
 _action set [2, ICON_ADD];
-_action set [3, COLOR_ADD];
+_action set [3, COLOR_ADD_AURA];

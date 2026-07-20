@@ -14,7 +14,6 @@ All other Arma 3 mods that are developed and structured correctly can be utilize
 
 ## Environment & Verification
 
-- **Arma 3 is NOT installed on this development machine.** The game runs on a separate computer; changes cannot be tested in-game here. Never claim in-game behavior was verified — `hemtt check` is the only verification available locally.
 - A Stop hook (`.claude/settings.json`) runs `hemtt check` automatically at the end of every session and blocks with the error output if it fails. Fix any reported errors before finishing.
 - Building/linting uses [HEMTT](https://hemtt.dev) (installed via winget, on PATH): `hemtt check`
 

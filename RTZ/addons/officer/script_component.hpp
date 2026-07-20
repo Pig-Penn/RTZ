@@ -18,11 +18,15 @@
 #define COOLDOWN_DURATION 15
 
 // Seconds between hold/release passes of FUNC(monitorAuras) (server-side)
-#define AURA_INTERVAL 3
+#define AURA_INTERVAL 5
 
 // Context-menu icon and tint per toggle state
 #define ICON_ADD "\x\zen\addons\context_actions\ui\add_ca.paa"
 #define ICON_REMOVE "\x\zen\addons\context_actions\ui\remove_ca.paa"
-#define COLOR_ADD [0.4, 1, 0.4, 1]
+#define COLOR_ADD_ZONE [0.4, 1, 0.4, 1]
+#define COLOR_ADD_AURA [0.3, 0.7, 0.7, 1]
 #define COLOR_REMOVE [1, 0.55, 0.61, 1]
 #define COLOR_COOLDOWN [0.6, 0.6, 0.6, 1]
+
+// Command-aura radius ring drawn on the Zeus map (FUNC(initCuratorDisplay))
+#define COLOR_AURA_RING [0.3, 0.7, 0.7, 0.85]

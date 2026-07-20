@@ -25,13 +25,13 @@ GVAR(fnc_toggleAllTags) = {
     private _newVis = !(GETGVAR(tagsVisible,false) || { GETGVAR(vtagsVisible,false) });
     if (!isNil QGVAR(tagsVisible))  then { GVAR(tagsVisible)  = _newVis };
     if (!isNil QGVAR(vtagsVisible)) then { GVAR(vtagsVisible) = _newVis };
-    [format ["Tags %1", ["hidden", "shown"] select _newVis]] call zen_common_fnc_showMessage;
+    [[LLSTRING(MsgTagsHidden), LLSTRING(MsgTagsShown)] select _newVis] call zen_common_fnc_showMessage;
 };
 
 // ── ZEN context menu toggle (label/tint mirror the current state) ───────────
 private _action = [
     "RTZ_ToggleTags",
-    "Draw Tags",
+    LLSTRING(ActionDrawTags),
     ["\a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa", [1, 1, 1, 1]],
     { [] call GVAR(fnc_toggleAllTags) },
     { true },
@@ -43,13 +43,13 @@ private _action = [
         // the toggle above, which hides everything first.
         private _visible = GETGVAR(tagsVisible,false) || { GETGVAR(vtagsVisible,false) };
         if (_visible) then {
-            _action set [1, "Hide Tags"];
-            _action set [3, [1, 1, 1, 1]];
+            _action set [1, LLSTRING(ActionHideTags)]; // Off
+            _action set [3, [1, 1, 1, 1]]; // White
         } else {
-            _action set [1, "Draw Tags"];
-            _action set [3, [0.40, 1.00, 0.40, 1]];
+            _action set [1, LLSTRING(ActionDrawTags)]; // On
+            _action set [3, [0.50, 0.50, 0.50, 1]]; // Grey
         };
     }
 ] call zen_context_menu_fnc_createAction;
 
-[_action, ["RTZ_Overlays"], 6] call zen_context_menu_fnc_addAction;
+[_action, ["RTZ_Overlays"], 2] call zen_context_menu_fnc_addAction;

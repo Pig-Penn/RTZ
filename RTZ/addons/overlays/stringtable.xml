@@ -14,7 +14,7 @@
             <English>Hide Targets</English>
         </Key>
         <Key ID="STR_RTZ_Overlays_DestinationIconScaling">
-            <English>Destination Icon Scaling</English>
+            <English>Icon Scaling</English>
         </Key>
         <Key ID="STR_RTZ_Overlays_DestinationIconScaling_Description">
             <English>Scale the destination move icon with the unit's speed — larger the faster it moves (the LAMBS debug look). When off, the icon stays a fixed size.</English>

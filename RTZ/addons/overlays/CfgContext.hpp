@@ -9,7 +9,7 @@ class zen_context_menu_actions {
             statement = QUOTE(call FUNC(destinationToggle));
             condition = QUOTE(GVAR(enableDestinationDisplay));
             modifierFunction = QUOTE([_this select 0] call FUNC(destinationActionModifier));
-            priority = 3;
+            priority = 4;
         };
 
         class GVAR(toggleTarget) {

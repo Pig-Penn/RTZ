@@ -31,8 +31,15 @@ params ["_objects"];
 private _sets = [_objects] call FUNC(collectAssembleSets);
 if (_sets isEqualTo []) exitWith {};
 
+private _previewClass = (_sets select 0) select 1;
+
+// The static's own Zeus tree icon (the glyph shown next to its create-menu entry),
+// resolved live through ZEN's cache so the ghost reads like a normal Zeus placement
+// rather than a generic reticle
+private _previewIcon = [_previewClass] call zen_common_fnc_getVehicleIcon;
+
 [
-    (_sets select 0) select 1,
+    _previewClass,
     {
         params ["_confirmed", "_position", "_direction", "_sets"];
 
@@ -61,7 +68,8 @@ if (_sets isEqualTo []) exitWith {};
         [_message] call zen_common_fnc_showMessage;
     },
     _sets,
-    ICON_PREVIEW,
+    _previewIcon,
     COLOR_PREVIEW,
-    true
+    true,
+    ""  // no hint text — the ghost static alone, like vanilla Zeus placement
 ] call EFUNC(common,placementPreview);

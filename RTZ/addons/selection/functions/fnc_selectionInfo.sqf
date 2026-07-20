@@ -123,7 +123,7 @@ if (hasInterface) then {
     // ── Zeus Enhanced context menu action ──────────────────────────────────
     private _action = [
         "RTZ_ViewSelInfo",
-        "Behavior",
+        LLSTRING(ActionBehavior),
         ["\a3\ui_f\data\igui\cfg\simpletasks\types\intel_ca.paa", [1, 1, 1, 1]],
         { [] call FUNC(openSelectionInfo) },
         // Show-condition: ZEN lists the action when this returns true, so it

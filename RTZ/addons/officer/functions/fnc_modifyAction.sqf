@@ -52,5 +52,5 @@ if (_cooldown > 0) then {
 } else {
     _action set [1, LLSTRING(ActionAdd)];
     _action set [2, ICON_ADD];
-    _action set [3, COLOR_ADD];
+    _action set [3, COLOR_ADD_ZONE];
 };

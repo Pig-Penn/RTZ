@@ -2,7 +2,7 @@
 <Project name="RTZ">
     <Package name="Reverse">
         <Key ID="STR_RTZ_Reverse_DisplayName">
-            <English>Vehicle Reversing</English>
+            <English>Reversing</English>
         </Key>
         <Key ID="STR_RTZ_Reverse_ReverseToCursor">
             <English>Reverse to Cursor</English>
