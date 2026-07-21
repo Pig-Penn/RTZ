@@ -97,6 +97,12 @@
         <Key ID="STR_RTZ_Selection_TagShowAmmo_Description">
             <English>Include rounds left in the current primary-weapon magazine.</English>
         </Key>
+        <Key ID="STR_RTZ_Selection_TagShowCommand">
+            <English>Show Command</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagShowCommand_Description">
+            <English>Include the unit's current AI command (e.g. MOVE, ATTACK TARGET).</English>
+        </Key>
         <Key ID="STR_RTZ_Selection_TagShowFlagIcon">
             <English>Show Flag Icon</English>
         </Key>
@@ -109,35 +115,17 @@
         <Key ID="STR_RTZ_Selection_TagShowHealth_Description">
             <English>Include HP percentage (only shown when below 100).</English>
         </Key>
-        <Key ID="STR_RTZ_Selection_TagShowIntel">
-            <English>Show Leader Intel</English>
-        </Key>
-        <Key ID="STR_RTZ_Selection_TagShowIntel_Description">
-            <English>Include known-enemy and group-memory counts (leader's tag only).</English>
-        </Key>
         <Key ID="STR_RTZ_Selection_TagShowMorale">
             <English>Show Morale</English>
         </Key>
         <Key ID="STR_RTZ_Selection_TagShowMorale_Description">
             <English>Include morale percentage.</English>
         </Key>
-        <Key ID="STR_RTZ_Selection_TagShowName">
-            <English>Show Name</English>
-        </Key>
-        <Key ID="STR_RTZ_Selection_TagShowName_Description">
-            <English>Include the unit's name.</English>
-        </Key>
         <Key ID="STR_RTZ_Selection_TagShowRole">
             <English>Show Role</English>
         </Key>
         <Key ID="STR_RTZ_Selection_TagShowRole_Description">
             <English>Include the unit's role (class display name).</English>
-        </Key>
-        <Key ID="STR_RTZ_Selection_TagShowStateIcon">
-            <English>Show AI State Icon</English>
-        </Key>
-        <Key ID="STR_RTZ_Selection_TagShowStateIcon_Description">
-            <English>Show a small icon left of the tag for the unit's behaviour/combat mode (mirrors the selection dialog's icon). Hover to see behaviour, state, and current command.</English>
         </Key>
         <Key ID="STR_RTZ_Selection_TagShowStatus">
             <English>Show Status</English>

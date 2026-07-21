@@ -13,6 +13,13 @@
  * unit ride along in a bulk edit. Over-strict for unaffected bystanders in the
  * selection, but predictable: deselect what you don't mean to edit.
  *
+ * If the local curator has no editing areas active at all, the restriction
+ * never applies — editing stays free until at least one editing area exists.
+ * Checked against the engine's own curatorEditingArea rather than RTZ's
+ * officer-area tracking (EGVAR(officer,areas)) so this also recognizes areas
+ * added outside the officer context-menu system, e.g. a Curator Editing Area
+ * module placed directly in Eden and synced to the curator module.
+ *
  * Arguments:
  * 0: Entity being edited <OBJECT|GROUP> (passed as _this)
  *
@@ -26,6 +33,9 @@
  */
 
 if (!GVAR(enabled)) exitWith {true};
+
+private _curator = getAssignedCuratorLogic player;
+if (isNull _curator || {curatorEditingArea _curator isEqualTo []}) exitWith {true};
 
 private _objects = [];
 

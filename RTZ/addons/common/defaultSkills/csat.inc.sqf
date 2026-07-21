@@ -1,5 +1,3 @@
-// CSAT (Iran)
-
 _skills append [
 
     // Men (QRF)

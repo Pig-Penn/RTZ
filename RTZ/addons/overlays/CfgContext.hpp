@@ -14,7 +14,7 @@ class zen_context_menu_actions {
 
         class GVAR(toggleTarget) {
             displayName = CSTRING(ActionDrawTargets);
-            icon = "\x\zen\addons\modules\ui\target_ca.paa";
+            icon = "\a3\ui_f\data\igui\cfg\simpletasks\types\kill_ca.paa";
             statement = QUOTE(call FUNC(targetToggle));
             condition = QUOTE(GVAR(enableTargetDisplay));
             modifierFunction = QUOTE([_this select 0] call FUNC(targetActionModifier));

@@ -44,13 +44,13 @@
             <English>Raise the selected helicopters' AI fly-in height by the step setting.</English>
         </Key>
         <Key ID="STR_RTZ_Common_MsgBeyondRange">
-            <English>Beyond %1 m</English>
+            <English>Beyond %1 [m]</English>
         </Key>
         <Key ID="STR_RTZ_Common_MsgCooldown">
-            <English>%1 s Cooldown</English>
+            <English>%1 [s] Cooldown</English>
         </Key>
         <Key ID="STR_RTZ_Common_MsgFlyHeight">
-            <English>Altitude %1%2 m</English>
+            <English>Altitude %1%2 [m]</English>
         </Key>
         <Key ID="STR_RTZ_Common_MsgInCombat">
             <English>In Combat</English>
@@ -65,7 +65,7 @@
             <English>Teleported</English>
         </Key>
         <Key ID="STR_RTZ_Common_OpenUnitInventory">
-            <English>Open Unit Inventory</English>
+            <English>Open Inventory</English>
         </Key>
         <Key ID="STR_RTZ_Common_OpenUnitInventory_Description">
             <English>Open the selected unit's inventory to loot nearby crates, vehicles, or bodies.</English>

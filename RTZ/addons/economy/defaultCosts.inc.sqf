@@ -7,7 +7,7 @@
 // that folder and including it below; later entries win on duplicate classes.
 private _costs = [];
 
-#include "defaultCosts\acm_msf.inc.sqf"
+#include "defaultCosts\msf.inc.sqf"
 #include "defaultCosts\csat.inc.sqf"
 #include "defaultCosts\viper.inc.sqf"
 #include "defaultCosts\aaf.inc.sqf"

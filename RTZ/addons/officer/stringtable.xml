@@ -11,7 +11,7 @@
             <English>Remove Command Aura</English>
         </Key>
         <Key ID="STR_RTZ_Officer_ActionCooldown">
-            <English>Add Editing Area (%1 s)</English>
+            <English>Add Editing Area — %1 [s]</English>
         </Key>
         <Key ID="STR_RTZ_Officer_ActionRemove">
             <English>Remove Editing Area</English>
@@ -44,7 +44,7 @@
             <English>Officers can anchor curator editing areas, confining Zeus editing to their surroundings.</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaAdded">
-            <English>%1 m Zone Created</English>
+            <English>%1 [m] Zone Created</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaAuraBlocked">
             <English>Command Aura Active</English>
@@ -56,13 +56,13 @@
             <English>Officer Engaged</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaCooldown">
-            <English>%1 s Cooldown</English>
+            <English>%1 [s] Cooldown</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaRemoved">
             <English>Editing zone removed</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAuraAdded">
-            <English>%1 m Aura Active</English>
+            <English>%1 [m] Aura Active</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAuraBlockedArea">
             <English>Editing Area Active</English>

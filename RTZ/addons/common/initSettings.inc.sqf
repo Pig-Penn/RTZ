@@ -20,7 +20,7 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     QGVAR(teleportMaxDistance), "SLIDER",
     [LSTRING(TeleportRange), LSTRING(TeleportRange_Description)],
     _category,
-    [10, 500, 100, 0],
+    [10, 500, 150, 0],
     true // Global
 ] call CBA_fnc_addSetting;
 

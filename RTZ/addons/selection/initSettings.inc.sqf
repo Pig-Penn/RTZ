@@ -25,16 +25,14 @@ private _catOverlays = [ELSTRING(main,DisplayName), LSTRING(CategoryOverlays)];
     ] call CBA_fnc_addSetting;
 } forEach [
     [QGVAR(tagShowRole),        LSTRING(TagShowRole),        LSTRING(TagShowRole_Description),        false],
-    [QGVAR(tagShowName),        LSTRING(TagShowName),        LSTRING(TagShowName_Description),        false],
     [QGVAR(tagShowHealth),      LSTRING(TagShowHealth),      LSTRING(TagShowHealth_Description),       true],
     [QGVAR(tagShowMorale),      LSTRING(TagShowMorale),      LSTRING(TagShowMorale_Description),       false],
     [QGVAR(tagShowSuppression), LSTRING(TagShowSuppression), LSTRING(TagShowSuppression_Description),  false],
     [QGVAR(tagShowAmmo),        LSTRING(TagShowAmmo),        LSTRING(TagShowAmmo_Description),         false],
     [QGVAR(tagShowStatus),      LSTRING(TagShowStatus),      LSTRING(TagShowStatus_Description),       true],
     [QGVAR(tagShowTactic),      LSTRING(TagShowTactic),      LSTRING(TagShowTactic_Description),       true],
-    [QGVAR(tagShowIntel),       LSTRING(TagShowIntel),       LSTRING(TagShowIntel_Description),        false],
+    [QGVAR(tagShowCommand),     LSTRING(TagShowCommand),     LSTRING(TagShowCommand_Description),      false],
     [QGVAR(tagShowFlagIcon),    LSTRING(TagShowFlagIcon),    LSTRING(TagShowFlagIcon_Description),     false],
-    [QGVAR(tagShowStateIcon),   LSTRING(TagShowStateIcon),   LSTRING(TagShowStateIcon_Description),    false],
     [QGVAR(tagShowThreatIcon),  LSTRING(TagShowThreatIcon),  LSTRING(TagShowThreatIcon_Description),   false]
 ];
 
@@ -61,7 +59,7 @@ private _catOverlays = [ELSTRING(main,DisplayName), LSTRING(CategoryOverlays)];
     "SLIDER",
     [LSTRING(TagMaxDistance), LSTRING(TagMaxDistance_Description)],
     _catTags,
-    [100, 500, 200, 0],
+    [100, 1000, 200, 0],
     0
 ] call CBA_fnc_addSetting;
 
@@ -122,7 +120,7 @@ private _catOverlays = [ELSTRING(main,DisplayName), LSTRING(CategoryOverlays)];
     "SLIDER",
     [LSTRING(VtagMaxDistance), LSTRING(VtagMaxDistance_Description)],
     _catVehTags,
-    [200, 5000, 1500, 0],
+    [100, 1000, 200, 0],
     0
 ] call CBA_fnc_addSetting;
 

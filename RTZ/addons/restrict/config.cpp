@@ -6,7 +6,7 @@ class CfgPatches {
         units[] = {};
         weapons[] = {};
         requiredVersion = REQUIRED_VERSION;
-        requiredAddons[] = {"rtz_main", "rtz_officer", "zen_common", "zen_attributes"};
+        requiredAddons[] = {"rtz_main", "rtz_common", "zen_common", "zen_attributes"};
         author = "Maxim";
         authors[] = {"Maxim"};
         url = "";

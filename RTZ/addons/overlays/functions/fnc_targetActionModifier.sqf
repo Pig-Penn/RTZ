@@ -25,5 +25,5 @@ if (GVAR(tgtEnabled)) then {
     _action set [3, [0.50, 0.50, 0.50, 1]]; // Grey
 } else {
     _action set [1, LLSTRING(ActionDrawTargets)]; // On
-    _action set [3, [0.5, 0, 0, 1]]; // Red
+    _action set [3, [0.6, 0.2, 0.2, 1]]; // Red
 };
