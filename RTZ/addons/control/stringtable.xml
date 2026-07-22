@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Control">
+        <Key ID="STR_RTZ_Control_ActionDelete">
+            <English>Delete</English>
+        </Key>
         <Key ID="STR_RTZ_Control_ActionDisableSimulation">
             <English>Dissimulate</English>
         </Key>
         <Key ID="STR_RTZ_Control_ActionEnableSimulation">
             <English>Simulate</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_ActionInit">
+            <English>Init</English>
         </Key>
         <Key ID="STR_RTZ_Control_ActionReload">
             <English>Reload</English>
@@ -13,8 +19,26 @@
         <Key ID="STR_RTZ_Control_ActionReset">
             <English>Reset</English>
         </Key>
+        <Key ID="STR_RTZ_Control_Delete">
+            <English>Delete Objects</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_DeleteSelected">
+            <English>Delete Selected</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_DeleteSelected_Description">
+            <English>Delete the selected units, vehicles, bodies and wrecks without refunding any curator points.</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_Delete_Description">
+            <English>Add a context menu action deleting the selected units, vehicles, bodies and wrecks. Players and curator modules are never deleted, and the deletion refunds no curator points.</English>
+        </Key>
         <Key ID="STR_RTZ_Control_DisplayName">
             <English>Control</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_MsgDeleted">
+            <English>Deleted</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_MsgInit">
+            <English>Ownership Transferred</English>
         </Key>
         <Key ID="STR_RTZ_Control_MsgNoUnitsSelected">
             <English>No units selected</English>

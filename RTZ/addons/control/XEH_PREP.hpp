@@ -1,3 +1,10 @@
+PREP(canInitControl);
+PREP(collectDeletables);
+PREP(deleteObjects);
+PREP(deleteObjectsApply);
+PREP(deleteSelected);
+PREP(initControl);
+PREP(initControlApply);
 PREP(lambsReset);
 PREP(lambsResetApply);
 PREP(reloadSquad);

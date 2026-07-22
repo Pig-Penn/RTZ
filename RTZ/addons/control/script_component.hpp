@@ -22,5 +22,7 @@
 #define COLOR_HIDE [1.00, 0.60, 0.20, 1]
 #define COLOR_SHOW [0.40, 1.00, 0.40, 1]
 
+#define ICON_INIT "\x\zen\addons\context_actions\ui\add_ca.paa"
 #define ICON_RESET "\a3\3DEN\Data\CfgWaypoints\cycle_ca.paa"
 #define ICON_RELOAD "\A3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa"
+#define ICON_DELETE "\x\zen\addons\context_actions\ui\remove_ca.paa"
