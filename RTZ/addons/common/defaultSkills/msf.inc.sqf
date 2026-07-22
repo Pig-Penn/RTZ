@@ -10,5 +10,5 @@ _skills append [
     ["ACM_MSF_CG_Soldier_AntiTank", 0.6],
     ["ACM_MSF_CG_Soldier_AntiAir", 0.6],
     ["ACM_MSF_CG_Soldier_Team_Lead", 0.6],
-    ["ACM_MSF_CG_Soldier_Officer", 0.6],
+    ["ACM_MSF_CG_Soldier_Officer", 0.6]
 ];

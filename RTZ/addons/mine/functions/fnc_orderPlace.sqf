@@ -38,4 +38,6 @@ private _minDistance = 1e10;
     };
 } forEach _units;
 
-[QGVAR(place), [_unit, _pos, _magazine], _unit] call CBA_fnc_targetEvent;
+// player is the ordering curator (this runs on their client) — threaded through so
+// FUNC(placeMine) can toast them if the layer can't reach the spot.
+[QGVAR(place), [_unit, _pos, _magazine, player], _unit] call CBA_fnc_targetEvent;

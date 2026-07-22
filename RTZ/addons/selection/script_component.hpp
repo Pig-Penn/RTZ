@@ -10,8 +10,8 @@
 #define SEL_MAX_UNITS 24
 
 // Same idea for vehicles: capped in the client poll, the server gather
-// (rtz_fnc_vehicleDataStream), and the bottom-right card render
-// (rtz_fnc_vehicleOverlay) so they never disagree.
+// (FUNC(vehicleDataStream)), and the bottom-right card render
+// (FUNC(vehicleOverlay)) so they never disagree.
 #define SEL_MAX_VEHICLES 8
 
 // Side index used throughout the addon's packets: 0 west, 1 east, 2 independent,
@@ -43,7 +43,7 @@
 #define HEX_BAD    "#FF6161"
 
 // BIS simpletask icon family shared by the selection dialog rows
-// (rtz_fnc_buildSelectionRows) and the unit head tags (rtz_fnc_unitTags) —
+// (FUNC(buildSelectionRows)) and the unit head tags (FUNC(unitTags)) —
 // direct texture paths; CfgMarkers lookups can silently return "". FLAG_ICON
 // is the flag-inventory marker texture (unit tags only).
 #define ICON_ATTACK  "\a3\ui_f\data\igui\cfg\simpletasks\types\attack_ca.paa"
@@ -57,9 +57,11 @@
 #define ICON_UNKNOWN "\a3\ui_f\data\igui\cfg\simpletasks\types\unknown_ca.paa"
 #define FLAG_ICON    "\a3\ui_f\data\map\markers\military\flag_ca.paa"
 
-// Server gather cadence (s), shared by the infantry gather (rtz_fnc_selectionInfo)
-// and the vehicle gather (rtz_fnc_vehicleDataStream): ~3 Hz + event-driven.
-#define GATHER_INTERVAL 0.3
+// Base tick (s) of the server gather PFHs, shared by the infantry gather
+// (FUNC(selectionInfo)) and the vehicle gather (FUNC(vehicleDataStream)).
+// The effective cadence is the GVAR(gatherInterval) CBA setting, read live
+// each tick and floored to this value — this is the fastest it can go.
+#define GATHER_TICK 0.25
 
 // LAMBS danger-cause labels, indexed by dangerType + 2 (-2 Forced AI … 10
 // Assessing; out of range → ""). Mirrors lambs_main_fnc_debugDangerType,

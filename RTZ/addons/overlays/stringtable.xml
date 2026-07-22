@@ -64,5 +64,11 @@
         <Key ID="STR_RTZ_Overlays_MsgTargetsShown">
             <English>Targets shown</English>
         </Key>
+        <Key ID="STR_RTZ_Overlays_PollInterval">
+            <English>Overlay Refresh Interval</English>
+        </Key>
+        <Key ID="STR_RTZ_Overlays_PollInterval_Description">
+            <English>Seconds between server updates of the destination and target overlays. Lower is snappier, higher reduces server and network load. Read live — can be retuned mid-mission.</English>
+        </Key>
     </Package>
 </Project>

@@ -31,3 +31,11 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     [1, 10, 3, 0],
     true // Global
 ] call CBA_fnc_addSetting;
+
+[
+    QGVAR(rcCheckInterval), "SLIDER",
+    [LSTRING(RCCheckInterval), LSTRING(RCCheckInterval_Description)],
+    _category,
+    [1, 10, 3, 0],
+    true // Global
+] call CBA_fnc_addSetting;

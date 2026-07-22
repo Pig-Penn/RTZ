@@ -20,8 +20,8 @@
 params ["_unit"];
 
 private _veh = vehicle _unit;
-if (_veh isKindOf "Air")                                      exitWith { "aircraft" };
-if (_veh isKindOf "Ship" || { _veh isKindOf "Submarine" })    exitWith { "naval units" };
-if (_veh isKindOf "Tank")                                     exitWith { "armor" };
-if (_veh isKindOf "LandVehicle" && { _veh != _unit })         exitWith { "vehicles" };
-"infantry"
+if (_veh isKindOf "Air")                                      exitWith { LLSTRING(CategoryAircraft) };
+if (_veh isKindOf "Ship" || { _veh isKindOf "Submarine" })    exitWith { LLSTRING(CategoryNaval) };
+if (_veh isKindOf "Tank")                                     exitWith { LLSTRING(CategoryArmor) };
+if (_veh isKindOf "LandVehicle" && { _veh != _unit })         exitWith { LLSTRING(CategoryVehicles) };
+LLSTRING(CategoryInfantry)

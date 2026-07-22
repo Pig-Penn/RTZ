@@ -24,10 +24,14 @@
  * Public: No
  */
 
-// Only while the Zeus interface is open — these are curator-view icons, so they must
-// not bleed into first person / map when the curator display (312) is closed.
-if (isNull (findDisplay 312)) exitWith {};
+// Empty-store test first: cheapest check and the common case on a quiet mission.
 if (count GVAR(spotGroups) == 0 && { count GVAR(spotChevrons) == 0 }) exitWith {};
+// Only while the Zeus interface is open — these are curator-view icons, so they must
+// not bleed into first person / map when the curator display (312) is closed. The
+// Zeus map covers the 3D view, so drawIcon3D output is invisible while it is up:
+// skip the whole pass (the map has its own overlay, FUNC(initCuratorDisplay)).
+// Matches the identical gate in FUNC(remoteControlIndicator)'s Draw3D handler.
+if (isNull (findDisplay 312) || { visibleMap }) exitWith {};
 private _camPos   = positionCameraToWorld [0,0,0];   // Zeus cursor camera, for fade
 private _viewDist = getObjectViewDistance select 0;
 // HOVER_HIT_R2 / GROUP_HOVER_R2 are SafeZone screen-space radii (worldToScreen

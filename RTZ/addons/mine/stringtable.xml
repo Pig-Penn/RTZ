@@ -46,5 +46,8 @@
         <Key ID="STR_RTZ_Mine_PlaceTimeout_Description">
             <English>Time in seconds a unit has to reach the ordered position before a place order expires.</English>
         </Key>
+        <Key ID="STR_RTZ_Mine_PlaceUnreachable">
+            <English>Mine layer couldn't reach the spot</English>
+        </Key>
     </Package>
 </Project>

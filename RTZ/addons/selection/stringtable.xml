@@ -58,6 +58,12 @@
         <Key ID="STR_RTZ_Selection_EnableVehicleTags_Description">
             <English>Show a small floating status tag above each selected vehicle in Zeus. Requires Selection Info enabled. Toggle in-mission via the RTZ context menu.</English>
         </Key>
+        <Key ID="STR_RTZ_Selection_GatherInterval">
+            <English>Data Refresh Interval</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_GatherInterval_Description">
+            <English>Seconds between server updates of selection info, unit tags and vehicle data. Lower is snappier, higher reduces server and network load. Read live — can be retuned mid-mission.</English>
+        </Key>
         <Key ID="STR_RTZ_Selection_MsgNoUnitsSelected">
             <English>No units selected</English>
         </Key>

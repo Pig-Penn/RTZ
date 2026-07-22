@@ -1,10 +1,9 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_buildSelectionRows
- *
+ * Author: Maxim
  * Builds the display model for the selection info dialog from the current
  * curator selection state. Reads GVAR(selCurrent) and GVAR(selData), maintained
- * by rtz_fnc_selectionInfo.
+ * by FUNC(selectionInfo).
  *
  * Each unit becomes one spaced listbox line — "» Role · STATUS · Morale x% ·
  * Supp y% · HP z%" plus the current danger OR target when present — carrying a
@@ -16,15 +15,21 @@
  * side-coloured header row (name · units · morale · tactic · down) only when
  * more than one group is selected.
  *
- * Returns: [_header, _rows, _keys]
- *   _header  STRING            — summary line rendered above the list.
- *   _rows    [[text, color, tooltip, picture, pictureColor, pictureRight, pictureRightColor], ...]
- *   _keys    [STRING, ...]     — a stable structural key per row. rtz_fnc_open-
- *                                SelectionInfo compares it tick-to-tick to decide
- *                                between an in-place refresh and a full rebuild.
- *
- * No parameters.
  * Requirements: CBA_A3
+ *
+ * Arguments:
+ * None
+ *
+ * Return Value:
+ * 0: Summary line rendered above the list <STRING>
+ * 1: Rows, each [text, color, tooltip, picture, pictureColor, pictureRight, pictureRightColor] <ARRAY>
+ * 2: A stable structural key per row <ARRAY of STRING> — FUNC(openSelectionInfo)
+ *    compares it tick-to-tick to decide between an in-place refresh and a full rebuild
+ *
+ * Example:
+ * call rtz_selection_fnc_buildSelectionRows
+ *
+ * Public: No
  */
 
 // Row colours (COL_*), group separator tint (SIDE_TINTS), row icons (ICON_*),
@@ -39,7 +44,7 @@
 // The per-row `params [...]` below reads the whole packet in order; these name the
 // handful of fields this function ALSO reaches for out of order (grouping keys,
 // tallies, side tint) so those stay readable and survive a layout change. Indices
-// are the writer's — rtz_fnc_gatherUnitInfo's array order.
+// are the writer's — FUNC(gatherUnitInfo)'s array order.
 #define PKT_ISLDR   1
 #define PKT_GRPID   2
 #define PKT_SIDE    4

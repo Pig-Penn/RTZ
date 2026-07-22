@@ -29,6 +29,7 @@ Current components:
 | `common` | Shared helpers: unit/squad/vehicle collection, skills, smoke deployment, stance, teleport, placement preview |
 | `assemble` | AI orders to assemble/disassemble static weapons and UAVs from backpacks |
 | `attack` | Order groups to find and destroy a target via waypoints |
+| `captive` | Surrender/stand-down toggle, plus enemy-proximity capture that transfers the prisoner and pays out both curators |
 | `control` | Squad control: LAMBS reset, squad reload, squad hide toggle |
 | `dismount` | Unload-in-combat behavior for vehicle passengers |
 | `economy` | Zeus point costs: categorization, cost registration, per-curator coefficients (`defaultCosts/`) |
@@ -41,8 +42,7 @@ Current components:
 | `reverse` | Order vehicles to reverse to a position (keybind) |
 | `selection` | Selection info panel, unit/vehicle tags, vehicle data overlay |
 | `spotting` | AI spotting system: contact callouts, 3D contact markers, curator display |
-| `unit_info` | Per-unit 3D info overlay, toggled via ZEN context menu |
-| `vehicle_info` | Per-vehicle 3D info overlay, toggled via ZEN context menu |
+| `supply` | Supply vehicles repair/refuel/rearm the vehicles parked around them |
 
 **Component skeleton.** New features are added as new components under `addons/`, following the same skeleton:
 - `config.cpp` — `CfgPatches` (name, `requiredAddons`, version) plus includes for `CfgEventHandlers.hpp` / `CfgContext.hpp` / settings

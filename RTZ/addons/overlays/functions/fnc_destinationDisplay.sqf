@@ -174,10 +174,14 @@ GVAR(destWatchers) = createHashMap;
 }] call CBA_fnc_addEventHandler;
 
 // Unscheduled per-frame handler (RTZ server-loop convention) rather than a
-// spawned while/sleep: no scheduler starvation, and the send cadence is exactly
-// POLL_INTERVAL. Bails cheaply when nobody is subscribed; no suspending
+// spawned while/sleep: no scheduler starvation. Ticks at POLL_TICK and
+// self-gates on the live GVAR(pollInterval) setting, so admins can retune the
+// cadence mid-mission. Bails cheaply when nobody is subscribed; no suspending
 // commands in the body.
 [{
+    (_this select 0) params ["_nextRun"];
+    if (CBA_missionTime < _nextRun) exitWith {};
+    (_this select 0) set [0, CBA_missionTime + ((GETGVAR(pollInterval,2)) max POLL_TICK)];
     if (count GVAR(destWatchers) == 0) exitWith {};
 
     private _toDrop = [];
@@ -225,4 +229,4 @@ GVAR(destWatchers) = createHashMap;
     } forEach GVAR(destWatchers);
 
     { GVAR(destWatchers) deleteAt _x } forEach _toDrop;
-}, POLL_INTERVAL] call CBA_fnc_addPerFrameHandler;
+}, POLL_TICK, [0]] call CBA_fnc_addPerFrameHandler;

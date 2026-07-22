@@ -25,9 +25,11 @@
 #define LABEL_TEXT_SIZE     0.03
 #define LABEL_FONT          "RobotoCondensed"
 
-// Server poll cadence (s) for both overlay streams: one targetEvent per
-// watcher per tick, so 2 s tracks contact without flooding the network.
-#define POLL_INTERVAL       2
+// Base tick (s) of the server poll PFHs for both overlay streams. The
+// effective cadence is the GVAR(pollInterval) CBA setting (default 2 s — one
+// targetEvent per watcher per tick, tracks contact without flooding the
+// network), read live each tick and floored to this value.
+#define POLL_TICK           0.5
 
 // Server-side sanity cap (m) on unit → destination / estimated-target
 // distance — mirrors the LAMBS debug renderer's cap.

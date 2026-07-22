@@ -1,14 +1,13 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_vehicleTags
- *
+ * Author: Maxim
  * Minimalist floating status tag above each selected vehicle while Zeus is
  * open — one discrete text line (e.g. "Hunter HMG · 45 km/h · CREW 3/4 ·
  * FUEL 62 · LOW FUEL") — the vehicle counterpart of the infantry head tags
- * (rtz_fnc_unitTags). Fed by the same live server packets the vehicle overlay
+ * (FUNC(unitTags)). Fed by the same live server packets the vehicle overlay
  * cards use (GVAR(selVehicleIds) / GVAR(selVehicleData), maintained by
- * rtz_fnc_selectionInfo's poll and rtz_fnc_vehicleDataStream's server gather).
- * Runs independently of rtz_fnc_vehicleOverlay — either display can be enabled
+ * FUNC(selectionInfo)'s poll and FUNC(vehicleDataStream)'s server gather).
+ * Runs independently of FUNC(vehicleOverlay) — either display can be enabled
  * without the other.
  *
  * The line is assembled from the fields enabled in CBA settings (name, speed,
@@ -21,7 +20,7 @@
  * out approaching GVAR(vtagMaxDistance) from the camera.
  *
  * Visibility toggles at runtime via the shared "Draw Tags" ZEN context menu
- * entry (rtz_fnc_tagsContext), which drives this system's
+ * entry (FUNC(tagsContext)), which drives this system's
  * GVAR(fnc_toggleVehTags) alongside the unit tags' toggle. Unlike the
  * infantry stream, the vehicle stream is not consumer-gated — the poll
  * reports selected vehicles whenever the set changes — so hiding tags only
@@ -33,8 +32,8 @@
  * does two hashmap lookups + one drawIcon3D per selected vehicle.
  *
  * Requirements: CBA_A3; ZEN optional (context toggle absent without it).
- *   Needs rtz_fnc_selectionInfo running (Selection Info setting ON) for the
- *   selection poll AND rtz_fnc_vehicleDataStream running for the data stream
+ *   Needs FUNC(selectionInfo) running (Selection Info setting ON) for the
+ *   selection poll AND FUNC(vehicleDataStream) running for the data stream
  *   (started automatically alongside this system — see XEH_postInit) — both
  *   must be enabled. Ordered after FUNC(vehicleDataStream) so its
  *   QGVAR(selVehicleData) handler (which fills the hashmap) runs before this
@@ -42,15 +41,20 @@
  * Loading: called from XEH_postInit after CBA_settingsInitialized, gated on
  *   GVAR(enableVehicleTags). Client-only; registers a Draw3D MEH + CBA
  *   handlers, no scheduled ops — `call`ed, not `spawn`ed.
+ *
+ * Arguments:
+ * None
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * call rtz_selection_fnc_vehicleTags
+ *
+ * Public: No
  */
 
 if (!hasInterface) exitWith {};
-
-// Extra breathing room (each side of the split point, UI-x = size × this) between
-// the main line and the status word (LAMBS task / LOW FUEL / DAMAGED) so the
-// status text isn't cramped against the rest of the tag — the vehicle analogue
-// of the unit tags' ICON_TEXT_GAP.
-#define STATUS_GAP 0.25
 
 // Runtime visibility switch (context menu). The master CBA setting gates
 // whether this system exists at all; this flips it mid-mission.
@@ -80,7 +84,7 @@ GVAR(vtagCacheDirty) = true;
 
 // ── Tag line assembly ────────────────────────────────────────────────────────
 // Builds one vehicle's cache entry (see GVAR(vtagCache) layout above) from its
-// server packet (layout: rtz_fnc_vehicleDataStream's _fnc_gatherVehicle).
+// server packet (layout: FUNC(vehicleDataStream)'s _fnc_gatherVehicle).
 // Locality-bound fields (LAMBS task/tactic) arrive as "" when the crew is not
 // server-local, so they drop out naturally. statusText is coloured separately
 // from mainText so LOW FUEL / DAMAGED can be amber/red without recolouring the
@@ -93,7 +97,7 @@ GVAR(fnc_buildVtagEntry) = {
         "", ["_seatCnt", -1], ["_flyHeight", -1], ["_selAmmo", -1]
     ];
 
-    // Display-label remap (rtz_fnc_loadTagLabels) — re-words LAMBS task/
+    // Display-label remap (FUNC(loadTagLabels)) — re-words LAMBS task/
     // tactic strings and RTZ warning flags at build time (cached).
     private _labels = GVAR(tagLabels);
 
@@ -221,7 +225,7 @@ GVAR(fnc_toggleVehTags) = {
         private _base = unitAimPositionVisual _veh;
         private _dist = _camPos distance _base;
         if (_dist > _maxDist) then { continue };
-        // Screen-space vertical lift (see rtz_fnc_unitTags): along camera-up and
+        // Screen-space vertical lift (see FUNC(unitTags)): along camera-up and
         // distance-scaled, so the tag clears the icon from a top-down camera too.
         private _pos = _base vectorAdd (_camUp vectorMultiply (_zOff * (1 max (_dist / 30))));
         private _alpha = linearConversion [_fadeIn, _maxDist, _dist, 0.85, 0, true];
@@ -247,18 +251,15 @@ GVAR(fnc_toggleVehTags) = {
             // Split point = centre + halfWidth(fullText) - width(statusText),
             // from the widths measured at cache-build time (FUNC(textWidth)) —
             // keeps the combined line centred on the vehicle while letting the
-            // status word carry its own colour. A STATUS_GAP is opened around
-            // the split point (main pulled left, status pushed right by the
-            // same amount) so the status word gets breathing room instead of
-            // butting against the rest of the line.
+            // status word carry its own colour. Both halves meet exactly at that
+            // point (same as the unit tags): the " · " separator already carries
+            // the spacing, so pushing them further apart double-spaces the line.
             private _boundaryUI  = ((_wMainSep + _wStatus) / 2) - _wStatus;
-            private _gapUI       = _size * STATUS_GAP;
-            private _mainPos   = _pos vectorAdd (_camRight vectorMultiply ((_boundaryUI - _gapUI) / _perMetre));
-            private _statusPos = _pos vectorAdd (_camRight vectorMultiply ((_boundaryUI + _gapUI) / _perMetre));
+            private _boundaryPos = _pos vectorAdd (_camRight vectorMultiply (_boundaryUI / _perMetre));
             // textAlign names the SIDE of the anchor the text sits on (not
             // typographic alignment): "left" ends at the anchor, "right" starts there.
-            drawIcon3D ["", _rgbMain   + [_alpha], _mainPos,   0, 0, 0, _mainText + _sep, 2, _size, "RobotoCondensedBold", "left",  false, 0, 0];
-            drawIcon3D ["", _rgbStatus + [_alpha], _statusPos, 0, 0, 0, _statusText,      2, _size, "RobotoCondensedBold", "right", false, 0, 0];
+            drawIcon3D ["", _rgbMain   + [_alpha], _boundaryPos, 0, 0, 0, _mainText + _sep, 2, _size, "RobotoCondensedBold", "left",  false, 0, 0];
+            drawIcon3D ["", _rgbStatus + [_alpha], _boundaryPos, 0, 0, 0, _statusText,      2, _size, "RobotoCondensedBold", "right", false, 0, 0];
         };
     } forEach _ids;
 }] call CBA_fnc_addBISEventHandler;

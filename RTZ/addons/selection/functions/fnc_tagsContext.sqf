@@ -1,9 +1,8 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_tagsContext
- *
+ * Author: Maxim
  * Single "Draw Tags" ZEN context menu entry driving both the infantry head
- * tags (rtz_fnc_unitTags) and the vehicle tags (rtz_fnc_vehicleTags) — the
+ * tags (FUNC(unitTags)) and the vehicle tags (FUNC(vehicleTags)) — the
  * two systems used to register their own separate buttons; this condenses
  * them into one. Each system is independently CBA-setting gated, so only
  * one, both, or neither of GVAR(fnc_toggleTags) / GVAR(fnc_toggleVehTags)
@@ -13,6 +12,17 @@
  * Loading: called from XEH_postInit after CBA_settingsInitialized, once at
  * least one of FUNC(unitTags) / FUNC(vehicleTags) has run for this session.
  * Client-only, registers one ZEN context menu action — no scheduled ops.
+ *
+ * Arguments:
+ * None
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * call rtz_selection_fnc_tagsContext
+ *
+ * Public: No
  */
 
 if (!hasInterface) exitWith {};

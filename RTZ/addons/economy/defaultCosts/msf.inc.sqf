@@ -1,5 +1,3 @@
-// ACM_MSF (Malden Security)
-
 _costs append [
 
     // APCs
@@ -13,11 +11,11 @@ _costs append [
     ["ACM_B_MSF_V_Transport_Boat", 2],
     ["ACM_B_MSF_V_RescueBoat", 2],
     ["ACM_B_MSF_V_Police_Boat", 3],
-    ["ACM_B_MSF_V_ArmedBoat", 15],
-    ["vn_b_boat_06_02", 25], // PTF Nasty Boat 
-    ["vn_b_boat_06_01", 25],
-    ["vn_b_boat_05_02", 30],
-    ["vn_b_boat_05_01", 30],
+    ["ACM_B_MSF_V_ArmedBoat", 15], // Speedboat Minigun
+    ["vn_b_boat_06_02", 30], // PTF Nasty Boat 
+    ["vn_b_boat_06_01", 30], // PTF Nasty Boat 
+    ["vn_b_boat_05_02", 25], // PTF Nasty Boat (Mortar)
+    ["vn_b_boat_05_01", 25], // PTF Nasty Boat (Mortar)
 
     // Cars
     ["ACM_B_MSF_V_UAZ", 3],
@@ -70,8 +68,15 @@ _costs append [
     ["ACM_B_MSF_V_T55", 25],
 
     // Turrets
-    ["gm_dk_army_mg3_aatripod", 6], // MG3 (Tripod)
-    ["gm_ge_army_mg3_aatripod", 6], // MG3 (Tripod)
+    ["gm_dk_army_mg3_aatripod", 4], // MG3 (High)
+    ["gm_ge_army_mg3_aatripod", 4], // MG3 (High)
+    ["vn_o_nva_static_pk_low", 4], // PK (Low)
+    ["vn_o_nva_static_pk_high", 4], // PK (High)
+    ["gm_gc_army_dshkm_aatripod", 6], // DShKM (High)
+    ["vn_o_nva_65_static_dshkm_high_01", 6], // DShKM (High)
+    ["vn_o_nva_static_dshkm_high_02", 6.5], // DShKM (Anti-Air)
+    ["vn_b_navy_static_l70mk2", 15], // Mk2 Autocannon
     ["gm_ge_army_m120", 14], // M120 Mortar
+    ["gm_gc_army_spg9_tripod", 10], // SPG-9
     ["gm_ge_army_milan_launcher_tripod", 12] // LATGM
 ];

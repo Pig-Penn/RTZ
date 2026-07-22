@@ -1,11 +1,10 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_openSelectionInfo
- *
+ * Author: Maxim
  * Opens the ZEN-styled selection info dialog and keeps it live. After the dialog
  * is created, the listbox and header controls are grabbed back out of it and a
  * per-frame handler refreshes them ~4×/s from the latest selection state
- * (GVAR(selCurrent) / GVAR(selData), maintained by rtz_fnc_selectionInfo).
+ * (GVAR(selCurrent) / GVAR(selData), maintained by FUNC(selectionInfo)).
  *
  * The server only streams infantry data while a dialog is open, so this reports
  * the current selection once, immediately, before creating the dialog — the
@@ -16,7 +15,16 @@
  * a full rebuild when the set/grouping of selected units actually changes. The
  * handler removes itself once the dialog's display is gone.
  *
- * No parameters. Returns nothing.
+ * Arguments:
+ * None
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * call rtz_selection_fnc_openSelectionInfo
+ *
+ * Public: No
  */
 
 // ZEN dialog row-control IDCs (see ZEN: addons\dialog\script_component.hpp).
@@ -80,7 +88,7 @@ private _listCtrl  = _group controlsGroupCtrl ZEN_IDC_ROW_LIST;
 private _labelCtrl = _group controlsGroupCtrl ZEN_IDC_ROW_LABEL;
 
 // The dialog keeps ZEN's standard 26-column width — rows are built short enough
-// to fit it (rtz_fnc_buildSelectionRows), and overflow detail lives in tooltips.
+// to fit it (FUNC(buildSelectionRows)), and overflow detail lives in tooltips.
 
 // Applies a built row model to the listbox. Full rebuild only when the structural
 // key list changed; otherwise an in-place update that leaves scrolling untouched

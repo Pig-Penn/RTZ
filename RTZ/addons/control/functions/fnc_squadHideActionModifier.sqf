@@ -1,16 +1,23 @@
 #include "script_component.hpp"
 /*
- * rtz_control_fnc_squadHideActionModifier
- *
+ * Author: Maxim
  * CfgContext modifierFunction for the squad hide/freeze toggle (see
  * CfgContext.hpp). Sets the action's label, icon and tint to reflect whether
  * the first selected group is currently hidden:
  *   visible → orange "Disable Simulation"
  *   hidden  → green  "Enable Simulation"
  *
- * Parameters:
- *   0: Array  — the action array (mutated in place)
- *   1: Array  — selection objects + hovered entity (pre-combined by the caller)
+ * Arguments:
+ * 0: The action array (mutated in place) <ARRAY>
+ * 1: Selection objects + hovered entity (pre-combined by the caller) <ARRAY>
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * [_action, _objects] call rtz_control_fnc_squadHideActionModifier
+ *
+ * Public: No
  */
 
 params ["_action", "_objects"];

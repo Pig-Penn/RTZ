@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_control_fnc_reloadSquadApply
- *
+ * Author: Maxim
  * Handler body for QGVAR(reloadSquad) (registered on EVERY machine in
  * XEH_postInit). Orders every alive AI unit in each group to reload its
  * current weapon via the "reload" scripted command. Units with no spare
@@ -11,8 +10,16 @@
  * at the groups and this filters to the ones local to this machine; players
  * are skipped so a curator can never force a human's reload animation.
  *
- * Parameters:
- *   0: Array — groups to order (whole selection; non-local entries skipped)
+ * Arguments:
+ * 0: Groups to order (whole selection; non-local entries skipped) <ARRAY>
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * [_groups] call rtz_control_fnc_reloadSquadApply
+ *
+ * Public: No
  */
 params ["_grps"];
 

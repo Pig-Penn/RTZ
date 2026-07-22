@@ -1,0 +1,12 @@
+PREP(handleLethalDamage);
+PREP(makeCasualty);
+PREP(manageCasualties);
+PREP(findSafeZone);
+PREP(collectCasualties);
+PREP(loadCasualty);
+PREP(loadCasualtyApply);
+PREP(loadCasualtyMoveIn);
+PREP(casualtyIndicator);
+PREP(registerMedicalZone);
+PREP(placeMedicalZone);
+PREP(medZoneApply);

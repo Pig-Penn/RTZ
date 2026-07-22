@@ -1,4 +1,4 @@
-// ── Unit head tags (rtz_fnc_unitTags) — per-client display customization ────
+// ── Unit head tags (FUNC(unitTags)) — per-client display customization ────
 // All client-local (isGlobal 0): each curator styles their own overlay. The
 // master switch takes effect at mission start (postInit gate); flipping it
 // mid-mission still shows/hides tags via the CBA_SettingChanged sync.
@@ -63,7 +63,7 @@ private _catOverlays = [ELSTRING(main,DisplayName), LSTRING(CategoryOverlays)];
     0
 ] call CBA_fnc_addSetting;
 
-// ── Vehicle tags (rtz_fnc_vehicleTags) — per-client display customization ───
+// ── Vehicle tags (FUNC(vehicleTags)) — per-client display customization ───
 // All client-local (isGlobal 0), mirroring the Dog Tags block above. The
 // master switch takes effect at mission start (postInit gate); flipping it
 // mid-mission still shows/hides tags via the CBA_SettingChanged sync.
@@ -140,4 +140,15 @@ private _catOverlays = [ELSTRING(main,DisplayName), LSTRING(CategoryOverlays)];
     _catOverlays,
     false,
     0
+] call CBA_fnc_addSetting;
+
+// Server-global (unlike the per-client display settings above): one cadence for
+// both server gather loops (infantry + vehicle). Read live each tick.
+[
+    QGVAR(gatherInterval),
+    "SLIDER",
+    [LSTRING(GatherInterval), LSTRING(GatherInterval_Description)],
+    _catOverlays,
+    [0.25, 5, 0.3, 2],
+    true // Global
 ] call CBA_fnc_addSetting;

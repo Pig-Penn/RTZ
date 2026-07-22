@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_gatherUnitInfo
- *
+ * Author: Maxim
  * SERVER ONLY. Reads one infantry unit's state into a compact packet mirroring
  * the LAMBS Danger debug overlay: behaviour, unit state, current command,
  * current task/tactic, danger cause + range + timeout, current target +
@@ -16,7 +15,7 @@
  * leader, group, role, name, side, behaviour, health, MOUNTED/WOUNDED flags)
  * is valid on every machine and always filled in.
  *
- * Packet layout (index → field) — kept in lockstep with rtz_fnc_buildSelectionRows:
+ * Packet layout (index → field) — kept in lockstep with FUNC(buildSelectionRows):
  *   0 netId  1 isLdr  2 grpId  3 role  4 sideNum  5 name
  *   6 behaviour  7 unitState  8 currentCommand  9 morale  10 suppression
  *   11 flags[]  12 downed  13 task  14 tactic
@@ -29,9 +28,15 @@
  * two groups can share a groupId string (copy-pasted compositions).
  *
  * Arguments:
- *   0: Unit to read <OBJECT>
+ * 0: Unit to read <OBJECT>
  *
- * Returns: packet <ARRAY>
+ * Return Value:
+ * Packet <ARRAY>
+ *
+ * Example:
+ * [_unit] call rtz_selection_fnc_gatherUnitInfo
+ *
+ * Public: No
  */
 
 params ["_unit"];

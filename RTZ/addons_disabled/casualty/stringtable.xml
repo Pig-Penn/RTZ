@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Casualty">
+        <Key ID="STR_RTZ_Casualty_ActionLoadCasualty">
+            <English>Load into Medical Vehicle</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_BleedoutTime">
+            <English>Bleed-out Time</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_BleedoutTime_Description">
+            <English>Seconds a downed casualty survives before dying, unless loaded into a medical vehicle first.</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_DeliveryRadius">
+            <English>Delivery Radius</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_DeliveryRadius_Description">
+            <English>How close (m) the medical vehicle must reach a friendly HQ unit or an 'rtz_safezone' marker to complete the evacuation.</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_DisplayName">
+            <English>Casualties</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_Enable">
+            <English>Critically Wounded</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_Enable_Description">
+            <English>Give units a small chance of surviving an otherwise-lethal hit as a downed casualty that must be evacuated.</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_LoadingRadius">
+            <English>Loading Radius</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_LoadingRadius_Description">
+            <English>How close (m) a friendly crewed medical vehicle must be to a casualty for the Load action to work.</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_MedicalZoneRadius">
+            <English>Medical Zone Radius</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_MedicalZoneRadius_Description">
+            <English>Radius (m) of a Medical Zone module placed from the Zeus module menu — the field-hospital area a medical vehicle must reach to complete an evacuation.</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_ModuleMedicalZone">
+            <English>Medical Zone</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_MsgCasualtyBledOut">
+            <English>A casualty has bled out.</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_MsgCasualtyDown">
+            <English>A soldier is down — evacuate him by medical vehicle.</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_MsgCasualtyEvacuated">
+            <English>Casualty evacuated.</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_MsgCasualtyLoaded">
+            <English>Casualty loaded — deliver him to a friendly HQ / safe zone.</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_MsgCuratorOnly">
+            <English>Only a curator can place a medical zone</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_MsgNoMedicalVehicle">
+            <English>No friendly medical vehicle in range.</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_MsgZoneCreateFailed">
+            <English>Could not create medical zone</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_MsgZonePlaced">
+            <English>Medical Zone Placed — %1 [m]</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_MsgZoneRemoved">
+            <English>Medical zone removed</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_SurvivalChance">
+            <English>Survival Chance</English>
+        </Key>
+        <Key ID="STR_RTZ_Casualty_SurvivalChance_Description">
+            <English>The chance that a lethal hit on a unit downs him as a casualty instead of killing him.</English>
+        </Key>
+    </Package>
+</Project>

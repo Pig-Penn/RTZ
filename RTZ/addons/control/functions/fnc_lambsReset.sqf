@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_control_fnc_lambsReset
- *
+ * Author: Maxim
  * Context-menu statement: clears the LAMBS Danger FSM state of every AI group
  * in the selection via lambs_wp_fnc_taskReset. A selected/hovered man
  * contributes his group, a vehicle the groups of its crew
@@ -17,13 +16,21 @@
  * fields; without help it would keep showing the pre-reset text until the next
  * ~0.3s gather tick lines up. So once the reset event is sent, this also
  * re-sends this client's current selection report — reusing the same
- * "instant fill" path rtz_fnc_openSelectionInfo uses on dialog open — so the
+ * "instant fill" path EFUNC(selection,openSelectionInfo) uses on dialog open — so the
  * server pushes fresh data immediately and the tag cache invalidates right away.
  *
- * Parameters:
- *   0: Array  — selection objects
- *   1: Array  — ZEN's selected groups
- *   2: Object — hovered entity
+ * Arguments:
+ * 0: Selection objects <ARRAY>
+ * 1: ZEN's selected groups <ARRAY>
+ * 2: Hovered entity <OBJECT>
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * [_objects, _groups, _hoveredEntity] call rtz_control_fnc_lambsReset
+ *
+ * Public: No
  */
 
 params ["_objects", "_groups", "_hoveredEntity"];
@@ -38,7 +45,7 @@ if (_grps isEqualTo []) exitWith {};
 // Force an immediate head-tag refresh instead of waiting for the next
 // ~0.3s gather tick: re-send this client's current selection report so
 // the server pushes fresh selData right away (same instant-fill path
-// rtz_fnc_openSelectionInfo uses on dialog open), which invalidates
+// EFUNC(selection,openSelectionInfo) uses on dialog open), which invalidates
 // rtz_selection's tag cache as soon as it arrives. No-op if the unit
 // tag overlay isn't running (addon absent or feature toggled off).
 if (GETEGVAR(selection,tagsVisible,false)) then {

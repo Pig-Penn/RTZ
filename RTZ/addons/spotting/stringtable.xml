@@ -7,6 +7,51 @@
         <Key ID="STR_RTZ_Spotting_ActionShowChevrons">
             <English>Show Chevrons</English>
         </Key>
+        <!-- Radio contact report phrasing. %1 = contact category (Category* below,
+             possibly several joined by ContactListJoin), %2 = location qualifier
+             (Loc* below, may be empty). One is picked at random per report so
+             repeated contacts do not sound identical. -->
+        <Key ID="STR_RTZ_Spotting_CalloutPhrase1">
+            <English>Contact! Enemy %1 spotted%2.</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_CalloutPhrase2">
+            <English>Eyes on enemy %1%2!</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_CalloutPhrase3">
+            <English>Be advised, enemy %1%2.</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_CalloutPhrase4">
+            <English>Visual on enemy %1%2.</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_CalloutPhrase5">
+            <English>Enemy %1 contact%2!</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_CalloutPhrase6">
+            <English>We've got enemy %1 in sight%2.</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_CalloutPhrase7">
+            <English>Spotted enemy %1%2 — keep your heads down.</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_CalloutPhrase8">
+            <English>Heads up, enemy %1 on the move%2.</English>
+        </Key>
+        <!-- Contact categories. Mass/plural nouns so they read cleanly in
+             "Enemy %1 spotted" above. -->
+        <Key ID="STR_RTZ_Spotting_CategoryAircraft">
+            <English>aircraft</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_CategoryArmor">
+            <English>armor</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_CategoryInfantry">
+            <English>infantry</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_CategoryNaval">
+            <English>naval units</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_CategoryVehicles">
+            <English>vehicles</English>
+        </Key>
         <Key ID="STR_RTZ_Spotting_CheckInterval">
             <English>Spotting Interval</English>
         </Key>
@@ -18,6 +63,38 @@
         </Key>
         <Key ID="STR_RTZ_Spotting_ChevronNames_Description">
             <English>Show a unit's display name when hovering your mouse near a chevron.</English>
+        </Key>
+        <!-- Joins the last category onto the rest: %1 = "infantry" or
+             "infantry, vehicles", %2 = the final category. Whole-phrase rather
+             than a bare separator so word order stays translatable. -->
+        <Key ID="STR_RTZ_Spotting_ContactListJoin">
+            <English>%1 and %2</English>
+        </Key>
+        <!-- Cardinal bearings from the named location to the contact, used by
+             LocDirection. -->
+        <Key ID="STR_RTZ_Spotting_DirEast">
+            <English>east</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_DirNorth">
+            <English>north</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_DirNortheast">
+            <English>northeast</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_DirNorthwest">
+            <English>northwest</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_DirSouth">
+            <English>south</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_DirSoutheast">
+            <English>southeast</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_DirSouthwest">
+            <English>southwest</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_DirWest">
+            <English>west</English>
         </Key>
         <Key ID="STR_RTZ_Spotting_DisplayName">
             <English>Spotting</English>
@@ -34,11 +111,30 @@
         <Key ID="STR_RTZ_Spotting_EnableSpotting_Description">
             <English>Show enemies detected by your AI units as world icons in the Zeus interface, with radio contact reports on first sighting.</English>
         </Key>
+        <!-- Location qualifier appended to a contact report (%2 of the Callout*
+             phrases). The separating space is added by fnc_spotCallout, not
+             carried here — stringtable values must not have edge whitespace.
+             LocDirection: %1 = bearing (Dir* above), %2 = place name. -->
+        <Key ID="STR_RTZ_Spotting_LocDirection">
+            <English>%1 of %2</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_LocIn">
+            <English>in %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_LocNear">
+            <English>near %1</English>
+        </Key>
         <Key ID="STR_RTZ_Spotting_MsgChevronsHidden">
             <English>Chevrons hidden</English>
         </Key>
         <Key ID="STR_RTZ_Spotting_MsgChevronsShown">
             <English>Chevrons shown</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_RCCheckInterval">
+            <English>Remote Control Scan Interval</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_RCCheckInterval_Description">
+            <English>Seconds between server scans for remote-controlled units. Lower shows/hides the indicator faster, higher reduces server load. Read live — can be retuned mid-mission.</English>
         </Key>
     </Package>
 </Project>

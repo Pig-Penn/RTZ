@@ -37,25 +37,15 @@ GVAR(spotGroups)   = createHashMap;
 GVAR(spotChevrons) = createHashMap;
 GVAR(officerZones) = createHashMap;
 
-// Runtime visibility switch for the officer-zone ring overlay. Data keeps
-// flowing either way — it rides free on the existing spot payload — this only
-// gates the map draw. No UI toggles it yet; flip it from the debug console.
-GVAR(officerZonesVisible) = true;
-
 // markerName → time until which the icon flashes white (set by QGVAR(blink) when the
 // spotted unit fires). Only wedge markers ever receive blinks.
 GVAR(blinkUntil) = createHashMap;
 
-// Guard for the per-unit hover name display. Initialized here so FUNC(draw3D)
-// (which runs every frame) never sees nil and throws a type error.
-// Fallback matches the registered CBA setting default (false); CBA overwrites
-// it with the real synced value once settings initialize.
-if (isNil QGVAR(chevronNames)) then { GVAR(chevronNames) = false };
-
-// Runtime visibility switch for the individual chevrons themselves (context-menu
-// toggle, FUNC(toggleChevrons)); defaults on. Per-client — group icons are
-// unaffected. Initialized here for the same reason as chevronNames above.
-GVAR(chevronsEnabled) = true;
+// NOTE: GVAR(chevronsEnabled), GVAR(officerZonesVisible) and the GVAR(chevronNames)
+// fallback are initialized in XEH_preInit, NOT here — this function is gated on the
+// GVAR(enableSpottingSystem) setting, whereas the context action's modifierFunction
+// runs unconditionally and would read them as nil with the system disabled. See the
+// comment block in XEH_preInit.sqf.
 
 // Diagnostic: confirm the client half actually ran on this machine (set
 // RTZ_debug = true in the console to enable; default off, zero cost otherwise).

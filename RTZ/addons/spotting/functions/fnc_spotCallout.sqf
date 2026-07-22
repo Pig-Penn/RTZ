@@ -39,24 +39,28 @@ if (_contactPos isNotEqualTo []) then {
             // distance2D ignores altitude so the thresholds are true map distances,
             // not inflated by terrain elevation on hilly maps like Malden.
             private _dist = _contactPos distance2D (locationPosition _loc);
-            _locText = switch (true) do {
-                case (_dist < 150): { format [" in %1", _name] };
-                case (_dist < 400): { format [" near %1", _name] };
+            // Leading space added here rather than baked into the Loc* stringtable
+            // values — HEMTT rejects edge whitespace inside localization tags. The
+            // Callout* phrases butt %2 straight against the preceding word, so the
+            // no-location case must stay exactly "" (set above).
+            _locText = " " + (switch (true) do {
+                case (_dist < 150): { format [LLSTRING(LocIn), _name] };
+                case (_dist < 400): { format [LLSTRING(LocNear), _name] };
                 default {
                     private _dir = (locationPosition _loc) getDir _contactPos;
                     private _cardinal = switch (true) do {
-                        case (_dir < 22.5 || _dir >= 337.5): { "north" };
-                        case (_dir < 67.5):                  { "northeast" };
-                        case (_dir < 112.5):                 { "east" };
-                        case (_dir < 157.5):                 { "southeast" };
-                        case (_dir < 202.5):                 { "south" };
-                        case (_dir < 247.5):                 { "southwest" };
-                        case (_dir < 292.5):                 { "west" };
-                        default                              { "northwest" };
+                        case (_dir < 22.5 || _dir >= 337.5): { LLSTRING(DirNorth) };
+                        case (_dir < 67.5):                  { LLSTRING(DirNortheast) };
+                        case (_dir < 112.5):                 { LLSTRING(DirEast) };
+                        case (_dir < 157.5):                 { LLSTRING(DirSoutheast) };
+                        case (_dir < 202.5):                 { LLSTRING(DirSouth) };
+                        case (_dir < 247.5):                 { LLSTRING(DirSouthwest) };
+                        case (_dir < 292.5):                 { LLSTRING(DirWest) };
+                        default                              { LLSTRING(DirNorthwest) };
                     };
-                    format [" %1 of %2", _cardinal, _name]
+                    format [LLSTRING(LocDirection), _cardinal, _name]
                 };
-            };
+            });
         };
     };
 };
@@ -64,14 +68,14 @@ if (_contactPos isNotEqualTo []) then {
 // One phrase picked at random so repeated contacts don't sound identical.
 // %1 = contact category string, %2 = location qualifier (may be empty).
 private _CONTACT_PHRASES = [
-    "Contact! Enemy %1 spotted%2.",
-    "Eyes on enemy %1%2!",
-    "Be advised, enemy %1%2.",
-    "Visual on enemy %1%2.",
-    "Enemy %1 contact%2!",
-    "We've got enemy %1 in sight%2.",
-    "Spotted enemy %1%2 — keep your heads down.",
-    "Heads up, enemy %1 on the move%2."
+    LLSTRING(CalloutPhrase1),
+    LLSTRING(CalloutPhrase2),
+    LLSTRING(CalloutPhrase3),
+    LLSTRING(CalloutPhrase4),
+    LLSTRING(CalloutPhrase5),
+    LLSTRING(CalloutPhrase6),
+    LLSTRING(CalloutPhrase7),
+    LLSTRING(CalloutPhrase8)
 ];
 
 // Build the category string ("infantry", "infantry and armor", etc.).
@@ -81,7 +85,7 @@ private _catText = if (count _cats == 1) then {
     _cats # 0
 } else {
     private _last = _cats deleteAt (count _cats - 1);
-    (_cats joinString ", ") + " and " + _last
+    format [LLSTRING(ContactListJoin), _cats joinString ", ", _last]
 };
 
 private _message = format [selectRandom _CONTACT_PHRASES, _catText, _locText];

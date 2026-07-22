@@ -17,3 +17,4 @@ PREP(removeContextActions);
 PREP(sideColor);
 PREP(switchStance);
 PREP(teleportToCursor);
+PREP(toggleCombatMode);

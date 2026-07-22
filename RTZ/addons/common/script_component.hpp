@@ -38,3 +38,8 @@
 #define STANCE_ICON_MIDDLE "\a3\3DEN\Data\Attributes\Stance\middle_ca.paa"
 #define STANCE_ICON_DOWN "\a3\3DEN\Data\Attributes\Stance\down_ca.paa"
 #define STANCE_ICON_AUTO "\a3\3DEN\Data\Attributes\default_ca.paa"
+
+// ZEN's own Combat Mode context-menu glyph, tinted the same way ZEN tints it
+#define ICON_COMBAT_MODE "\x\zen\addons\context_actions\ui\hold_ca.paa"
+#define COLOR_HOLD_FIRE [1, 0, 0, 1]
+#define COLOR_OPEN_FIRE [1, 1, 1, 1]

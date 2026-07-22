@@ -1,10 +1,9 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_loadTagLabels
- *
+ * Author: Maxim
  * ── THE ONE PLACE TO RENAME TAG TEXT ─────────────────────────────────────────
  * Fills GVAR(tagLabels) — the display-label remap the unit head tags
- * (rtz_fnc_unitTags) and vehicle tags (rtz_fnc_vehicleTags) run every LAMBS
+ * (FUNC(unitTags)) and vehicle tags (FUNC(vehicleTags)) run every LAMBS
  * task / tactic string (and RTZ's own status words / flags) through before
  * drawing. LAMBS emits these strings live; RTZ never stored them, so this table
  * is where you re-word them.
@@ -32,7 +31,7 @@
  *   Number of rows loaded <NUMBER>
  *
  * Example:
- *   call rtz_fnc_loadTagLabels
+ * call rtz_selection_fnc_loadTagLabels
  *
  * Public: No
  */

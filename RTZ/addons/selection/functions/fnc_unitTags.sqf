@@ -1,11 +1,10 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_unitTags
- *
+ * Author: Maxim
  * Minimalist floating status tag above each selected infantry unit's head
  * while Zeus is open — one discrete text line (e.g. "Rifleman · HP 62 ·
  * FLEEING") fed by the same live server packets the selection info dialog
- * uses (GVAR(selCurrent) / GVAR(selData), maintained by rtz_fnc_selectionInfo).
+ * uses (GVAR(selCurrent) / GVAR(selData), maintained by FUNC(selectionInfo)).
  *
  * The line is assembled from the fields enabled in CBA settings (role,
  * health, morale, suppression, magazine rounds, status, LAMBS tactic,
@@ -36,9 +35,9 @@
  * as one — a tight squad reads as a stack instead of an unreadable pile.
  *
  * Visibility toggles at runtime via the shared "Draw Tags" ZEN context menu
- * entry (rtz_fnc_tagsContext), which drives this system's GVAR(fnc_toggleTags)
+ * entry (FUNC(tagsContext)), which drives this system's GVAR(fnc_toggleTags)
  * alongside the vehicle tags' toggle. The selection poll in
- * rtz_fnc_selectionInfo reports the selection to the server while
+ * FUNC(selectionInfo) reports the selection to the server while
  * GVAR(tagsVisible) is true, so hidden tags cost zero gather/network traffic.
  *
  * Per-frame cost: tag text/colour is cached per unit (GVAR(tagCache)) and only
@@ -46,11 +45,22 @@
  * two hashmap lookups + one drawIcon3D per selected unit.
  *
  * Requirements: CBA_A3; ZEN optional (context toggle absent without it).
- *   Needs rtz_fnc_selectionInfo running (Selection Info setting ON) for the
+ *   Needs FUNC(selectionInfo) running (Selection Info setting ON) for the
  *   data stream — XEH_postInit only starts this system when both are enabled.
  * Loading: called from XEH_postInit after CBA_settingsInitialized, gated on
  *   GVAR(enableUnitTags). Client-only; registers a Draw3D MEH + CBA handlers,
  *   no scheduled ops — `call`ed, not `spawn`ed.
+ *
+ * Arguments:
+ * None
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * call rtz_selection_fnc_unitTags
+ *
+ * Public: No
  */
 
 if (!hasInterface) exitWith {};
@@ -107,7 +117,7 @@ GVAR(tagCacheDirty) = true;
 
 // ── Tag line assembly ────────────────────────────────────────────────────────
 // Builds one unit's cache entry (see GVAR(tagCache) layout above) from its
-// server packet (layout: rtz_fnc_gatherUnitInfo). Locality-bound fields
+// server packet (layout: FUNC(gatherUnitInfo)). Locality-bound fields
 // (morale, suppression, ammo, task, tactic, command, threat icon) are
 // only rendered when the packet carries live data. statusText is coloured
 // separately from mainText so DOWN / FLEEING can be red without recolouring
@@ -123,7 +133,7 @@ GVAR(fnc_buildTagEntry) = {
         "", ["_ammo", -1], ["_ammoCap", -1]
     ];
 
-    // Display-label remap (rtz_fnc_loadTagLabels) — re-words LAMBS task/tactic
+    // Display-label remap (FUNC(loadTagLabels)) — re-words LAMBS task/tactic
     // strings, RTZ status words, and flags at build time (cached).
     private _labels = GVAR(tagLabels);
 

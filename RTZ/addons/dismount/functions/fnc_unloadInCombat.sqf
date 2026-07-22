@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_unloadInCombat
- *
+ * Author: Maxim
  * Lets a curator stop the AI crew/cargo of a selected transport from bailing
  * out. Vital for RTS-style troop movement: without it, AI dumps its infantry
  * the instant the vehicle is shot at OR immobilised, stranding a squad mid-map.
@@ -25,6 +24,17 @@
  *
  * Requires CBA_A3; the context action also requires Zeus Enhanced.
  * Loading: spawned from XEH_postInit once CBA settings are initialised.
+ *
+ * Arguments:
+ * None
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * call rtz_dismount_fnc_unloadInCombat
+ *
+ * Public: No
  */
 
 // ─────────────────────────────────────────────────────────────────────────────

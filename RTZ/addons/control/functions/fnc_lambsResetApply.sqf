@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_control_fnc_lambsResetApply
- *
+ * Author: Maxim
  * Handler body for QGVAR(lambsReset) (registered on EVERY machine in
  * XEH_postInit). Clears the LAMBS Danger FSM state of each group via
  * lambs_wp_fnc_taskReset, which must run where the group is local. The client
@@ -23,10 +22,25 @@
  * same as the group — no flicker). A plain getVariable read defaulting to
  * false, so it costs nothing and no-ops when the feature is off.
  *
- * Parameters:
- *   0: Array — groups to reset (whole selection; non-local entries skipped)
+ * Arguments:
+ * 0: Groups to reset (whole selection; non-local entries skipped) <ARRAY>
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * [_groups] call rtz_control_fnc_lambsResetApply
+ *
+ * Public: No
  */
 params ["_grps"];
+
+// The context-menu condition already tests for LAMBS, but this is a CBA event
+// handler: it is also reachable from a keybind path and from any machine the
+// batch is dispatched to, so the guard belongs here too. Without LAMBS there is
+// no danger FSM state to reset and nothing to re-lock afterwards.
+if (isNil "lambs_wp_fnc_taskReset") exitWith {};
+
 {
     private _grp = _x;
     if (!isNull _grp && { local _grp }) then {

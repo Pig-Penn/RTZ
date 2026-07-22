@@ -25,6 +25,18 @@
     _heli flyInHeight [_height, true];
 }] call CBA_fnc_addEventHandler;
 
+// Combat mode orders are executed where the group is local (setCombatMode is
+// a local-effect command). The engine exposes no reliable cross-locality
+// combatMode getter, so the ordered fire discipline is tracked in a public
+// per-group variable so the curator's next read (FUNC(toggleCombatMode)) is
+// authoritative even when the group is local to a dedicated server / headless
+// client.
+[QGVAR(toggleCombatMode), {
+    params ["_grp", "_mode", "_hold"];
+    _grp setCombatMode _mode;
+    _grp setVariable [QGVAR(holdFire), _hold, true];
+}] call CBA_fnc_addEventHandler;
+
 // Curator feedback toast for errands driven by FUNC(approach) (e.g. a unit that
 // couldn't reach the picked spot). Fired at the ordering curator's player.
 if (hasInterface) then {

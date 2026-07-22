@@ -127,9 +127,9 @@ if (!isServer) exitWith {};
 // SERVER — detection loop (unscheduled CBA per-frame handler)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// RC_CHECK_INTERVAL (seconds between scans, RC changes are infrequent) and
-// RC_OWNER_VAR (set globally by BI/ACE/ZEN → readable on the server) are
-// #defined in script_component.hpp.
+// RC_CHECK_TICK (base tick of the scan loop; the live GVAR(rcCheckInterval)
+// setting is the effective cadence) and RC_OWNER_VAR (set globally by
+// BI/ACE/ZEN → readable on the server) are #defined in script_component.hpp.
 
 // Force a re-send of every active indicator to its current viewers on the next
 // scan. Set by QGVAR(rcResync), fired by each client once its handlers are
@@ -145,8 +145,12 @@ GVAR(rcForceResend) = false;
     // and QGVAR(rcLost) to viewers who dropped out (released control ends up in
     // the cleanup pass; role changes in the per-unit diff). The colour is
     // resolved once per takeover and cached. State lives in the PFH args
-    // hashmap, mutated in place across ticks.
-    (_this select 0) params ["_activeRC"];
+    // hashmap, mutated in place across ticks. Ticks at RC_CHECK_TICK and
+    // self-gates on the live GVAR(rcCheckInterval) setting (RC changes are
+    // infrequent — default 3 s), retunable mid-mission.
+    (_this select 0) params ["_activeRC", "_nextRun"];
+    if (CBA_missionTime < _nextRun) exitWith {};
+    (_this select 0) set [1, CBA_missionTime + ((GETGVAR(rcCheckInterval,3)) max RC_CHECK_TICK)];
 
     // Every unit presently under remote control. allUnits is global (all
     // machines) and contains only the living, so death self-cleans next tick;
@@ -223,4 +227,4 @@ GVAR(rcForceResend) = false;
             } forEach ((_activeRC deleteAt _id) param [0, []]);
         };
     } forEach keys _activeRC;
-}, RC_CHECK_INTERVAL, [createHashMap]] call CBA_fnc_addPerFrameHandler;
+}, RC_CHECK_TICK, [createHashMap, 0]] call CBA_fnc_addPerFrameHandler;

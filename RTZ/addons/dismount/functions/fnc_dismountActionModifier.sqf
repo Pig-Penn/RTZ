@@ -1,15 +1,22 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_dismountActionModifier
- *
+ * Author: Maxim
  * CfgContext modifierFunction for the dismount toggle (see CfgContext.hpp).
  * Mutates the action's displayName (index 1), icon path (index 2), and
  * iconColor (index 3) to reflect the live vehicle state — amber padlock
  * "Forbid Dismount" while vanilla; cyan "Allow Dismount" once locked.
  *
- * Parameters:
- *   0: Array — the action array (mutated in place)
- *   1: Array — selection objects + hovered entity (pre-combined by the caller)
+ * Arguments:
+ * 0: The action array (mutated in place) <ARRAY>
+ * 1: Selection objects + hovered entity (pre-combined by the caller) <ARRAY>
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * [_action, _objects] call rtz_dismount_fnc_dismountActionModifier
+ *
+ * Public: No
  */
 params ["_action", "_objects"];
 private _vehs = [_objects] call EFUNC(common,collectVehicles);

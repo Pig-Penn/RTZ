@@ -1,26 +1,25 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_textWidth
- *
+ * Author: Maxim
  * Measures a tag string's on-screen width in UI-x coordinates (the same space
  * worldToScreen / getMousePosition return) with a hidden RscText fonted and
  * sized to match the tags' drawIcon3D calls, so icon placement and the
  * coloured status-word split land exactly at the real text edges at any
- * resolution or UI scale. Shared by rtz_fnc_unitTags and rtz_fnc_vehicleTags.
+ * resolution or UI scale. Shared by FUNC(unitTags) and FUNC(vehicleTags).
  *
  * The measuring control is created once on the main mission display and
  * reused; if it can't be made yet (no display) the call degrades to a rough
  * per-character estimate.
  *
  * Arguments:
- *   0: Text to measure <STRING>
- *   1: Font height (drawIcon3D text size) <NUMBER>
+ * 0: Text to measure <STRING>
+ * 1: Font height (drawIcon3D text size) <NUMBER>
  *
  * Return Value:
- *   Width in UI-x units <NUMBER>
+ * Width in UI-x units <NUMBER>
  *
  * Example:
- *   ["Rifleman · HP 62", 0.03] call rtz_fnc_textWidth
+ * ["Rifleman · HP 62", 0.03] call rtz_selection_fnc_textWidth
  *
  * Public: No
  */

@@ -16,5 +16,14 @@
         <Key ID="STR_RTZ_Dismount_DisplayName">
             <English>Dismount</English>
         </Key>
+        <Key ID="STR_RTZ_Dismount_MsgDismountAllowed">
+            <English>Dismount allowed</English>
+        </Key>
+        <Key ID="STR_RTZ_Dismount_MsgDismountForbidden">
+            <English>Dismount forbidden</English>
+        </Key>
+        <Key ID="STR_RTZ_Dismount_MsgNoVehicleSelected">
+            <English>Select a vehicle to lock its crew in</English>
+        </Key>
     </Package>
 </Project>

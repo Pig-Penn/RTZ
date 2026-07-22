@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_selectionInfo
- *
+ * Author: Maxim
  * When a curator uses the context menu action, a ZEN-styled
  * dialog lists every selected friendly infantry unit with a live snapshot of the
  * same data the LAMBS Danger debug overlay shows:
@@ -14,21 +13,33 @@
  * Data flow:
  *   Client poll (0.25 s) → tracks the curator's selection locally every tick,
  *   but only reports it to the server while someone is LOOKING at the data:
- *   the info dialog is open, or the unit head tags (rtz_fnc_unitTags) are
+ *   the info dialog is open, or the unit head tags (FUNC(unitTags)) are
  *   visible. Idle curators stream nothing.
- *   rtz_fnc_openSelectionInfo additionally reports once immediately on open,
+ *   FUNC(openSelectionInfo) additionally reports once immediately on open,
  *   and the server gathers + pushes straight from that report, so the dialog
  *   fills without waiting for a poll/gather tick to line up.
- *   Server gather (event-driven + 0.3 s PFH) → reads AI state where units are
- *   local (rtz_fnc_gatherUnitInfo), packages it into compact packets, and
- *   pushes to each reporting curator's client via CBA event.
+ *   Server gather (event-driven + PFH at the GVAR(gatherInterval) setting) →
+ *   reads AI state where units are local (FUNC(gatherUnitInfo)), packages it
+ *   into compact packets, and pushes to each reporting curator's client via
+ *   CBA event — skipped when identical to the last push (diff-gated).
  *   Dialog refreshes itself (0.25 s PFH) while open, so the listing stays live.
  *
- * Rendering functions (rtz_fnc_buildSelectionRows, rtz_fnc_openSelectionInfo) are
+ * Rendering functions (FUNC(buildSelectionRows), FUNC(openSelectionInfo)) are
  * compiled separately via PREP and called by name.
  *
  * Requirements: CBA_A3, ZEN, LAMBS (optional — task/tactic rows blank without it).
  * Loading: called from XEH_postInit after CBA_settingsInitialized.
+ *
+ * Arguments:
+ * None
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * call rtz_selection_fnc_selectionInfo
+ *
+ * Public: No
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -43,15 +54,15 @@ if (hasInterface) then {
     // netId → data packet, last pushed by the server for our selection.
     GVAR(selData)       = createHashMap;
     // netIds currently selected (updated by the poll PFH below).
-    // rtz_fnc_openSelectionInfo and rtz_fnc_buildSelectionRows read this directly.
+    // FUNC(openSelectionInfo) and FUNC(buildSelectionRows) read this directly.
     GVAR(selCurrent)    = [];
-    // netIds of selected vehicles — set by the poll PFH; consumed by rtz_fnc_vehicleOverlay.
+    // netIds of selected vehicles — set by the poll PFH; consumed by FUNC(vehicleOverlay).
     GVAR(selVehicleIds) = [];
     // True while the selection info dialog is open — guards against stacking
     // duplicates AND gates what the poll reports to the server.
     GVAR(selDialogOpen) = false;
     // Last selection list actually sent to the server. Shared with
-    // rtz_fnc_openSelectionInfo (which reports once immediately on open), so the
+    // FUNC(openSelectionInfo) (which reports once immediately on open), so the
     // poll and the dialog never double-send or strand a report server-side.
     GVAR(selReported)   = [];
 
@@ -100,7 +111,7 @@ if (hasInterface) then {
         GVAR(selVehicleIds) = _vehs;
 
         // Report the selection only while a consumer is active: the info dialog,
-        // or the unit head tags (GVAR(tagsVisible), owned by rtz_fnc_unitTags —
+        // or the unit head tags (GVAR(tagsVisible), owned by FUNC(unitTags) —
         // read defensively since that system may be disabled). An empty report
         // (consumers gone / selection cleared / Zeus closed) tells the server to
         // stop gathering for us.
@@ -156,6 +167,13 @@ if (!isServer) exitWith {};
 // the gather loop below touches exactly the players who are actually looking.
 GVAR(selByPlayer) = createHashMap;
 
+// playerNetId → the packet array last actually SENT to that client. The gather
+// still runs every tick (unit state must be read to know it hasn't changed), but
+// an identical result is not re-serialized onto the network — idle selections
+// cost zero traffic. Entries are dropped whenever the client re-reports (forcing
+// a fresh send: the client clears its own data on close) or unsubscribes.
+GVAR(selLastSent) = createHashMap;
+
 // Gather packets for one curator's reported selection and push them to their
 // client. Called from the report event (instant dialog fill) and the PFH loop.
 GVAR(fnc_pushSelData) = {
@@ -171,28 +189,46 @@ GVAR(fnc_pushSelData) = {
         if (!_anySide && { side _unit != _cSide }) then { continue };
         _packets pushBack ([_unit] call FUNC(gatherUnitInfo));
     } forEach (_sel select [0, SEL_MAX_UNITS]);
+    // Diff-gate: nothing changed since the last send → skip the network hop.
+    // objNull default so a missing entry never compares equal to any array.
+    private _pk = netId _player;
+    if (_packets isEqualTo (GVAR(selLastSent) getOrDefault [_pk, objNull])) exitWith {};
+    GVAR(selLastSent) set [_pk, _packets];
     [QGVAR(selData), [_packets], _player] call CBA_fnc_targetEvent;
 };
 
 [QGVAR(selSelection), {
     params ["_player", "_sel"];
     if (isNull _player) exitWith {};
-    if (_sel isEqualTo []) exitWith { GVAR(selByPlayer) deleteAt (netId _player) };
-    GVAR(selByPlayer) set [netId _player, _sel];
+    private _pk = netId _player;
+    if (_sel isEqualTo []) exitWith {
+        GVAR(selByPlayer)  deleteAt _pk;
+        GVAR(selLastSent) deleteAt _pk;
+    };
+    GVAR(selByPlayer) set [_pk, _sel];
+    // A fresh report always gets a full send — the client may have cleared its
+    // data since (dialog close wipes it), so the diff baseline must not linger.
+    GVAR(selLastSent) deleteAt _pk;
     // Gather + push immediately so a freshly opened dialog fills right away
     // instead of waiting for the next PFH tick.
     [_player, _sel] call GVAR(fnc_pushSelData);
 }] call CBA_fnc_addEventHandler;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SERVER — gather loop (infantry only; vehicle gather is in rtz_fnc_vehicleDataStream)
+// SERVER — gather loop (infantry only; vehicle gather is in FUNC(vehicleDataStream))
 // ─────────────────────────────────────────────────────────────────────────────
 // A CBA PFH rather than a spawned while/sleep thread: unscheduled, so the gather
 // cadence never degrades under scheduler load. Entries whose player disconnected
 // or dropped curator are pruned in passing (deleted AFTER the forEach — never
 // mutate a HashMap mid-iteration).
 
+// The PFH ticks at GATHER_TICK and self-gates on the live GVAR(gatherInterval)
+// setting (same pattern as rtz_spotting's spotCheckInterval), so admins can
+// retune the cadence mid-mission without a restart.
 [{
+    (_this select 0) params ["_nextRun"];
+    if (CBA_missionTime < _nextRun) exitWith {};
+    (_this select 0) set [0, CBA_missionTime + ((GETGVAR(gatherInterval,0.3)) max GATHER_TICK)];
     if (count GVAR(selByPlayer) == 0) exitWith {};
     private _stale = [];
     {
@@ -204,5 +240,8 @@ GVAR(fnc_pushSelData) = {
         };
         [_player, _y] call GVAR(fnc_pushSelData);
     } forEach GVAR(selByPlayer);
-    { GVAR(selByPlayer) deleteAt _x } forEach _stale;
-}, GATHER_INTERVAL, []] call CBA_fnc_addPerFrameHandler;
+    {
+        GVAR(selByPlayer)  deleteAt _x;
+        GVAR(selLastSent) deleteAt _x;
+    } forEach _stale;
+}, GATHER_TICK, [0]] call CBA_fnc_addPerFrameHandler;

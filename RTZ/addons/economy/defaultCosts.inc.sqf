@@ -8,6 +8,7 @@
 private _costs = [];
 
 #include "defaultCosts\msf.inc.sqf"
+#include "defaultCosts\gendarmerie.inc.sqf"
 #include "defaultCosts\csat.inc.sqf"
 #include "defaultCosts\viper.inc.sqf"
 #include "defaultCosts\aaf.inc.sqf"

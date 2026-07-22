@@ -70,8 +70,10 @@
 // Officer editing-area zone ring overlay (fnc_initCuratorDisplay).
 #define COLOR_ZONE_RING [0.25, 0.55, 1, 0.85]
 
-// Remote-control indicator (fnc_remoteControlIndicator).
-#define RC_CHECK_INTERVAL 3
+// Remote-control indicator (fnc_remoteControlIndicator). RC_CHECK_TICK is the
+// base tick (s) of the server scan PFH; the effective cadence is the
+// GVAR(rcCheckInterval) CBA setting, read live and floored to this value.
+#define RC_CHECK_TICK 1
 #define RC_OWNER_VAR "bis_fnc_moduleRemoteControl_owner"
 #define RC_TEXTURE "\a3\modules_f_curator\data\portraitremotecontrol_ca.paa"
 #define RC_ICON_NEAR 500

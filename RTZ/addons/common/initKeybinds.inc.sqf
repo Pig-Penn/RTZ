@@ -1,4 +1,4 @@
-private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
+private _category = ELSTRING(main,DisplayName);
 
 // Every handler checks its own preconditions (Zeus open, search box not
 // focused, relevant selection) and returns false to pass the key through, so
@@ -35,6 +35,10 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 
 [_category, QGVAR(heliHeightDown), [LSTRING(HeliHeightDown), LSTRING(HeliHeightDown_Description)],
     {[-1] call FUNC(flyHeight)}, {}, [0xD1, [false, false, false]]] call CBA_fnc_addKeybind; // Default: PageDown
+
+// Flip the selected AI groups between forced Hold Fire and standard Open Fire
+[_category, QGVAR(toggleCombatMode), [LSTRING(ToggleCombatMode), LSTRING(ToggleCombatMode_Description)],
+    {call FUNC(toggleCombatMode)}, {}, [0x23, [true, false, false]]] call CBA_fnc_addKeybind; // Default: Shift + H
 
 // Open selected unit's inventory. Client-only: the gear dialog is a UI action,
 // and the engine's networked inventory sync carries the item transfers even when

@@ -27,3 +27,13 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     false,
     0 // Client
 ] call CBA_fnc_addSetting;
+
+// One cadence for both server poll loops (destinations + targets). Read live
+// each tick.
+[
+    QGVAR(pollInterval), "SLIDER",
+    [LSTRING(PollInterval), LSTRING(PollInterval_Description)],
+    _category,
+    [0.5, 10, 2, 1],
+    true // Global
+] call CBA_fnc_addSetting;

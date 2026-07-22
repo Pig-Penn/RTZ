@@ -52,6 +52,9 @@
         <Key ID="STR_RTZ_Common_MsgFlyHeight">
             <English>Altitude %1%2 [m]</English>
         </Key>
+        <Key ID="STR_RTZ_Common_MsgHoldFireCount">
+            <English>Hold Fire x%1</English>
+        </Key>
         <Key ID="STR_RTZ_Common_MsgInCombat">
             <English>In Combat</English>
         </Key>
@@ -60,6 +63,9 @@
         </Key>
         <Key ID="STR_RTZ_Common_MsgNoUnitSelected">
             <English>No unit selected</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_MsgOpenFireCount">
+            <English>Open Fire x%1</English>
         </Key>
         <Key ID="STR_RTZ_Common_MsgTeleported">
             <English>Teleported</English>
@@ -77,7 +83,7 @@
             <English>LMB place  |  hold rotate modifier to turn  |  ESC cancel</English>
         </Key>
         <Key ID="STR_RTZ_Common_SmokeScreen">
-            <English>Smoke Screen</English>
+            <English>Countermeasures</English>
         </Key>
         <Key ID="STR_RTZ_Common_StanceAuto">
             <English>Stance Auto</English>
@@ -120,6 +126,12 @@
         </Key>
         <Key ID="STR_RTZ_Common_TeleportToCursor_Description">
             <English>Teleport the selected units to the cursor position, preserving their formation. Units in combat are skipped; the Unit Teleport settings control range and cooldown.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_ToggleCombatMode">
+            <English>Toggle Hold Fire</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_ToggleCombatMode_Description">
+            <English>Flip the selected AI groups between forced Hold Fire and the standard Open Fire, maintain formation posture.</English>
         </Key>
     </Package>
 </Project>

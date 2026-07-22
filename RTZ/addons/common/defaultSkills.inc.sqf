@@ -8,7 +8,8 @@
 private _skills = [];
 
 #include "defaultSkills\csat.inc.sqf"
-#include "defaultSkils\msf.inc.sqf"
+#include "defaultSkills\msf.inc.sqf"
+#include "defaultSkills\gendarmerie.inc.sqf"
 
 // Keys are lowercased so lookups are immune to classname case differences
 GVAR(defaultSkills) = createHashMapFromArray (_skills apply {

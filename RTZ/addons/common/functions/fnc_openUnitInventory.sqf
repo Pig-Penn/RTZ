@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_common_fnc_openUnitInventory
- *
+ * Author: Maxim
  * Opens the gear / inventory of a single Zeus-selected unit (or vehicle) so the
  * curator can arrange its loadout and loot anything around it. Once the gear
  * display is open on a unit, its Ground / Container tabs list everything within
@@ -21,12 +20,20 @@
  * transfers even when the unit / container is remote — the same path that lets
  * you loot a server-side body from a client.
  *
- * Parameters:
- *   0 (optional): OBJECT — unit or vehicle whose inventory to open. Omitted →
- *                 the first selected man / vehicle from curatorSelected is used.
+ * Requires the player to be an assigned curator with the Zeus display open
+ * (guarded by the caller / keybind).
  *
- * Returns nothing. Requirements: player is an assigned curator with the Zeus
- * display open (guarded by the caller / keybind).
+ * Arguments:
+ * 0: Unit or vehicle whose inventory to open — omitted resolves to the first
+ *    selected man / vehicle from curatorSelected <OBJECT> (default: objNull)
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * [_unit] call rtz_common_fnc_openUnitInventory
+ *
+ * Public: No
  */
 
 params [["_unit", objNull, [objNull]]];

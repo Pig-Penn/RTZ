@@ -1,15 +1,22 @@
 #include "script_component.hpp"
 /*
- * rtz_control_fnc_squadHideApply
- *
+ * Author: Maxim
  * SERVER handler body for QGVAR(squadHideApply) (registered in XEH_postInit).
  * Hides/unhides and freezes/unfreezes one group. hideObjectGlobal /
  * enableSimulationGlobal are server-only commands, so the client toggle
  * (FUNC(squadHideToggle)) dispatches here via CBA_fnc_serverEvent.
  *
- * Parameters:
- *   0: Group   — group to toggle
- *   1: Boolean — true = hide & freeze; false = restore
+ * Arguments:
+ * 0: Group to toggle <GROUP>
+ * 1: True to hide & freeze, false to restore <BOOL>
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * [_group, true] call rtz_control_fnc_squadHideApply
+ *
+ * Public: No
  */
 
 params ["_grp", "_hide"];

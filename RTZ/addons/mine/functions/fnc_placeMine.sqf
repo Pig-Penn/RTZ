@@ -8,6 +8,7 @@
  * 0: Unit <OBJECT>
  * 1: Position AGL <ARRAY>
  * 2: Magazine <STRING>
+ * 3: Curator <OBJECT> — toast target if the layer can't reach the spot (default objNull)
  *
  * Return Value:
  * None
@@ -18,7 +19,7 @@
  * Public: No
  */
 
-params ["_unit", "_pos", "_magazine"];
+params ["_unit", "_pos", "_magazine", ["_curator", objNull]];
 
 [
     [_unit], _pos, PLACE_DISTANCE, GVAR(placeTimeout),
@@ -28,12 +29,15 @@ params ["_unit", "_pos", "_magazine"];
         if (_magazine in magazines _unit) then {
             [_unit, _magazine] call FUNC(plantMine);
         };
+
+        // Drop the force-move guard/pose and rejoin formation now the plant is done.
+        [_unit] call FUNC(clearErrand);
     },
-    {
-        // Errand expired — release the stale move order (skipped when a newer
-        // order superseded this one; EFUNC(common,approach) skips onFail then).
-        params ["_unit"];
-        if (alive _unit) then { _unit doMove getPosATL _unit };
-    },
-    [_unit, _magazine]
+    // Errand expired or the layer died — drop the guard/pose and rejoin formation
+    // (skipped when a newer order superseded this one; approach skips onFail then).
+    LINKFUNC(clearErrand),
+    [_unit, _magazine],
+    true,                           // forceMove: hold the layer against the LAMBS danger FSM mid-walk
+    _curator,
+    LLSTRING(PlaceUnreachable)
 ] call EFUNC(common,approach);

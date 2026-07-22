@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_control_fnc_reloadSquad
- *
+ * Author: Maxim
  * Context-menu statement: orders every unit in the selected group(s) to
  * reload its current weapon.
  *
@@ -11,9 +10,17 @@
  * GROUPS: CBA delivers it once per owning machine and the handler filters
  * to its local groups (registered on every machine in XEH_postInit).
  *
- * Parameters:
- *   0: Array  — selection objects
- *   1: Object — hovered entity
+ * Arguments:
+ * 0: Selection objects <ARRAY>
+ * 1: Hovered entity <OBJECT>
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * [_objects, _hoveredEntity] call rtz_control_fnc_reloadSquad
+ *
+ * Public: No
  */
 
 params ["_objects", "_hoveredEntity"];

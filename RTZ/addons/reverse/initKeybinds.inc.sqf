@@ -1,4 +1,4 @@
-private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
+private _category = ELSTRING(main,DisplayName);
 
 [_category, QGVAR(reverseToCursor), [LSTRING(ReverseToCursor), LSTRING(ReverseToCursor_Description)], {
     if (!isNull curatorCamera && {!GETMVAR(RscDisplayCurator_search,false)}) then {

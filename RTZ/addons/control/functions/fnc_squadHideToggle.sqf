@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_control_fnc_squadHideToggle
- *
+ * Author: Maxim
  * Context-menu statement: flips the "hidden & frozen" state of every group in
  * the selection. Reads the current state from the FIRST group and applies the
  * inverse uniformly to all of them (matching the label shown by the modifier).
@@ -12,8 +11,16 @@
  * broadcasts the per-group state variable so every client's modifier reads the
  * correct label.
  *
- * Parameters:
- *   0: Array — selection objects (curatorSelected + hovered entity)
+ * Arguments:
+ * 0: Selection objects (curatorSelected + hovered entity) <ARRAY>
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * [_objects] call rtz_control_fnc_squadHideToggle
+ *
+ * Public: No
  */
 
 params ["_objects"];

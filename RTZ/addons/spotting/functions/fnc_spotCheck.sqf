@@ -11,6 +11,11 @@
  *    to groups x hostiles.
  *  - All units + vehicles are classified into per-side buckets once per tick;
  *    curators on the same side share one detection pass.
+ *  - The knowledge matrix is INVERTED via the `targets` command: one engine call
+ *    per spotter group returns every enemy that group already has on its target
+ *    list (the same group-level store knowsAbout reads), so the per-member
+ *    knowsAbout loop only runs over the groups that actually know the member —
+ *    O(spotterGroups + contacts) instead of O(spotterGroups × hostiles).
  *  - spotDetected is only sent when the rendered payload actually changes. The change
  *    signature embeds the destination player's netId, so a rejoined player (new player
  *    object) forces a one-shot full re-send with no JIP machinery. Clients additionally
@@ -92,11 +97,14 @@ private _officerZoneRadii = GETMVAR(RTZ_officerZoneRadiusMap,createHashMap);
 // Men and vehicles are looped separately — allUnits is alive-only and all
 // CAManBase, so the men's loop needs no alive/kind checks and no merged array
 // is allocated. Buckets are fetched with get + isNil (not getOrDefault) so the
-// default array/hashmap isn't allocated per entity on the hit path.
+// default array/hashmap isn't allocated per entity on the hit path. Units with
+// simulation disabled are skipped entirely — neither spottable (they present
+// no meaningful target) nor usable as a spotter rep.
 private _sideEntities    = createHashMap;
 private _sideSpotterReps = createHashMap;
 {
     if (isPlayer _x) then { continue };
+    if (!simulationEnabled _x) then { continue };
     private _eSide  = side _x;
     private _sk     = str _eSide;
     private _bucket = _sideEntities get _sk;
@@ -118,6 +126,7 @@ private _sideSpotterReps = createHashMap;
 
 {
     if (!alive _x || { isPlayer _x }) then { continue };
+    if (!simulationEnabled _x) then { continue };
     if !(_x isKindOf "LandVehicle"
         || { _x isKindOf "Air" }
         || { _x isKindOf "Ship" }) then { continue };
@@ -185,6 +194,34 @@ private _currentKeys = createHashMap;
     private _spotterReps = values (_sideSpotterReps getOrDefault [_x, createHashMap]);
     if (_spotterReps isEqualTo []) then { continue };
 
+    // ── Invert the knowledge matrix ───────────────────────────────────
+    // `targets [true]` returns every enemy this rep's GROUP has on its target
+    // list — anything with knowsAbout > 0, including stale/heard contacts, so
+    // SOFT_THRESHOLD graduation below is unaffected. Building targetNetId →
+    // [candidate reps] here means the member loop below runs knowsAbout only
+    // against groups that genuinely know the member; every other rep×member
+    // pair — the overwhelming majority on a big mission — is never touched.
+    // Knowledge crosses the hull both ways (the engine's target list may carry
+    // either object for a crewed vehicle, but knowsAbout answers for both): a
+    // known enemy VEHICLE also credits its crew, and a known MAN who has since
+    // mounted also credits his vehicle — the member loop below walks men and
+    // hulls as separate entries.
+    private _knownBy = createHashMap;
+    {
+        private _rep = _x;
+        {
+            (_knownBy getOrDefault [netId _x, [], true]) pushBack _rep;
+            if (_x isKindOf "CAManBase") then {
+                private _hull = objectParent _x;
+                if (!isNull _hull) then {
+                    (_knownBy getOrDefault [netId _hull, [], true]) pushBack _rep;
+                };
+            } else {
+                { (_knownBy getOrDefault [netId _x, [], true]) pushBack _rep } forEach crew _x;
+            };
+        } forEach (_rep targets [true]);
+    } forEach _spotterReps;
+
     // All alive, non-player entities hostile to this side: union of the
     // pre-bucketed sides whose relation to us is hostile.
     private _allHostile = [];
@@ -217,6 +254,18 @@ private _currentKeys = createHashMap;
     {
         _x params ["_leader", "_members", "_leaderNetId"];
 
+        // The group leader is not necessarily a SPOTTABLE entity: _allHostile
+        // excludes players and simulation-disabled units, but grouping above keys
+        // on `leader group`, so an AI squad led by a player reports the PLAYER as
+        // its leader. Anchoring the group icon on him would track a player's exact
+        // position for the enemy Zeus every frame (and seed the callout's location
+        // lookup) — precisely what the isPlayer filter exists to prevent, and not
+        // something his chevron-less members ever reveal. Fall back to a member that
+        // genuinely is spotted. _leaderNetId keeps the ORIGINAL leader's netId as the
+        // group key, so chevron→group association (the hover peek in FUNC(draw3D))
+        // and the callout cooldown are unaffected.
+        if !(_leader in _members) then { _leader = _members select 0 };
+
         // Team awareness, computed ONCE for all curators on this side, ONE
         // knowsAbout per (spotter group, member):
         //   _groupKnows — best knowsAbout across members (knows the GROUP) → group icon.
@@ -233,18 +282,25 @@ private _currentKeys = createHashMap;
             // that per-spotter loop is the expensive part of this pass, and a unit
             // just confirmed spotted is assumed still known for a short memory window
             // rather than re-verified every tick.
+            // The latched spotter must still be alive: it is reused below as the
+            // group's callout author (_grpReporter), and a dead unit cannot
+            // sideChat — the report would be consumed by the cooldown and never
+            // heard. A dead latch falls through to the full knowsAbout scan,
+            // which only ever draws from the live _spotterReps.
             private _latchKey = _spotterSideStr + "_" + _memberId;
             private _latch    = GVAR(chevronLatch) get _latchKey;
             private _uKnows = 0;
             private _uBest  = objNull;
-            if (!isNil "_latch" && { (_latch select 0) > CBA_missionTime }) then {
+            if (!isNil "_latch" && { (_latch select 0) > CBA_missionTime } && { alive (_latch select 1) }) then {
                 _uKnows = HARD_THRESHOLD;
                 _uBest  = _latch select 1;
             } else {
+                // Only reps whose group has this member (or its hull) on their
+                // target list can score above zero — everyone else is skipped.
                 {
                     private _k = _x knowsAbout _member;
                     if (_k > _uKnows) then { _uKnows = _k; _uBest = _x; };
-                } forEach _spotterReps;
+                } forEach (_knownBy getOrDefault [_memberId, []]);
                 if (_uKnows >= HARD_THRESHOLD) then {
                     GVAR(chevronLatch) set [_latchKey, [CBA_missionTime + CHEVRON_LATCH_DURATION, _uBest]];
                 };
@@ -342,7 +398,13 @@ private _currentKeys = createHashMap;
             if (CBA_missionTime - (GVAR(spotGroupCooldowns) getOrDefault [_sideGroupKey, -1e10]) >= GROUP_CALLOUT_COOLDOWN) then {
                 GVAR(spotGroupCooldowns) set [_sideGroupKey, CBA_missionTime];
                 (_sideNewReport select 1) pushBackUnique ([_leader] call FUNC(contactCategory));
-                if (isNull (_sideNewReport select 0)) then {
+                // Claim the author slot while it is still unfilled OR holds a unit
+                // that has since died (alive objNull is false, so this covers both).
+                // Testing `alive` rather than `isNull` keeps one group's casualty
+                // from poisoning the whole side's report: a later group with a live
+                // spotter takes the slot over, and the position follows the author
+                // so the callout always names the group it came from.
+                if (!alive (_sideNewReport select 0) && { alive _grpReporter }) then {
                     // Representatives are always men (crew are represented by their
                     // effective commander), so the reporter can sideChat directly.
                     _sideNewReport set [0, _grpReporter];
@@ -357,7 +419,9 @@ private _currentKeys = createHashMap;
     // One call for the whole side: the location lookup and phrasing are
     // computed once, so same-side curators hear the identical report.
     _sideNewReport params ["_reporter", "_reportCats", "_contactPos"];
-    if (_reportCats isNotEqualTo [] && { !isNull _reporter }) then {
+    // alive, not just !isNull: a corpse is a valid object but sideChat on it is
+    // silent, and the per-group cooldown has already been consumed by now.
+    if (_reportCats isNotEqualTo [] && { alive _reporter }) then {
         [_reporter, _reportCats, _curatorsData apply { _x select 1 }, _contactPos] call FUNC(spotCallout);
     };
 

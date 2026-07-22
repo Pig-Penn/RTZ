@@ -1,7 +1,6 @@
 #include "script_component.hpp"
 /*
- * rtz_fnc_vehicleOverlay
- *
+ * Author: Maxim
  * Native-styled stat card in the bottom-right corner for each vehicle selected
  * by the curator, matching the vanilla Zeus / ZEN interface language:
  *   — title bar tinted with the player's profile UI theme colour (the same
@@ -13,11 +12,11 @@
  * A faint side-coloured world line links each card to its vehicle.
  *
  * Cards minimize to accent strip + title bar (and back) at runtime via a ZEN
- * context menu entry — same toggle pattern as the unit tags (rtz_fnc_unitTags).
+ * context menu entry — same toggle pattern as the unit tags (FUNC(unitTags)).
  *
- * rtz_fnc_selectionInfo's poll tracks which vehicles are selected and sets
+ * FUNC(selectionInfo)'s poll tracks which vehicles are selected and sets
  * GVAR(selVehicleIds). The actual per-vehicle data (netId → packet) is fed by
- * rtz_fnc_vehicleDataStream — split into its own function so rtz_fnc_vehicleTags
+ * FUNC(vehicleDataStream) — split into its own function so FUNC(vehicleTags)
  * can consume the same stream without this overlay being enabled. This script
  * only renders the bottom-right cards from whatever that stream has gathered.
  *
@@ -28,11 +27,22 @@
  *
  * Requirements: CBA_A3; ZEN optional (context toggle absent without it);
  *   LAMBS optional (task/tactic lines blank without it). Needs
- *   rtz_fnc_vehicleDataStream running for its data (started automatically
+ *   FUNC(vehicleDataStream) running for its data (started automatically
  *   alongside this system — see XEH_postInit).
  * Loading: called from XEH_postInit after CBA_settingsInitialized, gated on
  *   GVAR(enableVehicleOverlay). Registers a client Draw3D handler; contains no
  *   scheduled ops, so it is `call`ed, not `spawn`ed.
+ *
+ * Arguments:
+ * None
+ *
+ * Return Value:
+ * None
+ *
+ * Example:
+ * call rtz_selection_fnc_vehicleOverlay
+ *
+ * Public: No
  */
 
 // ── Card geometry (absolute UI units) and shared card colours ────────────────

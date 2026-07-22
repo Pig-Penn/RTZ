@@ -1,4 +1,5 @@
 PREP(canDisarm);
+PREP(clearErrand);
 PREP(demine);
 PREP(draw3D);
 PREP(drawMap);
