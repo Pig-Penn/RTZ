@@ -15,3 +15,11 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     true,
     true // Global
 ] call CBA_fnc_addSetting;
+
+[
+    QGVAR(enableDelete), "CHECKBOX",
+    [LSTRING(Delete), LSTRING(Delete_Description)],
+    _category,
+    true,
+    true // Global
+] call CBA_fnc_addSetting;

@@ -12,13 +12,13 @@
 #define AREA_ID_BASE 1000
 
 // Seconds between lifecycle/prune/follow passes of FUNC(monitorAreas)
-#define MONITOR_INTERVAL 5
+#define MONITOR_INTERVAL 10
 
 // Seconds an officer must wait after his area is removed before a new one can be placed
 #define COOLDOWN_DURATION 15
 
 // Seconds between hold/release passes of FUNC(monitorAuras) (server-side)
-#define AURA_INTERVAL 5
+#define AURA_INTERVAL 10
 
 // Context-menu icon and tint per toggle state
 #define ICON_ADD "\x\zen\addons\context_actions\ui\add_ca.paa"
