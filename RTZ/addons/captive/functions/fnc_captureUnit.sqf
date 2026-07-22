@@ -51,7 +51,14 @@ private _payOut = {
     {
         _x addCuratorPoints _share;
         private _player = getAssignedCuratorUnit _x;
-        if (!isNull _player) then {
+        // isPlayer, not isNull: a curator module bound to a departed player keeps
+        // returning that player's leftover AI body (a playable Zeus slot whose AI
+        // is not disabled leaves the object behind). That body is server-local, so
+        // `owner` is 2 and the message would be delivered to the server — silently
+        // dropped on a dedicated server, but rendered by a listen-server host as its
+        // own payout notification. `isPlayer objNull` is false, so this still covers
+        // the null case. Same guard as rtz_spotting's curator resolution.
+        if (isPlayer _player) then {
             [QGVAR(captureMsg), [_msgKey, _name, round _share], _player] call CBA_fnc_targetEvent;
         };
     } forEach _curators;

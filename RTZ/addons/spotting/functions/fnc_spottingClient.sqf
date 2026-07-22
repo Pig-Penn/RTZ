@@ -119,7 +119,12 @@ if (!isNull _curatorDisplay) then {
     [_curatorDisplay] call FUNC(initCuratorDisplay);
 };
 
-// Handlers are registered — ask the server to force-resend every active spot on
-// its next tick. Covers JIP/rejoin where sig-gated sends happened before this
-// machine could listen. (Harmless no-op at mission start: nothing is active yet.)
-[QGVAR(spotResync), []] call CBA_fnc_serverEvent;
+// Handlers are registered — ask the server to force-resend every active spot to
+// THIS player. Covers JIP/rejoin where sig-gated sends happened before this machine
+// could listen, and (for a same-slot rejoin, where the player object and therefore
+// every signature is unchanged) is the only thing that restores the picture at all.
+// Sending `player` rather than an empty payload makes the request per-destination:
+// the server holds it pending until this player actually resolves to a curator,
+// instead of spending a global flag on the next tick whether or not we were a
+// resolvable Zeus by then. (Harmless no-op at mission start: nothing is active yet.)
+[QGVAR(spotResync), [player]] call CBA_fnc_serverEvent;

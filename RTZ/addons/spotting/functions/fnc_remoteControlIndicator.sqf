@@ -40,6 +40,23 @@
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SERVER - resync listener (registered BEFORE the client half below)
+// ─────────────────────────────────────────────────────────────────────────────
+// Force a re-send of every active indicator to its current viewers on the next
+// scan. Set by QGVAR(rcResync), fired by each client once its handlers are
+// registered - closing the JIP race where a viewer-diffed send happened before
+// the client could listen. Re-sends are idempotent (the client `set` overwrites).
+//
+// This sits above the client fork deliberately: on a listen server
+// CBA_fnc_serverEvent runs locally and immediately, so the host's own
+// QGVAR(rcResync) would be dropped - and then explicitly cleared - if the handler
+// and its `= false` initializer were still registered further down the file.
+if (isServer) then {
+    GVAR(rcForceResend) = false;
+    [QGVAR(rcResync), { GVAR(rcForceResend) = true }] call CBA_fnc_addEventHandler;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CLIENT - register event handlers
 // Runs on every machine with a screen: MP clients, listen-server host,
 // and singleplayer (where isServer and hasInterface are both true).
@@ -130,13 +147,8 @@ if (!isServer) exitWith {};
 // RC_CHECK_TICK (base tick of the scan loop; the live GVAR(rcCheckInterval)
 // setting is the effective cadence) and RC_OWNER_VAR (set globally by
 // BI/ACE/ZEN → readable on the server) are #defined in script_component.hpp.
-
-// Force a re-send of every active indicator to its current viewers on the next
-// scan. Set by QGVAR(rcResync), fired by each client once its handlers are
-// registered — closing the JIP race where a viewer-diffed send happened before
-// the client could listen. Re-sends are idempotent (the client `set` overwrites).
-GVAR(rcForceResend) = false;
-[QGVAR(rcResync), { GVAR(rcForceResend) = true }] call CBA_fnc_addEventHandler;
+// GVAR(rcForceResend) and its QGVAR(rcResync) listener are set up at the top of
+// this file, above the client fork — see the note there.
 
 [{
     // Active indicators: unitNetId → [viewerPlayers, colorArray]. viewerPlayers
@@ -205,9 +217,11 @@ GVAR(rcForceResend) = false;
         } forEach (_viewers - ([_prevViewers, []] select _force));
 
         // Viewers who dropped out since last tick get it retracted. A viewer who
-        // disconnected entirely is a null object — no client to notify, skip it.
+        // disconnected entirely has no client to notify — isPlayer, not isNull,
+        // since a departed player's body can persist as server-local AI (owner 2),
+        // which would route the retraction to the server/host instead.
         {
-            if (!isNull _x) then {
+            if (isPlayer _x) then {
                 [QGVAR(rcLost), [_id], _x] call CBA_fnc_targetEvent;
             };
         } forEach (_prevViewers - _viewers);
@@ -221,7 +235,7 @@ GVAR(rcForceResend) = false;
         if !(_x in _currentIds) then {
             private _id = _x;
             {
-                if (!isNull _x) then {
+                if (isPlayer _x) then {
                     [QGVAR(rcLost), [_id], _x] call CBA_fnc_targetEvent;
                 };
             } forEach ((_activeRC deleteAt _id) param [0, []]);

@@ -34,6 +34,45 @@
  * Public: No
  */
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SERVER — resync listeners (registered BEFORE the client half runs)
+// ─────────────────────────────────────────────────────────────────────────────
+// Two force-resend channels, both consumed by FUNC(spotCheck):
+//
+//   GVAR(spotForceResend)   — global one-shot, every curator re-sent next tick.
+//     Starts true (the first tick sends everything as new anyway).
+//
+//   GVAR(spotResendPlayers) — playerNetId → true, a per-destination pending
+//     request. Each client fires QGVAR(spotResync) with its own player object once
+//     its event handlers are registered. This is the ONLY recovery path for a
+//     rejoin into the same slot: the returning player keeps his unit object, so his
+//     netId — and every payload signature built from it — compares equal and the
+//     change-gated send never fires (see FUNC(emitSpot)).
+//
+// The per-player channel exists because the global flag is consumed on the very
+// next tick regardless of who was resolvable. A client fires its request from
+// CBA_settingsInitialized, but the mission may not assign it a curator module until
+// several ticks later (script-granted Zeus, BIS_fnc_moduleCurator on connect) — the
+// global flag would be spent on a pass that did not include that player at all, and
+// nothing would ever re-send. A pending per-player entry is instead retired only
+// once that player actually resolves to a targetable curator, so the request cannot
+// be burned early. A bare QGVAR(spotResync) with no player still sets the global
+// flag, so any other caller keeps the old behaviour.
+//
+// This block sits above the client fork deliberately: on a listen server
+// CBA_fnc_serverEvent runs locally and immediately, so the host's own
+// QGVAR(spotResync) — fired at the tail of FUNC(spottingClient) — would be dropped
+// on the floor if the handler were still registered further down the file.
+if (isServer) then {
+    GVAR(spotForceResend)   = true;
+    GVAR(spotResendPlayers) = createHashMap;
+    [QGVAR(spotResync), {
+        params [["_player", objNull]];
+        if (!isPlayer _player) exitWith { GVAR(spotForceResend) = true };
+        GVAR(spotResendPlayers) set [netId _player, true];
+    }] call CBA_fnc_addEventHandler;
+};
+
 // Runs on every machine with a screen: MP clients, listen-server host, and
 // singleplayer (where isServer and hasInterface are both true). Guarded here,
 // at the fork — FUNC(spottingClient) carries no guard of its own.
@@ -46,13 +85,6 @@ if (!isServer) exitWith {};
 // ─────────────────────────────────────────────────────────────────────────────
 // SERVER — state
 // ─────────────────────────────────────────────────────────────────────────────
-
-// Force a full re-send of every active spot on the next tick. Starts true (first
-// tick sends everything as new anyway); set again by QGVAR(spotResync), which each
-// client fires once its event handlers are registered — closing the JIP race where
-// a sig-gated send happened before the client could listen.
-GVAR(spotForceResend) = true;
-[QGVAR(spotResync), { GVAR(spotForceResend) = true }] call CBA_fnc_addEventHandler;
 
 // Fire-blink lookup, rebuilt by every detection pass:
 // netId(spottedUnit) → [[wedgeMarker, spotterPlayer], …] for units currently
@@ -87,8 +119,10 @@ GVAR(chevronLatch)       = createHashMap;   // (spotterSideStr + "_" + memberNet
     {
         _x params ["_mrkr", "_player"];
         // The lookup is rebuilt only once per check interval — the player may have
-        // disconnected since; a null targetEvent destination would error.
-        if (!isNull _player) then {
+        // disconnected since. isPlayer, not isNull: a departed player's leftover AI
+        // body is non-null and server-local, so owner is 2 and the blink would land
+        // on the server/host instead (see FUNC(spotCheck)'s curator-resolution block).
+        if (isPlayer _player) then {
             [QGVAR(blink), [_mrkr], _player] call CBA_fnc_targetEvent;
         };
     } forEach _spotters;

@@ -1,16 +1,17 @@
 class zen_context_menu_actions {
-    class RTZ_Control {
-        // Only appears while the selection actually holds a non-local group, so
-        // it stays invisible in normal play and surfaces exactly when a squad's
-        // simulation needs pulling back (typically after a curator rejoined).
-        class GVAR(initControl) {
-            displayName = CSTRING(ActionInit);
-            icon = ICON_INIT;
-            statement = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(initControl));
-            condition = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(canInitControl));
-            priority = 4;
-        };
+    // Only appears while the selection actually holds a non-local group, so
+    // it stays invisible in normal play and surfaces exactly when a squad's
+    // simulation needs pulling back (typically after a curator rejoined).
+    // Sits at the menu root alongside the other RTS-style order actions.
+    class GVAR(initControl) {
+        displayName = CSTRING(ActionInit);
+        icon = ICON_INIT;
+        statement = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(initControl));
+        condition = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(canInitControl));
+        priority = 4;
+    };
 
+    class RTZ_Control {
         class GVAR(reload) {
             displayName = CSTRING(ActionReload);
             icon = ICON_RELOAD;

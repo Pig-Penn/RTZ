@@ -17,10 +17,16 @@
  *    knowsAbout loop only runs over the groups that actually know the member —
  *    O(spotterGroups + contacts) instead of O(spotterGroups × hostiles).
  *  - spotDetected is only sent when the rendered payload actually changes. The change
- *    signature embeds the destination player's netId, so a rejoined player (new player
- *    object) forces a one-shot full re-send with no JIP machinery. Clients additionally
- *    request a resync (QGVAR(spotResync)) once their handlers are registered, closing
- *    the "event sent before the client registered" race.
+ *    signature embeds the destination player's netId, so a curator module handed to a
+ *    DIFFERENT player re-sends on its own. It does NOT cover a rejoin into the same
+ *    slot: Arma hands the returning player the same unit object, so the netId — and
+ *    every signature built from it — compares equal and nothing re-sends. JIP and
+ *    rejoin recovery therefore rest on the client's QGVAR(spotResync) request, fired
+ *    once its handlers are registered; that same request closes the "event sent
+ *    before the client registered" race. The request is held per-player in
+ *    GVAR(spotResendPlayers) and retired only when that player resolves to a
+ *    targetable curator, so it survives a mission that assigns the curator module
+ *    some ticks after the client asked (see FUNC(spottingSystem)).
  *  - Per-class config lookups (display names, NCO/HQ name tests, NATO symbol
  *    suffixes) are cached for the whole mission; chevron colours/names are
  *    pre-resolved server-side and shipped in the payload so the client Draw3D
@@ -56,7 +62,11 @@ params ["_activeSpots"];
 // repopulates it for units that are still wedge-spotted.
 GVAR(wedgeByUnit) = createHashMap;
 
-// Consume the pending force-resend flag (set at start and by client resyncs).
+// Consume the GLOBAL force-resend flag (set at mission start, and by any bare
+// QGVAR(spotResync)). The per-player pending requests in GVAR(spotResendPlayers)
+// are NOT consumed here — each entry is retired individually below, at the moment
+// its player resolves to a targetable curator, so a request that arrived before the
+// mission assigned that curator's module survives until it can be honoured.
 private _forceResend = GVAR(spotForceResend);
 GVAR(spotForceResend) = false;
 
@@ -67,7 +77,9 @@ private _curators = allCurators select { !isNull _x };
 // Diagnostic toggle, read once per tick. When on, each curator's resolution is
 // logged the first time it changes — this is THE check for "does the server
 // resolve joined/JIP clients' curators to a targetable player?". A curator that
-// logs player=<NULL>/owner=-1, or never logs at all, is being silently skipped.
+// logs owner=-1, or never logs at all, is being silently skipped; the logged
+// player object is the raw getAssignedCuratorUnit result, so a curator held by a
+// departed player shows a non-null body next to owner=-1.
 private _dbg = GETMVAR(RTZ_debug,false);
 
 // Officer editing-area zone radii (officerNetId → radius), published by
@@ -153,31 +165,51 @@ private _sideSpotterReps = createHashMap;
 } forEach vehicles;
 
 // ── Group manned curators by side ─────────────────────────────────────────
-// Only manned curators can be spotters — a player object is required as the
-// CBA_fnc_targetEvent destination. Headless curators are skipped entirely.
+// Only PLAYER-manned curators can be spotters — a live player object is required
+// as the CBA_fnc_targetEvent destination. Headless curators are skipped entirely,
+// and so are curator modules still bound to a departed player: a playable Zeus slot
+// whose AI is not disabled leaves the unit object behind, so getAssignedCuratorUnit
+// keeps returning a non-null, server-local, NON-player body. `owner` of that body is
+// 2, so an isNull-only guard would route every one of that curator's spots to the
+// server — a silent no-op on a dedicated server (whose keys then never age out of
+// _activeSpots), but on a listen server the host has the receivers registered and
+// would render a departed curator's entire contact picture as its own. isPlayer is
+// the same test FUNC(remoteControlIndicator) and rtz_selection already use, and
+// `isPlayer objNull` is false, so it subsumes the null check.
 // Same-side curators share the same spotter pool and see the same hostiles, so
 // the entire knowsAbout matrix is computed once per side and emitted to each.
-// Tuple: [curator, player, playerNetId (signature part), curatorNetId (key part)].
+// Tuple: [curator, player, playerNetId (signature part), curatorNetId (key part),
+// forceResend (this destination's own force flag)].
 private _bySide = createHashMap;   // sideStr → [side, curatorTuples[]]
 {
     private _curator = _x;
     private _player  = getAssignedCuratorUnit _curator;
 
     if (_dbg) then {
-        private _curatorSide = if (isNull _player) then { sideUnknown } else { side _player };
+        private _curatorSide = if (!isPlayer _player) then { sideUnknown } else { side _player };
         private _repCount = count (_sideSpotterReps getOrDefault [str _curatorSide, createHashMap]);
         private _sig = format ["%1|%2|%3", _player, _curatorSide, _repCount];
         if (_sig != (GVAR(spotDebugLast) getOrDefault [netId _curator, ""])) then {
             GVAR(spotDebugLast) set [netId _curator, _sig];
             diag_log text format ["[RTZ] server curator %1: player=%2 owner=%3 side=%4 spotterGroups=%5",
-                netId _curator, _player, (if (isNull _player) then {-1} else {owner _player}), _curatorSide, _repCount];
+                netId _curator, _player, (if (!isPlayer _player) then {-1} else {owner _player}), _curatorSide, _repCount];
         };
     };
 
-    if (isNull _player) then { continue };
+    if (!isPlayer _player) then { continue };
     private _curatorSide = side _player;
+    private _playerId    = netId _player;
+
+    // Retire this player's pending resync request HERE — the first tick on which
+    // they resolve to a targetable curator — and fold it into a per-destination
+    // force flag. Doing it at the point of resolution (rather than consuming a
+    // global flag unconditionally at the top of the pass) is what makes a request
+    // that arrived before the curator module was assigned still get honoured.
+    private _pending = _playerId in GVAR(spotResendPlayers);
+    if (_pending) then { GVAR(spotResendPlayers) deleteAt _playerId };
+
     ((_bySide getOrDefault [str _curatorSide, [_curatorSide, []], true]) select 1)
-        pushBack [_curator, _player, netId _player, netId _curator];
+        pushBack [_curator, _player, _playerId, netId _curator, _forceResend || _pending];
 } forEach _curators;
 
 // HashMap used as a set for O(1) "is this spot still active?" checks.
@@ -353,7 +385,7 @@ private _currentKeys = createHashMap;
 
         // Emit to each curator on this side with their own spot key and target player.
         {
-            _x params ["_curator", "_player", "_playerId", "_curId"];
+            _x params ["_curator", "_player", "_playerId", "_curId", "_curForce"];
 
             private _leaderKey = "s_" + _leaderNetId + "_" + _curId;
             _currentKeys set [_leaderKey, true];
@@ -361,7 +393,7 @@ private _currentKeys = createHashMap;
                 _leaderKey,
                 [MKR_PREFIX + _leaderKey, _leader, _leaderTex, _mrkrColor, true, _echelonTex, _sideIdx, _leaderNetId, ""],
                 _grpBaseSig + _playerId,
-                _player, _activeSpots, _drawGroup, _forceResend
+                _player, _activeSpots, _drawGroup, _curForce
             ] call FUNC(emitSpot);
 
             // Chevrons: one per individual the team knows well (knowsAbout the unit).
@@ -374,7 +406,7 @@ private _currentKeys = createHashMap;
                     _wedgeKey,
                     [_wedgeMrkr, _member, WEDGE_TEXTURE, _wedgeColor, false, "", _sideIdx, _leaderNetId, _memberName, _zoneRadius],
                     _wedgeBaseSig + _playerId,
-                    _player, _activeSpots, true, _forceResend
+                    _player, _activeSpots, true, _curForce
                 ] call FUNC(emitSpot);
 
                 // Register this wedge so the FiredMan handler can flash it white.
@@ -443,8 +475,11 @@ private _toRemove = [];
     // Don't re-send spotLost for entries already marked off — the client cleared
     // the icon when _draw = false first fired; a second event is a no-op but wastes
     // a targeted network message per stale-off entry per cleanup pass. The player
-    // may have disconnected since the spot was emitted — skip null destinations.
-    if (_spotSig != "_off_" && { !isNull _spotterPlayer }) then {
+    // may have disconnected since the spot was emitted — isPlayer, not isNull, since
+    // a departed player's body can persist as server-local AI (owner 2), which would
+    // route the retraction to the server/host instead. See the curator-resolution
+    // block above for the full reasoning.
+    if (_spotSig != "_off_" && { isPlayer _spotterPlayer }) then {
         [QGVAR(spotLost), [_mrkrName], _spotterPlayer] call CBA_fnc_targetEvent;
     };
     _activeSpots deleteAt _x;
@@ -464,6 +499,17 @@ if (count GVAR(spotGroupCooldowns) > SPOT_COOLDOWN_CAP) then {
     private _old = [];
     { if (_y < _cutoff) then { _old pushBack _x } } forEach GVAR(spotGroupCooldowns);
     { GVAR(spotGroupCooldowns) deleteAt _x } forEach _old;
+};
+// Pending resync requests are retired when their player resolves to a curator, so
+// an entry only survives while that player is connected but not (yet) a Zeus —
+// exactly the case the pending channel exists for. What it must not do is outlive
+// the player: someone who requests a resync and then disconnects without ever being
+// made curator would otherwise leave a permanent entry. Normally empty, and bounded
+// by slot count even when not, so this is a no-op on the hot path.
+if (count GVAR(spotResendPlayers) > 0) then {
+    private _stale = [];
+    { if (!isPlayer (objectFromNetId _x)) then { _stale pushBack _x } } forEach GVAR(spotResendPlayers);
+    { GVAR(spotResendPlayers) deleteAt _x } forEach _stale;
 };
 if (count GVAR(chevronLatch) > CHEVRON_LATCH_CAP) then {
     private _old = [];
