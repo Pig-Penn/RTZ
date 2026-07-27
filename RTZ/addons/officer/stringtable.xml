@@ -50,10 +50,10 @@
             <English>Command Aura Active</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaBlocked">
-            <English>Officer Engaged</English>
+            <English>Officer Unavailable</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaCombatRemoved">
-            <English>Officer Engaged</English>
+            <English>Officer Unavailable</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaCooldown">
             <English>%1 [s] Cooldown</English>

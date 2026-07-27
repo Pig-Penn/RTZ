@@ -8,7 +8,9 @@ PREP_RECOMPILE_END;
 
 #include "initSettings.inc.sqf"
 
-// Areas added by THIS client's curator: officerNetId -> [areaId, lastPos, radius].
+// Areas added by THIS client's curator: officerNetId -> [areaId]. The centre and
+// radius are not tracked — an area never moves after it is planted, so nothing
+// ever needs to re-read them (see FUNC(monitorAreas)).
 // Created eagerly so every reader (toggle, modifier) is safe before the monitor starts.
 GVAR(areas) = createHashMap;
 GVAR(nextAreaId) = AREA_ID_BASE;

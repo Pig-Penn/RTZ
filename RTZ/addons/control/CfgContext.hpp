@@ -38,11 +38,11 @@ class zen_context_menu_actions {
             priority = 1;
         };
 
-        class GVAR(lambsReset) {
+        class GVAR(reset) {
             displayName = CSTRING(ActionReset);
             icon = ICON_RESET;
-            statement = QUOTE([ARR_3(_objects,_groups,_hoveredEntity)] call FUNC(lambsReset));
-            condition = QUOTE(isClass (configFile >> 'CfgPatches' >> 'lambs_wp') && {_groups findIf {units _x findIf {!isPlayer _x} != -1} != -1 || {([_objects + [_hoveredEntity]] call EFUNC(common,collectSquads)) findIf {units _x findIf {!isPlayer _x} != -1} != -1}});
+            statement = QUOTE([ARR_3(_objects,_groups,_hoveredEntity)] call FUNC(reset));
+            condition = QUOTE(_groups findIf {units _x findIf {!isPlayer _x} != -1} != -1 || {([_objects + [_hoveredEntity]] call EFUNC(common,collectSquads)) findIf {units _x findIf {!isPlayer _x} != -1} != -1});
             priority = 0;
         };
     };

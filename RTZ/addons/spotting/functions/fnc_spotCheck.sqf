@@ -489,7 +489,7 @@ private _toRemove = [];
 // Entries for dead/deleted units would otherwise accumulate for the whole
 // mission. Collect-then-delete — never deleteAt inside a HashMap forEach.
 if (count GVAR(blinkThrottle) > BLINK_THROTTLE_CAP) then {
-    private _cutoff = CBA_missionTime - BLINK_THROTTLE_WINDOW;   // blink throttle window is FIRE_BLINK_THROTTLE — anything older is dead weight
+    private _cutoff = CBA_missionTime - BLINK_THROTTLE_WINDOW;   // window is generous vs. FIRE_BLINK_THROTTLE (0.1s) so live entries are never evicted early
     private _old = [];
     { if (_y < _cutoff) then { _old pushBack _x } } forEach GVAR(blinkThrottle);
     { GVAR(blinkThrottle) deleteAt _x } forEach _old;

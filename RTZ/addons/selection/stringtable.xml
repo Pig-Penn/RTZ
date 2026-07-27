@@ -67,6 +67,9 @@
         <Key ID="STR_RTZ_Selection_MsgNoUnitsSelected">
             <English>No units selected</English>
         </Key>
+        <Key ID="STR_RTZ_Selection_MsgSelectionTruncated">
+            <English>%1 more unit(s) selected than shown (max %2)</English>
+        </Key>
         <Key ID="STR_RTZ_Selection_MsgTagsHidden">
             <English>Tags hidden</English>
         </Key>
@@ -78,6 +81,9 @@
         </Key>
         <Key ID="STR_RTZ_Selection_MsgUnitTagsShown">
             <English>Unit tags shown</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_MsgVehicleSelectionTruncated">
+            <English>%1 more vehicle(s) selected than shown (max %2)</English>
         </Key>
         <Key ID="STR_RTZ_Selection_MsgVehicleTagsHidden">
             <English>Vehicle tags hidden</English>

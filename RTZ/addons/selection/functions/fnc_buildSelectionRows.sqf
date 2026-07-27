@@ -157,7 +157,11 @@ switch (true) do {
         _header = format ["Awaiting data%1%2 unit%3",
             SEP, _totalUnits, ["s", ""] select (_totalUnits == 1)];
     };
-    case (_numGroups == 1): {
+    // Pending units may still turn out to belong to a second group once their
+    // packet arrives — until then, fall through to the multi-group summary
+    // below (which counts _totalUnits, pending included) rather than a group
+    // descriptor scoped to only the resolved members.
+    case (_numGroups == 1 && { _pending isEqualTo [] }): {
         // Group descriptor only (name · N units · morale · tactic · down) —
         // raw AI state / combat mode is deliberately not surfaced.
         private _members = _groupMembers get (_groupOrder select 0);
@@ -165,12 +169,20 @@ switch (true) do {
     };
     default {
         _header = [
-            format ["%1 groups", _numGroups],
-            format ["%1 units selected", _totalUnits],
+            format ["%1 group%2", _numGroups, ["s", ""] select (_numGroups == 1)],
+            format ["%1 unit%2 selected", _totalUnits, ["s", ""] select (_totalUnits == 1)],
             [format ["%1 down", _downTotal], ""] select (_downTotal == 0),
             [format ["%1 fleeing", _fleeTotal], ""] select (_fleeTotal == 0)
         ] call _fnc_join;
     };
+};
+
+// Selections beyond SEL_MAX_UNITS are silently dropped by the client poll
+// (FUNC(selectionInfo)) before they ever reach GVAR(selCurrent) — note it here
+// so the curator has some indication their selection was cut down, instead of
+// extra units just never appearing anywhere.
+if (GETGVAR(selOverflow,0) > 0) then {
+    _header = _header + format [" — " + LLSTRING(MsgSelectionTruncated), GVAR(selOverflow), SEL_MAX_UNITS];
 };
 
 // ── Entry rows ────────────────────────────────────────────────────

@@ -31,7 +31,7 @@ class zen_context_menu_actions {
     };
 
     // Submenu for squad/behaviour control actions (behaviour info, disable
-    // simulation, LAMBS reset).
+    // simulation, reset).
     class RTZ_Control {
         displayName = "Controls";
         icon = "\a3\ui_f\data\igui\cfg\simpletasks\types\help_ca.paa";

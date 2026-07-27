@@ -67,6 +67,10 @@ if !(_unit isKindOf "CAManBase") exitWith {
 private _checkPos = _unit getPos [1, getDir _unit];
 private _nearby   = nearestObjects [_checkPos, ["ThingX", "AllVehicles", "CAManBase"], 5];
 private _ti       = _nearby findIf { _x isNotEqualTo _unit && {!(_x isKindOf "CAManBase") || {!alive _x}} };
-private _target   = [objNull, _nearby select _ti] select (_ti > -1);
+// if/else, NOT `[objNull, _nearby select _ti] select (_ti > -1)`: array literal
+// elements are evaluated eagerly, so the miss case (_ti == -1 — nothing lootable
+// in front of the unit, the common case) still ran `_nearby select -1` on the way
+// to discarding it.
+private _target   = if (_ti > -1) then { _nearby select _ti } else { objNull };
 
 _unit action ["Gear", _target];

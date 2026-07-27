@@ -23,7 +23,8 @@
  * selected/hovered vehicle (or its crew).
  *
  * Requires CBA_A3; the context action also requires Zeus Enhanced.
- * Loading: spawned from XEH_postInit once CBA settings are initialised.
+ * Loading: called from XEH_postInit once CBA settings are initialised. Registers
+ * one CBA event handler and returns — no scheduled ops, so it is `call`ed.
  *
  * Arguments:
  * None

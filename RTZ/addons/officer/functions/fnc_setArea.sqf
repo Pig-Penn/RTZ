@@ -7,10 +7,12 @@
  * no-op. Because a curator with any editing area can only edit inside its
  * areas, this is what confines a Zeus to building near their own officers.
  *
- * The stored position/radius let FUNC(monitorAreas) re-centre the area when
- * the officer moves (follow mode) without re-reading the setting. A
- * successful removal also arms GVAR(cooldowns) for COOLDOWN_DURATION seconds
- * (see FUNC(isOnCooldown)), so an area cannot be instantly re-planted.
+ * The area is planted where the officer stands at this moment and never moves
+ * again — it does NOT follow him (see FUNC(monitorAreas) for why). Only the
+ * allocated area id is tracked per officer, since nothing re-reads the centre
+ * or radius afterwards. A successful removal arms GVAR(cooldowns) for
+ * COOLDOWN_DURATION seconds (see FUNC(isOnCooldown)), so an area cannot be
+ * instantly re-planted — moving your editing rights is meant to cost that wait.
  *
  * Locality: call on any curator machine. The BIS curator logic is local to the
  * SERVER and add/removeCuratorEditingArea require the curator to be local, so
@@ -24,7 +26,7 @@
  *
  * Return Value:
  * Success — false if a requested add/remove did not happen, e.g. the officer
- * is in combat or there was nothing to remove <BOOLEAN>
+ * is in combat/careless or there was nothing to remove <BOOLEAN>
  *
  * Example:
  * [_officer, true] call rtz_officer_fnc_setArea
@@ -43,7 +45,7 @@ if (_enable) then {
     if (_key in GVAR(areas)) exitWith {false};            // already has an area
     if (!alive _officer) exitWith {false};                // never anchor to a corpse
     if ([_officer] call FUNC(isOnCooldown) > 0) exitWith {false}; // just torn down, not re-plantable yet
-    if (behaviour _officer == "COMBAT") exitWith {false};         // don't hand out editing rights while the officer is in a firefight
+    if (behaviour _officer in ["COMBAT", "CARELESS"]) exitWith {false}; // don't hand out editing rights while the officer is in a firefight or not paying attention
     if (GETVAR(_officer,GVAR(auraActive),false)) exitWith {false}; // command aura active — the two officer zones are mutually exclusive (see FUNC(applyAura))
 
     private _areaId = GVAR(nextAreaId);
@@ -53,7 +55,7 @@ if (_enable) then {
     private _pos = getPosWorld _officer;
 
     [QGVAR(applyArea), ["add", _curator, [_areaId, _pos, _radius, _key]]] call CBA_fnc_serverEvent;
-    GVAR(areas) set [_key, [_areaId, _pos, _radius]];
+    GVAR(areas) set [_key, [_areaId]];
     true
 } else {
     private _entry = GVAR(areas) deleteAt _key;

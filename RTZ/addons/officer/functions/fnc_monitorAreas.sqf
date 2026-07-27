@@ -15,10 +15,20 @@
  *    remove.
  * 2. Pruning — areas whose officer has died or been deleted are removed, so
  *    an area never lingers after its anchor is gone. An area is also torn
- *    down the moment its officer enters COMBAT behaviour (mirrors the entry
- *    block in FUNC(setArea): a Zeus should not keep editing rights over a
- *    position once his anchor is in a firefight), arming the same
- *    COOLDOWN_DURATION so it cannot be instantly re-planted once combat ends.
+ *    down the moment its officer enters COMBAT or CARELESS behaviour (mirrors
+ *    the entry block in FUNC(setArea): a Zeus should not keep editing rights
+ *    over a position once his anchor is in a firefight or not paying
+ *    attention), arming the same COOLDOWN_DURATION so it cannot be instantly
+ *    re-planted once behaviour normalizes.
+ *
+ * Areas do NOT follow their officer. An area is anchored to the position the
+ * officer stood on when it was planted and stays there for its whole life; the
+ * officer is the area's ANCHOR (his death or combat state ends it, above), not
+ * a handle that drags it around. A Zeus who wants editing rights somewhere
+ * else removes the area and re-plants it — that is what COOLDOWN_DURATION
+ * prices. This is deliberate: a zone that trailed a walking officer would hand
+ * a Zeus continuously moving editing rights over ground he never committed an
+ * officer to. Do not re-add a re-centring pass here.
  *
  * Areas are only ever added on demand by FUNC(setArea) via the context-menu
  * toggle; there is deliberately no auto-add on officer placement.
@@ -55,10 +65,10 @@ if (!hasInterface) exitWith {};
 
     if (isNull _curator || {count GVAR(areas) == 0}) exitWith {};
 
-    // Prune dead/deleted anchors
+    // Prune dead/deleted anchors, re-centre live ones that moved
     private _toDelete = [];
     {
-        _y params ["_areaId", "_lastPos", "_radius"];
+        _y params ["_areaId"];
         private _officer = objectFromNetId _x;
 
         if (isNull _officer || {!alive _officer}) then {
@@ -67,7 +77,7 @@ if (!hasInterface) exitWith {};
             continue;
         };
 
-        if (behaviour _officer == "COMBAT") then {
+        if (behaviour _officer in ["COMBAT", "CARELESS"]) then {
             [QGVAR(applyArea), ["remove", _curator, [_areaId]]] call CBA_fnc_serverEvent;
             GVAR(cooldowns) set [_x, CBA_missionTime + COOLDOWN_DURATION];
             _toDelete pushBack _x;

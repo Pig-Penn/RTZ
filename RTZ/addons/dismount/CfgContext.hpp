@@ -1,6 +1,6 @@
 class zen_context_menu_actions {
     // Sits at the top of the shared RTZ_Control submenu (declared in
-    // rtz_common/CfgZenContext.hpp), above squad hide/freeze and LAMBS reset.
+    // rtz_common/CfgZenContext.hpp), above squad hide/freeze and reset.
     // Label and icon tint track the hovered/selected vehicle's current state
     // via FUNC(dismountActionModifier); clicking it flips every selected
     // vehicle through FUNC(toggleUnloadInCombat). Static weapons (HMGs,

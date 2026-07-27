@@ -11,7 +11,7 @@
 // unique per curator module, so every client using the same base is fine.
 #define AREA_ID_BASE 1000
 
-// Seconds between lifecycle/prune/follow passes of FUNC(monitorAreas)
+// Seconds between lifecycle/prune passes of FUNC(monitorAreas)
 #define MONITOR_INTERVAL 10
 
 // Seconds an officer must wait after his area is removed before a new one can be placed

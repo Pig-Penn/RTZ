@@ -64,9 +64,13 @@ scopeName "scan";
     };
 
     // exitWith would only skip to the next forEach iteration rather than break -
-    // scopeName/breakOut is what actually terminates the loop early
+    // scopeName/breakOut is what actually terminates the loop early. The value
+    // MUST ride along: a bare `breakOut "scan"` exits the function scope with no
+    // return value, so every limited scan (FUNC(canLoot) passes 1) handed its
+    // caller nil the moment it found something - i.e. the Loot action's condition
+    // broke precisely when there WAS loot to take
     if (_limit > 0 && {count _lootables >= _limit}) then {
-        breakOut "scan";
+        _lootables breakOut "scan";
     };
 } forEach nearestObjects [_position, ["ThingX", "WeaponHolder", "WeaponHolderSimulated", "AllVehicles"], _radius];
 

@@ -10,7 +10,13 @@ diag_log text format ["[RTZ] dismount postInit — version %1, machine [isServer
 // FUNC(unloadInCombat) registers the QGVAR(applyUnloadFlags) receiver on every
 // machine and, on interface machines, the RTZ_Control toggle action.
 ["CBA_settingsInitialized", {
+    // `call`, not `spawn`: the body only registers one CBA event handler and
+    // returns — there is nothing to suspend on. Spawning parked the
+    // QGVAR(applyUnloadFlags) receiver behind a scheduler slot, so an order
+    // issued in that window (or on a server busy enough to defer the thread)
+    // landed on a machine that was not listening yet. Matches every other RTZ
+    // addon's CBA_settingsInitialized fork.
     if (GVAR(enableDismountControl)) then {
-        [] spawn FUNC(unloadInCombat);
+        [] call FUNC(unloadInCombat);
     };
 }] call CBA_fnc_addEventHandler;

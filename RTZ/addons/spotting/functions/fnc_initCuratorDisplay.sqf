@@ -78,9 +78,14 @@ if (!isNil QGVAR(officerZones) && {!(_display getVariable [QGVAR(zoneDrawAttache
         if (!GVAR(officerZonesVisible) || { count GVAR(officerZones) == 0 }) exitWith {};
         params ["_map"];
         {
-            // _y = [unit, radius]; position sampled live so the ring tracks the
-            // officer between spot ticks (matches the follow behaviour of the
-            // real editing area, which re-centres on the same officer).
+            // _y = [unit, radius]; the ring is drawn on the officer's LIVE
+            // position. NOTE: rtz_officer's editing areas do not follow their
+            // officer (see EFUNC(officer,monitorAreas)) — they stay where they
+            // were planted — so once a spotted officer walks away this ring
+            // marks him, not the ground his Zeus can actually still edit. The
+            // cross-addon payload (RTZ_officerZoneRadiusMap → the wedge's
+            // zoneRadius field) carries only a radius, so the planted centre is
+            // not available here to draw instead.
             _y params ["_unit", "_radius"];
             if (!alive _unit) then { continue };
             _map drawEllipse [getPosVisual _unit, _radius, _radius, 0, COLOR_ZONE_RING, ""];

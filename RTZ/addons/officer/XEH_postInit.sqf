@@ -73,7 +73,7 @@
     };
 
     if (GVAR(enable)) then {
-        // Per-client curator lifecycle + prune/follow loop (guards hasInterface itself)
+        // Per-client curator lifecycle + prune loop (guards hasInterface itself)
         call FUNC(monitorAreas);
     };
 }] call CBA_fnc_addEventHandler;

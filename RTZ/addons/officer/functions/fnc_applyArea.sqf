@@ -21,10 +21,11 @@
  *
  * Modes:
  *   "add"    args [areaId, pos, radius, officerNetId] — create an area and
- *            register it. Re-sent without the officerNetId to MOVE an area
- *            (follow mode): the engine has no move command, so it is a
- *            remove + re-add with the same ID, back-to-back — the area is
- *            never observably absent.
+ *            register it. Areas never move once planted (see
+ *            FUNC(monitorAreas)), so an id is only ever added once; the
+ *            leading removeCuratorEditingArea and the "" officerNetId
+ *            fallback below are defensive against a repeated add, not a
+ *            move/follow path.
  *   "remove" args [areaId] — remove one area, unregister it, and drop its
  *            officer's published radius
  *   "clear"  args [] — remove EVERY registered area on the module. Fired by a
@@ -59,7 +60,7 @@ switch (_mode) do {
         _curator removeCuratorEditingArea _areaId;
         _curator addCuratorEditingArea [_areaId, _pos, _radius];
 
-        // A move carries no officerNetId — the registry already knows it
+        // Defensive: a re-add carrying no officerNetId keeps the registered owner
         if (_officerId isEqualTo "") then {
             _officerId = _areas getOrDefault [_areaId, ""];
         };

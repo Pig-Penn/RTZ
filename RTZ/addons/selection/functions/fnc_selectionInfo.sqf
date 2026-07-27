@@ -65,6 +65,14 @@ if (hasInterface) then {
     // FUNC(openSelectionInfo) (which reports once immediately on open), so the
     // poll and the dialog never double-send or strand a report server-side.
     GVAR(selReported)   = [];
+    // How many eligible units/vehicles the curator's raw selection had beyond
+    // the SEL_MAX_* cap, updated every poll tick. Without this, a selection
+    // over the cap silently drops the extras from tags/dialog/cards with zero
+    // feedback — FUNC(buildSelectionRows) reads GVAR(selOverflow) to note it
+    // in the dialog header, and the poll below hints once (edge-triggered) on
+    // GVAR(selVehOverflow) for the vehicle side, which has no dialog.
+    GVAR(selOverflow)    = 0;
+    GVAR(selVehOverflow) = 0;
 
     // Replace the whole infantry data set with the server's latest gather.
     [QGVAR(selData), {
@@ -79,13 +87,17 @@ if (hasInterface) then {
     // locally every tick; the SERVER is only told about infantry while a data
     // consumer is active (info dialog open, or unit head tags visible), so
     // idle curators cost zero gather/network traffic.
-    // State array [lastVehs] is mutated in-place each call — CBA PFH passes the
-    // same args object every iteration, providing free persistent state.
+    // State array [lastVehs, hadUnitOverflow, hadVehOverflow] is mutated in-place
+    // each call — CBA PFH passes the same args object every iteration, providing
+    // free persistent state (the overflow flags edge-trigger the truncation hint
+    // below rather than re-firing it every tick).
     [{
         params ["_state", "_handle"];
-        _state params ["_lastVehs"];
+        _state params ["_lastVehs", ["_hadUnitOverflow", false], ["_hadVehOverflow", false]];
         private _ids  = [];
         private _vehs = [];
+        private _unitOverflow = 0;
+        private _vehOverflow  = 0;
         if (!isNull (getAssignedCuratorLogic player) && { !isNull (findDisplay 312) }) then {
             private _objs = SELECTED_OBJECTS;
             private _grps = SELECTED_GROUPS;
@@ -99,16 +111,35 @@ if (hasInterface) then {
             // alive covers null too, and every entry is already a CAManBase
             // (the pushBack filter and group expansion both guarantee it).
             _ids = (_units select { alive _x && { _anySide || { side _x == side player } } }) apply { netId _x };
+            // Cap AFTER counting the true size — the difference is what silently
+            // falls off the tags/dialog/gather below, surfaced via GVAR(selOverflow).
+            _unitOverflow = 0 max ((count _ids) - SEL_MAX_UNITS);
             _ids = _ids select [0, SEL_MAX_UNITS];
             // AllVehicles-not-man: without the kind check, selected props /
             // ammo crates pass the "not a man" filter (they always did for a
             // virtual Zeus, whom the side filter exempts) and get gathered,
             // carded and tagged as if they were vehicles.
             _vehs = (_objs select { alive _x && { _x isKindOf "AllVehicles" } && { !(_x isKindOf "CAManBase") } && { _anySide || { side (group _x) == side player } } }) apply { netId _x };
+            _vehOverflow = 0 max ((count _vehs) - SEL_MAX_VEHICLES);
             _vehs = _vehs select [0, SEL_MAX_VEHICLES];
         };
         GVAR(selCurrent)    = _ids;
         GVAR(selVehicleIds) = _vehs;
+        GVAR(selOverflow)    = _unitOverflow;
+        GVAR(selVehOverflow) = _vehOverflow;
+
+        // One-shot hint on the RISING edge only (not selected → over-cap) so
+        // holding an oversized selection doesn't spam a message every 0.25 s.
+        // The unit dialog also notes this in its header (FUNC(buildSelectionRows));
+        // vehicles have no dialog, so this hint is their only feedback.
+        if (_unitOverflow > 0 && { !_hadUnitOverflow }) then {
+            [format [LLSTRING(MsgSelectionTruncated), _unitOverflow, SEL_MAX_UNITS]] call zen_common_fnc_showMessage;
+        };
+        if (_vehOverflow > 0 && { !_hadVehOverflow }) then {
+            [format [LLSTRING(MsgVehicleSelectionTruncated), _vehOverflow, SEL_MAX_VEHICLES]] call zen_common_fnc_showMessage;
+        };
+        _state set [1, _unitOverflow > 0];
+        _state set [2, _vehOverflow > 0];
 
         // Report the selection only while a consumer is active: the info dialog,
         // or the unit head tags (GVAR(tagsVisible), owned by FUNC(unitTags) —
@@ -129,7 +160,7 @@ if (hasInterface) then {
             [QGVAR(selVehicles), [player, _vehs]] call CBA_fnc_serverEvent;
             if (_vehs isEqualTo []) then { GVAR(selVehicleData) = createHashMap };
         };
-    }, _selPollInterval, [[]]] call CBA_fnc_addPerFrameHandler;
+    }, _selPollInterval, [[], false, false]] call CBA_fnc_addPerFrameHandler;
 
     // ── Zeus Enhanced context menu action ──────────────────────────────────
     private _action = [
