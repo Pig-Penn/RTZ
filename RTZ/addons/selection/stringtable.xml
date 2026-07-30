@@ -16,6 +16,9 @@
         <Key ID="STR_RTZ_Selection_ActionVehCardsMin">
             <English>Vehicle Cards: MIN</English>
         </Key>
+        <Key ID="STR_RTZ_Selection_CardBarValue">
+            <English>%1  %2%%</English>
+        </Key>
         <Key ID="STR_RTZ_Selection_CardCommander">
             <English>CDR</English>
         </Key>
@@ -33,6 +36,42 @@
         </Key>
         <Key ID="STR_RTZ_Selection_CategoryVehicleTags">
             <English>Vehicle Tags</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_DangerAssessing">
+            <English>Assessing</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_DangerBulletClose">
+            <English>Bullet Close</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_DangerCanFire">
+            <English>Can Fire</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_DangerDeadBody">
+            <English>Dead Body</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_DangerEnemyDetected">
+            <English>Enemy Detected</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_DangerEnemyNear">
+            <English>Enemy Near</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_DangerExplosion">
+            <English>Explosion</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_DangerFire">
+            <English>Fire</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_DangerForcedAI">
+            <English>Forced AI</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_DangerFriendlyDead">
+            <English>Friendly Dead</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_DangerHit">
+            <English>Hit</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_DangerScreamHeard">
+            <English>Scream Heard</English>
         </Key>
         <Key ID="STR_RTZ_Selection_EnableSelectionInfo">
             <English>Selection Info</English>
@@ -58,11 +97,89 @@
         <Key ID="STR_RTZ_Selection_EnableVehicleTags_Description">
             <English>Show a small floating status tag above each selected vehicle in Zeus. Requires Selection Info enabled. Toggle in-mission via the RTZ context menu.</English>
         </Key>
+        <Key ID="STR_RTZ_Selection_FlagBusy">
+            <English>BUSY</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_FlagDamaged">
+            <English>DAMAGED</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_FlagFleeing">
+            <English>FLEEING</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_FlagForced">
+            <English>FORCED</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_FlagHidden">
+            <English>HIDDEN</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_FlagInside">
+            <English>INSIDE</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_FlagLowFuel">
+            <English>LOW FUEL</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_FlagMounted">
+            <English>MOUNTED</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_FlagMoveOff">
+            <English>MOVE OFF</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_FlagPathOff">
+            <English>PATH OFF</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_FlagWounded">
+            <English>WOUNDED</English>
+        </Key>
         <Key ID="STR_RTZ_Selection_GatherInterval">
             <English>Data Refresh Interval</English>
         </Key>
         <Key ID="STR_RTZ_Selection_GatherInterval_Description">
             <English>Seconds between server updates of selection info, unit tags and vehicle data. Lower is snappier, higher reduces server and network load. Read live — can be retuned mid-mission.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_HeaderAwaitingData">
+            <English>Awaiting data</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_HeaderGroup">
+            <English>%1 group</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_HeaderGroups">
+            <English>%1 groups</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_HeaderUnit">
+            <English>%1 unit</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_HeaderUnits">
+            <English>%1 units</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_HeaderUnitsSelected">
+            <English>%1 selected</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_LabelDownCount">
+            <English>%1 down</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_LabelFleeingCount">
+            <English>%1 fleeing</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_LabelHealth">
+            <English>HP %1%%</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_LabelMorale">
+            <English>Morale %1%%</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_LabelRange">
+            <English>%1m</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_LabelSuppression">
+            <English>Supp %1%%</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_LabelTactic">
+            <English>Tactic: %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_LabelTarget">
+            <English>Target: %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_LabelTimeout">
+            <English>%1s</English>
         </Key>
         <Key ID="STR_RTZ_Selection_MsgNoUnitsSelected">
             <English>No units selected</English>
@@ -76,20 +193,38 @@
         <Key ID="STR_RTZ_Selection_MsgTagsShown">
             <English>Tags shown</English>
         </Key>
-        <Key ID="STR_RTZ_Selection_MsgUnitTagsHidden">
-            <English>Unit tags hidden</English>
-        </Key>
-        <Key ID="STR_RTZ_Selection_MsgUnitTagsShown">
-            <English>Unit tags shown</English>
-        </Key>
         <Key ID="STR_RTZ_Selection_MsgVehicleSelectionTruncated">
             <English>%1 more vehicle(s) selected than shown (max %2)</English>
         </Key>
-        <Key ID="STR_RTZ_Selection_MsgVehicleTagsHidden">
-            <English>Vehicle tags hidden</English>
+        <Key ID="STR_RTZ_Selection_RowAwaitingData">
+            <English>awaiting server data</English>
         </Key>
-        <Key ID="STR_RTZ_Selection_MsgVehicleTagsShown">
-            <English>Vehicle tags shown</English>
+        <Key ID="STR_RTZ_Selection_RowNoLiveData">
+            <English>no live data</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_StatusDown">
+            <English>DOWN</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_StatusDowned">
+            <English>DOWNED</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_StatusFleeing">
+            <English>FLEEING</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagFieldAmmo">
+            <English>%1/%2</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagFieldHealth">
+            <English>HP %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagFieldMorale">
+            <English>MOR %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagFieldSuppression">
+            <English>SUP %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TagFieldTactic">
+            <English>TAC %1</English>
         </Key>
         <Key ID="STR_RTZ_Selection_TagHeight">
             <English>Tag Height</English>
@@ -168,6 +303,66 @@
         </Key>
         <Key ID="STR_RTZ_Selection_TagSize_Description">
             <English>Text size of the unit tags.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TipAwaitingData">
+            <English>Waiting for the server to report this unit's state.</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TipCommand">
+            <English>Command %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TipDanger">
+            <English>Danger %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TipFlags">
+            <English>Flags %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TipIntel">
+            <English>Known enemies %1   Group memory %2</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TipMoraleSupp">
+            <English>Morale %1%%   Suppression %2%%</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TipNotLocal">
+            <English>Not local — no live data (HC-owned or remote-controlled)</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TipState">
+            <English>State %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TipTactic">
+            <English>Tactic %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TipTarget">
+            <English>Target %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TipTargetVis">
+            <English>Target %1  (%2 vis)</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_TipTask">
+            <English>Task %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagFieldAlt">
+            <English>ALT %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagFieldAmmo">
+            <English>AMMO %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagFieldCommander">
+            <English>CDR %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagFieldCrew">
+            <English>CREW %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagFieldCrewSeats">
+            <English>CREW %1/%2</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagFieldFuel">
+            <English>FUEL %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagFieldHull">
+            <English>HULL %1</English>
+        </Key>
+        <Key ID="STR_RTZ_Selection_VtagFieldSpeed">
+            <English>%1 km/h</English>
         </Key>
         <Key ID="STR_RTZ_Selection_VtagHeight">
             <English>Tag Height</English>

@@ -144,13 +144,25 @@ private _sideSpotterReps = createHashMap;
         || { _x isKindOf "Ship" }) then { continue };
     private _eSide  = side _x;
     private _sk     = str _eSide;
-    private _bucket = _sideEntities get _sk;
-    if (isNil "_bucket") then {
-        _bucket = [_eSide, []];
-        _sideEntities set [_sk, _bucket];
-    };
-    (_bucket select 1) pushBack _x;
 
+    // Spottable only when the hull's group has a man leader. The grouping pass
+    // further down keys on `leader group` and discards anything answering objNull,
+    // so a hull without one never produced an icon anyway — it was merely walked
+    // once per curator side first. `vehicles` is every vehicle on the map, which on
+    // a populated terrain means hundreds of alive ambient cars, so testing it here
+    // keeps them out of _allHostile and out of the per-side grouping walk entirely.
+    if (!isNull (leader group _x)) then {
+        private _bucket = _sideEntities get _sk;
+        if (isNil "_bucket") then {
+            _bucket = [_eSide, []];
+            _sideEntities set [_sk, _bucket];
+        };
+        (_bucket select 1) pushBack _x;
+    };
+
+    // Spotter rep regardless of the above: UAV crew are absent from allUnits (see
+    // allUnitsUAV), so a UAV's knowledge is only reachable via its hull's
+    // effective commander here.
     if (local _x) then {
         private _rep = effectiveCommander _x;
         if (!isNull _rep && { !isPlayer _rep } && { !isNull group _rep }) then {
@@ -238,18 +250,23 @@ private _currentKeys = createHashMap;
     // known enemy VEHICLE also credits its crew, and a known MAN who has since
     // mounted also credits his vehicle — the member loop below walks men and
     // hulls as separate entries.
+    // pushBackUnique, not pushBack: that cross-crediting means one rep can reach
+    // the same entry by two routes (its target list holding both a crewed vehicle
+    // AND one of its occupants), and a duplicate rep only re-runs the knowsAbout
+    // test below for a group that has already answered. The lists hold just the
+    // groups that know the entry, so the uniqueness scan is over a handful.
     private _knownBy = createHashMap;
     {
         private _rep = _x;
         {
-            (_knownBy getOrDefault [netId _x, [], true]) pushBack _rep;
+            (_knownBy getOrDefault [netId _x, [], true]) pushBackUnique _rep;
             if (_x isKindOf "CAManBase") then {
                 private _hull = objectParent _x;
                 if (!isNull _hull) then {
-                    (_knownBy getOrDefault [netId _hull, [], true]) pushBack _rep;
+                    (_knownBy getOrDefault [netId _hull, [], true]) pushBackUnique _rep;
                 };
             } else {
-                { (_knownBy getOrDefault [netId _x, [], true]) pushBack _rep } forEach crew _x;
+                { (_knownBy getOrDefault [netId _x, [], true]) pushBackUnique _rep } forEach crew _x;
             };
         } forEach (_rep targets [true]);
     } forEach _spotterReps;
@@ -293,10 +310,17 @@ private _currentKeys = createHashMap;
         // position for the enemy Zeus every frame (and seed the callout's location
         // lookup) — precisely what the isPlayer filter exists to prevent, and not
         // something his chevron-less members ever reveal. Fall back to a member that
-        // genuinely is spotted. _leaderNetId keeps the ORIGINAL leader's netId as the
-        // group key, so chevron→group association (the hover peek in FUNC(draw3D))
-        // and the callout cooldown are unaffected.
-        if !(_leader in _members) then { _leader = _members select 0 };
+        // genuinely is spotted, preferring a MAN — a crewed hull rides in _members
+        // alongside its crew, and anchoring on the man both classifies correctly
+        // (FUNC(unitMarker), FUNC(contactCategory)) and still renders on the hull,
+        // since FUNC(draw3D) anchors every icon on `vehicle _unit`. findIf returns -1
+        // when the group is men-less (a UAV), where index 0 — the hull — is what we
+        // want. _leaderNetId keeps the ORIGINAL leader's netId as the group key, so
+        // chevron→group association (the hover peek in FUNC(draw3D)) and the callout
+        // last-seen gate are unaffected; the anchor itself rides in _grpBaseSig below.
+        if !(_leader in _members) then {
+            _leader = _members select ((_members findIf { _x isKindOf "CAManBase" }) max 0);
+        };
 
         // Team awareness, computed ONCE for all curators on this side, ONE
         // knowsAbout per (spotter group, member):
@@ -354,13 +378,26 @@ private _currentKeys = createHashMap;
         // group icon and every chevron below.
         ([_leader, _isHQ] call FUNC(unitMarker)) params ["_leaderTex", "_mrkrColor", "_sideIdx"];
 
-        // Group icon. Drawn for groups of >1 member, OR whenever the leader is in a
-        // vehicle (a single-crewed vehicle is still worth marking). A lone infantryman
-        // shows no group icon — its members still chevron below.
-        private _grpCount   = count _members;
-        private _drawGroup  = (_grpCount > 1) || { !isNull objectParent _leader };
-        private _echelonTex = [_leader, _grpCount] call FUNC(echelonTex);   // size amplifier
-        private _grpBaseSig = str [_leaderTex, _mrkrColor, _echelonTex];
+        // Group icon. Drawn for groups of >1 man, OR whenever the anchor is in a
+        // vehicle (a single-crewed vehicle is still worth marking), OR whenever the
+        // anchor IS a vehicle — a hull whose crew never reach _members because they
+        // are absent from allUnits (a UAV). A lone infantryman shows no group icon;
+        // its members still chevron below.
+        // Men only: crewed hulls ride in _members alongside their crew, so counting
+        // raw members read a 3-man tank crew as 4 and skewed the echelon amplifier
+        // for every mechanised group.
+        private _menCount   = { _x isKindOf "CAManBase" } count _members;
+        private _drawGroup  = (_menCount > 1)
+            || { !isNull objectParent _leader }
+            || { !(_leader isKindOf "CAManBase") };
+        private _echelonTex = [_leader, _menCount] call FUNC(echelonTex);   // size amplifier
+        // netId _leader is part of the signature, not just of the spot KEY: the key
+        // carries the ORIGINAL leader's netId, while the anchor sent to the client can
+        // be a fallback member (see above) that changes as members die. Without it the
+        // change-gated send in FUNC(emitSpot) never fires for that swap, and the client
+        // keeps drawing on a stale object — whose !alive test then hides the icon of a
+        // group that is still very much spotted.
+        private _grpBaseSig = str [netId _leader, _leaderTex, _mrkrColor, _echelonTex];
 
         // Chevron colour and display name — once per member, shared by every curator.
         private _chevronData = _chevrons apply {
@@ -416,19 +453,26 @@ private _currentKeys = createHashMap;
         } forEach _curatorsData;
 
         // Radio callout fires when this group is positively identified — best
-        // knowsAbout >= HARD, the engine's own "freshly spotted / confirmed" value —
-        // gated once per contact by the per-group cooldown (keyed side+leader, and
-        // seeded at -1e10 so a never-announced group fires immediately). Gating at
-        // HARD rather than SOFT keeps "Contact!" to genuine sightings: the group icon
-        // (SOFT) still appears for merely-heard/decaying contacts, but the audio
-        // callout only sounds on confirmation, when the first chevron shows. The
-        // cooldown — not new-spot detection — dedupes, so a contact that ramps up
-        // gradually (1.0 → 1.5 over several ticks) still gets announced when it
-        // crosses HARD, and re-announces after being lost and re-acquired.
+        // knowsAbout >= HARD, the engine's own "freshly spotted / confirmed" value.
+        // GVAR(spotGroupLastSeen) (keyed side+leader) holds the last time this side
+        // had this group confirmed and is refreshed on EVERY tick it stays confirmed,
+        // so a group under continuous observation is announced exactly once; only a
+        // group that drops out of confirmed contact for GROUP_CALLOUT_COOLDOWN and is
+        // then re-acquired reports again. Seeded at -1e10 so a group never yet seen
+        // fires immediately.
+        // Gating at HARD rather than SOFT keeps "Contact!" to genuine sightings: the
+        // group icon (SOFT) still appears for merely-heard/decaying contacts, but the
+        // audio callout only sounds on confirmation, when the first chevron shows.
+        // Refreshing at the same HARD bar is what makes the gap meaningful — a group
+        // that decays to heard-only and is later re-confirmed reports again, whereas
+        // refreshing at SOFT would let a long-heard group cross HARD in silence.
+        // The gap — not new-spot detection — dedupes, so a contact that ramps up
+        // gradually (1.0 → 1.5 over several ticks) is still announced when it crosses.
         if (_groupKnows >= HARD_THRESHOLD) then {
-            private _sideGroupKey = str _spotterSide + "_" + _leaderNetId;
-            if (CBA_missionTime - (GVAR(spotGroupCooldowns) getOrDefault [_sideGroupKey, -1e10]) >= GROUP_CALLOUT_COOLDOWN) then {
-                GVAR(spotGroupCooldowns) set [_sideGroupKey, CBA_missionTime];
+            private _sideGroupKey = _spotterSideStr + "_" + _leaderNetId;
+            private _lastSeen     = GVAR(spotGroupLastSeen) getOrDefault [_sideGroupKey, -1e10];
+            GVAR(spotGroupLastSeen) set [_sideGroupKey, CBA_missionTime];
+            if (CBA_missionTime - _lastSeen >= GROUP_CALLOUT_COOLDOWN) then {
                 (_sideNewReport select 1) pushBackUnique ([_leader] call FUNC(contactCategory));
                 // Claim the author slot while it is still unfilled OR holds a unit
                 // that has since died (alive objNull is false, so this covers both).
@@ -451,8 +495,12 @@ private _currentKeys = createHashMap;
     // One call for the whole side: the location lookup and phrasing are
     // computed once, so same-side curators hear the identical report.
     _sideNewReport params ["_reporter", "_reportCats", "_contactPos"];
-    // alive, not just !isNull: a corpse is a valid object but sideChat on it is
-    // silent, and the per-group cooldown has already been consumed by now.
+    // alive, not just !isNull: a corpse is a valid object but sideChat on it is silent.
+    // In practice this never fails when _reportCats is non-empty — representatives come
+    // from allUnits (alive-only) and the chevron latch verifies `alive` before reusing
+    // its spotter — so the case is a guard, not a lost report. Were it to fail, those
+    // groups' last-seen stamps have already been refreshed, so they would stay silent
+    // until they drop out of confirmed contact for GROUP_CALLOUT_COOLDOWN.
     if (_reportCats isNotEqualTo [] && { alive _reporter }) then {
         [_reporter, _reportCats, _curatorsData apply { _x select 1 }, _contactPos] call FUNC(spotCallout);
     };
@@ -494,11 +542,13 @@ if (count GVAR(blinkThrottle) > BLINK_THROTTLE_CAP) then {
     { if (_y < _cutoff) then { _old pushBack _x } } forEach GVAR(blinkThrottle);
     { GVAR(blinkThrottle) deleteAt _x } forEach _old;
 };
-if (count GVAR(spotGroupCooldowns) > SPOT_COOLDOWN_CAP) then {
-    private _cutoff = CBA_missionTime - GROUP_CALLOUT_COOLDOWN;   // expired cooldowns re-fire anyway
+if (count GVAR(spotGroupLastSeen) > GROUP_LAST_SEEN_CAP) then {
+    // A stamp this old means the group is already out of contact long enough to
+    // re-announce, so dropping it is indistinguishable from keeping it.
+    private _cutoff = CBA_missionTime - GROUP_CALLOUT_COOLDOWN;
     private _old = [];
-    { if (_y < _cutoff) then { _old pushBack _x } } forEach GVAR(spotGroupCooldowns);
-    { GVAR(spotGroupCooldowns) deleteAt _x } forEach _old;
+    { if (_y < _cutoff) then { _old pushBack _x } } forEach GVAR(spotGroupLastSeen);
+    { GVAR(spotGroupLastSeen) deleteAt _x } forEach _old;
 };
 // Pending resync requests are retired when their player resolves to a curator, so
 // an entry only survives while that player is connected but not (yet) a Zeus —

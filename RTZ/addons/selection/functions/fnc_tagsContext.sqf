@@ -4,10 +4,9 @@
  * Single "Draw Tags" ZEN context menu entry driving both the infantry head
  * tags (FUNC(unitTags)) and the vehicle tags (FUNC(vehicleTags)) — the
  * two systems used to register their own separate buttons; this condenses
- * them into one. Each system is independently CBA-setting gated, so only
- * one, both, or neither of GVAR(fnc_toggleTags) / GVAR(fnc_toggleVehTags)
- * may exist at runtime; the combined toggle drives whichever are present,
- * and the label/tint reflect whichever active system reports visible.
+ * them into one. The press goes to FUNC(toggleTags), which computes one
+ * target state for whichever systems are present; the label/tint here mirror
+ * whatever any active system currently reports.
  *
  * Loading: called from XEH_postInit after CBA_settingsInitialized, once at
  * least one of FUNC(unitTags) / FUNC(vehicleTags) has run for this session.
@@ -27,30 +26,19 @@
 
 if (!hasInterface) exitWith {};
 
-GVAR(fnc_toggleAllTags) = {
-    // Both systems get ONE computed target state instead of each flipping its
-    // own: if the two ever disagree (e.g. a master setting flipped one off
-    // mid-mission), independent toggles would swap them forever — this
-    // converges them on the first press. Target: hide if ANY tags are visible.
-    private _newVis = !(GETGVAR(tagsVisible,false) || { GETGVAR(vtagsVisible,false) });
-    if (!isNil QGVAR(tagsVisible))  then { GVAR(tagsVisible)  = _newVis };
-    if (!isNil QGVAR(vtagsVisible)) then { GVAR(vtagsVisible) = _newVis };
-    [[LLSTRING(MsgTagsHidden), LLSTRING(MsgTagsShown)] select _newVis] call zen_common_fnc_showMessage;
-};
-
 // ── ZEN context menu toggle (label/tint mirror the current state) ───────────
 private _action = [
     "RTZ_ToggleTags",
     LLSTRING(ActionDrawTags),
     ["\a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa", [1, 1, 1, 1]],
-    { [] call GVAR(fnc_toggleAllTags) },
+    { call FUNC(toggleTags) },
     { true },
     [],
     {},
     {
         params ["_action"];
         // "Hide" is offered while ANY active tag system is visible — matches
-        // the toggle above, which hides everything first.
+        // FUNC(toggleTags), which hides everything first.
         private _visible = GETGVAR(tagsVisible,false) || { GETGVAR(vtagsVisible,false) };
         if (_visible) then {
             _action set [1, LLSTRING(ActionHideTags)]; // Off

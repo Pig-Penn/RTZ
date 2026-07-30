@@ -20,9 +20,13 @@
 #define CHEVRON_LATCH_DURATION 10
 #define CHEVRON_LATCH_CAP 256
 
-// Seconds before the same group can trigger another radio contact report
-// after contact on it is lost.
-#define GROUP_CALLOUT_COOLDOWN 600
+// Seconds a group must have been OUT of confirmed contact (below HARD_THRESHOLD
+// for the reporting side) before it can trigger another radio contact report.
+// GVAR(spotGroupLastSeen) is refreshed on every tick the group stays confirmed,
+// so a group under continuous observation is announced exactly once; only one
+// that is genuinely lost for this long and then re-acquired reports again
+// (fnc_spotCheck).
+#define GROUP_CALLOUT_COOLDOWN 120
 
 // Spot marker naming + wedge (individual chevron) look.
 #define MKR_PREFIX "rtz_spot_"
@@ -34,7 +38,11 @@
 #define BLINK_THROTTLE_CAP 128
 #define BLINK_THROTTLE_WINDOW 5
 #define FIRE_BLINK_THROTTLE 0.1
-#define SPOT_COOLDOWN_CAP 256
+// GVAR(spotGroupLastSeen) holds one entry per (side, group) in or recently out of
+// confirmed contact — sized to SIMULTANEOUS contacts, not to callouts, since it is
+// stamped on every tick a group stays confirmed. Set well above the plausible live
+// count so the prune walk isn't entered every tick to free nothing.
+#define GROUP_LAST_SEEN_CAP 512
 
 // Echelon/size amplifier squad-size breakpoints (fnc_echelonTex). ~8 men per
 // squad — adjust if your squads differ.
@@ -45,6 +53,11 @@
 // Client draw distances/sizes (fnc_draw3D).
 #define WEDGE_MAX_DIST 2500
 #define CHEVRON_MAX_DIST 500
+// Chevron icon width ramp: CHEVRON_W_NEAR at the camera, tapering to
+// CHEVRON_W_FAR at WEDGE_MAX_DIST. Same endpoints as the 500 m stepped table
+// this replaced, without the visible size jumps as the camera pulls back.
+#define CHEVRON_W_NEAR 4
+#define CHEVRON_W_FAR 2
 #define HOVER_MAX_DIST 50
 #define HOVER_HIT_R2 (0.05 * 0.05)
 #define GROUP_HOVER_R2 (0.05 * 0.05)

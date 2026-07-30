@@ -66,6 +66,7 @@
 if (isServer) then {
     GVAR(spotForceResend)   = true;
     GVAR(spotResendPlayers) = createHashMap;
+    
     [QGVAR(spotResync), {
         params [["_player", objNull]];
         if (!isPlayer _player) exitWith { GVAR(spotForceResend) = true };
@@ -92,7 +93,7 @@ if (!isServer) exitWith {};
 // watching the shooter.
 GVAR(wedgeByUnit)        = createHashMap;
 GVAR(blinkThrottle)      = createHashMap;   // netId → last blink-send time (rate limiter)
-GVAR(spotGroupCooldowns) = createHashMap;   // (sideStr + "_" + leaderNetId) → time of last callout
+GVAR(spotGroupLastSeen)  = createHashMap;   // (sideStr + "_" + leaderNetId) → last time that side had the group confirmed (callout gate)
 GVAR(spotDebugLast)      = createHashMap;   // curatorNetId → last-logged resolution sig (diagnostic, on-change only)
 GVAR(markerSuffixCache)  = createHashMap;   // "m"/"v" + class → NATO symbol suffix, mission-lifetime (fnc_unitMarker)
 GVAR(chevronLatch)       = createHashMap;   // (spotterSideStr + "_" + memberNetId) → [expiryTime, lastBestSpotter] (fnc_spotCheck)
@@ -108,14 +109,18 @@ GVAR(chevronLatch)       = createHashMap;   // (spotterSideStr + "_" + memberNet
 // Cheap early-out for the common case: a shot nobody is watching does one lookup.
 ["CAManBase", "FiredMan", {
     params ["_unit"];
+
     private _id = netId _unit;
     private _spotters = GVAR(wedgeByUnit) getOrDefault [_id, []];
+
     if (_spotters isEqualTo []) exitWith {};
     // Throttle: cap to one blink event per 0.1 s per unit (slightly under the blink
     // duration so sustained auto-fire stays lit) to bound network cost in a firefight.
     private _now = CBA_missionTime;
+
     if (_now - (GVAR(blinkThrottle) getOrDefault [_id, 0]) < FIRE_BLINK_THROTTLE) exitWith {};
     GVAR(blinkThrottle) set [_id, _now];
+
     {
         _x params ["_mrkr", "_player"];
         // The lookup is rebuilt only once per check interval — the player may have

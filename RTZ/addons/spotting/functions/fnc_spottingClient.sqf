@@ -47,12 +47,6 @@ GVAR(blinkUntil) = createHashMap;
 // runs unconditionally and would read them as nil with the system disabled. See the
 // comment block in XEH_preInit.sqf.
 
-// Diagnostic: confirm the client half actually ran on this machine (set
-// RTZ_debug = true in the console to enable; default off, zero cost otherwise).
-if (GETMVAR(RTZ_debug,false)) then {
-    diag_log text format ["[RTZ] spotting CLIENT half started (clientOwner=%1, hasInterface=%2)", clientOwner, hasInterface];
-};
-
 // Draw 3D world icons above each spotted enemy every frame; positions are sampled
 // live from the unit so icons track smoothly between the server's spot cycles.
 addMissionEventHandler ["Draw3D", LINKFUNC(draw3D)];
@@ -61,6 +55,7 @@ addMissionEventHandler ["Draw3D", LINKFUNC(draw3D)];
 // side index, group-leader netId and display name are all pre-resolved on the server.
 [QGVAR(spotDetected), {
     params ["_markerName", "_unit", "_texture", "_colorArray", "_isGroupMarker", "_echelonTex", "_sideIdx", "_ldrId", "_name", ["_zoneRadius", 0]];
+
     if (_isGroupMarker) then {
         // Diagnostic: log the first receipt of each marker so we can confirm the
         // server's targeted event is actually reaching THIS client (RTZ_debug).
@@ -90,6 +85,7 @@ addMissionEventHandler ["Draw3D", LINKFUNC(draw3D)];
 // both maps is a safe single-hit.
 [QGVAR(spotLost), {
     params ["_markerName"];
+
     GVAR(spotGroups)   deleteAt _markerName;
     GVAR(spotChevrons) deleteAt _markerName;
     GVAR(officerZones) deleteAt _markerName;
@@ -101,6 +97,7 @@ addMissionEventHandler ["Draw3D", LINKFUNC(draw3D)];
 // the line appears in this player's side channel as "<groupId>: <message>".
 [QGVAR(spotAlert), {
     params ["_reporter", "_message"];
+
     if (isNull _reporter) exitWith {};
     _reporter sideChat _message;
 }] call CBA_fnc_addEventHandler;
@@ -108,6 +105,7 @@ addMissionEventHandler ["Draw3D", LINKFUNC(draw3D)];
 // Flash a wedge white for a moment — fired by the server when the spotted unit shoots.
 [QGVAR(blink), {
     params ["_markerName"];
+    
     GVAR(blinkUntil) set [_markerName, time + BLINK_DURATION];
 }] call CBA_fnc_addEventHandler;
 

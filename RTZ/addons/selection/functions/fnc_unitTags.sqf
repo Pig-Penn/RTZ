@@ -6,9 +6,9 @@
  * FLEEING") fed by the same live server packets the selection info dialog
  * uses (GVAR(selCurrent) / GVAR(selData), maintained by FUNC(selectionInfo)).
  *
- * The line is assembled from the fields enabled in CBA settings (role,
- * health, morale, suppression, magazine rounds, status, LAMBS tactic,
- * current AI command) and drawn in a static colour so urgency never
+ * The line is assembled by FUNC(buildTagEntry) from the fields enabled in CBA
+ * settings (role, health, morale, suppression, magazine rounds, status, LAMBS
+ * tactic, current AI command) and drawn in a static colour so urgency never
  * recolours the whole line. Only the trailing status word (DOWN / FLEEING)
  * gets its own colour (red), rendered as a second drawIcon3D split at a
  * measured text-width boundary from the rest of the line (same screen-space
@@ -35,8 +35,8 @@
  * as one — a tight squad reads as a stack instead of an unreadable pile.
  *
  * Visibility toggles at runtime via the shared "Draw Tags" ZEN context menu
- * entry (FUNC(tagsContext)), which drives this system's GVAR(fnc_toggleTags)
- * alongside the vehicle tags' toggle. The selection poll in
+ * entry (FUNC(tagsContext)) — one entry drives this system and the vehicle
+ * tags together, through FUNC(toggleTags). The selection poll in
  * FUNC(selectionInfo) reports the selection to the server while
  * GVAR(tagsVisible) is true, so hidden tags cost zero gather/network traffic.
  *
@@ -65,39 +65,20 @@
 
 if (!hasInterface) exitWith {};
 
-// Threat/flag icon textures (FLAG_ICON, ICON_*) come from
-// script_component.hpp — the same BIS simpletask set the selection dialog's
-// row icons use, so tag and dialog always agree.
+// Icon render size and hover pick distance (ICON_DRAW / ICON_HOVER_RADIUS) come
+// from script_component.hpp, alongside the placement constants
+// FUNC(buildTagEntry) measures with. The UI-x offsets that position the icons and
+// split the coloured status word are measured exactly at cache-build time — this
+// pass only reads them back.
 
-// ICON_HOVER_RADIUS is the Zeus-cursor pick distance (UI coordinates) for an
-// icon's hover-expand. The text widths that place the icons and split the
-// coloured status word are now measured exactly (FUNC(textWidth)), so the
-// old eyeballed per-character constants are gone.
-#define ICON_HOVER_RADIUS 0.03
-
-// Icon geometry, all as multiples of the tag's text size so icons scale WITH it
-// (the old draw pass drew every icon at a fixed 0.7 regardless of Tag Size, so a
-// larger tag kept postage-stamp icons). ICON_DRAW is the drawIcon3D render size;
-// ICON_FOOT is the icon's on-screen footprint (UI-x) used to butt icons flush
-// against the text and each other; ICON_TEXT_GAP is the (larger) gap between the
-// text and its first icon so a status word like DOWN isn't cramped against the
-// icon beside it, while ICON_GAP keeps two adjacent icons snug. Tuned so the
-// default (size 0.03) reproduces the old ~0.7 icon — nudge ICON_FOOT /
-// ICON_TEXT_GAP / ICON_GAP if icons overlap or drift at your UI scale.
-#define ICON_DRAW      23
-#define ICON_FOOT      1.1
-#define ICON_TEXT_GAP  0.9
-#define ICON_GAP       0.3
-
-// Runtime visibility switch (context menu). The master CBA setting
-// gates whether this system exists at all; this flips it mid-mission. Read
-// defensively by the selection poll — while true, the poll reports the
-// selection so the server streams packets.
+// Runtime visibility switch (context menu). The master CBA setting gates whether
+// this system exists at all; this flips it mid-mission. Read defensively by the
+// selection poll — while true, the poll reports the selection so the server
+// streams packets.
 GVAR(tagsVisible) = true;
 
-// netId → [mainText, [r,g,b], statusText, [r,g,b], sep, flagsText, threatIcon,
-// [r,g,b], threatHover] built lazily during the draw pass; wiped whenever the
-// underlying data or a tag* setting changes.
+// netId → FUNC(buildTagEntry) result, built lazily during the draw pass; wiped
+// whenever the underlying data or a tag* setting changes.
 GVAR(tagCache)      = createHashMap;
 GVAR(tagCacheDirty) = true;
 
@@ -115,163 +96,14 @@ GVAR(tagCacheDirty) = true;
     if (_lname == toLower QGVAR(enableUnitTags)) then { GVAR(tagsVisible) = _value };
 }] call CBA_fnc_addEventHandler;
 
-// ── Tag line assembly ────────────────────────────────────────────────────────
-// Builds one unit's cache entry (see GVAR(tagCache) layout above) from its
-// server packet (layout: FUNC(gatherUnitInfo)). Locality-bound fields
-// (morale, suppression, ammo, task, tactic, command, threat icon) are
-// only rendered when the packet carries live data. statusText is coloured
-// separately from mainText so DOWN / FLEEING can be red without recolouring
-// the whole line. flagsText/threatHover are the hover-expand strings for
-// their respective icons ("" when the icon has nothing to show).
-GVAR(fnc_buildTagEntry) = {
-    params ["_pkt"];
-    _pkt params [
-        "", "_isLdr", "", "_role", "", "",
-        "", "", "_cmd", "_morale", "_supp", "_flags", "_downed",
-        "_task", "_tactic", ["_dangerType", -1], ["_dangerDist", -1], ["_dangerTimeout", -1],
-        "_tgtType", ["_tgtVis", -1], "", "", "_isLocal", ["_hp", 100], "",
-        "", ["_ammo", -1], ["_ammoCap", -1]
-    ];
-
-    // Display-label remap (FUNC(loadTagLabels)) — re-words LAMBS task/tactic
-    // strings, RTZ status words, and flags at build time (cached).
-    private _labels = GVAR(tagLabels);
-
-    private _segs = [];
-    if (GVAR(tagShowRole)) then { _segs pushBack _role };
-    if (GVAR(tagShowHealth) && { _hp < 100 }) then { _segs pushBack format ["HP %1", _hp] };
-    private _suppPct = round (_supp * 100);
-    if (_isLocal) then {
-        if (GVAR(tagShowMorale)) then {
-            _segs pushBack format ["MOR %1", round (linearConversion [-1, 1, _morale, 0, 100, true])];
-        };
-        if (GVAR(tagShowSuppression) && { _suppPct > 0 }) then {
-            _segs pushBack format ["SUP %1", _suppPct];
-        };
-        if (GVAR(tagShowAmmo) && { _ammo >= 0 } && { _ammo != _ammoCap }) then {
-            // "<current>/<capacity>"; capacity can be unknown (-1: no mag
-            // loaded, or a pre-capacity server build) — degrade to bare count.
-            // A full magazine (_ammo == _ammoCap) is dropped entirely — only
-            // partial/depleted mags are worth flagging.
-            _segs pushBack ([str _ammo, format ["%1/%2", _ammo, _ammoCap]] select (_ammoCap > 0));
-        };
-        if (GVAR(tagShowCommand) && { _cmd != "" }) then { _segs pushBack _cmd };
-        // Group-wide fact — leader's tag only, so a squad doesn't repeat the
-        // same line on every member.
-        if (_isLdr && { GVAR(tagShowTactic) } && { _tactic != "" }) then {
-            _segs pushBack format ["TAC %1", _labels getOrDefault [_tactic, _tactic]];
-        };
-    };
-
-    // Status: urgent states always surface; the LAMBS task only when enabled.
-    // Kept out of _segs — it's rendered as its own coloured drawIcon3D so DOWN
-    // / FLEEING can be red without recolouring the rest of the line.
-    private _status = switch (true) do {
-        case (_downed):             { "DOWN" };
-        case ("FLEEING" in _flags): { "FLEEING" };
-        case (GVAR(tagShowStatus)): { _task };   // "" without LAMBS
-        default                     { "" };
-    };
-    _status = _labels getOrDefault [_status, _status];   // re-word DOWN/FLEEING/task
-
-    private _urgent = _downed || { "FLEEING" in _flags };
-    private _col = COL_NORMAL;
-    private _statusCol = [_col, COL_BAD] select _urgent;
-
-    private _mainText = _segs joinString " · ";
-    private _sep = ["", " · "] select (_mainText != "" && { _status != "" });
-
-    // Threat icon (between the text and the flag icon) — LAMBS danger cause
-    // beats a live attack target, same rule the dialog uses for its one
-    // right-side indicator.
-    private _threatIcon = "";
-    private _threatIconCol = [];
-    private _threatHover = "";
-    if (GVAR(tagShowThreatIcon) && _isLocal) then {
-        private _dStr = DANGER_LABELS param [(_dangerType + 2) max 0, ""];
-        if (_dStr != "") then {
-            _threatIcon = ICON_DANGER;
-            _threatIconCol = COL_WARN;
-            _threatHover = _dStr
-                + ([" ", format [" %1m", _dangerDist]] select (_dangerDist >= 0))
-                + ([" ", format [" %1s", _dangerTimeout]] select (_dangerTimeout >= 0));
-        } else {
-            if (_tgtType != "") then {
-                _threatIcon = ICON_TARGET;
-                _threatIconCol = COL_BAD;
-                _threatHover = format ["Target %1 (%2 vis)", _tgtType, (_tgtVis max 0) toFixed 1];
-            };
-        };
-    };
-
-    // Exact on-screen widths for the icon placement / status split in the draw
-    // pass. Measured here (once per cache build) so the per-frame draw only
-    // reads them back — size changes dirty the cache, so these stay in step.
-    private _tagSize  = GVAR(tagSize);
-    private _wMainSep = [_mainText + _sep, _tagSize] call FUNC(textWidth);
-    private _wStatus  = [_status, _tagSize] call FUNC(textWidth);
-    private _halfFull = (_wMainSep + _wStatus) / 2;   // text half-width (UI-x)
-
-    // Icon layout (UI-x, from the unit's centre). Each icon butts flush against
-    // the text or the previous icon with one small ICON_GAP — no more eyeballed
-    // per-icon advances. Right side only: threat then flag.
-    private _iconW    = _tagSize * ICON_FOOT;          // icon on-screen footprint
-    private _gap      = _tagSize * ICON_GAP;           // gap between two adjacent icons
-    private _textGap  = _tagSize * ICON_TEXT_GAP;      // larger gap: text ↔ its first icon
-    private _step     = _iconW + _gap;                 // centre-to-centre, adjacent icons
-    private _flush    = _halfFull + _textGap + (_iconW / 2); // first icon offset from a text edge
-
-    private _threatCenterUI = _flush;                  // right of the text
-    // Flag follows the threat icon when both show, otherwise sits flush itself.
-    private _flagCenterUI    = if (_threatIcon != "") then { _flush + _step } else { _flush };
-
-    // De-confliction half-width: the text half plus whichever side carries icons,
-    // so the stacking pass knows each tag's true footprint (icons included).
-    private _hasFlag  = GVAR(tagShowFlagIcon) && { _flags isNotEqualTo [] };
-    private _nRight    = parseNumber (_threatIcon != "") + parseNumber _hasFlag;
-    private _hwLayout = [_halfFull, _flush + (_iconW / 2) + ([0, _step] select (_nRight > 1))] select (_nRight > 0);
-
-    private _flagsText = (_flags apply { _labels getOrDefault [_x, _x] }) joinString " · ";
-    // Precomputed "anything to draw at all" flag — the per-frame resolve pass
-    // reads this single boolean instead of unpacking the entry to re-derive
-    // it every frame for every unit.
-    private _hasContent = _mainText != "" || { _status != "" } || { _flagsText != "" }
-        || { _threatIcon != "" };
-
-    [
-        _mainText,
-        _col select [0, 3],
-        _status,
-        _statusCol select [0, 3],
-        _sep,
-        _flagsText,
-        _threatIcon,
-        _threatIconCol select [0, 3],
-        _threatHover,
-        _wMainSep,
-        _wStatus,
-        _threatCenterUI,
-        _flagCenterUI,
-        _hwLayout,
-        _hasContent
-    ]
-};
-
-// ── Runtime toggle (driven by the shared context menu entry) ────────────────
-GVAR(fnc_toggleTags) = {
-    GVAR(tagsVisible) = !GVAR(tagsVisible);
-    [[LLSTRING(MsgUnitTagsHidden), LLSTRING(MsgUnitTagsShown)] select GVAR(tagsVisible)] call zen_common_fnc_showMessage;
-};
-
 // ── Draw pass ────────────────────────────────────────────────────────────────
 // Three passes per frame: (1) resolve each selected unit to a render record
-// (screen pos, per-metre scales, measured widths, cache entry); (2) de-conflict
-// vertically so bunched tags stack instead of piling; (3) draw. The layout pass
-// needs every survivor's screen extent up front, hence the split from the old
-// single loop.
+// (screen pos, per-metre scales, cache entry); (2) de-conflict vertically so
+// bunched tags stack instead of piling; (3) draw. The layout pass needs every
+// survivor's screen extent up front, hence the split from the old single loop.
 [missionNamespace, "Draw3D", {
     if (!GVAR(tagsVisible)) exitWith {};
-    if (isNull (findDisplay 312) || { isNull (getAssignedCuratorLogic player) }) exitWith {};
+    if (isNull (findDisplay IDD_RSCDISPLAYCURATOR) || { isNull (getAssignedCuratorLogic player) }) exitWith {};
     if (isNil QGVAR(selCurrent)) exitWith {};
     private _ids = GVAR(selCurrent);
     if (_ids isEqualTo []) exitWith {};
@@ -281,21 +113,20 @@ GVAR(fnc_toggleTags) = {
         GVAR(tagCacheDirty) = false;
     };
 
-    private _cache   = GVAR(tagCache);
-    private _data    = GVAR(selData);
-    private _camPos  = positionCameraToWorld [0, 0, 0];
-    private _maxDist = GVAR(tagMaxDistance);
-    private _fadeIn  = _maxDist * 0.85;
-    private _size    = GVAR(tagSize);
+    private _cache    = GVAR(tagCache);
+    private _data     = GVAR(selData);
+    private _camPos   = positionCameraToWorld [0, 0, 0];
+    private _maxDist  = GVAR(tagMaxDistance);
+    private _fadeIn   = _maxDist * 0.85;
+    private _size     = GVAR(tagSize);
     private _iconDraw = _size * ICON_DRAW;   // icons scale with the tag size now
-    private _zOff    = GVAR(tagHeight);
-    private _showFlags = GVAR(tagShowFlagIcon);
-    private _mouse     = getMousePosition;
+    private _zOff     = GVAR(tagHeight);
+    private _mouse    = getMousePosition;
     // Camera-right / camera-up unit vectors in world space — the axes tags are
     // shifted along so "right of the text" and "one line down" hold for any
     // camera orientation.
-    private _camRight  = (positionCameraToWorld [1, 0, 0]) vectorDiff _camPos;
-    private _camUp     = (positionCameraToWorld [0, 1, 0]) vectorDiff _camPos;
+    private _camRight = (positionCameraToWorld [1, 0, 0]) vectorDiff _camPos;
+    private _camUp    = (positionCameraToWorld [0, 1, 0]) vectorDiff _camPos;
 
     // ── Pass 1: resolve each selected unit to a render record ────────────────
     // [_scr, _perMetreRight, _pos, _alpha, _entry, _yShift]. Every skip
@@ -310,12 +141,12 @@ GVAR(fnc_toggleTags) = {
         private _entry = _cache get _x;
         if (isNil "_entry") then {
             private _pkt = _data get _x;
-            if (isNil "_pkt") then { continue };                   // packet not arrived yet
-            if ("MOUNTED" in (_pkt select 11)) then { continue };  // vehicle card covers it
-            _entry = [_pkt] call GVAR(fnc_buildTagEntry);
+            if (isNil "_pkt") then { continue };                        // packet not arrived yet
+            if (FLAG_MOUNTED in (_pkt select 11)) then { continue };    // vehicle card covers it
+            _entry = [_pkt] call FUNC(buildTagEntry);
             _cache set [_x, _entry];
         };
-        if !(_entry select 14) then { continue };                  // every field/icon toggled off
+        if !(_entry select 14) then { continue };                       // every field/icon toggled off
 
         private _unit = objectFromNetId _x;
         // objectParent re-check: the unit can mount between server pushes.
@@ -332,7 +163,7 @@ GVAR(fnc_toggleTags) = {
         private _pos = _head vectorAdd (_camUp vectorMultiply (_zOff * (1 max (_dist / 30))));
 
         private _scr = worldToScreen _pos;
-        if (_scr isEqualTo []) then { continue };                  // unit off-screen
+        if (_scr isEqualTo []) then { continue };                       // unit off-screen
         private _oneRight = worldToScreen (_pos vectorAdd _camRight);
         if (_oneRight isEqualTo []) then { continue };
         private _perMetreRight = (_oneRight select 0) - (_scr select 0);
@@ -352,15 +183,14 @@ GVAR(fnc_toggleTags) = {
     private _lineH = _size * 1.5;   // clears the text + icon band between stacked tags
     private _order = [];
     { _order pushBack [(_x select 0) select 1, _forEachIndex] } forEach _records;
-    _order sort true;                                              // top of screen first
+    _order sort true;                                                  // top of screen first
 
-    private _placed = [];                                          // [xCentre, halfWidth, finalY]
+    private _placed = [];                                              // [xCentre, halfWidth, finalY]
     {
         private _rec = _records select (_x select 1);
-        private _e   = _rec select 4;
         private _scr = _rec select 0;
         private _xC  = _scr select 0;
-        private _hw  = _e select 13;   // true composed half-width (text + present icons)
+        private _hw  = (_rec select 4) select 13;   // composed half-width (text + present icons)
         private _finalY = _scr select 1;
         private _pass = 0;
         private _bumped = true;
@@ -385,6 +215,7 @@ GVAR(fnc_toggleTags) = {
     // icons of one tag move together. The UI-y-per-metre-of-camera-up scale is
     // measured here, only for the (rare) shifted tags — unshifted tags never
     // pay for the extra worldToScreen.
+    private _showFlags = GVAR(tagShowFlagIcon);
     {
         _x params ["_scr", "_perMetre", "_pos", "_alpha", "_entry", "_yShift"];
         _entry params [
@@ -405,7 +236,6 @@ GVAR(fnc_toggleTags) = {
         };
         private _scrX = _scr select 0;
         private _scrY = (_scr select 1) + _yShift;
-        private _halfFull = (_wMainSep + _wStatus) / 2;
 
         // Main line — split so the status word carries its own colour while the
         // combined line stays centred on the unit. Boundary = centre + halfFull
@@ -416,7 +246,7 @@ GVAR(fnc_toggleTags) = {
         if (_statusText == "") then {
             drawIcon3D ["", _rgbMain + [_alpha], _dpos, 0, 0, 0, _mainText + _sep, 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
         } else {
-            private _boundaryUI  = _halfFull - _wStatus;
+            private _boundaryUI  = ((_wMainSep + _wStatus) / 2) - _wStatus;
             private _boundaryPos = _dpos vectorAdd (_camRight vectorMultiply (_boundaryUI / _perMetre));
             drawIcon3D ["", _rgbMain   + [_alpha], _boundaryPos, 0, 0, 0, _mainText + _sep, 2, _size, "RobotoCondensedBold", "left",  false, 0, 0];
             drawIcon3D ["", _rgbStatus + [_alpha], _boundaryPos, 0, 0, 0, _statusText,      2, _size, "RobotoCondensedBold", "right", false, 0, 0];

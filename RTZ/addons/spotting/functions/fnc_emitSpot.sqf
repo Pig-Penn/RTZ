@@ -43,9 +43,20 @@ private _isNew  = _prev isEqualTo [];
 private _mrkr   = _payload select 0;
 
 if (_draw) then {
+    // Hand-over: this key's previous recipient is not the current destination, i.e.
+    // the curator module changed hands (the key is per curator MODULE, not per
+    // player). The signature embeds the player netId, so the new owner is sent to
+    // below — but the old one would keep the icon in its store for the rest of the
+    // mission, and render it as its own the moment it is made a curator again.
+    // isPlayer, not isNull, for the departed-player-body reason described below.
+    if (!_isNew && { (_prev select 1) != _player } && { isPlayer (_prev select 1) }) then {
+        [QGVAR(spotLost), [_prev select 0], _prev select 1] call CBA_fnc_targetEvent;
+    };
+    
     if (_force || { _isNew } || { (_prev select 2) != _sig }) then {
         [QGVAR(spotDetected), _payload, _player] call CBA_fnc_targetEvent;
     };
+
     _activeSpots set [_key, [_mrkr, _player, _sig]];
 } else {
     // Drop a previously drawn icon when this contact stops qualifying to draw.
@@ -60,5 +71,6 @@ if (_draw) then {
     if (!_isNew && { (_prev select 2) != "_off_" } && { isPlayer (_prev select 1) }) then {
         [QGVAR(spotLost), [_prev select 0], _prev select 1] call CBA_fnc_targetEvent;
     };
+
     _activeSpots set [_key, [_mrkr, _player, "_off_"]];
 };

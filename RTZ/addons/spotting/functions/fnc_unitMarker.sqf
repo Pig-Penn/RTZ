@@ -13,7 +13,9 @@
  * (e.g. b_naval) resolve to "".
  *
  * Arguments:
- * 0: Unit — pass the GROUP LEADER so the symbol represents the whole group <OBJECT>
+ * 0: Unit — pass the GROUP LEADER so the symbol represents the whole group. May be
+ *    a vehicle rather than a man (FUNC(spotCheck) anchors on a hull when the group's
+ *    leader is not spottable), in which case that vehicle is classified <OBJECT>
  * 1: Headquarters/command element — forces the staff symbol <BOOL> (default: false)
  *
  * Return Value:
@@ -36,13 +38,27 @@ private _sideIdx = switch (_unitSide) do {
 private _prefix = ["b_", "o_", "n_"] select _sideIdx;
 private _color = [_unitSide] call EFUNC(common,sideColor);
 
-// Vehicle the unit occupies, or objNull on foot. Parachutes and non-mortar
-// static weapons count as on-foot so their crew keeps an infantry symbol.
-private _veh = vehicle _unit;
-if (_veh == _unit
-    || { typeOf _veh == "Steerable_Parachute_F" }
-    || { _veh isKindOf "StaticWeapon" && { !(_veh isKindOf "StaticMortar") } }
-) then { _veh = objNull };
+// Vehicle to classify by, or objNull for the on-foot symbol. objectParent, not
+// vehicle: it already yields objNull on foot, whereas `vehicle` returns the unit
+// and needs a `== _unit` sentinel to mean the same thing — a sentinel that cannot
+// distinguish a man on foot from an argument that IS a vehicle. typeOf objNull is ""
+// and objNull isKindOf is always false, so the on-foot case falls through the
+// exceptions below untouched.
+private _veh = objNull;
+if (_unit isKindOf "CAManBase") then {
+    // Vehicle the man occupies. Parachutes and non-mortar static weapons count as
+    // on-foot so their crew keeps an infantry symbol.
+    _veh = objectParent _unit;
+    if (typeOf _veh == "Steerable_Parachute_F"
+        || { _veh isKindOf "StaticWeapon" && { !(_veh isKindOf "StaticMortar") } }
+    ) then { _veh = objNull };
+} else {
+    // Not a man. FUNC(spotCheck) anchors a group on a vehicle hull whenever the
+    // group's own leader is not itself spottable (a player-led enemy squad, or a
+    // UAV whose AI crew are absent from allUnits), so classify the hull directly —
+    // its own objectParent is objNull, which would read as "on foot".
+    _veh = _unit;
+};
 
 // Everything below the HQ and cargo tests is class-invariant, so the resolved
 // suffix is cached per class in GVAR(markerSuffixCache) (created by
@@ -53,16 +69,15 @@ private _suffix = call {
     if (_isHQ) exitWith { "hq" };
 
     // On foot (also static-weapon crew & parachutists, via _veh = objNull above).
+    // Only a man reaches this — a non-man argument keeps _veh = _unit above.
     if (isNull _veh) exitWith {
         private _key = "m" + typeOf _unit;
         private _s   = GVAR(markerSuffixCache) get _key;
         if (isNil "_s") then {
-            _s = if !(_unit isKindOf "CAManBase") then { "unknown" } else {
-                // Recon: stealthy, high-detection, or diver units (ACE getMarkerType heuristic).
-                ["inf", "recon"] select (getNumber (configOf _unit >> "detectSkill") > 20
-                    || { getNumber (configOf _unit >> "camouflage") < 1 }
-                    || { getText (configOf _unit >> "textsingular") == "diver" })
-            };
+            // Recon: stealthy, high-detection, or diver units (ACE getMarkerType heuristic).
+            _s = ["inf", "recon"] select (getNumber (configOf _unit >> "detectSkill") > 20
+                || { getNumber (configOf _unit >> "camouflage") < 1 }
+                || { getText (configOf _unit >> "textsingular") == "diver" });
             GVAR(markerSuffixCache) set [_key, _s];
         };
         _s

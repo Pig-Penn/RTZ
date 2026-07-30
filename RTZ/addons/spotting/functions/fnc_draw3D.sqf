@@ -8,9 +8,9 @@
  * amplifier, side index and display name are all pre-resolved server-side.
  *
  * Registered as a mission Draw3D event handler by FUNC(spottingClient).
- * Distance/size tunables (WEDGE_MAX_DIST, CHEVRON_MAX_DIST, HOVER_MAX_DIST,
- * HOVER_HIT_R2, GROUP_HOVER_R2, AMP_GAPS_WORLD, GROUP_ZMOD_*) are #defined in
- * script_component.hpp.
+ * Distance/size tunables (WEDGE_MAX_DIST, CHEVRON_MAX_DIST, CHEVRON_W_NEAR/FAR,
+ * HOVER_MAX_DIST, HOVER_HIT_R2, GROUP_HOVER_R2, AMP_GAPS_WORLD, GROUP_ZMOD_*) are
+ * #defined in script_component.hpp.
  *
  * Arguments:
  * None
@@ -37,6 +37,11 @@ private _viewDist = getObjectViewDistance select 0;
 // HOVER_HIT_R2 / GROUP_HOVER_R2 are SafeZone screen-space radii (worldToScreen
 // format), compared SQUARED so the per-icon test needs no sqrt.
 private _mousePos = getMousePosition;
+// Blink state, hoisted out of _fnc_drawColor: `time` is read once per frame instead
+// of once per icon, and the map is empty except in the moments right after a spotted
+// unit fires — so the common case skips the per-icon lookup outright.
+private _now      = time;
+private _anyBlink = count GVAR(blinkUntil) > 0;
 
 // Echelon amplifier vertical gap above the group icon, indexed by the payload's
 // side index (0 = BLUFOR rectangle, 1 = OPFOR diamond — peaks highest so needs
@@ -44,14 +49,16 @@ private _mousePos = getMousePosition;
 // by camera distance (constant screen gap at any zoom).
 private _AMP_GAPS = AMP_GAPS_WORLD;
 
-// Hoisted once per frame: does the RC-indicator display map exist at all?
-private _hasRC = !isNil QGVAR(rcDisplay);
+// Hoisted once per frame: is anything actually under remote control? Testing only
+// that the map EXISTS made this true whenever the RC indicator is merely enabled,
+// so every chevron paid a netId + hashmap lookup every frame for nothing.
+private _hasRC = !isNil QGVAR(rcDisplay) && { count GVAR(rcDisplay) > 0 };
 
 // Distance fade × stored base alpha; flash white while the unit is firing.
 private _fnc_drawColor = {
     params ["_dist", "_colorArray", "_blinkKey"];
-    private _alpha = (((_viewDist - _dist) / _viewDist) max 0) * (_colorArray#3);
-    if (time <= (GVAR(blinkUntil) getOrDefault [_blinkKey, 0]))
+    private _alpha = ((_viewDist - _dist) / _viewDist) * (_colorArray#3);   // callers skip _dist >= _viewDist
+    if (_anyBlink && { _now <= (GVAR(blinkUntil) getOrDefault [_blinkKey, 0]) })
         then { [1, 1, 1, _alpha] }
         else { [_colorArray#0, _colorArray#1, _colorArray#2, _alpha] }
 };
@@ -69,6 +76,10 @@ private _groupHoverByLeader = createHashMap;
     // Anchor on the vehicle so a mounted leader is handled (vehicle = unit on foot).
     private _anchor = vehicle _unit;
     private _dist   = _camPos distance _anchor;
+    // Past view distance the fade alpha is 0 — there was never anything to see, so
+    // skip the icon (and its hover worldToScreen) rather than issue invisible draws.
+    // Group icons, unlike chevrons, have no cutoff of their own.
+    if (_dist >= _viewDist) then { continue };
 
     // Native Zeus group-icon recipe: world-space height offset grows with camera
     // distance (GROUP_ZMOD_MIN→MAX over GROUP_ZMOD_NEAR→FAR m, floored close in),
@@ -111,7 +122,7 @@ if (GVAR(chevronsEnabled)) then {
         if (!alive _unit) then { continue };
         private _anchor = vehicle _unit;
         private _dist   = _camPos distance _anchor;
-        if (_dist > WEDGE_MAX_DIST) then { continue };
+        if (_dist > WEDGE_MAX_DIST || { _dist >= _viewDist }) then { continue };
 
         // Past the normal cutoff, only show this chevron if its group's icon is
         // currently hovered — lets the curator "peek" at squad composition from afar.
@@ -122,15 +133,10 @@ if (GVAR(chevronsEnabled)) then {
         if (_hasRC && { (netId _unit) in GVAR(rcDisplay) }) then { continue };
 
         // Native EG-spectator chevron (ACE recipe): head + 1 m, size scaled by distance.
+        // Smooth ramp rather than the 500 m stepped table this replaced — same
+        // endpoints, one engine call, and no per-chevron `call {}` scope per frame.
         private _iconPos = (_unit modelToWorldVisual (_unit selectionPosition "Head")) vectorAdd [0, 0, 1];
-        private _iconW = call {
-            if (_dist <= 500)  exitWith { 4 };
-            if (_dist <= 1000) exitWith { 3.5 };
-            if (_dist <= 1500) exitWith { 3 };
-            if (_dist <= 2000) exitWith { 2.5 };
-            if (_dist <= 2500) exitWith { 2 };
-            1.5
-        };
+        private _iconW   = linearConversion [0, WEDGE_MAX_DIST, _dist, CHEVRON_W_NEAR, CHEVRON_W_FAR, true];
 
         private _col = [_dist, _colorArray, _x] call _fnc_drawColor;
         drawIcon3D [_texture, _col, _iconPos, _iconW, _iconW, 0, "", 0, 0.03, "RobotoCondensed", "center", false, 0, 0];

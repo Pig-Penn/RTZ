@@ -9,8 +9,10 @@
  * tuned for AI group sizes.
  *
  * Arguments:
- * 0: Unit (group leader) <OBJECT>
- * 1: Group member count <NUMBER>
+ * 0: Unit (group leader) — may be a vehicle hull, which yields "" (a bare vehicle
+ *    carries no infantry to size) <OBJECT>
+ * 1: Number of MEN in the group — hulls ride in the group alongside their crew, so
+ *    counting raw members would inflate every mechanised group by one per vehicle <NUMBER>
  *
  * Return Value:
  * Texture path <STRING>, or "" for no amplifier
@@ -23,12 +25,19 @@
 
 params ["_unit", "_grpCount"];
 
-private _veh = vehicle _unit;
+// objectParent, not vehicle: it is already objNull when the unit is on foot, so no
+// `== _unit` sentinel is needed to spell that. typeOf objNull is "" and objNull
+// isKindOf is always false, so the exception clauses below are safe on it.
+private _veh = objectParent _unit;
 
 private _count = call {
     // On foot — incl. static (non-mortar) weapon crews and parachutists, which the
-    // symbol also classifies as infantry.
-    if (_veh == _unit
+    // symbol also classifies as infantry. A hull passed as _unit lands here too (a
+    // vehicle has no parent) and yields the men count, which for a group whose crew
+    // are absent from allUnits is 0 → no amplifier. isNull must stay the FIRST
+    // clause: without it an on-foot unit would fall through to the crew count below
+    // and come back 0, silently dropping every infantry group's amplifier.
+    if (isNull _veh
         || { typeOf _veh == "Steerable_Parachute_F" }
         || { _veh isKindOf "StaticWeapon" && { !(_veh isKindOf "StaticMortar") } }
     ) exitWith { _grpCount };

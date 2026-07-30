@@ -15,31 +15,43 @@
  * leader, group, role, name, side, behaviour, health, MOUNTED/WOUNDED flags)
  * is valid on every machine and always filled in.
  *
- * Packet layout (index → field) — kept in lockstep with FUNC(buildSelectionRows):
+ * `_detailed` gates the two genuinely expensive reads — `targetsQuery` (known
+ * enemies, leaders only) and `checkVisibility` (target visibility). Both are
+ * consumed ONLY by the info dialog's hover tooltip and the unit tag's threat
+ * hover, so a curator running tags alone should not pay for them on every unit
+ * on every tick. They come back at -1 when not gathered, which the render paths
+ * already treat as "omit".
+ *
+ * Packet layout (index → field) — kept in lockstep with FUNC(buildSelectionRows)
+ * and FUNC(buildTagEntry):
  *   0 netId  1 isLdr  2 grpId  3 role  4 sideNum  5 name
  *   6 behaviour  7 unitState  8 currentCommand  9 morale  10 suppression
  *   11 flags[]  12 downed  13 task  14 tactic
  *   15 dangerType  16 dangerDist(m)  17 dangerTimeout(s)
  *   18 targetType  19 targetVisibility  20 knownEnemies  21 groupMemory
- *   22 isLocal  23 healthPct  24 stance  25 grpNetId  26 primaryAmmo
- *   27 primaryAmmoCap
+ *   22 isLocal  23 healthPct  24 grpNetId  25 primaryAmmo  26 primaryAmmoCap
  *
  * grpNetId is the bucketing key client-side; grpId (2) is display-only —
  * two groups can share a groupId string (copy-pasted compositions).
  *
+ * flags[] carries the FLAG_* wire tokens from script_component.hpp, never
+ * display text: the client tests them and resolves each to a localized label
+ * through GVAR(tagLabels) at render time.
+ *
  * Arguments:
  * 0: Unit to read <OBJECT>
+ * 1: Gather the dialog-only intel (targetsQuery / checkVisibility) <BOOL> (default: false)
  *
  * Return Value:
  * Packet <ARRAY>
  *
  * Example:
- * [_unit] call rtz_selection_fnc_gatherUnitInfo
+ * [_unit, true] call rtz_selection_fnc_gatherUnitInfo
  *
  * Public: No
  */
 
-params ["_unit"];
+params ["_unit", ["_detailed", false]];
 
 private _grp     = group _unit;
 private _isLdr   = _unit isEqualTo (leader _grp);
@@ -65,7 +77,6 @@ private _tgtType       = "";
 private _tgtVis        = -1;
 private _known         = -1;
 private _groupMem      = -1;
-private _stance        = "";
 private _ammo          = -1;
 private _ammoCap       = -1;
 
@@ -75,7 +86,6 @@ if (_isLocal) then {
     _state  = getUnitState _unit;
     _cmd    = currentCommand _unit;
     _downed = lifeState _unit isEqualTo "INCAPACITATED";
-    _stance = stance _unit;
 
     // Rounds left in the current primary-weapon magazine and its capacity
     // (-1: no primary / no mag loaded / non-local) — consumed by the unit head
@@ -87,7 +97,7 @@ if (_isLocal) then {
         private _mag = primaryWeaponMagazine _unit param [0, ""];
         if (_mag != "") then {
             _ammoCap = GVAR(magCapCache) getOrDefaultCall [_mag, {
-                getNumber (configFile >> "CfgMagazines" >> _mag >> "count")
+                getNumber (configFile >> "CfgMagazines" >> _this >> "count")
             }, true];
         };
     };
@@ -104,23 +114,29 @@ if (_isLocal) then {
     private _tgt = _dc param [3, objNull];
     if (!(_tgt isEqualType objNull) || { isNull _tgt }) then { _tgt = getAttackTarget _unit };
     if (!isNull _tgt && { _tgt isNotEqualTo _unit }) then {
-        _tgtType = getText (configOf _tgt >> "displayName");
-        _tgtVis  = [objNull, "VIEW", objNull] checkVisibility [eyePos _unit, eyePos _tgt];
+        // Same mission-long per-class cache as _role above — this used to be a
+        // raw config read per targeting unit per tick.
+        _tgtType = (_tgt call EFUNC(common,classInfo)) select 0;
+        // Only the dialog tooltip and the tag's threat hover show the number.
+        if (_detailed) then {
+            _tgtVis = [objNull, "VIEW", objNull] checkVisibility [eyePos _unit, eyePos _tgt];
+        };
     };
 
     // Status tags (mirrors the flags drawn by the LAMBS debug overlay).
-    if !(_unit checkAIFeature "PATH") then { _flags pushBack "PATH OFF" };
-    if !(_unit checkAIFeature "MOVE") then { _flags pushBack "MOVE OFF" };
-    if (_unit getVariable ["lambs_danger_forceMove", false]) then { _flags pushBack "FORCED" };
-    if (fleeing _unit)                    then { _flags pushBack "FLEEING" };
-    if (isHidden _unit)                   then { _flags pushBack "HIDDEN" };
-    if (insideBuilding _unit isEqualTo 1) then { _flags pushBack "INSIDE" };
-    if !(unitReady _unit)                 then { _flags pushBack "BUSY" };
+    if !(_unit checkAIFeature "PATH") then { _flags pushBack FLAG_PATH_OFF };
+    if !(_unit checkAIFeature "MOVE") then { _flags pushBack FLAG_MOVE_OFF };
+    if (_unit getVariable ["lambs_danger_forceMove", false]) then { _flags pushBack FLAG_FORCED };
+    if (fleeing _unit)                    then { _flags pushBack FLAG_FLEEING };
+    if (isHidden _unit)                   then { _flags pushBack FLAG_HIDDEN };
+    if (insideBuilding _unit isEqualTo 1) then { _flags pushBack FLAG_INSIDE };
+    if !(unitReady _unit)                 then { _flags pushBack FLAG_BUSY };
 
     // LAMBS enrichment — "" / -1 (omitted client-side) when LAMBS isn't loaded.
     _task   = _unit getVariable ["lambs_main_currentTask", ""];
     _tactic = _grp  getVariable ["lambs_main_currentTactic", ""];
-    if (_isLdr) then {
+    // targetsQuery allocates and scans the whole known-target list; dialog only.
+    if (_isLdr && _detailed) then {
         _groupMem = count (_grp getVariable ["lambs_main_groupMemory", []]);
         _known = count ((_unit targetsQuery [objNull, sideUnknown, "", [], 0]) select {
             ((side _unit) isNotEqualTo (side (_x select 1))) || { side (_x select 1) isEqualTo civilian }
@@ -129,14 +145,14 @@ if (_isLocal) then {
 };
 
 // Mounted state and health are global (objectParent / damage read on any machine).
-if !(isNull objectParent _unit) then { _flags pushBack "MOUNTED" };
+if !(isNull objectParent _unit) then { _flags pushBack FLAG_MOUNTED };
 private _hp = (round ((1 - damage _unit) * 100)) max 0;
-if (_hp <= 65) then { _flags pushBack "WOUNDED" };
+if (_hp <= 65) then { _flags pushBack FLAG_WOUNDED };
 
 [
     netId _unit, _isLdr, groupId _grp, _role, _sideNum, name _unit,
     behaviour _unit, _state, _cmd, _morale, _supp, _flags, _downed,
     _task, _tactic, _dangerType, _dangerDist, _dangerTimeout,
-    _tgtType, _tgtVis, _known, _groupMem, _isLocal, _hp, _stance,
+    _tgtType, _tgtVis, _known, _groupMem, _isLocal, _hp,
     netId _grp, _ammo, _ammoCap
 ]

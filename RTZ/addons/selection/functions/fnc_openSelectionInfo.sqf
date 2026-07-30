@@ -6,10 +6,11 @@
  * per-frame handler refreshes them ~4×/s from the latest selection state
  * (GVAR(selCurrent) / GVAR(selData), maintained by FUNC(selectionInfo)).
  *
- * The server only streams infantry data while a dialog is open, so this reports
- * the current selection once, immediately, before creating the dialog — the
- * server gathers straight off that event and the rows fill on the first refresh
- * instead of waiting for the poll and gather ticks to line up.
+ * The server only streams infantry data while a consumer is active, and only
+ * gathers the expensive leader intel while a DIALOG is open, so this reports the
+ * current selection once, immediately, before creating the dialog — the server
+ * gathers straight off that event and the rows fill on the first refresh instead
+ * of waiting for the poll and gather ticks to line up.
  *
  * The refresh updates rows in place — preserving scroll position — and only does
  * a full rebuild when the set/grouping of selected units actually changes. The
@@ -28,8 +29,18 @@
  */
 
 // ZEN dialog row-control IDCs (see ZEN: addons\dialog\script_component.hpp).
+// ZEN's LIST row reuses the COMBO control, so the list itself really does live
+// under IDC_ROW_COMBO — ZEN defines no IDC_ROW_LIST at all.
 #define ZEN_IDC_ROW_LABEL 1001
-#define ZEN_IDC_ROW_LIST  1003
+#define ZEN_IDC_ROW_COMBO 1003
+
+// Constant save ID. Without one, ZEN synthesizes it by joinString-ing the whole
+// content array — for this dialog, every row's label text. That paid to build a
+// large string on every single open, and because the ID differed per selection,
+// each confirm (OK) wrote one more permanent key into ZEN's zen_dialog_saved
+// namespace, which grows for the rest of the mission. The LIST row forces its
+// default anyway, so there is nothing here worth persisting per-selection.
+#define DIALOG_SAVE_ID QGVAR(selInfoDialog)
 
 if (isNil QGVAR(selCurrent) || { count GVAR(selCurrent) == 0 }) exitWith {
     [LLSTRING(MsgNoUnitsSelected)] call zen_common_fnc_showMessage;
@@ -38,18 +49,19 @@ if (isNil QGVAR(selCurrent) || { count GVAR(selCurrent) == 0 }) exitWith {
 // Don't stack a second dialog on top of an open one.
 if (GETGVAR(selDialogOpen,false)) exitWith {};
 
-// Report the selection to the server right now (the poll only reports while
-// GVAR(selDialogOpen) is set). GVAR(selReported) is shared with the poll: if the
-// dialog fails to create below, the next poll tick sees open=false, reports [],
-// and the server stops gathering — no stranded report to clean up here.
-GVAR(selReported) = +GVAR(selCurrent);
-[QGVAR(selSelection), [player, GVAR(selReported)]] call CBA_fnc_serverEvent;
+// Report the selection to the server right now, flagged as dialog-open so the
+// gather starts including the leader intel only the dialog shows. GVAR(selReported)
+// is shared with the poll: if the dialog fails to create below, the next poll tick
+// sees open=false and re-reports (or reports [] and the server stops gathering) —
+// no stranded report to clean up here.
+GVAR(selReported) = [+GVAR(selCurrent), true];
+[QGVAR(selSelection), [player] + GVAR(selReported)] call CBA_fnc_serverEvent;
 
 ([] call FUNC(buildSelectionRows)) params ["_header", "_rows", "_keys"];
 
 // ZEN LIST label entry format is [text, tooltip, picture, textColor] — the
 // right-side indicator icon is ours alone, applied by _fnc_apply below.
-private _labels  = _rows apply { _x params ["_t", "_c", "_tip", "_pic"]; [_t, _tip, _pic, _c] };
+private _labels = _rows apply { _x params ["_t", "_c", "_tip", "_pic"]; [_t, _tip, _pic, _c] };
 
 // ── ZEN grid geometry (mirrors defineCommonGrids.inc) so we can size the list
 //    HEIGHT to the screen rather than ZEN's fixed 12-row default. ──────────────
@@ -70,7 +82,8 @@ private _created = [
     [["LIST", _header, [[], _labels, 0, _visRows, false], true]],
     { GVAR(selDialogOpen) = false },
     { GVAR(selDialogOpen) = false },
-    []
+    [],
+    DIALOG_SAVE_ID
 ] call zen_dialog_fnc_create;
 
 if (!_created) exitWith {};
@@ -84,7 +97,7 @@ private _group = _controls param [0, []] param [0, controlNull];
 
 if (isNull _display || { isNull _group }) exitWith { GVAR(selDialogOpen) = false };
 
-private _listCtrl  = _group controlsGroupCtrl ZEN_IDC_ROW_LIST;
+private _listCtrl  = _group controlsGroupCtrl ZEN_IDC_ROW_COMBO;
 private _labelCtrl = _group controlsGroupCtrl ZEN_IDC_ROW_LABEL;
 
 // The dialog keeps ZEN's standard 26-column width — rows are built short enough
@@ -135,15 +148,17 @@ private _fnc_apply = {
     _args params ["_display", "_listCtrl", "_labelCtrl", "_lastKeys", "_lastRows", "_fnc_apply"];
 
     // Dialog gone (OK / Cancel / ESC / Zeus closed) — stop and release the lock;
-    // the selection poll notices open=false and reports [] to stop the gather.
+    // the selection poll notices open=false and re-reports so the server drops
+    // back to the cheap gather.
     if (isNull _display) exitWith {
         GVAR(selDialogOpen) = false;
         [_handle] call CBA_fnc_removePerFrameHandler;
     };
 
     // Zeus closed underneath the dialog — the selection poll has already
-    // reported [] (it requires display 312), so close the now-empty shell too.
-    if (isNull findDisplay 312) exitWith {
+    // reported [] (it requires the curator display), so close the now-empty
+    // shell too.
+    if (isNull (findDisplay IDD_RSCDISPLAYCURATOR)) exitWith {
         GVAR(selDialogOpen) = false;
         [_handle] call CBA_fnc_removePerFrameHandler;
         _display closeDisplay 2;
