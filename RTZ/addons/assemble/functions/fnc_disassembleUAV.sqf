@@ -31,10 +31,7 @@ if (isNull _weapon) exitWith {};
 private _position = getPosATL _weapon;
 private _operator = _weapon getVariable [QGVAR(operator), objNull];
 
-{
-    _weapon deleteVehicleCrew _x;
-} forEach (crew _weapon);
-
+[_weapon] call FUNC(ejectCrew);
 deleteVehicle _weapon;
 
 if (_weaponBag != "") then {

@@ -14,8 +14,9 @@
  * slot of the shared QGVAR(packCtx) on the gunner makes the event handler and the
  * fallback mutually exclusive - whichever fires first claims "done" and the other
  * bails. Crew (including a corpse in the seat, which would silently block
- * deleteVehicle) is always ejected before the weapon is removed, and a gunner who
- * died mid-pack drops the bags on the ground instead of receiving one.
+ * deleteVehicle) is always ejected before the weapon is removed - FUNC(ejectCrew) -
+ * and a gunner who died mid-pack drops the bags on the ground instead of receiving
+ * one.
  *
  * Called by FUNC(disassembleWeapon) once the assistant has reached the weapon, or
  * immediately for a single bag weapon. Must be executed where the weapon is local.
@@ -41,32 +42,19 @@
 params ["_weapon", "_gunner", ["_weaponBag", ""], ["_baseBag", ""], ["_assistant", objNull], ["_curator", objNull]];
 
 if (isNull _weapon) exitWith {
-    [_gunner, _assistant] call FUNC(finishPack);
-};
-
-private _position = getPosATL _weapon;
-private _direction = getDir _weapon;
-
-// Eject everyone - a corpse left in the seat silently blocks deleteVehicle
-private _fnc_ejectCrew = {
-    params ["_weapon"];
-
-    {
-        if (unitIsUAV _x) then {
-            _weapon deleteVehicleCrew _x;
-        } else {
-            moveOut _x;
-        };
-    } forEach (crew _weapon);
+    [_gunner, _assistant, objNull] call FUNC(finishPack);
 };
 
 // Gunner gone, nobody can animate a pack. Drop the weapon and scatter the bags
 if (isNull _gunner || {!alive _gunner}) exitWith {
-    [_weapon] call _fnc_ejectCrew;
+    private _position = getPosATL _weapon;
+    private _direction = getDir _weapon;
+
+    [_weapon] call FUNC(ejectCrew);
     deleteVehicle _weapon;
     [_weaponBag, _position] call FUNC(dropBag);
     [_baseBag, _position vectorAdd [sin _direction, cos _direction, 0]] call FUNC(dropBag);
-    [_gunner, _assistant] call FUNC(finishPack);
+    [_gunner, _assistant, _weapon] call FUNC(finishPack);
     [_curator, LLSTRING(Packed)] call FUNC(notifyCurator);
 };
 
@@ -84,7 +72,7 @@ _gunner setVariable [QGVAR(packCtx), _ctx];
 // state slot keeps it mutually exclusive with the "WeaponDisassembled" handler, so
 // whichever fires first claims "done"
 private _fnc_directPack = {
-    params ["_weapon", "_gunner", "_weaponBag", "_baseBag", "_assistant", "_fnc_ejectCrew"];
+    params ["_weapon", "_gunner", "_weaponBag", "_baseBag", "_assistant"];
 
     if (isNull _gunner) exitWith {};
 
@@ -99,13 +87,13 @@ private _fnc_directPack = {
     };
 
     if (isNull _weapon) exitWith {
-        [_gunner, _assistant] call FUNC(finishPack);
+        [_gunner, _assistant, objNull] call FUNC(finishPack);
     };
 
     private _position = getPosATL _weapon;
     private _direction = getDir _weapon;
 
-    [_weapon] call _fnc_ejectCrew;
+    [_weapon] call FUNC(ejectCrew);
 
     if (alive _gunner) then {
         (group _gunner) leaveVehicle _weapon;
@@ -133,12 +121,12 @@ private _fnc_directPack = {
         [_ctx param [2, objNull], LLSTRING(Packed)] call FUNC(notifyCurator);
     };
 
-    [_gunner, _assistant] call FUNC(finishPack);
+    [_gunner, _assistant, _weapon] call FUNC(finishPack);
 };
 
 // Instant disassembly: skip the engine animation, pack immediately
 if (GVAR(instant)) exitWith {
-    [_weapon, _gunner, _weaponBag, _baseBag, _assistant, _fnc_ejectCrew] call _fnc_directPack;
+    [_weapon, _gunner, _weaponBag, _baseBag, _assistant] call _fnc_directPack;
 };
 
 // The engine folded the weapon and spawned the bag objects
@@ -165,9 +153,10 @@ private _eh = _gunner addEventHandler ["WeaponDisassembled", {
         // The engine's own action doesn't reliably remove the static once the gunner
         // was dismounted ahead of it (see moveOut/leaveVehicle/unassignVehicle above) -
         // clean it up here rather than trust the animation to do it
-        deleteVehicle (_ctx param [4, objNull]);
+        private _packed = _ctx param [4, objNull];
+        deleteVehicle _packed;
 
-        [_unit, _assistant] call FUNC(finishPack);
+        [_unit, _assistant, _packed] call FUNC(finishPack);
     };
 }];
 _ctx set [3, _eh];
@@ -179,4 +168,4 @@ unassignVehicle _gunner;
 _gunner action ["Disassemble", _weapon];
 
 // Deterministic fallback: if the engine never fired, pack it directly
-[_fnc_directPack, [_weapon, _gunner, _weaponBag, _baseBag, _assistant, _fnc_ejectCrew], PACK_TIMEOUT] call CBA_fnc_waitAndExecute;
+[_fnc_directPack, [_weapon, _gunner, _weaponBag, _baseBag, _assistant], PACK_TIMEOUT] call CBA_fnc_waitAndExecute;

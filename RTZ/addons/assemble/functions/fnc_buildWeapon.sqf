@@ -17,6 +17,14 @@
  * didn't - and it aborts, rather than building off a corpse, if the gunner died
  * inside the animation window.
  *
+ * The fallback also has to clean up after a HALF finished engine run, which is the
+ * messy case: the engine consumes each bag as it goes, so the fallback compares what
+ * the two men carry against what they carried when the action was issued. A weapon
+ * bag that is gone means the engine did raise the static and merely never reported
+ * it, so that static is adopted instead of a second one being stacked on top of it;
+ * a support bag that is gone was dropped by the "PutBag" half, so the loose bag
+ * object is removed rather than left on the ground as a free duplicate.
+ *
  * Called by FUNC(assembleWeapon) on arrival at, or timeout walking to, the picked
  * spot. Must be executed where the gunner is local.
  *
@@ -52,6 +60,14 @@ if (!isNull _assistant && {alive _assistant}) then {
     doStop _assistant;
 };
 
+// Noted before the action is issued: what the two men carry now is how the fallback
+// later tells an untouched errand from a half finished engine run
+private _bags = [backpack _gunner, ""];
+
+if (!isNull _assistant) then {
+    _bags set [1, backpack _assistant];
+};
+
 // One transient context var on the gunner: [state, assistant, curator, facing, EH id].
 // SQF arrays are by reference, so the EH id slot set below is seen by the stored
 // copy. "pending" until the event handler or the fallback claims the build, the
@@ -65,7 +81,7 @@ _gunner setVariable [QGVAR(buildCtx), _ctx];
 // fallback - the ctx state slot keeps it mutually exclusive with the
 // "WeaponAssembled" handler, so whichever fires first claims "done"
 private _fnc_directBuild = {
-    params ["_gunner", "_staticClass", "_assistant", ["_direction", -1]];
+    params ["_gunner", "_staticClass", "_assistant", "_direction", "_bags"];
 
     if (isNull _gunner) exitWith {};
 
@@ -85,28 +101,56 @@ private _fnc_directBuild = {
         [_ctx param [2, objNull], LLSTRING(Aborted)] call FUNC(notifyCurator);
     };
 
-    // Honour the preview facing when one was chosen, otherwise face where the gunner does
-    private _buildDirection = if (_direction >= 0) then {_direction} else {getDir _gunner};
-    private _position = getPosATL _gunner;
+    _bags params ["_gunnerBag", "_assistantBag"];
 
-    removeBackpackGlobal _gunner;
+    private _weapon = objNull;
 
-    if (!isNull _assistant) then {
-        removeBackpackGlobal _assistant;
+    // Weapon bag gone means the engine did raise the static, it just never reported
+    // it - adopt that one rather than raise a second
+    if (backpack _gunner isNotEqualTo _gunnerBag) then {
+        private _existing = nearestObjects [_gunner, [_staticClass], ADOPT_RADIUS];
+
+        if (_existing isNotEqualTo []) then {
+            _weapon = _existing select 0;
+        };
     };
 
-    private _weapon = createVehicle [_staticClass, [0, 0, 0], [], 0, "CAN_COLLIDE"];
-    _weapon setDir _buildDirection;
-    _weapon setPosATL (_position vectorAdd [sin _buildDirection, cos _buildDirection, 0]);
+    if (isNull _weapon) then {
+        // Honour the preview facing when one was chosen, otherwise face where the
+        // gunner does
+        private _buildDirection = if (_direction >= 0) then {_direction} else {getDir _gunner};
+        private _position = getPosATL _gunner;
+
+        removeBackpackGlobal _gunner;
+
+        if (!isNull _assistant) then {
+            if (backpack _assistant isEqualTo _assistantBag) then {
+                removeBackpackGlobal _assistant;
+            } else {
+                // The engine's "PutBag" half already dropped it. Delete the loose bag
+                // object, or this build hands out a free second support bag
+                private _loose = nearestObjects [_assistant, [_assistantBag], BAG_SWEEP_RADIUS];
+
+                if (_loose isNotEqualTo []) then {
+                    deleteVehicle (_loose select 0);
+                };
+            };
+        };
+
+        _weapon = createVehicle [_staticClass, [0, 0, 0], [], 0, "CAN_COLLIDE"];
+        _weapon setDir _buildDirection;
+        _weapon setPosATL (_position vectorAdd [sin _buildDirection, cos _buildDirection, 0]);
+    };
+
     _gunner assignAsGunner _weapon;
     _gunner moveInGunner _weapon;
 
-    [_weapon, _gunner, _assistant, _ctx param [2, objNull]] call FUNC(finishBuild);
+    [_weapon, _gunner, _assistant] call FUNC(finishBuild);
 };
 
 // Instant assembly: skip the engine animation, build immediately
 if (GVAR(instant)) exitWith {
-    [_gunner, _staticClass, _assistant, _direction] call _fnc_directBuild;
+    [_gunner, _staticClass, _assistant, _direction, _bags] call _fnc_directBuild;
 };
 
 // The engine finished the animation and spawned the (empty) weapon
@@ -118,7 +162,7 @@ private _eh = _gunner addEventHandler ["WeaponAssembled", {
     if ((_ctx param [0, ""]) isEqualTo "pending") then {
         _ctx set [0, "done"];
         _unit removeEventHandler ["WeaponAssembled", _thisEventHandler];
-        [_weapon, _unit, _ctx param [1, objNull], _ctx param [2, objNull]] call FUNC(finishBuild);
+        [_weapon, _unit, _ctx param [1, objNull]] call FUNC(finishBuild);
     };
 }];
 _ctx set [4, _eh];
@@ -134,4 +178,4 @@ if (isNull _assistant) then {
 };
 
 // Deterministic fallback: if the engine never fired, build it directly
-[_fnc_directBuild, [_gunner, _staticClass, _assistant, _direction], BUILD_TIMEOUT] call CBA_fnc_waitAndExecute;
+[_fnc_directBuild, [_gunner, _staticClass, _assistant, _direction, _bags], BUILD_TIMEOUT] call CBA_fnc_waitAndExecute;

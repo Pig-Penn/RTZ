@@ -53,7 +53,7 @@
             <English>Officer Unavailable</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaCombatRemoved">
-            <English>Officer Unavailable</English>
+            <English>Officer Engaged — Editing Zone Lost</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaCooldown">
             <English>%1 [s] Cooldown</English>

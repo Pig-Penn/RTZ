@@ -5,7 +5,9 @@
  * GVAR(auras) — officerNetId -> aura radius — the registry FUNC(monitorAuras)
  * sweeps. Unlike editing areas there is no engine object behind an aura, so
  * this is pure bookkeeping: the monitor derives the zone live from the
- * officer's position each pass, which is how the aura follows him.
+ * officer's position each pass, which is how the aura follows him. Nothing
+ * here touches a group — the effects themselves live in
+ * FUNC(applyAuraEffects), which FUNC(monitorAuras) drives.
  *
  * The registry is server-side because an aura is a world effect, not
  * per-curator state: any curator may toggle any officer's aura and it must
@@ -28,6 +30,13 @@
  * a hollow ring on the Zeus map. Visible to every curator regardless of side;
  * unlike the editing-area zone ring in rtz_spotting there is no spotted-only
  * gate here.
+ *
+ * The add broadcast is JIP-persistent (AURA_ZONE_JIP_ID keys the stack entry
+ * per officer): a client joining after an aura was switched on has no live
+ * broadcast to catch, so without the JIP stack its mirror would stay empty for
+ * the rest of the mission and it would never draw that ring. Removal — here
+ * and on the death/delete path in FUNC(monitorAuras) — must clear the same id,
+ * or a later joiner would resurrect a ring for an aura that is long gone.
  *
  * Arguments:
  * 0: Mode — "add" or "remove" <STRING>
@@ -62,13 +71,14 @@ private _areaBlocked = false;
         GVAR(auras) set [_key, GVAR(auraRadius)];
         SETPVAR(_x,GVAR(auraActive),true);
         _applied = _applied + 1;
-        [QGVAR(auraZone), ["add", _key, _x, GVAR(auraRadius)]] call CBA_fnc_globalEvent;
+        [QGVAR(auraZone), ["add", _key, _x, GVAR(auraRadius)], AURA_ZONE_JIP_ID(_key)] call CBA_fnc_globalEventJIP;
     } else {
         if (isNil {GVAR(auras) deleteAt _key}) then {continue};
 
         SETPVAR(_x,GVAR(auraActive),nil);
         _applied = _applied + 1;
         [QGVAR(auraZone), ["remove", _key]] call CBA_fnc_globalEvent;
+        [AURA_ZONE_JIP_ID(_key)] call CBA_fnc_removeGlobalEventJIP;
     };
 } forEach _officers;
 

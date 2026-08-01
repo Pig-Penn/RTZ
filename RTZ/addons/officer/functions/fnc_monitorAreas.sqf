@@ -2,7 +2,7 @@
 /*
  * Author: Maxim
  * Per-client lifecycle loop for officer editing areas. Runs a single low-rate
- * CBA perFrameHandler (MONITOR_INTERVAL) that does three cheap things:
+ * CBA perFrameHandler (MONITOR_INTERVAL) that does two cheap things:
  *
  * 1. Curator lifecycle — when the local player's curator changes (assigned,
  *    lost, or module swapped), every RTZ area is cleared from BOTH modules:
@@ -65,8 +65,12 @@ if (!hasInterface) exitWith {};
 
     if (isNull _curator || {count GVAR(areas) == 0}) exitWith {};
 
-    // Prune dead/deleted anchors, re-centre live ones that moved
+    // Prune areas whose anchor is gone or is no longer in a state that earns
+    // editing rights. Deletions are collected and applied after the loop —
+    // GVAR(areas) is being iterated.
     private _toDelete = [];
+    private _combatRemoved = false;
+
     {
         _y params ["_areaId"];
         private _officer = objectFromNetId _x;
@@ -74,17 +78,22 @@ if (!hasInterface) exitWith {};
         if (isNull _officer || {!alive _officer}) then {
             [QGVAR(applyArea), ["remove", _curator, [_areaId]]] call CBA_fnc_serverEvent;
             _toDelete pushBack _x;
-            continue;
-        };
-
-        if (behaviour _officer in ["COMBAT", "CARELESS"]) then {
-            [QGVAR(applyArea), ["remove", _curator, [_areaId]]] call CBA_fnc_serverEvent;
-            GVAR(cooldowns) set [_x, CBA_missionTime + COOLDOWN_DURATION];
-            _toDelete pushBack _x;
-            [LSTRING(MsgAreaCombatRemoved)] call zen_common_fnc_showMessage;
-            continue;
+        } else {
+            if (behaviour _officer in ["COMBAT", "CARELESS"]) then {
+                [QGVAR(applyArea), ["remove", _curator, [_areaId]]] call CBA_fnc_serverEvent;
+                GVAR(cooldowns) set [_x, CBA_missionTime + COOLDOWN_DURATION];
+                _toDelete pushBack _x;
+                _combatRemoved = true;
+            };
         };
     } forEach GVAR(areas);
 
     {GVAR(areas) deleteAt _x} forEach _toDelete;
+
+    // One message per pass, not per officer: a firefight that catches several
+    // anchors at once tears down several areas in the same pass, and the
+    // curator does not need to be told that once per area
+    if (_combatRemoved) then {
+        [LSTRING(MsgAreaCombatRemoved)] call zen_common_fnc_showMessage;
+    };
 }, MONITOR_INTERVAL, [objNull]] call CBA_fnc_addPerFrameHandler;

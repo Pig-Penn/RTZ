@@ -16,6 +16,12 @@
  * (settings-deferred) aura system starts; the per-display guard makes the two
  * paths safe to overlap.
  *
+ * The DisplayLoad handler in CfgEventHandlers.hpp is unconditional, so this
+ * also runs with the aura system off — and GVAR(auraEnable) is false by
+ * DEFAULT, i.e. the common case. Bailing on the setting keeps a per-frame Draw
+ * handler off the map control of every mission that never enables auras (same
+ * shape of guard rtz_spotting uses for its own officer zone ring).
+ *
  * Arguments:
  * 0: The freshly created curator display <DISPLAY>
  *
@@ -30,15 +36,30 @@
 
 params ["_display"];
 
+// GETGVAR, not a bare read: DisplayLoad can beat CBA's setting registration
+if !(GETGVAR(auraEnable,false)) exitWith {};
 if (_display getVariable [QGVAR(auraDrawAttached), false]) exitWith {};
 _display setVariable [QGVAR(auraDrawAttached), true];
 
-(_display displayCtrl 50) ctrlAddEventHandler ["Draw", {
+(_display displayCtrl IDC_RSCDISPLAYCURATOR_MAINMAP) ctrlAddEventHandler ["Draw", {
     if (count GVAR(auraZones) == 0) exitWith {};
     params ["_map"];
     {
         _y params ["_officer", "_radius"];
-        if (isNull _officer || {!alive _officer}) then {continue};
+
+        // Null means the mirror was filled by a JIP replay before the unit had
+        // streamed in (see XEH_preInit). Re-resolve from the key the entry is
+        // stored under and write it back, so this costs one lookup, not one
+        // per frame. Still null = the officer is genuinely gone; the server
+        // prunes the entry within AURA_INTERVAL.
+        if (isNull _officer) then {
+            _officer = objectFromNetId _x;
+            if (isNull _officer) then {continue};
+            _y set [0, _officer];
+        };
+
+        if (!alive _officer) then {continue};
+
         _map drawEllipse [getPosVisual _officer, _radius, _radius, 0, COLOR_AURA_RING, ""];
     } forEach GVAR(auraZones);
 }];

@@ -1,10 +1,10 @@
 PREP(applyArea);
 PREP(applyAura);
-PREP(auraApply);
+PREP(applyAuraEffects);
 PREP(getOfficers);
 PREP(initCuratorDisplay);
-PREP(isOnCooldown);
 PREP(isOfficer);
+PREP(isOnCooldown);
 PREP(modifyAction);
 PREP(modifyAuraAction);
 PREP(monitorAreas);

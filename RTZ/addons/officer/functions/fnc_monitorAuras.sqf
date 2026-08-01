@@ -8,7 +8,9 @@
  *    GVAR(auraActive) flag so client menus recover and broadcasting a
  *    QGVAR(auraZone) removal so the map ring (FUNC(initCuratorDisplay)) does
  *    not linger on a dead anchor — normal toggle-off already does this in
- *    FUNC(applyAura); this is the death/delete path it can't reach.
+ *    FUNC(applyAura); this is the death/delete path it can't reach. The
+ *    matching JIP-stack entry goes with it, or a later joiner would replay the
+ *    add and draw a ring for an aura that ended when its officer did.
  * 2. Builds the union of groups currently inside ANY aura. The zone is
  *    derived live from each officer's position — that is what makes the aura
  *    follow him for free. Only groups of the officer's own side count, and a
@@ -18,8 +20,14 @@
  *    whole group anyway.
  * 3. Diffs that union against the previous pass (GVAR(auraHeld)): groups that
  *    entered get the aura effects applied, groups that left get them
- *    released — each via QGVAR(auraApply) targeted at the group, so the
+ *    released — each via QGVAR(applyAuraEffects) targeted at the group, so the
  *    command runs on the group's owner (server, HC, or a player leading AI).
+ *
+ * Both sides of the diff are HashMaps keyed by group netId, not arrays: the
+ * membership tests run once per unit inside a zone and once per group on each
+ * side of the diff, so arrays would make the whole pass quadratic in the number
+ * of units under an aura — the one place in this component that scales with
+ * mission size.
  *
  * The diff means effects are applied ONCE on entry, never re-asserted — if a
  * mission script fights over allowFleeing the aura does not re-win until the
@@ -44,10 +52,11 @@
 if (!isServer) exitWith {};
 
 [{
-    // Idle cost is one count per pass
-    if (count GVAR(auras) == 0 && {GVAR(auraHeld) isEqualTo []}) exitWith {};
+    // Idle cost is two counts per pass
+    if (count GVAR(auras) == 0 && {count GVAR(auraHeld) == 0}) exitWith {};
 
-    private _inside = [];
+    // groupNetId -> group, for every group under ANY aura this pass
+    private _inside = createHashMap;
     private _gone = [];
 
     {
@@ -57,6 +66,7 @@ if (!isServer) exitWith {};
             if (!isNull _officer) then {SETPVAR(_officer,GVAR(auraActive),nil)};
             _gone pushBack _x;
             [QGVAR(auraZone), ["remove", _x]] call CBA_fnc_globalEvent;
+            [AURA_ZONE_JIP_ID(_x)] call CBA_fnc_removeGlobalEventJIP;
             continue;
         };
 
@@ -68,8 +78,14 @@ if (!isServer) exitWith {};
             private _units = if (_x isKindOf "CAManBase") then {[_x]} else {crew _x};
 
             {
-                if (alive _x && {side group _x == _side}) then {
-                    _inside pushBackUnique (group _x);
+                if (alive _x) then {
+                    // Overwriting an already-recorded group is what makes the
+                    // union free — no uniqueness scan, and overlapping auras
+                    // simply write the same key twice
+                    private _group = group _x;
+                    if (side _group == _side) then {
+                        _inside set [netId _group, _group];
+                    };
                 };
             } forEach _units;
         } forEach (_officer nearEntities [["CAManBase", "LandVehicle", "Air", "Ship"], _y]);
@@ -80,14 +96,14 @@ if (!isServer) exitWith {};
     // Entered since last pass — apply effects once (see header on the diff trade-off)
     {
         if !(_x in GVAR(auraHeld)) then {
-            [QGVAR(auraApply), [_x, true], _x] call CBA_fnc_targetEvent;
+            [QGVAR(applyAuraEffects), [_y, true], _y] call CBA_fnc_targetEvent;
         };
     } forEach _inside;
 
     // Left since last pass — a wiped-out group is null and has nothing to release
     {
-        if (!isNull _x && {!(_x in _inside)}) then {
-            [QGVAR(auraApply), [_x, false], _x] call CBA_fnc_targetEvent;
+        if (!isNull _y && {!(_x in _inside)}) then {
+            [QGVAR(applyAuraEffects), [_y, false], _y] call CBA_fnc_targetEvent;
         };
     } forEach GVAR(auraHeld);
 

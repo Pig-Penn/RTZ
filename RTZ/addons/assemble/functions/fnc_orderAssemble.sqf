@@ -2,17 +2,20 @@
 /*
  * Author: Maxim
  * Context menu statement: opens a ghost model placement preview of the first
- * selected squad's weapon, then orders every selected squad carrying a disassembled
- * static weapon to walk its gunner and assistant to the picked spot and raise the
- * weapon there. The curator drags the translucent static to a spot and rotates it to
- * set its facing, Escape cancels with no order sent.
+ * carried weapon, then orders every disassembled static weapon the selected squads
+ * carry to be walked to the picked spot by its gunner and assistant and raised
+ * there. The curator drags the translucent static to a spot and rotates it to set
+ * its facing, Escape cancels with no order sent. The ghost shows the first set's
+ * class: a mixed selection places them all on the same spot, it just previews one
+ * of them.
  *
  * The walk, createVehicle and assemble action must run where the gunner is local -
  * the server for Zeus AI, but a headless client or a player's machine for offloaded
  * or player-led groups - so each set is dispatched to his owner over QGVAR(assemble)
- * (the receiver is registered on every machine in XEH_postInit). Multiple squads fan
- * out around the cursor so their weapons don't build on the same point. The ordering
- * curator's player rides along so the errand can toast failures back.
+ * (the receiver is registered on every machine in XEH_postInit). Every set past the
+ * first fans out around the cursor so two weapons don't build on the same point -
+ * including two carried by one squad. The ordering curator's player rides along so
+ * the errand can toast failures back.
  *
  * Arguments:
  * 0: Selected Objects <ARRAY>
@@ -48,7 +51,7 @@ private _previewIcon = [_previewClass] call zen_common_fnc_getVehicleIcon;
         {
             _x params ["_gunner", "_staticClass", "_assistant"];
 
-            // Fan the squads out around the cursor, the first builds on it
+            // Fan the sets out around the cursor, the first builds on it
             private _target = _position;
 
             if (_forEachIndex > 0) then {

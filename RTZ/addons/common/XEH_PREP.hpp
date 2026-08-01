@@ -1,5 +1,8 @@
 PREP(approach);
 PREP(canDeploySmoke);
+PREP(clearErrand);
+PREP(curatorsOf);
+PREP(grantCurators);
 PREP(collectUnits);
 PREP(collectSquads);
 PREP(collectVehicles);

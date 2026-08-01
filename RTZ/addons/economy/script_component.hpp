@@ -22,12 +22,16 @@
 // Income tick and new curator module detection interval (seconds)
 #define TICK_INTERVAL 5
 
-// Poll interval of the placement cost message watcher (seconds)
-#define TOAST_INTERVAL 0.25
+// RscDisplayCurator create trees whose leaves are single CfgVehicles classes.
+// The group, module and marker trees have no such class and stay unhooked
+#define IDC_CREATE_UNITS_WEST 270
+#define IDC_CREATE_UNITS_EAST 271
+#define IDC_CREATE_UNITS_GUER 272
+#define IDC_CREATE_UNITS_CIV 273
+#define IDC_CREATE_UNITS_EMPTY 274
+#define IDC_CREATE_RECENT 282
 
-// RscDisplayCurator_sections modes whose create tree holds one class per entry
-#define CURATOR_MODE_UNITS 0
-#define CURATOR_MODE_RECENT 4
+#define IDCS_CREATE_TREES [IDC_CREATE_UNITS_WEST, IDC_CREATE_UNITS_EAST, IDC_CREATE_UNITS_GUER, IDC_CREATE_UNITS_CIV, IDC_CREATE_UNITS_EMPTY, IDC_CREATE_RECENT]
 
 // Cost category indices, order matches the base cost array in fnc_registerCosts
 #define INDEX_FREE -1

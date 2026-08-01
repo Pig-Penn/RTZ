@@ -5,11 +5,17 @@
  * The engine calls this with every CfgVehicles class each time a player
  * enters the curator interface, so costs always follow the current settings.
  *
- * Mission makers can override single classes (in points) with:
+ * Mission makers can override single classes (in points), either by filling
+ * the table the component already created:
+ * rtz_economy_overrides set ["B_Soldier_F", 2];
+ *
+ * or by replacing it wholesale:
  * missionNamespace setVariable [
  *     "rtz_economy_overrides",
  *     createHashMapFromArray [["B_Soldier_F", 2]]
  * ];
+ *
+ * Keys are matched case-insensitively (see FUNC(getCost)).
  *
  * Arguments:
  * 0: Curator module <OBJECT>

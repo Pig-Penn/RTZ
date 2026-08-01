@@ -9,9 +9,9 @@
  * Both sides are paid from the economy price list (EFUNC(economy,getCost) —
  * the same table placement charges from): the CAPTURING curators split half
  * the unit's value, the OWNING curators split the other half. Curator
- * ownership is resolved through curatorEditableObjects; curator modules are
- * server-local, so the direct addCuratorPoints / add-remove editable calls
- * are valid here. Control of the prisoner transfers to the capturing
+ * ownership is resolved through EFUNC(common,curatorsOf); curator modules are
+ * server-local, so that lookup and the direct EFUNC(economy,addPoints) /
+ * add-remove editable calls are all valid here. Control of the prisoner transfers to the capturing
  * curators — the owner lost him. A curator who somehow owns both units
  * (e.g. an admin Zeus who can edit everything) sits in both lists and
  * simply collects both halves.
@@ -36,8 +36,8 @@ SETPVAR(_unit,GVAR(captured),true);
 GVAR(surrenderedUnits) = GVAR(surrenderedUnits) - [_unit];
 
 private _value = (typeOf _unit) call EFUNC(economy,getCost);
-private _owners  = allCurators select { !isNull _x && {_unit in curatorEditableObjects _x} };
-private _captors = allCurators select { !isNull _x && {_capturer in curatorEditableObjects _x} };
+private _owners  = [_unit] call EFUNC(common,curatorsOf);
+private _captors = [_capturer] call EFUNC(common,curatorsOf);
 
 // The prisoner now belongs to the capturing side's curators.
 { _x addCuratorEditableObjects [[_unit], false] } forEach _captors;
@@ -47,9 +47,11 @@ private _name = ([_unit] call EFUNC(common,classInfo)) select 0;
 private _payOut = {
     params ["_curators", "_msgKey"];
     if (_curators isEqualTo []) exitWith {};
+    // _value is in economy points, not the engine's normalized curator scale —
+    // addPoints does that conversion (and the full-bar cap) for us
     private _share = (_value * 0.5) / count _curators;
     {
-        _x addCuratorPoints _share;
+        [_x, _share] call EFUNC(economy,addPoints);
         private _player = getAssignedCuratorUnit _x;
         // isPlayer, not isNull: a curator module bound to a departed player keeps
         // returning that player's leftover AI body (a playable Zeus slot whose AI

@@ -51,11 +51,16 @@ params ["_mode", "_curator", ["_args", []]];
 
 if (isNull _curator) exitWith {};
 
-private _areas = GVAR(areasByCurator) getOrDefault [netId _curator, createHashMap, true];
+private _curatorId = netId _curator;
 
 switch (_mode) do {
     case "add": {
         _args params ["_areaId", "_pos", "_radius", ["_officerId", ""]];
+
+        // Only the add path may create the per-curator registry — the read
+        // paths below must not, or every "remove"/"clear" against a curator
+        // that has no RTZ areas would leave an empty map behind for good
+        private _areas = GVAR(areasByCurator) getOrDefault [_curatorId, createHashMap, true];
 
         _curator removeCuratorEditingArea _areaId;
         _curator addCuratorEditingArea [_areaId, _pos, _radius];
@@ -75,19 +80,31 @@ switch (_mode) do {
 
         _curator removeCuratorEditingArea _areaId;
 
+        private _areas = GVAR(areasByCurator) getOrDefault [_curatorId, createHashMap];
+
         private _officerId = _areas deleteAt _areaId;
         if (!isNil "_officerId" && {_officerId isNotEqualTo ""}) then {
             RTZ_officerZoneRadiusMap deleteAt _officerId;
         };
+
+        // Last area gone — drop the curator's registry rather than keep an
+        // empty map keyed by a module that may never be used again
+        if (count _areas == 0) then {
+            GVAR(areasByCurator) deleteAt _curatorId;
+        };
     };
     case "clear": {
-        {
-            _curator removeCuratorEditingArea _x;
-            if (_y isNotEqualTo "") then {
-                RTZ_officerZoneRadiusMap deleteAt _y;
-            };
-        } forEach _areas;
+        // deleteAt returns the registry and unregisters the curator in one step;
+        // nil means this module never had an RTZ area, so there is nothing to do
+        private _areas = GVAR(areasByCurator) deleteAt _curatorId;
 
-        GVAR(areasByCurator) deleteAt (netId _curator);
+        if (!isNil "_areas") then {
+            {
+                _curator removeCuratorEditingArea _x;
+                if (_y isNotEqualTo "") then {
+                    RTZ_officerZoneRadiusMap deleteAt _y;
+                };
+            } forEach _areas;
+        };
     };
 };

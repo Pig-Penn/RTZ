@@ -1,11 +1,16 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Handler body for QGVAR(auraApply) (registered on EVERY machine in
+ * Handler body for QGVAR(applyAuraEffects) (registered on EVERY machine in
  * XEH_postInit): applies or releases the command-aura effects on one group.
  * allowFleeing needs group locality, so FUNC(monitorAuras) targets the event
  * at the group and CBA routes it to the owner — server, HC, or a player
  * leading AI. The local guard covers ownership transfers mid-flight.
+ *
+ * Not to be confused with FUNC(applyAura), which is the SERVER-side registry
+ * of which officers have an aura at all. This function is the effect end: it
+ * knows nothing about officers or radii, only about one group being held or
+ * released.
  *
  * Effects (extend HERE as the aura grows properties):
  * - allowFleeing 0 while inside. There is no getter to restore from on
@@ -22,7 +27,7 @@
  * None
  *
  * Example:
- * [_group, true] call rtz_officer_fnc_auraApply
+ * [_group, true] call rtz_officer_fnc_applyAuraEffects
  *
  * Public: No
  */

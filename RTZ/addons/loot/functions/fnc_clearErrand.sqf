@@ -1,11 +1,11 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Release a loot errand unit back to its group and wipe the transient state stashed
- * on it: drop the errand claim and the LAMBS force move flag, then restore stance and
- * rejoin formation if the unit is still alive and on foot. Shared tail of both
- * outcomes - the loot itself (FUNC(lootSquads)'s arrival hook) and the walk timing
- * out or the unit dying on the way.
+ * Release a loot errand unit back to its group and drop the errand claim stashed on
+ * it. Shared tail of both outcomes - the loot itself (FUNC(lootSquads)'s arrival
+ * hook) and the walk timing out or the unit dying on the way. The generic half of
+ * the release (force move flag, stance, formation) is EFUNC(common,clearErrand);
+ * this only adds the loot claim on top.
  *
  * Extra arguments are ignored, so this can be handed to EFUNC(common,approach)
  * directly as its onFail hook.
@@ -27,9 +27,5 @@ params ["_unit"];
 if (isNull _unit) exitWith {};
 
 _unit setVariable [QGVAR(looting), nil];
-_unit setVariable ["lambs_danger_forceMove", nil];
 
-if (alive _unit && {isNull objectParent _unit}) then {
-    _unit setUnitPosWeak "AUTO";
-    _unit doFollow (leader _unit);
-};
+[_unit] call EFUNC(common,clearErrand);

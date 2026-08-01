@@ -1,3 +1,4 @@
+PREP(addPoints);
 PREP(applyCoefs);
 PREP(categorize);
 PREP(getCost);

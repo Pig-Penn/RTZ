@@ -24,6 +24,16 @@
 // How close the crew must get to the picked spot before the weapon is raised (meters)
 #define ARRIVE_DISTANCE 4
 
+// Fallback clean-up radii, both in meters, used only when the engine assemble ran
+// half way (see FUNC(buildWeapon)). ADOPT_RADIUS is how far out the fallback looks
+// for a static the engine already raised before deciding to raise its own;
+// BAG_SWEEP_RADIUS is how far out it looks for the support bag the engine's "PutBag"
+// half dropped. Both are deliberately tight - the man they are measured from is
+// standing right next to what is being looked for, and nearestObjects returns
+// nearest first, so a neighbouring squad's weapon (FAN_DISTANCE apart) never wins
+#define ADOPT_RADIUS 5
+#define BAG_SWEEP_RADIUS 5
+
 // Walk timeout: WALK_TIMEOUT_BASE seconds plus WALK_TIMEOUT_PER_METER per meter of
 // the initial distance. On expiry the errand builds/packs in place, so a Zeus order
 // always completes

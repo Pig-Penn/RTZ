@@ -54,8 +54,8 @@ _costs append [
     ["I_UAV_02_F", 10], // K40 Ababil-3
     ["I_UAV_02_CAS_F", 20], // K40 Ababil-3 (CAS)
     ["Aegis_I_UAV_07_F", 25], // MQ-9A Albatross
-    ["I_UGV_02_Science_F", 2], //  ED-1E Roller 
-    ["I_UGV_02_Demining_F", 5], // ED-1D Pelter 
+    ["I_UGV_02_Science_F", 2], //  ED-1E Roller
+    ["I_UGV_02_Demining_F", 5], // ED-1D Pelter
     ["I_UGV_01_F", 6], // UGV Stomper
     ["I_UGV_01_medical_F", 6], // UGV Stomper (Medical)
     ["I_UGV_01_rcws_F", 12], // UGV Stomper (RCWS)

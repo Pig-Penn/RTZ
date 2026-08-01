@@ -2,37 +2,31 @@
 /*
  * Author: Maxim
  * Shows a Zeus feedback message with the cost of the class the curator has
- * selected for placement. Runs as a per-frame handler tick while the curator
- * display is open; group, module and marker placement have no single
- * CfgVehicles class and are ignored.
+ * just selected for placement. Attached as a TreeSelChanged handler to every
+ * create tree whose leaves are single CfgVehicles classes (IDCS_CREATE_TREES);
+ * group, module and marker placement has no such class and is never hooked.
  *
  * Arguments:
- * None
+ * 0: Create tree <CONTROL>
+ * 1: Path of the newly selected entry <ARRAY of NUMBER>
  *
  * Return Value:
  * None
  *
  * Example:
- * [] call rtz_economy_fnc_placementToast
+ * [_ctrlTree, [0, 1, 2]] call rtz_economy_fnc_placementToast
  *
  * Public: No
  */
 
 if (!GVAR(enable) || {!GVAR(placementToast)}) exitWith {};
 
-if (!(call zen_common_fnc_isPlacementActive)) exitWith {GVAR(toastClass) = ""};
+params ["_ctrlTree", "_path"];
 
-// Only the unit and recent trees hold one placeable class per entry
-RscDisplayCurator_sections params ["_mode"];
-if !(_mode in [CURATOR_MODE_UNITS, CURATOR_MODE_RECENT]) exitWith {GVAR(toastClass) = ""};
+private _class = _ctrlTree tvData _path;
 
-private _ctrlTree = call zen_common_fnc_getActiveTree;
-private _class = _ctrlTree tvData (tvCurSel _ctrlTree);
-
-if (_class isEqualTo GVAR(toastClass)) exitWith {};
-GVAR(toastClass) = _class;
-
-// The recent tree also lists groups, modules and markers
+// Category nodes carry no data, and the recent tree also lists groups and markers
+if (_class isEqualTo "") exitWith {};
 if (!isClass (configFile >> "CfgVehicles" >> _class) || {_class isKindOf "Logic"}) exitWith {};
 
 [str (_class call FUNC(getCost))] call zen_common_fnc_showMessage;

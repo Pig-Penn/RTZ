@@ -1,9 +1,9 @@
 _costs append [
     // APCs
-    ["EF_B_Gyra_GEN", 10], // Gyra 
-    ["EF_B_Gyra_HMG_GEN", 14], // Gyra (HMG) 
-    ["B_GEN_APC_Wheeled_02_hmg_lxWS", 12], // MSE-3 Marid (Unarmed) 
-    
+    ["EF_B_Gyra_GEN", 10], // Gyra
+    ["EF_B_Gyra_HMG_GEN", 14], // Gyra (HMG)
+    ["B_GEN_APC_Wheeled_02_hmg_lxWS", 12], // MSE-3 Marid (Unarmed)
+
     // Boats
     ["B_GEN_Boat_Transport_02_F", 3], // RHIB
     ["EF_B_CombatBoat_Unarmed_GEN", 14], // Combat Boat (Unarmed)
@@ -31,6 +31,6 @@ _costs append [
     ["B_GEN_crew_lxWS", 0.5], // Crewman
     ["B_GEN_Helipilot_RF", 0.5], // Helicopter Pilot
 
-    // Men (Story) 
+    // Men (Story)
     ["B_Captain_Dwarden_F", 1] // Dwarden
 ];

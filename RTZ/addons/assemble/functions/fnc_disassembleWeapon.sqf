@@ -41,24 +41,37 @@ if (!local _weapon) exitWith {
     [_curator, LLSTRING(WeaponNotLocal)] call FUNC(notifyCurator);
 };
 
+// Claim the weapon, so a double right-click can't pack it twice - and so the context
+// menu (FUNC(collectDisassembleSets)) stops offering it. Public because the menu is
+// filtered on the ordering curator's client while this runs wherever the weapon is
+// local, which on a dedicated server is another machine entirely. Claimed before the
+// drone split so a fast double order can't return two bags.
+//
+// Every path that goes on to pack deletes the weapon, taking the claim with it. The
+// two that bail out below instead release it by hand, so a weapon this order can't
+// pack doesn't stay un-packable for the rest of the mission
+if (_weapon getVariable [QGVAR(packing), false]) exitWith {};
+SETPVAR(_weapon,GVAR(packing),true);
+
 // A drone folds instantly back into its bag, no dismount animation. Lightweight,
 // separate path (mirror of the assemble UAV split)
 if (unitIsUAV _weapon) exitWith {
     [_weapon, _weaponBag] call FUNC(disassembleUAV);
 };
 
-if (!(_weapon isKindOf "StaticWeapon")) exitWith {};
+if (!(_weapon isKindOf "StaticWeapon")) exitWith {
+    SETPVAR(_weapon,GVAR(packing),nil);
+};
 
 if (isNull _gunner) then {
     _gunner = gunner _weapon;
 };
 
-if (isNull _gunner) exitWith {};
-
-// Guard against a double right-click packing the same weapon twice. The flag lives
-// on the weapon, which the pack deletes, so it needs no later clear
-if (_weapon getVariable [QGVAR(packing), false]) exitWith {};
-_weapon setVariable [QGVAR(packing), true];
+// Nobody left in the seat to fold it - release the claim so a crew that mans it
+// later can still be ordered to pack it
+if (isNull _gunner) exitWith {
+    SETPVAR(_weapon,GVAR(packing),nil);
+};
 
 private _baseBag = _baseBags param [0, ""];
 
@@ -76,20 +89,35 @@ private _tagged = _weapon getVariable [QGVAR(assistant), objNull];
 if (!isNull _tagged && {alive _tagged} && {isNull objectParent _tagged} && {group _tagged == group _gunner} && {backpack _tagged == ""}) then {
     _assistant = _tagged;
 } else {
-    private _candidates = (units group _gunner) select {
-        _x != _gunner && {alive _x} && {isNull objectParent _x} && {backpack _x == ""}
-    };
-    private _nonLeaders = _candidates select {_x != leader group _gunner};
+    // Nearest bagless groupmate on foot, in one pass: the leader is only considered
+    // once no ordinary rifleman is left, so a squad doesn't lose its leader to
+    // carrying a tripod. Linear scan rather than a sort - a squad's worth of
+    // candidates, and sort would be comparing arrays that hold objects
+    private _leader = leader group _gunner;
+    private _closest = 1e10;
+    private _closestLeader = 1e10;
+    private _fallback = objNull;
 
-    if (_nonLeaders isNotEqualTo []) then {
-        _candidates = _nonLeaders;
-    };
+    {
+        if (_x != _gunner && {alive _x} && {isNull objectParent _x} && {backpack _x == ""}) then {
+            private _distance = _x distance _gunner;
 
-    _candidates = _candidates apply {[_x distance _gunner, _x]};
-    _candidates sort true;
+            if (_x isEqualTo _leader) then {
+                if (_distance < _closestLeader) then {
+                    _closestLeader = _distance;
+                    _fallback = _x;
+                };
+            } else {
+                if (_distance < _closest) then {
+                    _closest = _distance;
+                    _assistant = _x;
+                };
+            };
+        };
+    } forEach (units group _gunner);
 
-    if (_candidates isNotEqualTo []) then {
-        _assistant = (_candidates select 0) select 1;
+    if (isNull _assistant) then {
+        _assistant = _fallback;
     };
 };
 

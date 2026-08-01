@@ -7,7 +7,7 @@
  * spawn the drone in front of the operator, give it an AI crew on his side and link
  * his terminal so he keeps flying it on foot (matching a vanilla assemble), tag him
  * so a later disassemble returns the bag to him, and grant Zeus ownership of the
- * drone and its crew.
+ * drone and its crew (EFUNC(common,grantCurators)).
  *
  * Split out of the manned assemble flow (FUNC(assembleWeapon) routes here for any
  * assembleTo that is not a StaticWeapon) so neither path carries the other's special
@@ -39,7 +39,7 @@ removeBackpackGlobal _gunner;
 private _drone = createVehicle [_staticClass, [0, 0, 0], [], 0, "CAN_COLLIDE"];
 _drone setDir _direction;
 _drone setPosATL (_position vectorAdd [sin _direction, cos _direction, 0]);
-_drone setVectorUp (surfaceNormal (getPos _drone));
+_drone setVectorUp (surfaceNormal (getPosASL _drone));
 
 // moveInGunner would fail on a seat a drone doesn't have, leaving an empty
 // uncontrolled UAV. Give it an AI crew on the operator's side and link his terminal
@@ -52,4 +52,4 @@ _gunner connectTerminalToUAV _drone;
 SETPVAR(_drone,GVAR(operator),_gunner);
 
 // addCrew = true also registers the drone's AI crew with the curator
-[_drone, _gunner, true] call FUNC(grantCurators);
+[_drone, _gunner, true] call EFUNC(common,grantCurators);

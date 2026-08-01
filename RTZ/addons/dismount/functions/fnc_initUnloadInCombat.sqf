@@ -23,8 +23,9 @@
  * selected/hovered vehicle (or its crew).
  *
  * Requires CBA_A3; the context action also requires Zeus Enhanced.
- * Loading: called from XEH_postInit once CBA settings are initialised. Registers
- * one CBA event handler and returns — no scheduled ops, so it is `call`ed.
+ * Loading: called straight from XEH_postInit on every machine. Registers one CBA
+ * event handler and returns — no scheduled ops, so it is `call`ed. Deliberately
+ * NOT gated on GVAR(enableDismountControl): see XEH_postInit for why.
  *
  * Arguments:
  * None
@@ -33,15 +34,21 @@
  * None
  *
  * Example:
- * call rtz_dismount_fnc_unloadInCombat
+ * call rtz_dismount_fnc_initUnloadInCombat
  *
  * Public: No
  */
 
+// Registering twice would stack a second receiver on the same event, so every
+// order would run the LAMBS tag/untag pass twice. Cheap insurance — postInit is
+// the only caller today.
+if !(isNil QGVAR(applyRegistered)) exitWith {};
+GVAR(applyRegistered) = true;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EVERY MACHINE (incl. dedicated server / HC) — the apply event handler.
-// Registered before the interface guard because CBA_fnc_targetEvent fires it on
-// the vehicle's owner, which on a dedicated server or HC has no interface.
+// Unconditional, with no hasInterface guard: CBA_fnc_targetEvent fires it on the
+// vehicle's owner, which on a dedicated server or HC has no interface at all.
 //
 // _allow == true  -> vanilla bail-out behaviour
 // _allow == false -> crew/cargo stay put (in combat AND when the vehicle is dead/flipped)

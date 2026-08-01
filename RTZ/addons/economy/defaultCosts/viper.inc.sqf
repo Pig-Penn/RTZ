@@ -1,7 +1,7 @@
 _costs append [
 
     // Cars
-    ["O_V_LSV_02_unarmed_F", 4], // Qilin 
+    ["O_V_LSV_02_unarmed_F", 4], // Qilin
     ["O_V_LSV_02_armed_F", 7], // Qilin (Minigun)
     ["O_V_LSV_02_AT_F", 15], // Qilin (AT)
 

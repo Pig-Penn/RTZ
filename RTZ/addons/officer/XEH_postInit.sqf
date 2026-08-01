@@ -21,6 +21,29 @@
 
         if (GVAR(enable)) then {
             [QGVAR(applyArea), LINKFUNC(applyArea)] call CBA_fnc_addEventHandler;
+
+            // Areas are normally torn down by the placing client's
+            // FUNC(monitorAreas) — including the wipe it runs when that client's
+            // assigned curator changes. A client that DISCONNECTS never runs
+            // either, so without this its areas stay registered here forever:
+            // GVAR(areasByCurator) leaks, and RTZ_officerZoneRadiusMap keeps
+            // feeding rtz_spotting zone rings for areas that no longer have an
+            // owner to remove them. Resolve the module off allCurators rather
+            // than the unit — allCurators is a handful of entries and the
+            // assignment is what we actually need to reverse.
+            addMissionEventHandler ["HandleDisconnect", {
+                params ["_unit"];
+
+                {
+                    if (getAssignedCuratorUnit _x isEqualTo _unit) then {
+                        ["clear", _x] call FUNC(applyArea);
+                    };
+                } forEach allCurators;
+
+                // Never return true here — that would keep the disconnecting
+                // player's body in the world
+                false
+            }];
         };
 
         if (GVAR(auraEnable)) then {
@@ -28,8 +51,9 @@
             // derived live from the officer each pass, so the aura follows him.
             GVAR(auras) = createHashMap;
 
-            // Groups currently held by ANY aura — the diff baseline of FUNC(monitorAuras)
-            GVAR(auraHeld) = [];
+            // groupNetId -> group, for every group held by ANY aura — the diff
+            // baseline of FUNC(monitorAuras)
+            GVAR(auraHeld) = createHashMap;
 
             [QGVAR(applyAura), LINKFUNC(applyAura)] call CBA_fnc_addEventHandler;
             call FUNC(monitorAuras);
@@ -40,32 +64,19 @@
         // allowFleeing needs group locality (server, HC, or a player leading AI),
         // so the effect receiver registers on EVERY machine — the monitor targets
         // the event at each group and CBA routes it to the owner.
-        [QGVAR(auraApply), LINKFUNC(auraApply)] call CBA_fnc_addEventHandler;
+        [QGVAR(applyAuraEffects), LINKFUNC(applyAuraEffects)] call CBA_fnc_addEventHandler;
 
         if (hasInterface) then {
             // Server → curator feedback for aura toggles: only the server owns the
             // aura registry, so only it knows whether a request actually applied.
+            // (The GVAR(auraZones) map-ring mirror and its QGVAR(auraZone) handler
+            // are NOT here — they must be up before CBA's JIP replay, see XEH_preInit.)
             [QGVAR(auraMsg), {(_this select 0) call zen_common_fnc_showMessage}] call CBA_fnc_addEventHandler;
-
-            // Client-side mirror of GVAR(auras) for the map ring overlay: officerNetId
-            // -> [officer, radius], kept in sync by QGVAR(auraZone) broadcasts from
-            // FUNC(applyAura) (toggle on/off) and FUNC(monitorAuras) (death/delete prune).
-            // Drawn by FUNC(initCuratorDisplay).
-            GVAR(auraZones) = createHashMap;
-
-            [QGVAR(auraZone), {
-                params ["_mode", "_key", ["_officer", objNull], ["_radius", 0]];
-                if (_mode isEqualTo "add") then {
-                    GVAR(auraZones) set [_key, [_officer, _radius]];
-                } else {
-                    GVAR(auraZones) deleteAt _key;
-                };
-            }] call CBA_fnc_addEventHandler;
 
             // Normally attached by FUNC(initCuratorDisplay) via the XEH DisplayLoad
             // event each time the curator display is created. If Zeus is somehow
             // already open when this (settings-deferred) block runs, attach now.
-            private _curatorDisplay = findDisplay 312;
+            private _curatorDisplay = findDisplay IDD_RSCDISPLAYCURATOR;
             if (!isNull _curatorDisplay) then {
                 [_curatorDisplay] call FUNC(initCuratorDisplay);
             };

@@ -31,11 +31,12 @@ params ["_unit", "_pos", "_magazine", ["_curator", objNull]];
         };
 
         // Drop the force-move guard/pose and rejoin formation now the plant is done.
-        [_unit] call FUNC(clearErrand);
+        [_unit] call EFUNC(common,clearErrand);
     },
     // Errand expired or the layer died — drop the guard/pose and rejoin formation
     // (skipped when a newer order superseded this one; approach skips onFail then).
-    LINKFUNC(clearErrand),
+    // clearErrand ignores the extra _args entries, so it is a hook as-is.
+    ELINKFUNC(common,clearErrand),
     [_unit, _magazine],
     true,                           // forceMove: hold the layer against the LAMBS danger FSM mid-walk
     _curator,

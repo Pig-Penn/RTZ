@@ -13,12 +13,9 @@
 [QGVAR(assemble), LINKFUNC(assembleWeapon)] call CBA_fnc_addEventHandler;
 [QGVAR(disassemble), LINKFUNC(disassembleWeapon)] call CBA_fnc_addEventHandler;
 
-// Curator modules are server-local, so an errand that ran on any other machine
-// forwards its Zeus grant here — see FUNC(grantCurators)
-if (isServer) then {
-    [QGVAR(grantCurators), LINKFUNC(grantCurators)] call CBA_fnc_addEventHandler;
-};
-
+// The Zeus grant for a freshly built weapon rides EGVAR(common,grantCurators), whose
+// server-side receiver lives in rtz_common's own postInit.
+//
 // Feedback toasts raised by the errands (FUNC(notifyCurator))
 if (hasInterface) then {
     [QGVAR(message), {_this call zen_common_fnc_showMessage}] call CBA_fnc_addEventHandler;

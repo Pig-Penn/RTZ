@@ -12,8 +12,8 @@ _costs append [
     ["ACM_B_MSF_V_RescueBoat", 2],
     ["ACM_B_MSF_V_Police_Boat", 3],
     ["ACM_B_MSF_V_ArmedBoat", 15], // Speedboat Minigun
-    ["vn_b_boat_06_02", 30], // PTF Nasty Boat 
-    ["vn_b_boat_06_01", 30], // PTF Nasty Boat 
+    ["vn_b_boat_06_02", 30], // PTF Nasty Boat
+    ["vn_b_boat_06_01", 30], // PTF Nasty Boat
     ["vn_b_boat_05_02", 25], // PTF Nasty Boat (Mortar)
     ["vn_b_boat_05_01", 25], // PTF Nasty Boat (Mortar)
 
@@ -62,7 +62,7 @@ _costs append [
     ["ACM_MSF_CG_Soldier_AntiAir", 11],
     ["ACM_MSF_CG_Soldier_Team_Lead", 2.2],
     ["ACM_MSF_CG_Soldier_Officer", 21],
-    
+
     // Tanks
     ["ACM_B_MSF_V_Bpz", 16],
     ["ACM_B_MSF_V_T55", 25],

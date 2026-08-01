@@ -37,6 +37,12 @@
     _grp setVariable [QGVAR(holdFire), _hold, true];
 }] call CBA_fnc_addEventHandler;
 
+// Curator modules are server-local, so an errand that spawned an object on any
+// other machine forwards its Zeus grant here — see FUNC(grantCurators).
+if (isServer) then {
+    [QGVAR(grantCurators), LINKFUNC(grantCurators)] call CBA_fnc_addEventHandler;
+};
+
 // Curator feedback toast for errands driven by FUNC(approach) (e.g. a unit that
 // couldn't reach the picked spot). Fired at the ordering curator's player.
 if (hasInterface) then {

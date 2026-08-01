@@ -11,17 +11,20 @@
  * Cost category index <NUMBER>
  *
  * Example:
- * ["B_Soldier_F"] call rtz_economy_fnc_categorize
+ * "B_Soldier_F" call rtz_economy_fnc_categorize
  *
  * Public: No
  */
 
 params ["_class"];
 
+// Excludes animals, which derive from Man directly
+if (_class isKindOf "CAManBase") exitWith {
+    // No officer base class exists, so match on the classname
+    [INDEX_INFANTRY, INDEX_OFFICER] select (toLowerANSI _class find "officer" != -1)
+};
+
 switch (true) do {
-    // No officer base class exists, so match on the classname; before infantry
-    case (_class isKindOf "CAManBase" && {toLower _class find "officer" != -1}): {INDEX_OFFICER};
-    case (_class isKindOf "CAManBase"): {INDEX_INFANTRY}; // excludes animals, which derive from Man directly
     case (_class isKindOf "StaticWeapon"): {INDEX_STATIC};
     case (_class isKindOf "Wheeled_APC_F"): {INDEX_APC}; // before Car, wheeled APCs derive from it
     case (_class isKindOf "Tank"): {INDEX_TRACKED}; // includes tracked APCs

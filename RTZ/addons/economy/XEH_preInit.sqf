@@ -23,8 +23,11 @@ GVAR(baseCosts) = [
     COST_OFFICER
 ];
 
-GVAR(toastPFH) = -1;
-GVAR(toastClass) = "";
+// Classname -> cost in points, set by the mission to override anything built
+// in (see fnc_registerCosts). Created here so a cost lookup never has to
+// allocate a fallback map; preInit runs before any mission script, so a
+// mission replacing the whole variable still works
+GVAR(overrides) = createHashMap;
 
 // Classname -> built-in cost in points, overriding the category default
 #include "defaultCosts.inc.sqf"

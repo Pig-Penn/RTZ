@@ -1,11 +1,11 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Reads the current allow-state from the first selected vehicle, inverts it,
- * and applies it to all selected vehicles. Reports the new state as a toast.
+ * Flips the resolved selection between vanilla bail-out and locked-in, driving
+ * the whole set to one state. Reports the new state as a toast.
  *
  * Arguments:
- * 0: Objects from curatorSelected or a keybind handler <ARRAY>
+ * 0: Objects from curatorSelected (hovered entity included) or a keybind handler <ARRAY>
  *
  * Return Value:
  * None
@@ -18,12 +18,18 @@
 
 params ["_objects"];
 
-private _vehicles = [_objects] call EFUNC(common,collectVehicles);
+private _vehicles = [_objects] call FUNC(collectDismountVehicles);
 if (_vehicles isEqualTo []) exitWith {
     [LLSTRING(MsgNoVehicleSelected)] call zen_common_fnc_showMessage;
 };
 
-private _newAllow = !((_vehicles select 0) getVariable [QGVAR(unloadInCombat), true]);
+// Any-unlocked wins: while a single vehicle in the set can still bail out, the
+// click locks all of them; only an already-fully-locked set is released. Reading
+// the state off _vehicles select 0 instead made a mixed selection depend on
+// whichever vehicle ZEN happened to list first — and hovering reorders that.
+// FUNC(dismountActionModifier) applies the same rule, so the label on the menu
+// entry always predicts what the click does.
+private _newAllow = (_vehicles findIf {_x getVariable [QGVAR(unloadInCombat), true]}) == -1;
 [_vehicles, _newAllow] call FUNC(setUnloadInCombat);
 
 private _msg = [LLSTRING(MsgDismountForbidden), LLSTRING(MsgDismountAllowed)] select _newAllow;

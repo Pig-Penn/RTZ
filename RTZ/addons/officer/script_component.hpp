@@ -30,3 +30,9 @@
 
 // Command-aura radius ring drawn on the Zeus map (FUNC(initCuratorDisplay))
 #define COLOR_AURA_RING [0.3, 0.7, 0.7, 0.85]
+
+// JIP-stack id for one officer's QGVAR(auraZone) broadcast. Deterministic and
+// derived from his netId so a re-add OVERWRITES the stack entry instead of
+// piling up a second one, and so the remove path can address it without the
+// server having to remember an id CBA generated (see FUNC(applyAura)).
+#define AURA_ZONE_JIP_ID(officerNetId) (QGVAR(auraZone) + ":" + officerNetId)

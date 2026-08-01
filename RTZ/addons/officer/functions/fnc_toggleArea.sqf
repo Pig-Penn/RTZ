@@ -47,5 +47,12 @@ if (_enable) then {
         };
     };
 } else {
-    [LSTRING(MsgAreaRemoved)] call zen_common_fnc_showMessage;
+    // Gated on _applied like the add path above: the state was read off the
+    // FIRST officer, so a mixed selection — or an area the monitor tore down
+    // between the menu opening and the click — can leave nothing to remove
+    if (_applied > 0) then {
+        [LSTRING(MsgAreaRemoved)] call zen_common_fnc_showMessage;
+    } else {
+        [LSTRING(MsgAreaBlocked)] call zen_common_fnc_showMessage;
+    };
 };

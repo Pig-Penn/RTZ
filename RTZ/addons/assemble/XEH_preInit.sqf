@@ -11,8 +11,19 @@ PREP_RECOMPILE_END;
 // modifierFunction in CfgContext.hpp
 GVAR(icon) = getText (configFile >> "CfgVehicleIcons" >> ICON_CONFIG_ENTRY);
 
-// GVAR(disassembleMap) is built lazily on the first right-click of a static weapon
-// and cached from there on — see FUNC(getDisassembleMap)
+// The vanilla assemble config, read once into GVAR(bagInfo) / GVAR(disassembleMap) so
+// the context-menu path never touches configFile — see FUNC(buildBagMaps). Only the
+// ordering curator's client reads them (the action conditions and the two
+// collectors), so a dedicated server or headless client skips the scan; the errand
+// handlers that run there deliberately don't consult the maps. Both are still
+// defined there, empty, so a lookup from an unexpected caller comes back empty
+// rather than throwing on an undefined variable.
+GVAR(bagInfo) = createHashMap;
+GVAR(disassembleMap) = createHashMap;
+
+if (hasInterface) then {
+    call FUNC(buildBagMaps);
+};
 
 #include "initSettings.inc.sqf"
 

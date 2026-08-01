@@ -5,18 +5,16 @@
 diag_log text format ["[RTZ] dismount postInit — version %1, machine [isServer=%2 hasInterface=%3 clientOwner=%4]",
     QUOTE(VERSION_STR), isServer, hasInterface, clientOwner];
 
-// Setting-gated: deferred until CBA_settingsInitialized so the synced value has
-// landed (a bare read from postInit is a frame too early on a client).
-// FUNC(unloadInCombat) registers the QGVAR(applyUnloadFlags) receiver on every
-// machine and, on interface machines, the RTZ_Control toggle action.
-["CBA_settingsInitialized", {
-    // `call`, not `spawn`: the body only registers one CBA event handler and
-    // returns — there is nothing to suspend on. Spawning parked the
-    // QGVAR(applyUnloadFlags) receiver behind a scheduler slot, so an order
-    // issued in that window (or on a server busy enough to defer the thread)
-    // landed on a machine that was not listening yet. Matches every other RTZ
-    // addon's CBA_settingsInitialized fork.
-    if (GVAR(enableDismountControl)) then {
-        [] call FUNC(unloadInCombat);
-    };
-}] call CBA_fnc_addEventHandler;
+// Registered here and now — no CBA_settingsInitialized fork, no
+// GVAR(enableDismountControl) gate. Two reasons:
+//   — FUNC(initUnloadInCombat) reads no setting, so there is nothing to wait for.
+//     The deferral only existed to make the (now removed) gate read a synced value.
+//   — The gate was wrong: the context action's condition reads the setting LIVE,
+//     so an admin enabling it mid-mission surfaced a working-looking action on
+//     machines that never registered the QGVAR(applyUnloadFlags) receiver, and
+//     every order landed on a machine that was not listening. Registering one
+//     idle event handler costs nothing while the feature stays switched off.
+// `call`, not `spawn`: the body registers one CBA event handler and returns.
+// Spawning parked the receiver behind a scheduler slot, so an order issued in
+// that window hit a machine that was not listening yet.
+call FUNC(initUnloadInCombat);
