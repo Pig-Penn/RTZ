@@ -54,6 +54,4 @@ if (GETEGVAR(selection,tagsVisible,false)) then {
     [QEGVAR(selection,selSelection), [player, GETEGVAR(selection,selCurrent,[])]] call CBA_fnc_serverEvent;
 };
 
-private _msg = LLSTRING(MsgReset);
-if (count _grps > 1) then { _msg = format ["%1  x%2", _msg, count _grps]; };
-[_msg] call zen_common_fnc_showMessage;
+[LLSTRING(MsgReset), count _grps] call EFUNC(common,showCountMessage);

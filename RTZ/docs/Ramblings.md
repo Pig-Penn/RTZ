@@ -1,11 +1,8 @@
 # To-Do List
 
-This is a weird, unofficial, and messy record of my ramblings.
+This is a weird, unofficial, and messy record of my own personal ramblings:
 
-1. Remove hint sound that plays whenever you click a unit
-
-Weird bugs Caden had after disconnecting:
-1. Guys shooting at floor
-2. Adam shooting through buildings
-3. Can't remote control units
-
+1. Would like to incorporate Zeus Wargame's Path Planning system into my mod.
+2. Would like to incorporate Zeus Wargame's cover system into my mod. 
+3. Update the captive addon's icons.
+4. Design a system that would, on the map, draw a zone showing the general area that a hostile artillery piece fired from.

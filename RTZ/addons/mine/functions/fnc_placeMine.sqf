@@ -26,12 +26,10 @@ params ["_unit", "_pos", "_magazine", ["_curator", objNull]];
     {
         params ["_unit", "_magazine"];
 
-        if (_magazine in magazines _unit) then {
-            [_unit, _magazine] call FUNC(plantMine);
-        };
-
-        // Drop the force-move guard/pose and rejoin formation now the plant is done.
-        [_unit] call EFUNC(common,clearErrand);
+        // Release only once the plant has actually resolved — FUNC(plantMine)
+        // holds the layer through the PutDown animation, and rejoining formation
+        // before that would walk him off mid-kneel and drop the mine short
+        [_unit, _magazine, ELINKFUNC(common,clearErrand)] call FUNC(plantMine);
     },
     // Errand expired or the layer died — drop the guard/pose and rejoin formation
     // (skipped when a newer order superseded this one; approach skips onFail then).

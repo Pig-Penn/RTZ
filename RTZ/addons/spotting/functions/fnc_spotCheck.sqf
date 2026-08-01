@@ -9,8 +9,10 @@
  *    the group's value), so the server queries ONE representative unit per local AI
  *    group instead of every unit — the knowsAbout matrix shrinks from units x hostiles
  *    to groups x hostiles.
- *  - All units + vehicles are classified into per-side buckets once per tick;
- *    curators on the same side share one detection pass.
+ *  - Manned curators are resolved FIRST; with none, the tick skips straight to
+ *    icon cleanup. Otherwise all units + vehicles are classified into per-side
+ *    buckets once per tick (spotter reps only for sides that actually have a
+ *    curator); curators on the same side share one detection pass.
  *  - The knowledge matrix is INVERTED via the `targets` command: one engine call
  *    per spotter group returns every enemy that group already has on its target
  *    list (the same group-level store knowsAbout reads), so the per-member
@@ -74,109 +76,29 @@ GVAR(spotForceResend) = false;
 // the module is removed. Use !isNull to detect genuinely deleted curators.
 private _curators = allCurators select { !isNull _x };
 
-// Diagnostic toggle, read once per tick. When on, each curator's resolution is
-// logged the first time it changes — this is THE check for "does the server
-// resolve joined/JIP clients' curators to a targetable player?". A curator that
-// logs owner=-1, or never logs at all, is being silently skipped; the logged
-// player object is the raw getAssignedCuratorUnit result, so a curator held by a
-// departed player shows a non-null body next to owner=-1.
+// Diagnostic toggle, read once per tick. The per-curator resolution logging it
+// gates lives AFTER the classification pass (which it also forces to run), so
+// the logged spotter-group count is real — see the debug block below.
 private _dbg = GETMVAR(RTZ_debug,false);
 
-// Officer editing-area zone radii (officerNetId → radius), published by
-// rtz_officer (see fnc_officerAreaApply) — a plain cross-addon global, not
-// a GVAR, since rtz_spotting has no dependency on rtz_officer. Read once per
-// tick (not per member) and looked up per already-iterated chevron below;
+// Officer editing-area zones (officerNetId → [plantedCenter, radius]),
+// published by rtz_officer (see fnc_applyArea) — a plain cross-addon global,
+// not a GVAR, since rtz_spotting has no dependency on rtz_officer. Read once
+// per tick (not per member) and looked up per already-iterated chevron below;
 // defaults to an empty map when rtz_officer isn't loaded or its zoning
 // system is off, so this costs one hashmap read and is otherwise a no-op.
-private _officerZoneRadii = GETMVAR(RTZ_officerZoneRadiusMap,createHashMap);
-
-// ── Classify every unit and vehicle ONCE per tick ────────────────────────
-// _sideEntities:    sideStr → [side, entities[]] — spottable hostile candidates
-//                   (alive, non-player; locality NOT filtered: knowsAbout only
-//                   requires the SPOTTER to be local, and targets may sit on a
-//                   client, e.g. under curator remote control).
-// _sideSpotterReps: sideStr → HashMap(group netId → representative unit).
-//                   Target knowledge is stored per GROUP, so one member answers
-//                   knowsAbout for the whole group; crewed vehicles are covered by
-//                   their effective commander (a vehicle's knowledge IS its crew
-//                   group's), and empty vehicles — which know nothing — drop out.
-//                   `local` keeps the knowsAbout source server-local and excludes
-//                   AI in player-led groups (local to that player's client), same
-//                   as the old per-unit filter. Spotter units are drawn from ALL
-//                   server-local AI (not just curatorEditableObjects) so that
-//                   dynamically-spawned units from a late-joining curator are
-//                   never missed due to editable-object list lag.
-// Men and vehicles are looped separately — allUnits is alive-only and all
-// CAManBase, so the men's loop needs no alive/kind checks and no merged array
-// is allocated. Buckets are fetched with get + isNil (not getOrDefault) so the
-// default array/hashmap isn't allocated per entity on the hit path. Units with
-// simulation disabled are skipped entirely — neither spottable (they present
-// no meaningful target) nor usable as a spotter rep.
-private _sideEntities    = createHashMap;
-private _sideSpotterReps = createHashMap;
-{
-    if (isPlayer _x) then { continue };
-    if (!simulationEnabled _x) then { continue };
-    private _eSide  = side _x;
-    private _sk     = str _eSide;
-    private _bucket = _sideEntities get _sk;
-    if (isNil "_bucket") then {
-        _bucket = [_eSide, []];
-        _sideEntities set [_sk, _bucket];
-    };
-    (_bucket select 1) pushBack _x;
-
-    if (local _x && { !isNull group _x }) then {
-        private _reps = _sideSpotterReps get _sk;
-        if (isNil "_reps") then {
-            _reps = createHashMap;
-            _sideSpotterReps set [_sk, _reps];
-        };
-        _reps set [netId group _x, _x];
-    };
-} forEach allUnits;
-
-{
-    if (!alive _x || { isPlayer _x }) then { continue };
-    if (!simulationEnabled _x) then { continue };
-    if !(_x isKindOf "LandVehicle"
-        || { _x isKindOf "Air" }
-        || { _x isKindOf "Ship" }) then { continue };
-    private _eSide  = side _x;
-    private _sk     = str _eSide;
-
-    // Spottable only when the hull's group has a man leader. The grouping pass
-    // further down keys on `leader group` and discards anything answering objNull,
-    // so a hull without one never produced an icon anyway — it was merely walked
-    // once per curator side first. `vehicles` is every vehicle on the map, which on
-    // a populated terrain means hundreds of alive ambient cars, so testing it here
-    // keeps them out of _allHostile and out of the per-side grouping walk entirely.
-    if (!isNull (leader group _x)) then {
-        private _bucket = _sideEntities get _sk;
-        if (isNil "_bucket") then {
-            _bucket = [_eSide, []];
-            _sideEntities set [_sk, _bucket];
-        };
-        (_bucket select 1) pushBack _x;
-    };
-
-    // Spotter rep regardless of the above: UAV crew are absent from allUnits (see
-    // allUnitsUAV), so a UAV's knowledge is only reachable via its hull's
-    // effective commander here.
-    if (local _x) then {
-        private _rep = effectiveCommander _x;
-        if (!isNull _rep && { !isPlayer _rep } && { !isNull group _rep }) then {
-            private _reps = _sideSpotterReps get _sk;
-            if (isNil "_reps") then {
-                _reps = createHashMap;
-                _sideSpotterReps set [_sk, _reps];
-            };
-            _reps set [netId group _rep, _rep];
-        };
-    };
-} forEach vehicles;
+// The stored center is where the area was PLANTED — rtz_officer areas never
+// move once placed (see EFUNC(officer,monitorAreas)) — so the ring the client
+// draws from it marks the ground the enemy Zeus can actually edit, not
+// wherever the officer has since wandered.
+private _officerZones = GETMVAR(RTZ_officerZoneMap,createHashMap);
 
 // ── Group manned curators by side ─────────────────────────────────────────
+// Resolved BEFORE the unit/vehicle classification so a tick with no manned
+// curator — vacant Zeus slots, a headless-only setup — skips the
+// O(allUnits + vehicles) bucketing entirely and falls straight through to the
+// icon cleanup at the bottom (the detection loop iterates _bySide, so with it
+// empty the pass is already a no-op).
 // Only PLAYER-manned curators can be spotters — a live player object is required
 // as the CBA_fnc_targetEvent destination. Headless curators are skipped entirely,
 // and so are curator modules still bound to a departed player: a playable Zeus slot
@@ -194,20 +116,7 @@ private _sideSpotterReps = createHashMap;
 // forceResend (this destination's own force flag)].
 private _bySide = createHashMap;   // sideStr → [side, curatorTuples[]]
 {
-    private _curator = _x;
-    private _player  = getAssignedCuratorUnit _curator;
-
-    if (_dbg) then {
-        private _curatorSide = if (!isPlayer _player) then { sideUnknown } else { side _player };
-        private _repCount = count (_sideSpotterReps getOrDefault [str _curatorSide, createHashMap]);
-        private _sig = format ["%1|%2|%3", _player, _curatorSide, _repCount];
-        if (_sig != (GVAR(spotDebugLast) getOrDefault [netId _curator, ""])) then {
-            GVAR(spotDebugLast) set [netId _curator, _sig];
-            diag_log text format ["[RTZ] server curator %1: player=%2 owner=%3 side=%4 spotterGroups=%5",
-                netId _curator, _player, (if (!isPlayer _player) then {-1} else {owner _player}), _curatorSide, _repCount];
-        };
-    };
-
+    private _player = getAssignedCuratorUnit _x;
     if (!isPlayer _player) then { continue };
     private _curatorSide = side _player;
     private _playerId    = netId _player;
@@ -221,8 +130,125 @@ private _bySide = createHashMap;   // sideStr → [side, curatorTuples[]]
     if (_pending) then { GVAR(spotResendPlayers) deleteAt _playerId };
 
     ((_bySide getOrDefault [str _curatorSide, [_curatorSide, []], true]) select 1)
-        pushBack [_curator, _player, _playerId, netId _curator, _forceResend || _pending];
+        pushBack [_x, _player, _playerId, netId _x, _forceResend || _pending];
 } forEach _curators;
+
+// ── Classify every unit and vehicle ONCE per tick ────────────────────────
+// _sideEntities:    sideStr → [side, entities[]] — spottable hostile candidates
+//                   (alive, non-player; locality NOT filtered: knowsAbout only
+//                   requires the SPOTTER to be local, and targets may sit on a
+//                   client, e.g. under curator remote control).
+// _sideSpotterReps: sideStr → HashMap(group netId → representative unit),
+//                   collected ONLY for sides that actually have a manned curator
+//                   (_bySide keys) — no other side's knowledge is ever queried,
+//                   so building its rep map would be pure waste.
+//                   Target knowledge is stored per GROUP, so one member answers
+//                   knowsAbout for the whole group; crewed vehicles are covered by
+//                   their effective commander (a vehicle's knowledge IS its crew
+//                   group's), and empty vehicles — which know nothing — drop out.
+//                   `local` keeps the knowsAbout source server-local and excludes
+//                   AI in player-led groups (local to that player's client), same
+//                   as the old per-unit filter. Spotter units are drawn from ALL
+//                   server-local AI (not just curatorEditableObjects) so that
+//                   dynamically-spawned units from a late-joining curator are
+//                   never missed due to editable-object list lag.
+// Men and vehicles are looped separately — allUnits is alive-only and all
+// CAManBase, so the men's loop needs no alive/kind checks and no merged array
+// is allocated. Buckets are fetched with get + isNil (not getOrDefault) so the
+// default array/hashmap isn't allocated per entity on the hit path. Units with
+// simulation disabled are skipped entirely — neither spottable (they present
+// no meaningful target) nor usable as a spotter rep.
+// The whole pass is gated on a curator having resolved this tick — with _bySide
+// empty nothing downstream would ever read its output. RTZ_debug forces it so
+// the per-curator resolution log below can report a real spotter-group count.
+private _sideEntities    = createHashMap;
+private _sideSpotterReps = createHashMap;
+if (count _bySide > 0 || _dbg) then {
+    {
+        if (isPlayer _x) then { continue };
+        if (!simulationEnabled _x) then { continue };
+        private _eSide  = side _x;
+        private _sk     = str _eSide;
+        private _bucket = _sideEntities get _sk;
+        if (isNil "_bucket") then {
+            _bucket = [_eSide, []];
+            _sideEntities set [_sk, _bucket];
+        };
+        (_bucket select 1) pushBack _x;
+
+        if (_sk in _bySide && { local _x } && { !isNull group _x }) then {
+            private _reps = _sideSpotterReps get _sk;
+            if (isNil "_reps") then {
+                _reps = createHashMap;
+                _sideSpotterReps set [_sk, _reps];
+            };
+            _reps set [netId group _x, _x];
+        };
+    } forEach allUnits;
+
+    {
+        if (!alive _x || { isPlayer _x }) then { continue };
+        if (!simulationEnabled _x) then { continue };
+        if !(_x isKindOf "LandVehicle"
+            || { _x isKindOf "Air" }
+            || { _x isKindOf "Ship" }) then { continue };
+        private _eSide  = side _x;
+        private _sk     = str _eSide;
+
+        // Spottable only when the hull's group has a man leader. The grouping pass
+        // further down keys on `leader group` and discards anything answering objNull,
+        // so a hull without one never produced an icon anyway — it was merely walked
+        // once per curator side first. `vehicles` is every vehicle on the map, which on
+        // a populated terrain means hundreds of alive ambient cars, so testing it here
+        // keeps them out of _allHostile and out of the per-side grouping walk entirely.
+        if (!isNull (leader group _x)) then {
+            private _bucket = _sideEntities get _sk;
+            if (isNil "_bucket") then {
+                _bucket = [_eSide, []];
+                _sideEntities set [_sk, _bucket];
+            };
+            (_bucket select 1) pushBack _x;
+        };
+
+        // Spotter rep regardless of the above: UAV crew are absent from allUnits (see
+        // allUnitsUAV), so a UAV's knowledge is only reachable via its hull's
+        // effective commander here.
+        if (_sk in _bySide && { local _x }) then {
+            private _rep = effectiveCommander _x;
+            if (!isNull _rep && { !isPlayer _rep } && { !isNull group _rep }) then {
+                private _reps = _sideSpotterReps get _sk;
+                if (isNil "_reps") then {
+                    _reps = createHashMap;
+                    _sideSpotterReps set [_sk, _reps];
+                };
+                _reps set [netId group _rep, _rep];
+            };
+        };
+    } forEach vehicles;
+
+    // Diagnostic: each curator's resolution is logged the first time it changes —
+    // THE check for "does the server resolve joined/JIP clients' curators to a
+    // targetable player?". A curator that logs owner=-1, or never logs at all,
+    // is being silently skipped; the logged player object is the raw
+    // getAssignedCuratorUnit result, so a curator held by a departed player shows
+    // a non-null body next to owner=-1. Runs after the classification (which
+    // _dbg forces on even with no curator resolved) so spotterGroups is the real
+    // rep count for the curator's side — an unresolved curator reads side
+    // sideUnknown, whose bucket is always empty, matching its true picture.
+    if (_dbg) then {
+        {
+            private _player = getAssignedCuratorUnit _x;
+            private _curatorSide = if (!isPlayer _player) then { sideUnknown } else { side _player };
+            private _repCount = count (_sideSpotterReps getOrDefault [str _curatorSide, createHashMap]);
+            private _sig = format ["%1|%2|%3", _player, _curatorSide, _repCount];
+            if (_sig != (GVAR(spotDebugLast) getOrDefault [netId _x, ""])) then {
+                GVAR(spotDebugLast) set [netId _x, _sig];
+                diag_log text format ["[RTZ] server curator %1: player=%2 owner=%3 side=%4 spotterGroups=%5",
+                    netId _x, _player, (if (!isPlayer _player) then {-1} else {owner _player}), _curatorSide, _repCount];
+            };
+        } forEach _curators;
+    };
+};
 
 // HashMap used as a set for O(1) "is this spot still active?" checks.
 // Declared before the detection pass so the cleanup always runs, even when
@@ -414,10 +440,14 @@ private _currentKeys = createHashMap;
             if (lifeState _member isEqualTo "INCAPACITATED") then {
                 _wedgeColor = COLOR_INCAPACITATED;
             };
-            // Officer zone ring: 0 for the overwhelming majority (non-officers,
+            // Officer zone ring: [] for the overwhelming majority (non-officers,
             // or officers with no active area) — one O(1) lookup, no extra pass.
-            private _zoneRadius = _officerZoneRadii getOrDefault [_memberId, 0];
-            [_member, _memberId, _wedgeColor, _memberName, _zoneRadius, str [_wedgeColor, _leaderNetId, _zoneRadius]]
+            // The [plantedCenter, radius] pair rides the wedge payload verbatim
+            // and is folded into the signature, so planting, re-planting or
+            // clearing the area while the officer stays spotted re-sends the
+            // wedge and the client updates/clears its ring the same tick.
+            private _zone = _officerZones getOrDefault [_memberId, []];
+            [_member, _memberId, _wedgeColor, _memberName, _zone, str [_wedgeColor, _leaderNetId, _zone]]
         };
 
         // Emit to each curator on this side with their own spot key and target player.
@@ -435,13 +465,13 @@ private _currentKeys = createHashMap;
 
             // Chevrons: one per individual the team knows well (knowsAbout the unit).
             {
-                _x params ["_member", "_memberId", "_wedgeColor", "_memberName", "_zoneRadius", "_wedgeBaseSig"];
+                _x params ["_member", "_memberId", "_wedgeColor", "_memberName", "_zone", "_wedgeBaseSig"];
                 private _wedgeKey  = "w_" + _memberId + "_" + _curId;
                 private _wedgeMrkr = MKR_PREFIX + _wedgeKey;
                 _currentKeys set [_wedgeKey, true];
                 [
                     _wedgeKey,
-                    [_wedgeMrkr, _member, WEDGE_TEXTURE, _wedgeColor, false, "", _sideIdx, _leaderNetId, _memberName, _zoneRadius],
+                    [_wedgeMrkr, _member, WEDGE_TEXTURE, _wedgeColor, false, "", _sideIdx, _leaderNetId, _memberName, _zone],
                     _wedgeBaseSig + _playerId,
                     _player, _activeSpots, true, _curForce
                 ] call FUNC(emitSpot);

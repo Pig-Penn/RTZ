@@ -22,7 +22,14 @@
 #define COLOR_HIDE [1.00, 0.60, 0.20, 1]
 #define COLOR_SHOW [0.40, 1.00, 0.40, 1]
 
-#define ICON_INIT "\x\zen\addons\context_actions\ui\add_ca.paa"
+#define ICON_OWNERSHIP "\x\zen\addons\context_actions\ui\add_ca.paa"
 #define ICON_RESET "\a3\3DEN\Data\CfgWaypoints\cycle_ca.paa"
 #define ICON_RELOAD "\A3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa"
-#define ICON_DELETE "\x\zen\addons\context_actions\ui\remove_ca.paa"
+
+// Toggle icon/tint pair for the "Forbid/Allow Dismount" context action and its
+// modifierFunction — amber padlock while vanilla (will lock crew in), cyan
+// unlock once locked (will release).
+#define ICON_LOCKED "\a3\modules_f\data\iconlock_ca.paa"
+#define ICON_UNLOCKED "\a3\modules_f\data\iconunlock_ca.paa"
+#define COLOR_LOCKED [1.00, 0.78, 0.22, 1]
+#define COLOR_UNLOCKED [0.40, 0.80, 1.00, 1]

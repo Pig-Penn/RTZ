@@ -13,17 +13,23 @@
         <Key ID="STR_RTZ_Repair_Enabled_Description">
             <English>Enable the Repair Vehicle Zeus context menu action.</English>
         </Key>
+        <Key ID="STR_RTZ_Repair_MsgRepairing">
+            <English>Repairing</English>
+        </Key>
         <Key ID="STR_RTZ_Repair_RepairDuration">
             <English>Repair Duration</English>
         </Key>
         <Key ID="STR_RTZ_Repair_RepairDuration_Description">
-            <English>Time in seconds an engineer takes to fully repair a vehicle once work begins.</English>
+            <English>Time in seconds a single engineer takes to fully repair a vehicle once work begins. Engineers working the same vehicle share the job, so two of them finish in half this time.</English>
         </Key>
         <Key ID="STR_RTZ_Repair_RepairTimeout">
             <English>Order Timeout</English>
         </Key>
         <Key ID="STR_RTZ_Repair_RepairTimeout_Description">
-            <English>Time in seconds an engineer has to reach the vehicle before a repair order expires.</English>
+            <English>Minimum time in seconds an engineer has to reach the vehicle before a repair order expires. Longer walks are given proportionally more time.</English>
+        </Key>
+        <Key ID="STR_RTZ_Repair_RepairUnreachable">
+            <English>Engineer couldn't reach the vehicle</English>
         </Key>
     </Package>
 </Project>

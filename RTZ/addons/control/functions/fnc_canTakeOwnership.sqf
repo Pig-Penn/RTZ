@@ -1,8 +1,9 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Context-menu condition for the "Init" action: true when the selection holds a
- * group (or a vehicle it is riding in) that is NOT local to this client.
+ * Context-menu condition for the "Take Ownership" action: true when the
+ * selection holds a group (or a vehicle it is riding in) that is NOT local to
+ * this client.
  *
  * Zeus places objects local to the curator who placed them. When that curator
  * disconnects the engine hands everything he owned to the server, and rejoining
@@ -25,7 +26,7 @@
  * Selection has a transferable non-local group <BOOL>
  *
  * Example:
- * [_objects, _hoveredEntity] call rtz_control_fnc_canInitControl
+ * [_objects, _hoveredEntity] call rtz_control_fnc_canTakeOwnership
  *
  * Public: No
  */
@@ -42,6 +43,8 @@ _grps findIf {
     units _grp findIf {isPlayer _x} == -1
     && {
         !local _grp
-        || {units _grp findIf {vehicle _x isNotEqualTo _x && {!local vehicle _x}} != -1}
+        // objectParent is objNull for a man on foot, so this is the same test
+        // as `vehicle _x isNotEqualTo _x` without evaluating `vehicle` twice.
+        || {units _grp findIf {!isNull objectParent _x && {!local objectParent _x}} != -1}
     }
 } != -1

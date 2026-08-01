@@ -21,7 +21,8 @@
 // Radius around the context menu position in which mines are looked up (meters)
 #define SEARCH_RADIUS 15
 
-// Delay between the put animation starting and the plant/disarm taking effect (seconds)
+// How long the "PutDown" animation is given to play before the mine is actually
+// created and the layer's own weapon is put back in his hands (seconds)
 #define PUT_DELAY 1.5
 
 // Detected mine cache refresh interval (seconds)

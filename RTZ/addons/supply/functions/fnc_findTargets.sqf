@@ -27,7 +27,7 @@ params ["_supply", "_capabilities", ["_firstOnly", false]];
 
 _capabilities params ["_canRepair", "_canRefuel", "_canRearm"];
 
-private _nearby = _supply nearEntities [SERVICE_TYPES, GVAR(serviceRadius)];
+private _nearby = _supply nearEntities [VEHICLE_TYPES, GVAR(serviceRadius)];
 
 // Ordered cheapest test first: the ammo check walks the turret magazines, so it
 // only runs for vehicles that are already fully repaired and fuelled

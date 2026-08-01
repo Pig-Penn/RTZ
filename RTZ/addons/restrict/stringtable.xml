@@ -5,10 +5,10 @@
             <English>Restrict Servicing</English>
         </Key>
         <Key ID="STR_RTZ_Restrict_Enabled_Description">
-            <English>Healing, repairing, rearming, refueling and skill changes are only possible while every affected unit is inside one of the curator's editing zones.</English>
+            <English>Healing, repairing, rearming, refueling and skill changes are only possible while the units they would affect are inside one of the curator's editing zones. Sliders stay visible as unit info. Has no effect until the curator has at least one editing zone.</English>
         </Key>
         <Key ID="STR_RTZ_Restrict_MsgOutsideZone">
-            <English>Unit is outside an editing zone</English>
+            <English>Outside an editing zone</English>
         </Key>
     </Package>
 </Project>

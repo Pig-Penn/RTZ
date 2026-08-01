@@ -33,10 +33,4 @@ if (_vehicles isEqualTo []) exitWith {};
 
 [QGVAR(deploySmoke), [_vehicles], _vehicles] call CBA_fnc_targetEvent;
 
-private _message = LLSTRING(SmokeScreen);
-
-if (count _vehicles > 1) then {
-    _message = format ["%1  x%2", _message, count _vehicles];
-};
-
-[_message] call zen_common_fnc_showMessage;
+[LLSTRING(ActionDeploySmoke), count _vehicles] call FUNC(showCountMessage);

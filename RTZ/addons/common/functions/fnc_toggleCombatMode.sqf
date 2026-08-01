@@ -45,11 +45,8 @@
  * Public: No
  */
 
-// Non-null only while this machine's Zeus interface is open
-if (isNull curatorCamera) exitWith {false};
-
-// Typing in the Zeus search box (ZEN sets this flag): don't hijack the keystroke
-if (GETMVAR(RscDisplayCurator_search,false)) exitWith {false};
+// Zeus open, and not typing in ZEN's search box
+CHECK_CURATOR_INPUT;
 
 private _units = SELECTED_OBJECTS select {
     _x isKindOf "CAManBase"
@@ -67,7 +64,8 @@ if (_units isEqualTo []) exitWith {false};
 private _grps = [];
 { _grps pushBackUnique group _x } forEach _units;
 
-private _holdGroups = [];   // groups flipped TO hold fire this press (for icon choice)
+// Index-parallel with _grps: the icon colour each group's members get below.
+private _grpColors = [];
 private _holdCount = 0;
 private _openCount = 0;
 
@@ -79,25 +77,26 @@ private _openCount = 0;
 
     [QGVAR(toggleCombatMode), [_x, _mode, _newHold], _x] call CBA_fnc_targetEvent;
 
+    _grpColors pushBack ([COLOR_OPEN_FIRE, COLOR_HOLD_FIRE] select _newHold);
+
     if (_newHold) then {
         _holdCount = _holdCount + 1;
-        _holdGroups pushBack _x;
     } else {
         _openCount = _openCount + 1;
     };
 } forEach _grps;
 
 {
-    private _hold = group _x in _holdGroups;
-    private _color = [COLOR_OPEN_FIRE, COLOR_HOLD_FIRE] select _hold;
     [[
-        ["ICON", [_x, ICON_COMBAT_MODE, _color]]
+        ["ICON", [_x, ICON_COMBAT_MODE, _grpColors select (_grps find group _x)]]
     ], HINT_DURATION, _x] call zen_common_fnc_drawHint;
 } forEach _units;
 
 private _messages = [];
 if (_holdCount > 0) then { _messages pushBack format [LLSTRING(MsgHoldFireCount), _holdCount] };
 if (_openCount > 0) then { _messages pushBack format [LLSTRING(MsgOpenFireCount), _openCount] };
-[_messages joinString ", "] call zen_common_fnc_showMessage;
+// Composed text goes in as a format ARGUMENT so a "%" inside a translation
+// isn't re-scanned as a placeholder by showMessage's own format pass.
+["%1", _messages joinString ", "] call zen_common_fnc_showMessage;
 
 true

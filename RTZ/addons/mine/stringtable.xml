@@ -22,6 +22,9 @@
         <Key ID="STR_RTZ_Mine_Enabled_Description">
             <English>Enable the Place Mine and Clear Mines Zeus context menu actions.</English>
         </Key>
+        <Key ID="STR_RTZ_Mine_MagazineLabel">
+            <English>%1 (%2 carried)</English>
+        </Key>
         <Key ID="STR_RTZ_Mine_Mark3D">
             <English>Mark Spotted Mines in 3D</English>
         </Key>
@@ -39,6 +42,12 @@
         </Key>
         <Key ID="STR_RTZ_Mine_MaxDistance_Description">
             <English>Maximum distance from the camera at which 3D mine markers are drawn.</English>
+        </Key>
+        <Key ID="STR_RTZ_Mine_MsgDemining">
+            <English>Clearing mines</English>
+        </Key>
+        <Key ID="STR_RTZ_Mine_MsgPlacing">
+            <English>Laying mine</English>
         </Key>
         <Key ID="STR_RTZ_Mine_PlaceTimeout">
             <English>Order Timeout</English>

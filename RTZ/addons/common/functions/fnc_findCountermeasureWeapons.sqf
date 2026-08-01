@@ -10,6 +10,18 @@
  *     own Shift+C keybind (zen_common_fnc_deployCountermeasures), which only
  *     checks shotCM, fires correctly on aircraft but never on tanks/IFVs.
  *
+ * Only magazines the vehicle currently carries with rounds left count, so an
+ * emptied launcher stops offering the order.
+ *
+ * PERFORMANCE: the context menu condition (FUNC(canDeploySmoke)) runs this for
+ * every selected vehicle on every right-click, so the config work is memoised
+ * in GVAR(cmWeaponCache), keyed by "magazine|weapon". That verdict — does this
+ * weapon fire this magazine, and does that magazine count as a countermeasure
+ * — depends only on config, never on the vehicle instance, so it is resolved
+ * once per distinct pair per machine and is a single hashmap probe forever
+ * after. What remains per call is one magazinesAllTurrets query, which has to
+ * stay live: it is what reports the current ammo counts.
+ *
  * Arguments:
  * 0: Vehicle <OBJECT>
  * 1: Stop at the first weapon found (existence check for the context menu
@@ -26,22 +38,34 @@
 
 params ["_vehicle", ["_firstOnly", false]];
 
-private _cfgAmmo = configFile >> "CfgAmmo";
-private _cfgMagazines = configFile >> "CfgMagazines";
+private _cache = GVAR(cmWeaponCache);
 private _weapons = [];
 
 {
     _x params ["_magazine", "_turretPath", "_count"];
+
     if (_count > 0) then {
-        private _ammo = getText (_cfgMagazines >> _magazine >> "ammo");
-        private _isCM = getText (_cfgAmmo >> _ammo >> "simulation") == "shotCM";
         {
-            if ((_isCM || { "smoke" in toLower _x }) && { _magazine in (_x call CBA_fnc_compatibleMagazines) }) then {
+            private _key = _magazine + "|" + _x;
+            private _isCM = _cache get _key;
+
+            if (isNil "_isCM") then {
+                private _ammo = getText (configFile >> "CfgMagazines" >> _magazine >> "ammo");
+                _isCM = (
+                    getText (configFile >> "CfgAmmo" >> _ammo >> "simulation") == "shotCM"
+                    || {"smoke" in toLower _x}
+                ) && {_magazine in (_x call CBA_fnc_compatibleMagazines)};
+
+                _cache set [_key, _isCM];
+            };
+
+            if (_isCM) then {
                 _weapons pushBackUnique _x;
             };
         } forEach (_vehicle weaponsTurret _turretPath);
     };
-    if (_firstOnly && { _weapons isNotEqualTo [] }) exitWith {};
+
+    if (_firstOnly && {_weapons isNotEqualTo []}) exitWith {};
 } forEach magazinesAllTurrets _vehicle;
 
 _weapons

@@ -26,10 +26,15 @@ params ["_unit"];
 // vehicle, since a hull's own objectParent is objNull and would read as "on foot".
 private _veh = if (_unit isKindOf "CAManBase") then { objectParent _unit } else { _unit };
 
-if (isNull _veh)                                              exitWith { LLSTRING(CategoryInfantry) };
-if (_veh isKindOf "LandVehicle")                              exitWith { LLSTRING(CategoryVehicles) };
-if (_veh isKindOf "Tank")                                     exitWith { LLSTRING(CategoryArmor) };
-if (_veh isKindOf "Ship" || { _veh isKindOf "Submarine" })    exitWith { LLSTRING(CategoryNaval) };
-if (_veh isKindOf "Air")                                      exitWith { LLSTRING(CategoryAircraft) };
+// Most-specific class first: Tank inherits from LandVehicle, so testing
+// LandVehicle first would swallow every tank/IFV into "vehicles" and make the
+// armor branch unreachable. Air and Ship are disjoint from LandVehicle and from
+// each other (submarines are Ship-kind — there is no separate Submarine base
+// class), so their order is free.
+if (isNull _veh)                  exitWith { LLSTRING(CategoryInfantry) };
+if (_veh isKindOf "Tank")         exitWith { LLSTRING(CategoryArmor) };
+if (_veh isKindOf "LandVehicle")  exitWith { LLSTRING(CategoryVehicles) };
+if (_veh isKindOf "Air")          exitWith { LLSTRING(CategoryAircraft) };
+if (_veh isKindOf "Ship")         exitWith { LLSTRING(CategoryNaval) };
 
 LLSTRING(CategoryInfantry)

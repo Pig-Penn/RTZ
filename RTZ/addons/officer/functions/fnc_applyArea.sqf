@@ -15,9 +15,10 @@
  * Area IDs are only unique per client, so the registry is always scoped by
  * curator — never keyed by areaId alone.
  *
- * It also keeps RTZ_officerZoneRadiusMap (officerNetId -> radius) in sync —
- * the cross-addon contract rtz_spotting reads to draw an enemy officer's zone
- * ring once that officer is individually spotted.
+ * It also keeps RTZ_officerZoneMap (officerNetId -> [plantedCenter, radius])
+ * in sync — the cross-addon contract rtz_spotting reads to draw an enemy
+ * officer's zone ring, at the planted position, once that officer is
+ * individually spotted.
  *
  * Modes:
  *   "add"    args [areaId, pos, radius, officerNetId] — create an area and
@@ -72,7 +73,7 @@ switch (_mode) do {
         _areas set [_areaId, _officerId];
 
         if (_officerId isNotEqualTo "") then {
-            RTZ_officerZoneRadiusMap set [_officerId, _radius];
+            RTZ_officerZoneMap set [_officerId, [_pos, _radius]];
         };
     };
     case "remove": {
@@ -84,7 +85,7 @@ switch (_mode) do {
 
         private _officerId = _areas deleteAt _areaId;
         if (!isNil "_officerId" && {_officerId isNotEqualTo ""}) then {
-            RTZ_officerZoneRadiusMap deleteAt _officerId;
+            RTZ_officerZoneMap deleteAt _officerId;
         };
 
         // Last area gone — drop the curator's registry rather than keep an
@@ -102,7 +103,7 @@ switch (_mode) do {
             {
                 _curator removeCuratorEditingArea _x;
                 if (_y isNotEqualTo "") then {
-                    RTZ_officerZoneRadiusMap deleteAt _y;
+                    RTZ_officerZoneMap deleteAt _y;
                 };
             } forEach _areas;
         };

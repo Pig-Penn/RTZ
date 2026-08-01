@@ -7,9 +7,10 @@
  *
  * The actual hideObjectGlobal / enableSimulationGlobal calls must run on the
  * server, so the work is dispatched there via CBA_fnc_serverEvent
- * (QGVAR(squadHideApply), registered in XEH_postInit). The server also
- * broadcasts the per-group state variable so every client's modifier reads the
- * correct label.
+ * (QGVAR(squadHide), registered in XEH_postInit) as ONE event carrying the
+ * whole group array — a selection box over a company used to send one packet
+ * per group. The server also broadcasts the per-group state variable so every
+ * client's modifier reads the correct label.
  *
  * Arguments:
  * 0: Selection objects (curatorSelected + hovered entity) <ARRAY>
@@ -33,8 +34,7 @@ if (_grps isEqualTo []) exitWith {
 // label the curator just clicked.
 private _hide = !((_grps select 0) getVariable [QGVAR(squadHidden), false]);
 
-{ [QGVAR(squadHideApply), [_x, _hide]] call CBA_fnc_serverEvent; } forEach _grps;
+[QGVAR(squadHide), [_grps, _hide]] call CBA_fnc_serverEvent;
 
 private _msg = [LLSTRING(MsgSimulationEnabled), LLSTRING(MsgSimulationDisabled)] select _hide;
-if (count _grps > 1) then { _msg = format ["%1  x%2", _msg, count _grps]; };
-[_msg] call zen_common_fnc_showMessage;
+[_msg, count _grps] call EFUNC(common,showCountMessage);

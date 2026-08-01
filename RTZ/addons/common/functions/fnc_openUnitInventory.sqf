@@ -28,7 +28,7 @@
  *    selected man / vehicle from curatorSelected <OBJECT> (default: objNull)
  *
  * Return Value:
- * None
+ * Press was handled (consumed) <BOOL>
  *
  * Example:
  * [_unit] call rtz_common_fnc_openUnitInventory
@@ -37,6 +37,12 @@
  */
 
 params [["_unit", objNull, [objNull]]];
+
+// Zeus open, and not typing in the search box — the same preamble every other
+// RTZ keybind handler carries. Previously inlined in the keybind body and
+// missing the search-box test, so typing an "i" into ZEN's search field opened
+// the gear dialog and swallowed the keystroke.
+CHECK_CURATOR_INPUT;
 
 // No explicit unit → take the first selected man or vehicle from the curator.
 if (isNull _unit) then {
@@ -47,6 +53,7 @@ if (isNull _unit) then {
 
 if (isNull _unit) exitWith {
     [LLSTRING(MsgNoUnitSelected)] call zen_common_fnc_showMessage;
+    true
 };
 
 // ── Vehicle: open its cargo through a crew member ───────────────────────────────
@@ -55,8 +62,10 @@ if !(_unit isKindOf "CAManBase") exitWith {
     private _crew = crew _veh;
     if (_crew isEqualTo []) exitWith {
         [LLSTRING(MsgNoCrew)] call zen_common_fnc_showMessage;
+        true
     };
     (_crew select 0) actionNow ["Gear", _veh];
+    true
 };
 
 // ── Man: pre-select the nearest lootable container / body in front, then open ────
@@ -74,3 +83,5 @@ private _ti       = _nearby findIf { _x isNotEqualTo _unit && {!(_x isKindOf "CA
 private _target   = if (_ti > -1) then { _nearby select _ti } else { objNull };
 
 _unit action ["Gear", _target];
+
+true

@@ -25,9 +25,14 @@
 
 params ["_object", ["_fallbackAll", false]];
 
-private _live = allCurators select {!isNull _x};
-private _owners = _live select {_object in curatorEditableObjects _x};
+// One pass in the normal case. curatorEditableObjects materialises a curator's
+// entire editable set, so it is the expensive half of this — the isNull test
+// is deliberately first so a dead module never triggers one. The live-curator
+// list is only rebuilt on the fallback path, which is the rare one.
+private _owners = allCurators select {!isNull _x && {_object in curatorEditableObjects _x}};
 
-if (_fallbackAll && {_owners isEqualTo []}) exitWith {_live};
+if (_fallbackAll && {_owners isEqualTo []}) exitWith {
+    allCurators select {!isNull _x}
+};
 
 _owners

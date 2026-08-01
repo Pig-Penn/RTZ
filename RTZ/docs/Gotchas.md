@@ -279,6 +279,27 @@ On a **hosted** (listen) server the host machine is `isServer` *and* `hasInterfa
 `isDedicated`. Code written as "server = no UI" breaks there. Pick the one that matches the
 actual question: who owns the logic (`isServer`) vs. who can draw (`hasInterface`).
 
+### AI-state reads answer only where **the unit you ask about** is local
+
+`expectedDestination`, `assignedTarget` and `targetKnowledge` return AI brain state, which
+exists only on the owning machine — elsewhere they return empty or stale nonsense with no error
+to warn you. The trap is testing locality on the wrong object: for a crewed vehicle the pathing
+and sensor state belongs to the **crewman** (`effectiveCommander` for movement, `gunner` for
+targeting), and a vehicle can be local here while its crew's group is owned elsewhere. Test
+`local` on the unit you are about to query, not on the hull. See
+[fnc_gatherTarget.sqf](addons/overlays/functions/fnc_gatherTarget.sqf).
+
+`expectedDestination` returns `[position, planningMode, forceReplan]` and reports `[0,0,0]` when
+there is no plan. `planningMode` is one of `DoNotPlan` (not moving), `DoNotPlanFormation`,
+`LEADER PLANNED`, `LEADER DIRECT`, `FORMATION PLANNED`, `VEHICLE PLANNED` — note the runtime
+strings are **spaced and uppercase** where the wiki writes them camel-cased, so normalize before
+matching, and do not forget `VEHICLE PLANNED`: it is what every *driving vehicle* reports.
+
+`targetKnowledge` returns
+`[knownByGroup, knownByUnit, lastSeen, lastThreat, side, positionError, position, ignoreTarget]`
+— index 2 is the sighting time, 5 the error in metres, and 6 an **ASL** position needing
+`ASLToAGL` before it is drawn.
+
 ---
 
 ## 5. Zeus & curator specifics
@@ -319,6 +340,30 @@ and renders a departed curator's data as its own. `isPlayer` is the correct test
 A `condition` in `CfgContext.hpp` is evaluated as the menu builds, against the whole selection.
 Anything that scans nearby objects should take a limit and bail early (the pattern
 `FUNC(canLoot)` uses — pass `1` and stop at the first hit).
+
+### A `modifierFunction` mutates a fixed-layout array — use the `ACTION_INDEX_*` macros
+
+ZEN compiles each `CfgContext.hpp` entry into a flat array and hands it to `modifierFunction`
+as `_this select 0`, to be mutated in place. The layout is set by
+`zen_context_menu_fnc_compileActions`:
+
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| name | displayName | icon | iconColor | statement | condition | args | insertChildren | modifierFunction |
+
+Use `ACTION_INDEX_DISPLAYNAME` / `_ICON` / `_ICONCOLOR` … from
+[script_macros.hpp](addons/main/script_macros.hpp), never bare `1` / `2` / `3`.
+
+### `localize` and double-quoted strings cannot go inside `QUOTE(...)`
+
+`QUOTE` builds a **double-quoted** config string, so any `"` the expansion emits terminates it
+early and `hemtt check` reports *"macro's result could not be parsed"*. This bites on both
+`LLSTRING(x)` (expands to `localize "STR_…"`) and a `#define` holding a double-quoted literal.
+
+Two fixes, both in [rtz_overlays](addons/overlays): define constants that appear inside `QUOTE`
+with **single** quotes (`#define STREAM_DEST 'dest'` — valid SQF, harmless in config), and
+resolve localized labels **inside** the called function from a plain id rather than passing them
+through the config.
 
 ### `curatorSelected` is `[objects, groups, waypoints, markers]`
 

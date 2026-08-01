@@ -1,13 +1,17 @@
 private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 
+// Neither master switch needs a mission restart. The stream machinery is
+// registered unconditionally on every machine (see XEH_postInit) and is idle
+// while nothing is subscribed, so these only gate the context ACTION — read live
+// by its condition — and FUNC(streamClient) watches CBA_SettingChanged to shut a
+// running overlay down if its switch goes off mid-mission.
+
 [
     QGVAR(enableDestinationDisplay), "CHECKBOX",
     [LSTRING(DrawDestinations), LSTRING(DrawDestinations_Description)],
     _category,
     true,
-    true, // Global
-    {},
-    true // Needs mission restart
+    true // Global
 ] call CBA_fnc_addSetting;
 
 [
@@ -15,9 +19,7 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     [LSTRING(DrawTargets), LSTRING(DrawTargets_Description)],
     _category,
     true,
-    true, // Global
-    {},
-    true // Needs mission restart
+    true // Global
 ] call CBA_fnc_addSetting;
 
 [

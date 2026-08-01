@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Delete">
+        <Key ID="STR_RTZ_Delete_ActionDelete">
+            <English>Delete</English>
+        </Key>
+        <Key ID="STR_RTZ_Delete_DeleteSelected">
+            <English>Delete Selected</English>
+        </Key>
+        <Key ID="STR_RTZ_Delete_DeleteSelected_Description">
+            <English>Delete the selected units, vehicles, bodies and wrecks without refunding any curator points.</English>
+        </Key>
+        <Key ID="STR_RTZ_Delete_DisplayName">
+            <English>Delete</English>
+        </Key>
+        <Key ID="STR_RTZ_Delete_Enabled">
+            <English>Delete Objects</English>
+        </Key>
+        <Key ID="STR_RTZ_Delete_Enabled_Description">
+            <English>Add a context menu action deleting the selected units, vehicles, bodies and wrecks. Players, curator modules and headless clients are never deleted, and the deletion refunds no curator points.</English>
+        </Key>
+        <Key ID="STR_RTZ_Delete_MsgDeleted">
+            <English>Deleted</English>
+        </Key>
+    </Package>
+</Project>

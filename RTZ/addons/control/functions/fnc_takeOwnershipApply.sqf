@@ -1,7 +1,7 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Handler body for QGVAR(initControl) (server only). Transfers the requested
+ * Handler body for QGVAR(takeOwnership) (server only). Transfers the requested
  * groups and vehicles to the requesting curator's machine.
  *
  * setOwner, setGroupOwner and `owner` are all server-only, which is why the
@@ -22,7 +22,7 @@
  * None
  *
  * Example:
- * [_client, _groups, _vehicles] call rtz_control_fnc_initControlApply
+ * [_client, _groups, _vehicles] call rtz_control_fnc_takeOwnershipApply
  *
  * Public: No
  */

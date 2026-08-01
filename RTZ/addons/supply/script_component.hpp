@@ -17,12 +17,6 @@
 
 #define ICON_RESUPPLY "\A3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa"
 
-// Entity classes considered for servicing - everything that can hold fuel, ammo
-// or damage. StaticWeapon is listed alongside LandVehicle it inherits from, the
-// same way rtz_repair does, so a config hierarchy change cannot silently drop
-// statics out of the lookup.
-#define SERVICE_TYPES ["LandVehicle", "Air", "Ship", "StaticWeapon"]
-
 // Damage below this is treated as intact, so a scratched vehicle does not keep
 // the action visible forever
 #define REPAIR_THRESHOLD 0.02

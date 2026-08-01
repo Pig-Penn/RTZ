@@ -16,7 +16,7 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     QGVAR(standDownLockTime), "SLIDER",
     [LSTRING(StandDownLockTime), LSTRING(StandDownLockTime_Description)],
     _category,
-    [0, 1800, 300, 0],
+    [0, 600, 180, 0],
     true
 ] call CBA_fnc_addSetting;
 
@@ -35,6 +35,6 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     QGVAR(captureRadius), "SLIDER",
     [LSTRING(CaptureRadius), LSTRING(CaptureRadius_Description)],
     _category,
-    [5, 200, 50, 0],
+    [5, 100, 50, 0],
     true
 ] call CBA_fnc_addSetting;

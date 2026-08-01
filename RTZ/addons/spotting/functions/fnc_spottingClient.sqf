@@ -28,11 +28,13 @@
 // each frame. Set by QGVAR(spotDetected); cleared by QGVAR(spotLost).
 //   GVAR(spotGroups):   markerName → [unit, texture, colorArray, echelonTex, sideIdx, leaderNetId]
 //   GVAR(spotChevrons): markerName → [unit, texture, colorArray, leaderNetId, displayName]
-//   GVAR(officerZones): markerName → [unit, radius] — subset of spotChevrons entries
-//     whose unit is an enemy officer carrying an active editing-area zone
-//     (radius comes from rtz_officer's RTZ_officerZoneRadiusMap, piggybacked
-//     on the wedge payload — see QGVAR(spotDetected) below). Drawn as a
-//     hollow ring on the Zeus map by FUNC(initCuratorDisplay).
+//   GVAR(officerZones): markerName → [unit, plantedCenter, radius] — subset of
+//     spotChevrons entries whose unit is an enemy officer carrying an active
+//     editing-area zone (center + radius come from rtz_officer's
+//     RTZ_officerZoneMap, piggybacked on the wedge payload — see
+//     QGVAR(spotDetected) below). Drawn as a hollow ring on the Zeus map by
+//     FUNC(initCuratorDisplay), at the PLANTED center — rtz_officer areas never
+//     move once placed, so the ring marks the editable ground, not the officer.
 GVAR(spotGroups)   = createHashMap;
 GVAR(spotChevrons) = createHashMap;
 GVAR(officerZones) = createHashMap;
@@ -54,7 +56,7 @@ addMissionEventHandler ["Draw3D", LINKFUNC(draw3D)];
 // Store/update icon data for a spotted enemy. Texture, colour, echelon amplifier,
 // side index, group-leader netId and display name are all pre-resolved on the server.
 [QGVAR(spotDetected), {
-    params ["_markerName", "_unit", "_texture", "_colorArray", "_isGroupMarker", "_echelonTex", "_sideIdx", "_ldrId", "_name", ["_zoneRadius", 0]];
+    params ["_markerName", "_unit", "_texture", "_colorArray", "_isGroupMarker", "_echelonTex", "_sideIdx", "_ldrId", "_name", ["_zone", []]];
 
     if (_isGroupMarker) then {
         // Diagnostic: log the first receipt of each marker so we can confirm the
@@ -69,11 +71,12 @@ addMissionEventHandler ["Draw3D", LINKFUNC(draw3D)];
         };
         GVAR(spotChevrons) set [_markerName, [_unit, _texture, _colorArray, _ldrId, _name]];
         // Officer zone ring: only wedge (individually-identified) entries ever
-        // carry a non-zero radius (see the server's _chevronData build). A
-        // radius dropping to 0 (area removed while still spotted) clears it
-        // the same tick, since the sig embeds the radius and forces a resend.
-        if (_zoneRadius > 0) then {
-            GVAR(officerZones) set [_markerName, [_unit, _zoneRadius]];
+        // carry a non-empty [plantedCenter, radius] zone (see the server's
+        // _chevronData build). The zone dropping back to [] (area removed while
+        // still spotted) clears it the same tick, since the sig embeds the zone
+        // and forces a resend.
+        if (_zone isNotEqualTo []) then {
+            GVAR(officerZones) set [_markerName, [_unit, _zone select 0, _zone select 1]];
         } else {
             GVAR(officerZones) deleteAt _markerName;
         };

@@ -6,8 +6,10 @@ class zen_common_RscDisplay {
 
 // Merged into ZEN's attribute window display (zen_common gui.hpp). ZEN's
 // functions are compiled final by CBA, so zen_attributes_fnc_open cannot be
-// wrapped by reassignment — instead this invisible control rides along in the
-// display and its onLoad schedules the visual lock. One frame of delay lets
+// wrapped by reassignment, and the display's own onLoad does not route through
+// BIS_fnc_initDisplay, so CBA's Extended_DisplayLoad_EventHandlers never fires
+// for it either — instead this invisible control rides along in the display and
+// its onLoad schedules the gate. One frame of delay lets
 // zen_attributes_fnc_open finish building the rows and storing them on the
 // display (onLoad fires during createDialog, before any row exists).
 //
@@ -16,13 +18,13 @@ class zen_common_RscDisplay {
 // them on zen_common_RscDisplay) and the inherited Title/Background/Content.
 class zen_common_RscDisplayScrollbars: zen_common_RscDisplay {
     class controls: controls {
-        class GVAR(lockHook): RscText {
+        class GVAR(gateHook): RscText {
             idc = -1;
             x = 0;
             y = 0;
             w = 0;
             h = 0;
-            onLoad = QUOTE([ARR_2(FUNC(lockControls),ctrlParent (_this select 0))] call CBA_fnc_execNextFrame);
+            onLoad = QUOTE([ARR_2(FUNC(gateDisplay),[ctrlParent (_this select 0)])] call CBA_fnc_execNextFrame);
         };
     };
 };

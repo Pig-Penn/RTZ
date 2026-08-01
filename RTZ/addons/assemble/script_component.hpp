@@ -54,9 +54,7 @@
 #define ICON_CONFIG_ENTRY "iconModule"
 #define COLOR_ACTION {0.94, 0.51, 0.19, 1}
 
-// Icon slot in ZEN's compiled action array, which modifierFunction receives:
-// [name, displayName, icon, iconColor, statement, condition, args, insertChildren, modifierFunction]
-#define ACTION_INDEX_ICON 2
+// ZEN action array indices (ACTION_INDEX_*) come from main/script_macros.hpp.
 
 // Ghost-model placement preview marker. Matches vanilla Zeus create-menu placement:
 // the static's own tree icon (resolved per class in fnc_orderAssemble) drawn plain

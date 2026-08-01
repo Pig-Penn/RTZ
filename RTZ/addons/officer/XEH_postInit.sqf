@@ -12,12 +12,14 @@
         GVAR(areasByCurator) = createHashMap;
 
         // Cross-addon contract (plain global, not GVAR — rtz_spotting reads it
-        // without depending on rtz_officer): officerNetId -> zone radius, so a
-        // spotted enemy officer's zone ring can ride his chevron payload
-        // (see rtz_spotting's fnc_spotCheck). Also the mutual-exclusion source
-        // FUNC(applyAura) checks — an officer with an editing area cannot take a
-        // command aura — so it exists even with editing areas disabled.
-        RTZ_officerZoneRadiusMap = createHashMap;
+        // without depending on rtz_officer): officerNetId -> [plantedCenter,
+        // radius], so a spotted enemy officer's zone ring can ride his chevron
+        // payload and be drawn where the area actually sits (see rtz_spotting's
+        // fnc_spotCheck) — areas never move once planted, so the stored center
+        // stays authoritative. Also the mutual-exclusion source FUNC(applyAura)
+        // checks — an officer with an editing area cannot take a command aura —
+        // so it exists even with editing areas disabled.
+        RTZ_officerZoneMap = createHashMap;
 
         if (GVAR(enable)) then {
             [QGVAR(applyArea), LINKFUNC(applyArea)] call CBA_fnc_addEventHandler;
@@ -26,7 +28,7 @@
             // FUNC(monitorAreas) — including the wipe it runs when that client's
             // assigned curator changes. A client that DISCONNECTS never runs
             // either, so without this its areas stay registered here forever:
-            // GVAR(areasByCurator) leaks, and RTZ_officerZoneRadiusMap keeps
+            // GVAR(areasByCurator) leaks, and RTZ_officerZoneMap keeps
             // feeding rtz_spotting zone rings for areas that no longer have an
             // owner to remove them. Resolve the module off allCurators rather
             // than the unit — allCurators is a handful of entries and the

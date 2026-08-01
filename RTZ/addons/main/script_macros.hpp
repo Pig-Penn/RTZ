@@ -30,6 +30,12 @@
 #define TYPE_WEAPON_HANDGUN 2
 #define TYPE_WEAPON_SECONDARY 4
 
+// Entity classes considered "a vehicle" by the servicing features (rtz_repair,
+// rtz_supply). StaticWeapon is listed alongside the LandVehicle it inherits
+// from, so a config hierarchy change cannot silently drop statics out of a
+// nearEntities lookup.
+#define VEHICLE_TYPES ["LandVehicle", "Air", "Ship", "StaticWeapon"]
+
 // Zeus display
 #define IDD_RSCDISPLAYCURATOR 312
 #define IDC_RSCDISPLAYCURATOR_MAINMAP 50
@@ -37,6 +43,20 @@
 // Zeus selected entities (ZEN's script_curator.hpp convention)
 #define SELECTED_OBJECTS (curatorSelected select 0)
 #define SELECTED_GROUPS (curatorSelected select 1)
+
+// Indices into ZEN's compiled context-menu action array — the array a
+// modifierFunction receives as `_this select 0` and mutates in place. Layout
+// per zen_context_menu_fnc_compileActions; lives here rather than in one
+// component because every RTZ *ActionModifier needs it.
+#define ACTION_INDEX_NAME 0
+#define ACTION_INDEX_DISPLAYNAME 1
+#define ACTION_INDEX_ICON 2
+#define ACTION_INDEX_ICONCOLOR 3
+#define ACTION_INDEX_STATEMENT 4
+#define ACTION_INDEX_CONDITION 5
+#define ACTION_INDEX_ARGS 6
+#define ACTION_INDEX_INSERTCHILDREN 7
+#define ACTION_INDEX_MODIFIERFUNCTION 8
 
 #ifdef DISABLE_COMPILE_CACHE
     #undef PREP

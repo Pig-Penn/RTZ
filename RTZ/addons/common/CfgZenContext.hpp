@@ -25,16 +25,16 @@ class zen_context_menu_actions {
     // Submenu for the toggleable draw overlays (vehicle tags, unit tags,
     // destinations, targets).
     class RTZ_Overlays {
-        displayName = "Overlays";
-        icon = "\a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa";
+        displayName = CSTRING(SubmenuOverlays);
+        icon = ICON_SUBMENU_OVERLAYS;
         priority = 6;
     };
 
     // Submenu for squad/behaviour control actions (behaviour info, disable
     // simulation, reset).
     class RTZ_Control {
-        displayName = "Controls";
-        icon = "\a3\ui_f\data\igui\cfg\simpletasks\types\help_ca.paa";
+        displayName = CSTRING(SubmenuControl);
+        icon = ICON_SUBMENU_CONTROL;
         priority = 7;
     };
 };

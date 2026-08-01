@@ -78,17 +78,18 @@ if (!isNil QGVAR(officerZones) && {!(_display getVariable [QGVAR(zoneDrawAttache
         if (!GVAR(officerZonesVisible) || { count GVAR(officerZones) == 0 }) exitWith {};
         params ["_map"];
         {
-            // _y = [unit, radius]; the ring is drawn on the officer's LIVE
-            // position. NOTE: rtz_officer's editing areas do not follow their
-            // officer (see EFUNC(officer,monitorAreas)) — they stay where they
-            // were planted — so once a spotted officer walks away this ring
-            // marks him, not the ground his Zeus can actually still edit. The
-            // cross-addon payload (RTZ_officerZoneRadiusMap → the wedge's
-            // zoneRadius field) carries only a radius, so the planted centre is
-            // not available here to draw instead.
-            _y params ["_unit", "_radius"];
+            // _y = [unit, plantedCenter, radius]; the ring is drawn at the
+            // PLANTED area center carried by the cross-addon payload
+            // (RTZ_officerZoneMap → the wedge's zone field) — rtz_officer's
+            // editing areas never move once placed (see
+            // EFUNC(officer,monitorAreas)), so this is the ground the enemy
+            // Zeus can actually edit, wherever the officer has since walked.
+            // The unit rides along solely for the alive gate: the ring must
+            // drop the moment the officer dies, before the server's next pass
+            // retracts the wedge.
+            _y params ["_unit", "_center", "_radius"];
             if (!alive _unit) then { continue };
-            _map drawEllipse [getPosVisual _unit, _radius, _radius, 0, COLOR_ZONE_RING, ""];
+            _map drawEllipse [_center, _radius, _radius, 0, COLOR_ZONE_RING, ""];
         } forEach GVAR(officerZones);
     }];
 };

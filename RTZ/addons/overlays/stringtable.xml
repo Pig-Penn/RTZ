@@ -46,6 +46,9 @@
         <Key ID="STR_RTZ_Overlays_ModeFormation">
             <English>Formation</English>
         </Key>
+        <Key ID="STR_RTZ_Overlays_ModeHolding">
+            <English>Holding</English>
+        </Key>
         <Key ID="STR_RTZ_Overlays_ModePlanned">
             <English>Planned</English>
         </Key>

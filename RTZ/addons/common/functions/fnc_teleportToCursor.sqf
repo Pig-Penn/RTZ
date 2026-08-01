@@ -44,11 +44,8 @@
  * Public: No
  */
 
-// Non-null only while this machine's Zeus interface is open
-if (isNull curatorCamera) exitWith {false};
-
-// Typing in the Zeus search box (ZEN sets this flag): don't hijack the keystroke
-if (GETMVAR(RscDisplayCurator_search,false)) exitWith {false};
+// Zeus open, and not typing in ZEN's search box
+CHECK_CURATOR_INPUT;
 
 // Men on foot and whole vehicles from the current Zeus selection. objectParent
 // is objNull for both; a crewed-in man fails the test and is skipped.
@@ -69,7 +66,11 @@ if (CBA_missionTime < _readyAt) exitWith {
 // Cursor → world position (AGL; only x/y are used)
 private _pos = ASLToAGL ([] call zen_common_fnc_getPosFromScreen);
 
-private _maxDistance = GETGVAR(teleportMaxDistance,100);
+// Fallback matches the registered setting default (initSettings.inc.sqf) so a
+// read before CBA_settingsInitialized behaves like the configured one. It is
+// also the cooldown scale's divisor below, so it must never be 0 — the slider
+// floor is 10.
+private _maxDistance = GETGVAR(teleportMaxDistance,150);
 
 // Selection centre — per-unit offsets from it preserve the formation shape
 private _centre = [0, 0, 0];
@@ -148,6 +149,8 @@ private _messages = [];
 if (_moved > 0) then {_messages pushBack LLSTRING(MsgTeleported)};
 if (_inCombat > 0) then {_messages pushBack LLSTRING(MsgInCombat)};
 if (_tooFar > 0) then {_messages pushBack format [LLSTRING(MsgBeyondRange), _maxDistance]};
-[_messages joinString ", "] call zen_common_fnc_showMessage;
+// Composed text goes in as a format ARGUMENT so a "%" inside a translation
+// isn't re-scanned as a placeholder by showMessage's own format pass.
+["%1", _messages joinString ", "] call zen_common_fnc_showMessage;
 
 true

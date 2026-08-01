@@ -28,11 +28,8 @@
 
 params [["_stance", "AUTO", [""]]];
 
-// Non-null only while this machine's Zeus interface is open
-if (isNull curatorCamera) exitWith {false};
-
-// Typing in the Zeus search box (ZEN sets this flag): don't hijack the keystroke
-if (GETMVAR(RscDisplayCurator_search,false)) exitWith {false};
+// Zeus open, and not typing in ZEN's search box
+CHECK_CURATOR_INPUT;
 
 private _units = SELECTED_OBJECTS select {
     _x isKindOf "CAManBase"

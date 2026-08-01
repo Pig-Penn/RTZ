@@ -27,11 +27,11 @@ if (_grps isEqualTo []) exitWith {};
 
 private _hidden = (_grps select 0) getVariable [QGVAR(squadHidden), false];
 if (_hidden) then {
-    _action set [1, LLSTRING(ActionEnableSimulation)];
-    _action set [2, ICON_SHOW];
-    _action set [3, COLOR_SHOW];   // green — currently hidden, will restore
+    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionEnableSimulation)];
+    _action set [ACTION_INDEX_ICON, ICON_SHOW];
+    _action set [ACTION_INDEX_ICONCOLOR, COLOR_SHOW];   // green — currently hidden, will restore
 } else {
-    _action set [1, LLSTRING(ActionDisableSimulation)];
-    _action set [2, ICON_HIDE];
-    _action set [3, COLOR_HIDE];   // orange — will hide & freeze
+    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionDisableSimulation)];
+    _action set [ACTION_INDEX_ICON, ICON_HIDE];
+    _action set [ACTION_INDEX_ICONCOLOR, COLOR_HIDE];   // orange — will hide & freeze
 };

@@ -33,11 +33,11 @@
  *     cap the reset cannot build the replacement group; same exposure as LAMBS'
  *     own reset module.
  *   — taskReset nils lambs_danger_disableAI on every member, which is the lever
- *     EGVAR(dismount,applyUnloadFlags) uses to hold a locked transport's cargo
- *     in place. The vehicle keeps its engine-level flags (setUnloadInCombat /
- *     allowCrewInImmobile) and its QEGVAR(dismount,unloadInCombat) marker, but
- *     LAMBS' scripted force-eject is no longer suppressed until the curator
- *     re-toggles the lock.
+ *     FUNC(dismountApply) uses to hold a locked transport's cargo in place. The
+ *     vehicle keeps its engine-level flags (setUnloadInCombat /
+ *     allowCrewInImmobile) and its QGVAR(dismountAllowed) marker, but LAMBS'
+ *     scripted force-eject is no longer suppressed until the curator re-toggles
+ *     the lock.
  *
  * Waypoints are cleared up front rather than left to taskReset's _resetWaypoints
  * flag (which hard mode ignores, since it throws the group away). It costs one

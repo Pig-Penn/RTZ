@@ -16,7 +16,7 @@
  * editing-area guard in FUNC(setArea) read the state without a round-trip.
  *
  * Mutual exclusion: an officer with an editing area — ANY curator's, checked
- * against RTZ_officerZoneRadiusMap — cannot take an aura, mirroring the aura
+ * against RTZ_officerZoneMap — cannot take an aura, mirroring the aura
  * guard in FUNC(setArea). Removal is bookkeeping only: groups the aura was
  * holding are released by the next FUNC(monitorAuras) pass (≤ AURA_INTERVAL
  * seconds), so removal never needs to know who was inside.
@@ -63,7 +63,7 @@ private _areaBlocked = false;
     if (_mode isEqualTo "add") then {
         if (!alive _x || {_key in GVAR(auras)}) then {continue};
 
-        if (_key in RTZ_officerZoneRadiusMap) then {
+        if (_key in RTZ_officerZoneMap) then {
             _areaBlocked = true;
             continue;
         };

@@ -1,8 +1,13 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Builds a context menu child action for each distinct mine magazine carried by the selected units.
- * The parent action is hidden automatically when no children are returned.
+ * Builds a context menu child action for each distinct mine magazine carried by
+ * the selected units. The parent action is hidden automatically when no children
+ * are returned.
+ *
+ * One click lays ONE mine, by the single carrier standing closest to the spot. The
+ * count in each label is therefore the squad's carried STOCK, not an order size —
+ * it is there so a curator can see how many more he has before running dry.
  *
  * Arguments:
  * 0: Context Position ASL <ARRAY>
@@ -21,15 +26,18 @@ params ["_position", "_objects"];
 
 if (!GVAR(enabled)) exitWith {[]};
 
-private _units = _objects select {_x isKindOf "CAManBase" && {alive _x} && {isNull objectParent _x}};
+// Same resolution the order itself uses, so the menu can never offer a magazine
+// FUNC(orderPlace) then finds nobody carrying
+private _units = [_objects] call FUNC(getLayers);
 if (_units isEqualTo []) exitWith {[]};
 
 // Tally each placeable mine magazine across the selected units
 private _magazines = createHashMap;
+private _muzzles = GVAR(muzzles);
 
 {
     {
-        if ((toLowerANSI _x) in GVAR(muzzles)) then {
+        if ((toLowerANSI _x) in _muzzles) then {
             _magazines set [_x, (_magazines getOrDefault [_x, 0]) + 1];
         };
     } forEach magazines _x;
@@ -45,7 +53,7 @@ _names apply {
 
     private _action = [
         _x,
-        format ["%1 (%2)", getText (_config >> "displayName"), _magazines get _x],
+        format [LLSTRING(MagazineLabel), getText (_config >> "displayName"), _magazines get _x],
         getText (_config >> "picture"),
         _statement,
         {true},

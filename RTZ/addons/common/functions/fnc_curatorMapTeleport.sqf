@@ -26,12 +26,11 @@
  * Public: No
  */
 
-// Non-null only while this machine's Zeus interface is open
-if (isNull curatorCamera) exitWith {false};
-if (!visibleMap) exitWith {false};
+// Zeus open, and not typing in ZEN's search box
+CHECK_CURATOR_INPUT;
 
-// Typing in the Zeus search box (ZEN sets this flag): don't hijack the keystroke
-if (GETMVAR(RscDisplayCurator_search,false)) exitWith {false};
+// This one is map-only: there is no map cursor to read otherwise
+if (!visibleMap) exitWith {false};
 
 private _ctrlMap = findDisplay IDD_RSCDISPLAYCURATOR displayCtrl IDC_RSCDISPLAYCURATOR_MAINMAP;
 if (isNull _ctrlMap) exitWith {false};

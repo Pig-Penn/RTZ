@@ -24,11 +24,10 @@
  */
 
 params ["_objects", "_hoveredEntity"];
+
 private _grps = [_objects + [_hoveredEntity]] call EFUNC(common,collectSquads);
 if (_grps isEqualTo []) exitWith {};
 
 [QGVAR(reloadSquad), [_grps], _grps] call CBA_fnc_targetEvent;
 
-private _msg = LLSTRING(MsgReloading);
-if (count _grps > 1) then { _msg = format ["%1  x%2", _msg, count _grps]; };
-[_msg] call zen_common_fnc_showMessage;
+[LLSTRING(MsgReloading), count _grps] call EFUNC(common,showCountMessage);

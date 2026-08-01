@@ -30,16 +30,15 @@
 
 params [["_dir", 0, [0]]];
 
-// Non-null only while this machine's Zeus interface is open
-if (isNull curatorCamera) exitWith { false };
+// Zeus open, and not typing in ZEN's search box
+CHECK_CURATOR_INPUT;
 
-// Typing in the Zeus search box (ZEN sets this flag): don't hijack the keystroke
-if (GETMVAR(RscDisplayCurator_search,false)) exitWith { false };
-
-// Whole helicopters from the current Zeus selection. A crewed-in man fails
-// the objectParent test and is skipped.
+// Whole aircraft from the current Zeus selection. A crewed-in man fails the
+// objectParent test and is skipped. Helicopter + Plane rather than the broader
+// "Air", which also catches ParachuteBase — flyInHeight is meaningful on both
+// rotary and fixed wing (VTOLs are Plane), but not on a canopy.
 private _aircraft = SELECTED_OBJECTS select {
-    _x isKindOf "Helicopter"
+    (_x isKindOf "Helicopter" || {_x isKindOf "Plane"})
     && {alive _x}
     && {isNull objectParent _x}
 };

@@ -87,12 +87,18 @@ if (_previewClass != "" && {isClass (configFile >> "CfgVehicles" >> _previewClas
 };
 
 // Left click confirms — but skip the very frame we start on, so the click
-// that selected the context-menu entry can't instantly place at the menu spot
+// that selected the context-menu entry can't instantly place at the menu spot.
+// Returns true either way so the press is consumed by the picker: letting it
+// fall through reached the Zeus display underneath, which would clear the
+// curator's selection or drop whatever was highlighted in the Zeus tree at the
+// same spot. Other buttons return false so right-click still behaves normally.
 private _mouseEH = _display displayAddEventHandler ["MouseButtonDown", {
     params ["", "_button"];
-    if (_button != 0) exitWith {};
-    if (diag_frameNo <= GVAR(previewStartFrame)) exitWith {};
-    GVAR(previewPending) = [true];
+    if (_button != 0) exitWith {false};
+    if (diag_frameNo > GVAR(previewStartFrame)) then {
+        GVAR(previewPending) = [true];
+    };
+    true
 }];
 
 // Escape cancels (and swallows the key so it doesn't open the pause menu)
@@ -107,10 +113,30 @@ private _keyEH = _display displayAddEventHandler ["KeyDown", {
 // the default has to be computed from _allowRotate, which params can't express
 private _hint = param [6, [LLSTRING(PreviewHint), LLSTRING(PreviewHintRotate)] select _allowRotate, [""]];
 
-// Per-frame: drive the helper to the cursor, draw feedback, finish on a result
+// Feedback marker + hint at the spot, drawn from a Draw3D mission EH — the
+// render pass drawIcon3D belongs in, and the one every other RTZ overlay
+// (rtz_mine, rtz_overlays, rtz_selection) draws from. It reads the helper's
+// live position, so the PFH below never has to feed it. Drawn upright (angle
+// 0) rather than spun to the ghost's facing: the ghost model already shows the
+// direction, and a fixed icon reads like vanilla Zeus instead of a tumbling
+// reticle. Single-instance state is safe here — GVAR(previewActive) above
+// guarantees exactly one picker at a time.
+GVAR(previewDraw) = [_helper, _icon, _color, _hint];
+GVAR(previewDrawEH) = addMissionEventHandler ["Draw3D", {
+    GVAR(previewDraw) params ["_helper", "_icon", "_color", "_hint"];
+    if (isNull _helper) exitWith {};
+
+    drawIcon3D [
+        _icon, _color, ASLToAGL getPosASL _helper,
+        PREVIEW_ICON_SIZE, PREVIEW_ICON_SIZE, 0,
+        _hint, 1, PREVIEW_TEXT_SIZE, "RobotoCondensed"
+    ];
+}];
+
+// Per-frame: drive the helper to the cursor, finish on a result
 [{
     params ["_args", "_pfhID"];
-    _args params ["_display", "_helper", "_ghost", "_icon", "_color", "_hint", "_allowRotate", "_onConfirm", "_cbArgs", "_mouseEH", "_keyEH"];
+    _args params ["_display", "_helper", "_ghost", "_allowRotate", "_onConfirm", "_cbArgs", "_mouseEH", "_keyEH"];
 
     private _pending = GVAR(previewPending);
 
@@ -144,11 +170,6 @@ private _hint = param [6, [LLSTRING(PreviewHint), LLSTRING(PreviewHintRotate)] s
             _helper setPosASL _position;
             _helper setVectorUp _vectorUp;
         };
-
-        // Feedback marker + hint at the spot. Drawn upright (angle 0) rather than
-        // spun to the ghost's facing — the ghost model already shows the direction,
-        // and a fixed icon reads like vanilla Zeus instead of a tumbling reticle
-        drawIcon3D [_icon, _color, ASLToAGL getPosASL _helper, 1.2, 1.2, 0, _hint, 1, 0.03, "RobotoCondensed"];
     };
 
     // Finish: click confirmed, Escape cancelled, or the Zeus display went away
@@ -165,6 +186,7 @@ private _hint = param [6, [LLSTRING(PreviewHint), LLSTRING(PreviewHintRotate)] s
 
         // Tear everything down before the callback so a re-entrant picker is allowed
         [_pfhID] call CBA_fnc_removePerFrameHandler;
+        removeMissionEventHandler ["Draw3D", GVAR(previewDrawEH)];
         if (!isNull _display) then {
             _display displayRemoveEventHandler ["MouseButtonDown", _mouseEH];
             _display displayRemoveEventHandler ["KeyDown", _keyEH];
@@ -173,7 +195,10 @@ private _hint = param [6, [LLSTRING(PreviewHint), LLSTRING(PreviewHintRotate)] s
         deleteVehicle _helper;
         GVAR(previewActive) = false;
         GVAR(previewPending) = nil;
+        // GVAR(previewDraw) is deliberately left in place rather than nil'd:
+        // its handler is gone, the next picker overwrites it, and the isNull
+        // helper guard makes a stale entry inert either way.
 
         [_confirmed, _posAGL, _dir, _cbArgs] call _onConfirm;
     };
-}, 0, [_display, _helper, _ghost, _icon, _color, _hint, _allowRotate, _onConfirm, _args, _mouseEH, _keyEH]] call CBA_fnc_addPerFrameHandler;
+}, 0, [_display, _helper, _ghost, _allowRotate, _onConfirm, _args, _mouseEH, _keyEH]] call CBA_fnc_addPerFrameHandler;

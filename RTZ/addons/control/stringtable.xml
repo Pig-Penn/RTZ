@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Control">
-        <Key ID="STR_RTZ_Control_ActionDelete">
-            <English>Delete</English>
+        <Key ID="STR_RTZ_Control_ActionAllowDismount">
+            <English>Allow Dismount</English>
         </Key>
         <Key ID="STR_RTZ_Control_ActionDisableSimulation">
             <English>Dissimulate</English>
@@ -10,8 +10,8 @@
         <Key ID="STR_RTZ_Control_ActionEnableSimulation">
             <English>Simulate</English>
         </Key>
-        <Key ID="STR_RTZ_Control_ActionInit">
-            <English>Init</English>
+        <Key ID="STR_RTZ_Control_ActionForbidDismount">
+            <English>Forbid Dismount</English>
         </Key>
         <Key ID="STR_RTZ_Control_ActionReload">
             <English>Reload</English>
@@ -19,29 +19,32 @@
         <Key ID="STR_RTZ_Control_ActionReset">
             <English>Reset</English>
         </Key>
-        <Key ID="STR_RTZ_Control_Delete">
-            <English>Delete Objects</English>
+        <Key ID="STR_RTZ_Control_ActionTakeOwnership">
+            <English>Take Ownership</English>
         </Key>
-        <Key ID="STR_RTZ_Control_DeleteSelected">
-            <English>Delete Selected</English>
+        <Key ID="STR_RTZ_Control_Dismount">
+            <English>Dismount Control</English>
         </Key>
-        <Key ID="STR_RTZ_Control_DeleteSelected_Description">
-            <English>Delete the selected units, vehicles, bodies and wrecks without refunding any curator points.</English>
-        </Key>
-        <Key ID="STR_RTZ_Control_Delete_Description">
-            <English>Add a context menu action deleting the selected units, vehicles, bodies and wrecks. Players and curator modules are never deleted, and the deletion refunds no curator points.</English>
+        <Key ID="STR_RTZ_Control_Dismount_Description">
+            <English>Add a context menu action that either forbids or allows units to bail-out of a selected vehicle.</English>
         </Key>
         <Key ID="STR_RTZ_Control_DisplayName">
             <English>Control</English>
         </Key>
-        <Key ID="STR_RTZ_Control_MsgDeleted">
-            <English>Deleted</English>
+        <Key ID="STR_RTZ_Control_MsgDismountAllowed">
+            <English>Dismount allowed</English>
         </Key>
-        <Key ID="STR_RTZ_Control_MsgInit">
-            <English>Ownership Transferred</English>
+        <Key ID="STR_RTZ_Control_MsgDismountForbidden">
+            <English>Dismount forbidden</English>
         </Key>
         <Key ID="STR_RTZ_Control_MsgNoUnitsSelected">
             <English>No units selected</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_MsgNoVehicleSelected">
+            <English>Select a vehicle to lock its crew in</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_MsgOwnershipTransferred">
+            <English>Ownership Transferred</English>
         </Key>
         <Key ID="STR_RTZ_Control_MsgReloading">
             <English>Reloading</English>
@@ -61,11 +64,23 @@
         <Key ID="STR_RTZ_Control_ReloadSquad_Description">
             <English>Add a context menu action ordering selected units to reload their current weapon.</English>
         </Key>
+        <Key ID="STR_RTZ_Control_Reset">
+            <English>Reset AI</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_Reset_Description">
+            <English>Add a context menu action resetting the AI state of selected groups. The reset rebuilds each group from scratch, which clears its waypoints, orders and behaviour flags along with any stuck LAMBS task.</English>
+        </Key>
         <Key ID="STR_RTZ_Control_SquadHide">
             <English>Simulation Control</English>
         </Key>
         <Key ID="STR_RTZ_Control_SquadHide_Description">
             <English>Add a context menu action to toggle the simulation and visibility of selected units.</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_TakeOwnership">
+            <English>Take Ownership</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_TakeOwnership_Description">
+            <English>Add a context menu action transferring the selected groups and their vehicles to the curator's own machine. Only appears when the selection holds something simulated elsewhere, which typically happens after a curator reconnects.</English>
         </Key>
     </Package>
 </Project>

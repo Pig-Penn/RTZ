@@ -19,11 +19,16 @@
 
 params ["_position", "_objects"];
 
+if (!GVAR(enabled)) exitWith {};
+
 private _groups = [_objects] call FUNC(getDeminers);
 if (_groups isEqualTo []) exitWith {};
 
 private _pos = ASLToAGL _position;
+private _clearHidden = GVAR(clearHidden);
 
 {
-    [QGVAR(disarm), [_x, _pos, GVAR(clearHidden)], leader _x] call CBA_fnc_targetEvent;
+    [QGVAR(disarm), [_x, _pos, _clearHidden], leader _x] call CBA_fnc_targetEvent;
 } forEach _groups;
+
+[LLSTRING(MsgDemining), count _groups] call EFUNC(common,showCountMessage);

@@ -8,20 +8,19 @@ PREP_RECOMPILE_END;
 
 #include "initSettings.inc.sqf"
 
-// Overlay client state, per overlay: master toggle (context action), last
-// synced curator selection, watched unit netIds and the latest server
-// snapshot. Initialized here so the context action, toggle and display halves
-// can all assume the containers exist regardless of registration order.
+// Client stream state, shared by every overlay:
+//   active    — stream ids currently switched on for this curator
+//   selection — last synced raw curatorSelected, the change detector
+//   watched   — that selection resolved to hulls, the snapshot filter
+//   data      — stream id -> [entries, rxTime, dirty, refTime] (record layout
+//               documented in FUNC(streamClient))
+// Initialized here so the context actions, the toggle and the draw half can all
+// assume the containers exist regardless of registration order.
 if (hasInterface) then {
-    GVAR(destEnabled) = false;
-    GVAR(destSelection) = [];
-    GVAR(destWatchedUnits) = createHashMap;
-    GVAR(destDisplay) = [];
-
-    GVAR(tgtEnabled) = false;
-    GVAR(tgtSelection) = [];
-    GVAR(tgtWatchedUnits) = createHashMap;
-    GVAR(tgtDisplay) = [];
+    GVAR(active)    = [];
+    GVAR(selection) = [];
+    GVAR(watched)   = [];
+    GVAR(data)      = createHashMap;
 };
 
 ADDON = true;

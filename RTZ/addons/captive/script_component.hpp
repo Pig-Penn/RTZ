@@ -15,11 +15,7 @@
 
 #include "\x\rtz\addons\main\script_macros.hpp"
 
-// Indices into ZEN's compiled action array, which modifierFunction receives:
-// [name, displayName, icon, iconColor, statement, condition, args, insertChildren, modifierFunction]
-#define ACTION_INDEX_DISPLAYNAME 1
-#define ACTION_INDEX_ICON 2
-#define ACTION_INDEX_ICONCOLOR 3
+// ZEN action array indices (ACTION_INDEX_*) come from main/script_macros.hpp.
 
 // Surrender toggle icon/tint — white pause while fighting (will surrender),
 // green/grey play once surrendered (will stand down, grey while lock-timed).

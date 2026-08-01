@@ -15,7 +15,29 @@
 
 #include "\x\rtz\addons\main\script_macros.hpp"
 
-// ── Shared draw constants (fnc_destinationDisplay / fnc_targetDisplay) ───────
+// ── Stream ids ───────────────────────────────────────────────────────────────
+// Both overlays ride ONE pipeline (FUNC(streamClient) / FUNC(streamServer)):
+// one Draw3D handler, one server poll, one watcher registry, one subscribe /
+// snapshot event pair. A stream is just an id plus the gather + draw function
+// pair registered against it, so a third overlay costs two small functions and
+// a CfgContext entry — not another copy of the machinery.
+// SINGLE-quoted deliberately: these ids appear inside QUOTE(...) in
+// CfgContext.hpp, and a double-quoted literal would terminate the config string
+// the macro builds.
+#define STREAM_DEST 'dest'
+#define STREAM_TGT  'tgt'
+
+// Context-action icons and their idle tints. The labels and tints themselves are
+// resolved by FUNC(overlayActionModifier) from the stream id — localize inside a
+// QUOTE would hit the same nested-quote problem — and a running overlay goes
+// grey regardless of which one it is.
+#define ICON_DEST "\a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa"
+#define ICON_TGT  "\a3\ui_f\data\igui\cfg\simpletasks\types\kill_ca.paa"
+#define COLOR_DEST [1.00, 0.80, 0.40, 1]
+#define COLOR_TGT  [0.60, 0.20, 0.20, 1]
+#define COLOR_OVERLAY_ON [0.50, 0.50, 0.50, 1]
+
+// ── Shared draw constants (fnc_drawDestination / fnc_drawTarget) ─────────────
 // Overlays start fading at FADE_NEAR and bottom out at MAX_DRAW_DIST (matches
 // the spotting wedge outer cap); labels only render while the cursor is within
 // LABEL_CURSOR_RADIUS of the icon (GUI screen units).
@@ -35,7 +57,7 @@
 // distance — mirrors the LAMBS debug renderer's cap.
 #define KNOWLEDGE_MAX_DIST  6000
 
-// fnc_destinationDisplay: the line drops once the unit has effectively
+// fnc_drawDestination: the line drops once the unit has effectively
 // arrived. Icons swap foot/vehicle by unit type; when GVAR(destGrowWithSpeed)
 // is on the size ramps ICON_SIZE_MIN→ICON_SIZE_MAX across 0→ICON_SPEED_MAX
 // km/h (the LAMBS debug look), otherwise it holds at ICON_SIZE_FIXED.
@@ -47,8 +69,10 @@
 #define ICON_SIZE_MAX       0.9
 #define ICON_SIZE_FIXED     0.65
 
-// fnc_targetDisplay: how long (s) after the last sighting the overlay bottoms
-// out at its dimmest — old intel visibly recedes.
+// fnc_drawTarget: how long (s) after the last sighting the overlay bottoms
+// out at its dimmest — old intel visibly recedes. Aged client-side every frame
+// from the snapshot's reference time, so the dim fades instead of stepping once
+// per poll.
 #define STALE_DIM_TIME      30
 #define ICON_TARGET         "\a3\ui_f\data\igui\cfg\targeting\impactpoint_ca.paa"
 #define ICON_SIZE_TARGET    0.9

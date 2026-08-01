@@ -68,3 +68,19 @@ if (hasInterface) then {
         [] call FUNC(removeContextActions);
     };
 }] call CBA_fnc_addEventHandler;
+
+// Turning the clean-up on mid-mission applies immediately instead of waiting
+// for a restart. The reverse is one-way: zen_context_menu_fnc_removeAction
+// deletes the node out of ZEN's runtime action tree and ZEN offers no re-add
+// for its own built-ins, so turning the setting back OFF only takes effect on
+// the next mission start. FUNC(removeContextActions) self-guards against a
+// repeated ON (ZEN logs an RPT error for an already-removed path).
+if (hasInterface) then {
+    ["CBA_SettingChanged", {
+        params ["_name", "_value"];
+        if (toLower _name != toLower QGVAR(enableCleanContextMenu)) exitWith {};
+        if (_value) then {
+            [] call FUNC(removeContextActions);
+        };
+    }] call CBA_fnc_addEventHandler;
+};

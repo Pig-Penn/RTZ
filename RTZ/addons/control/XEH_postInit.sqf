@@ -1,30 +1,35 @@
 #include "script_component.hpp"
 
-// Squad hide/freeze — hideObjectGlobal/enableSimulationGlobal are server-only.
+// Server-only receivers. hideObjectGlobal / enableSimulationGlobal and the
+// ownership trio (setOwner / setGroupOwner / owner) are all server-only
+// commands, so both orders are dispatched here with CBA_fnc_serverEvent.
 if (isServer) then {
-    [QGVAR(squadHideApply), LINKFUNC(squadHideApply)] call CBA_fnc_addEventHandler;
+    [QGVAR(squadHide), LINKFUNC(squadHideApply)] call CBA_fnc_addEventHandler;
+    [QGVAR(takeOwnership), LINKFUNC(takeOwnershipApply)] call CBA_fnc_addEventHandler;
 };
 
-// Pull a squad's simulation back onto a curator's machine (the "Init" action).
-// setOwner / setGroupOwner / owner are all server-only commands.
-if (isServer) then {
-    [QGVAR(initControl), LINKFUNC(initControlApply)] call CBA_fnc_addEventHandler;
-};
-
-// Delete objects. deleteVehicle is only reliable from the owning machine and
-// the curator point safeguard needs the (server-local) curator modules.
-if (isServer) then {
-    [QGVAR(deleteObjects), LINKFUNC(deleteObjectsApply)] call CBA_fnc_addEventHandler;
-};
-
-// Reload squad — the "reload" command needs unit locality (server, HC, or a
-// player leading AI), so the receiver registers on every machine.
+// Everywhere-receivers. Both bodies need the group LOCAL, and local does not
+// mean the server: AI in a player-led group is local to that player, and a
+// curator's freshly placed units are local to him. The senders use
+// CBA_fnc_targetEvent aimed at the groups, so CBA delivers one copy per owning
+// machine and each handler filters the batch down to its own.
+//   — reloadSquad: the `reload` command needs unit locality (units share their
+//     group's locality).
+//   — reset: lambs_wp_fnc_taskReset must run where the group is local, and its
+//     hard-reset path creates the replacement group on that same machine so
+//     ownership carries over. LAMBS is always loaded alongside RTZ, so this
+//     registers unconditionally.
 [QGVAR(reloadSquad), LINKFUNC(reloadSquadApply)] call CBA_fnc_addEventHandler;
-
-// AI-state reset. LAMBS is always loaded alongside RTZ, so this registers
-// unconditionally. lambs_wp_fnc_taskReset must run where each group is local
-// (not necessarily the server — AI in a player-led group is local to that
-// player), and its hard-reset path creates the replacement group on that same
-// machine so ownership carries over, so the receiver is registered on every
-// machine.
 [QGVAR(reset), LINKFUNC(resetApply)] call CBA_fnc_addEventHandler;
+
+// Dismount lock. setUnloadInCombat / allowCrewInImmobile both need the VEHICLE
+// local, so FUNC(setDismount) aims a targetEvent at each vehicle and this
+// handler runs on its owner — which on a dedicated server or HC has no
+// interface, hence no hasInterface guard here.
+//
+// Registered unconditionally, NOT behind GVAR(enableDismount): the context
+// action's condition reads that setting LIVE, so gating registration on it
+// would surface a working-looking action on machines that never registered the
+// receiver, and every order would land on a machine that was not listening. An
+// idle CBA event handler costs nothing while the feature stays switched off.
+[QGVAR(dismount), LINKFUNC(dismountApply)] call CBA_fnc_addEventHandler;

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Description
 
-Real-Time Zeus (RTZ) is an Arma 3 mod written in SQF that adds real-time strategy elements to the Zeus interface. It always follows the [ACE3 coding guidelines](https://ace3.acemod.org/wiki/development/coding-guidelines) and CBA's modular component structure — the same conventions ACE3 and ZEN use.
+Real-Time Zeus (RTZ) is an Arma 3 mod written in SQF that adds real-time strategy elements to the Zeus system. It always follows the [ACE3 coding guidelines](https://ace3.acemod.org/wiki/development/coding-guidelines) and CBA's modular component structure — the same conventions ACE3 and ZEN use.
 
 ## References
 
@@ -26,19 +26,19 @@ Current components:
 | Component | Purpose |
 |---|---|
 | `main` | Framework core: prefix, version, macros, CBA/ZEN/LAMBS dependencies |
-| `common` | Shared helpers: unit/squad/vehicle collection, skills, smoke deployment, stance, teleport, placement preview |
+| `common` | Shared helpers: unit/squad/vehicle collection, skills, smoke deployment, stance, teleport, placement preview, curator message reporting |
 | `assemble` | AI orders to assemble/disassemble static weapons and UAVs from backpacks |
 | `attack` | Order groups to find and destroy a target via waypoints |
 | `captive` | Surrender/stand-down toggle, plus enemy-proximity capture that transfers the prisoner and pays out both curators |
-| `control` | Squad control: LAMBS reset, squad reload, squad hide toggle |
-| `dismount` | Unload-in-combat behavior for vehicle passengers |
+| `control` | Squad control: LAMBS reset, squad reload, squad hide/freeze toggle, ownership transfer for units left simulated elsewhere, and the dismount lock that stops a transport's AI crew/cargo bailing out (engine flags plus LAMBS force-eject suppression) |
+| `delete` | Point-free deletion of units, vehicles, bodies and wrecks (context action + keybind); protects players, curator modules and headless clients |
 | `economy` | Zeus point costs: categorization, cost registration, per-curator coefficients (`defaultCosts/`) |
 | `loot` | AI orders to loot bodies/objects |
 | `mine` | Mine placement, detection drawing, and disarm orders |
 | `officer` | Officer auras and area buffs with cooldowns and monitors |
-| `overlays` | Destination and target line overlays for groups |
+| `overlays` | Destination and target line overlays for the curator's selection. One shared stream engine (`fnc_streamClient` / `fnc_streamServer`) drives every overlay: one Draw3D handler, one server poll, one watcher registry, one diffed snapshot event. An overlay is a stream id plus a `fnc_gather*` / `fnc_draw*` pair |
 | `repair` | AI orders to repair vehicles |
-| `restrict` | Locks servicing attribute edits (health/fuel/ammo/skill) outside the curator's editing zones (any curatorEditingArea, not just officer-planted ones); sliders stay visible as info | 
+| `restrict` | Locks servicing attribute edits (health/fuel/ammo/skill/cargo/vehicle damage) outside the curator's editing zones (any curatorEditingArea, not just officer-planted ones, and honouring curatorEditingAreaType); each row is gated against exactly the selection subset it writes to; sliders stay visible as info | 
 | `reverse` | Order vehicles to reverse to a position (keybind) |
 | `selection` | Selection info panel, unit/vehicle tags, vehicle data overlay |
 | `spotting` | AI spotting system: contact callouts, 3D contact markers, curator display |

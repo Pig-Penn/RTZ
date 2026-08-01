@@ -29,7 +29,7 @@
             <English>Decrease Altitude</English>
         </Key>
         <Key ID="STR_RTZ_Common_HeliHeightDown_Description">
-            <English>Lower the selected helicopters' AI fly-in height by the step setting.</English>
+            <English>Lower the selected aircraft's altitude by the step setting.</English>
         </Key>
         <Key ID="STR_RTZ_Common_HeliHeightStep">
             <English>Altitude Step</English>
@@ -41,7 +41,7 @@
             <English>Increase Altitude</English>
         </Key>
         <Key ID="STR_RTZ_Common_HeliHeightUp_Description">
-            <English>Raise the selected helicopters' AI fly-in height by the step setting.</English>
+            <English>Raise the selected aircraft's altitude by the step setting.</English>
         </Key>
         <Key ID="STR_RTZ_Common_MsgBeyondRange">
             <English>Beyond %1 [m]</English>
@@ -82,9 +82,6 @@
         <Key ID="STR_RTZ_Common_PreviewHintRotate">
             <English>LMB place  |  hold rotate modifier to turn  |  ESC cancel</English>
         </Key>
-        <Key ID="STR_RTZ_Common_SmokeScreen">
-            <English>Countermeasures</English>
-        </Key>
         <Key ID="STR_RTZ_Common_StanceAuto">
             <English>Stance Auto</English>
         </Key>
@@ -108,6 +105,12 @@
         </Key>
         <Key ID="STR_RTZ_Common_StanceUp_Description">
             <English>Set the selected AI infantry's stance to standing.</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_SubmenuControl">
+            <English>Controls</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_SubmenuOverlays">
+            <English>Overlays</English>
         </Key>
         <Key ID="STR_RTZ_Common_TeleportCooldown">
             <English>Teleport Cooldown</English>
