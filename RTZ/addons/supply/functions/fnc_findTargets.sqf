@@ -41,6 +41,15 @@ private _targets = [];
 // No `alive` test in here: nearEntities defaults to aliveOnly, so the dead are
 // already gone by the time this filter sees the list.
 {
+    // Checked at the TOP with `break`. This was an `exitWith {}` at the bottom of
+    // the body, described as "the plain forEach break idiom" — it is not one:
+    // exitWith inside a forEach unwinds only the current ITERATION, making it a
+    // continue (docs/Gotchas.md §2). _limit was therefore inert, and the context
+    // menu condition — which asks for exactly one match — swept the whole parked
+    // column, running FUNC(needsAmmo) (a walk over every turret's magazines) on
+    // every vehicle in radius to answer a boolean.
+    if (_limit > 0 && {count _targets >= _limit}) then { break };
+
     if (_x isEqualTo _supply) then { continue };
 
     if !(
@@ -50,11 +59,6 @@ private _targets = [];
     ) then { continue };
 
     _targets pushBack _x;
-
-    // Kept at the top level of the loop body rather than nested in the test
-    // above: this is the plain forEach break idiom that way, with no question
-    // over which scope the exit unwinds.
-    if (_limit > 0 && {count _targets >= _limit}) exitWith {};
 } forEach (_supply nearEntities [VEHICLE_TYPES, GVAR(serviceRadius)]);
 
 _targets

@@ -45,6 +45,18 @@ private _protected = allCurators + (entities "HeadlessClient_F");
 
 private _targets = [];
 {
+    // The context-menu condition only needs to know whether the list would be
+    // non-empty; bailing here keeps a right-click on a large selection from
+    // expanding every crew compartment for an answer it discards.
+    //
+    // `break`, and at the TOP of the body. This was an `exitWith {}` at the
+    // BOTTOM, which is wrong twice over: exitWith inside a forEach exits only
+    // the current ITERATION (it is continue, not break — docs/Gotchas.md §2), so
+    // the loop ran on regardless, and sitting after the expansion it could not
+    // have skipped the work it exists to skip even if it had broken. _firstOnly
+    // was inert: every candidate's crew compartment was expanded every time.
+    if (_firstOnly && { _targets isNotEqualTo [] }) then { break };
+
     // Skip non-objects (a hovered waypoint/marker can arrive here via a modifier)
     if (_x isEqualType objNull && { !isNull _x } && { !(_x in _protected) }) then {
         private _group = if (_x isKindOf "CAManBase") then { [_x] } else { [_x] + crew _x };
@@ -54,11 +66,6 @@ private _targets = [];
             { _targets pushBackUnique _x } forEach _group;
         };
     };
-
-    // The context-menu condition only needs to know whether the list would be
-    // non-empty; bailing here keeps a right-click on a large selection from
-    // expanding every crew compartment for an answer it discards.
-    if (_firstOnly && { _targets isNotEqualTo [] }) exitWith {};
 } forEach _candidates;
 
 _targets
