@@ -113,6 +113,31 @@ This is why the codebase chains conditions as `_a && {_b} && {_c}` (see
 the `if`. In `XEH_postInit` that means the rest of your init never runs, silently. This is the
 failure mode behind the settings race in §4.
 
+### `continue` does not escape a `switch do` case
+
+`continue` applies to the enclosing loop, but a `switch do` case is its own code block —
+a `continue` written inside one does not reliably reach the `forEach` around the `switch`.
+
+```sqf
+{
+    private _list = switch (_source) do {
+        case SRC_HULLS: {
+            if !(_stream in _streams) then { continue };   // BAD - scope is the case
+            _hulls
+        };
+    };
+} forEach _streams;
+```
+
+Hoist the test out of the `switch` so `continue` sits directly in the loop body:
+
+```sqf
+{
+    if (_source == SRC_HULLS && {!(_stream in _streams)}) then { continue };   // GOOD
+    private _list = switch (_source) do { ... };
+} forEach _streams;
+```
+
 ### Nested `forEach` clobbers `_x` and `_forEachIndex`
 
 The inner loop overwrites both. Alias before descending:
@@ -287,7 +312,7 @@ to warn you. The trap is testing locality on the wrong object: for a crewed vehi
 and sensor state belongs to the **crewman** (`effectiveCommander` for movement, `gunner` for
 targeting), and a vehicle can be local here while its crew's group is owned elsewhere. Test
 `local` on the unit you are about to query, not on the hull. See
-[fnc_gatherTarget.sqf](addons/overlays/functions/fnc_gatherTarget.sqf).
+[fnc_gatherTarget.sqf](addons/hud/functions/fnc_gatherTarget.sqf).
 
 `expectedDestination` returns `[position, planningMode, forceReplan]` and reports `[0,0,0]` when
 there is no plan. `planningMode` is one of `DoNotPlan` (not moving), `DoNotPlanFormation`,
@@ -333,7 +358,7 @@ so `getAssignedCuratorUnit` keeps returning a non-null, server-local, *non-playe
 no-op on a dedicated server, but on a **listen server** the host has the receivers registered
 and renders a departed curator's data as its own. `isPlayer` is the correct test, and
 `isPlayer objNull` is `false` so it subsumes the null check. Full reasoning at
-[fnc_spotCheck.sqf:168-178](addons/spotting/functions/fnc_spotCheck.sqf#L168-L178).
+[fnc_spotCheck.sqf:104-112](addons/spotting/functions/fnc_spotCheck.sqf#L104-L112).
 
 ### Context-menu conditions run constantly — keep them cheap
 
@@ -360,7 +385,7 @@ Use `ACTION_INDEX_DISPLAYNAME` / `_ICON` / `_ICONCOLOR` … from
 early and `hemtt check` reports *"macro's result could not be parsed"*. This bites on both
 `LLSTRING(x)` (expands to `localize "STR_…"`) and a `#define` holding a double-quoted literal.
 
-Two fixes, both in [rtz_overlays](addons/overlays): define constants that appear inside `QUOTE`
+Two fixes, both in [rtz_hud](addons/hud): define constants that appear inside `QUOTE`
 with **single** quotes (`#define STREAM_DEST 'dest'` — valid SQF, harmless in config), and
 resolve localized labels **inside** the called function from a plain id rather than passing them
 through the config.
@@ -399,6 +424,23 @@ _unit setVariable [QGVAR(state), _v];              // -> "rtz_component_state"
 
 Always use `QGVAR` for event names and `setVariable` keys — hand-rolled `"rtz_..."` strings
 drift out of sync with the component name the moment anything is renamed.
+
+### `GETMVAR` / `GETGVAR` take a NAME to quote, not a variable holding one
+
+The `GET*VAR` family wraps its first argument in `QUOTE()`, so it expects the variable's
+name as literal source text. Passing a local that *holds* a name string looks right and
+silently looks up the wrong thing:
+
+```sqf
+private _settingVar = QGVAR(pollInterval);           // "rtz_hud_pollInterval"
+private _v = GETMVAR(_settingVar,2);                 // BAD - reads "_settingVar"
+private _v = missionNamespace getVariable [_settingVar, 2];   // GOOD
+```
+
+It does not error — it returns the default forever, so a setting silently never takes
+effect. Use the macro when the name is known at compile time, plain `getVariable` when it
+arrives at runtime (as it does for anything registry-driven, e.g. a stream's cadence
+setting in `EFUNC(hud,registerStream)`).
 
 ### Commas inside macro arguments need `ARR_N`
 
@@ -441,3 +483,6 @@ when someone looks.
 | Zeus can't edit a spawned object | missing `addCuratorEditableObjects` (§5) |
 | Baffling error pointing at an unrelated file | trailing space after `\` in a macro (§6) |
 | Variable name appears literally in-game | macro inside a string literal, missing `QUOTE` (§6) |
+| Loop skips its `continue` and runs on | `continue` inside a `switch do` case (§2) |
+| A setting never takes effect, no error | `GETMVAR` given a variable instead of a name (§6) |
+| Icons draw in first person, or behind the Zeus map | own `Draw3D` handler instead of an `EFUNC(hud,registerRenderer)` renderer (see CLAUDE.md) |

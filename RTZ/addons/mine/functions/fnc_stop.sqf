@@ -26,10 +26,11 @@ if (GVAR(pfh) != -1) then {
     GVAR(pfh) = -1;
 };
 
-if (GVAR(draw) != -1) then {
-    removeMissionEventHandler ["Draw3D", GVAR(draw)];
-    GVAR(draw) = -1;
-};
+// Unregister from rtz_hud's frame loop. The loop gates on the curator display
+// itself, so leaving it registered would draw nothing — but an unregistered
+// renderer is not called at all, and with every renderer gone the loop skips
+// building its camera basis outright.
+[QGVAR(mines3D), RENDER_WORLD] call EFUNC(hud,unregisterRenderer);
 
 GVAR(mapCtrl) = controlNull;
 GVAR(mapEH) = -1;

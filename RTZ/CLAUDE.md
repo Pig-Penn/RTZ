@@ -34,15 +34,14 @@ Current components:
 | `delete` | Point-free deletion of units, vehicles, bodies and wrecks (context action + keybind); protects players, curator modules and headless clients |
 | `economy` | Zeus point costs: categorization, cost registration, per-curator coefficients (`defaultCosts/`) |
 | `loot` | AI orders to sweep nearby bodies, weapon holders, crates and unmanned vehicles and improve their loadout. Gear is classified through a lazily memoized `BIS_fnc_itemType` wrapper (`fnc_itemCategory` / `fnc_weaponScore`), and every take is ROLE-locked against the unit's *config* loadout (`fnc_unitRole`) so a sweep cannot rewrite squad composition. `fnc_lootPlan` is pure and decides what one unit would take from one target — run before dispatch, so nobody is marched to a target they have no use for — while `fnc_lootStep` executes it one step at a time, since engine take actions cannot be stacked and `rearm` must land last. Errand ownership rides entirely on `EFUNC(common,errandToken)`; there is deliberately no separate claim flag |
+| `hud` | **Every curator-view display, and the two engines behind them.** One `Draw3D` handler (`fnc_frameLoop`) draws the whole mod: it resolves the Zeus test, the camera basis and the mouse position ONCE per frame and dispatches to registered renderers, so N displays cost one camera query rather than N. One stream engine (`fnc_selectionPoll` / `fnc_streamServer` / `fnc_streamClient`) feeds them: one client selection poll, one server watcher registry, one poll loop, one diffed snapshot event. Owns the selection info dialog, unit/vehicle tags, vehicle stat cards, and the destination/target overlays |
 | `mine` | Mine placement, detection drawing, and disarm orders |
 | `officer` | Officer auras and area buffs with cooldowns and monitors |
-| `overlays` | Destination and target line overlays for the curator's selection. One shared stream engine (`fnc_streamClient` / `fnc_streamServer`) drives every overlay: one Draw3D handler, one server poll, one watcher registry, one diffed snapshot event. An overlay is a stream id plus a `fnc_gather*` / `fnc_draw*` pair |
 | `repair` | AI orders to repair vehicles |
 | `restrict` | Locks servicing attribute edits (health/fuel/ammo/skill/cargo/vehicle damage) outside the curator's editing zones (any curatorEditingArea, not just officer-planted ones, and honouring curatorEditingAreaType); each row is gated against exactly the selection subset it writes to; sliders stay visible as info | 
 | `reverse` | Order AI-driven land vehicles to back up in a straight line to a position (keybind). AI cannot be commanded to reverse, so the driver is taken off the navigation stack and the hull is pushed with `setVelocity` along an axis captured at order time. One shared per-frame engine (`fnc_reverseTick`) drives every maneuver from a `GVAR(active)` record registry and is created/destroyed with the first/last one; only the velocity push and arrival test run per frame, the abort conditions are throttled. All teardown routes through `fnc_endReverse`, which restores the driver captured at order time — not whoever is in the seat when it ends |
-| `selection` | Selection info panel, unit/vehicle tags, vehicle data overlay |
-| `spotting` | AI spotting system: contact callouts, 3D contact markers, curator display |
-| `supply` | Supply vehicles repair/refuel/rearm the vehicles parked around them |
+| `spotting` | AI spotting DETECTION: the knowsAbout pass, contact callouts, and the client stores behind the contact markers and the remote-control indicator. It decides *what* is spotted; `hud` owns how it looks, and `spotting` registers those renderers with the frame loop |
+| `supply` | Supply vehicles repair/refuel/rearm the vehicles parked around them; owns a supply-lines stream on `hud`'s engine |
 
 **Component skeleton.** New features are added as new components under `addons/`, following the same skeleton:
 - `config.cpp` — `CfgPatches` (name, `requiredAddons`, version) plus includes for `CfgEventHandlers.hpp` / `CfgContext.hpp` / settings
@@ -52,6 +51,19 @@ Current components:
 - `functions/fnc_*.sqf` — one function per file, standard SQF header comment (Author/Arguments/Return Value/Example/Public)
 - `initSettings.inc.sqf` — CBA settings (included from `config.cpp`); `initKeybinds.inc.sqf` for CBA keybinds
 - `stringtable.xml` — ALL user-facing text goes through stringtable entries (`CSTRING`/`LSTRING` macros), never hardcoded strings
+
+**Drawing and streaming go through `hud`.** Two rules, both there to stop the duplication this architecture was built to undo:
+
+- **Never call `addMissionEventHandler ["Draw3D", …]`.** Register a renderer instead:
+  `[QGVAR(myThing), ELINKFUNC(mycomp,drawMyThing), RENDER_WORLD, 50] call EFUNC(hud,registerRenderer)`.
+  `RENDER_WORLD` renderers receive the shared frame context (camera position, camera-right/up, mouse, clock, view distance — indexed by the `CTX_*` macros) and are skipped while the Zeus map covers the 3D view. `RENDER_UI` renderers drive controls on the curator display, receive the display (or `displayNull`), and are called on Zeus-closed frames so they can tear their controls down. Unregister when the display is switched off — that is what makes it free, and with every renderer gone the loop never builds a camera basis. The only sanctioned exception is a short-lived, camera-free draw such as `common/fnc_placementPreview`.
+- **Never build a second selection poll or server gather loop.** Declare a stream:
+  `[STREAM_MINE, LINKFUNC(gatherMine), SRC_HULLS, QEGVAR(hud,pollInterval), 2] call EFUNC(hud,registerStream)`.
+  The engine owns the watcher registry, the per-stream cadence, the resolve of each selection slice (`SRC_UNITS` / `SRC_VEHS` / `SRC_HULLS`, resolved once per watcher per tick), the send diff and the targeted push. A stream is a gatherer plus a renderer — `rtz_supply` is the worked example of a component owning one from outside `hud`.
+
+Both contracts (`RENDER_*`, `CTX_*`, `SRC_*`) live in `main/script_macros.hpp`, not in `hud`'s own header, because component headers are not visible to each other.
+
+Gatherers report **absolute** times, never ages or progress figures: an age changes every tick and defeats the send diff, while a frozen timestamp diffs away and is aged client-side each frame — which also makes the readout climb smoothly between polls instead of stepping.
 
 **ZEN integration.** Context menu actions are declared per-component in `CfgContext.hpp` (`zen_context_menu_actions`); `common/CfgZenContext.hpp` holds the shared RTZ context-menu root. Toggle-style actions keep their label in sync (Show ↔ Hide) via a `fnc_modifyAction` in their component. `common` provides the selection-normalization helpers (`fnc_collectUnits`, `fnc_collectSquads`, `fnc_collectVehicles`) that expand ZEN selections (e.g. vehicles → crew) into flat lists — entry points should go through them.
 

@@ -50,15 +50,13 @@ if (_wanted) then {
     };
 };
 
+// Registration with rtz_hud's shared frame loop, not a Draw3D handler of our
+// own — registering and unregistering is what makes the marker free while it is
+// switched off, exactly as adding/removing the handler used to be.
 if (GVAR(mark3D)) then {
-    if (GVAR(draw) == -1) then {
-        GVAR(draw) = addMissionEventHandler ["Draw3D", {call FUNC(draw3D)}];
-    };
+    [QGVAR(mines3D), ELINKFUNC(mine,draw3D), RENDER_WORLD, 60] call EFUNC(hud,registerRenderer);
 } else {
-    if (GVAR(draw) != -1) then {
-        removeMissionEventHandler ["Draw3D", GVAR(draw)];
-        GVAR(draw) = -1;
-    };
+    [QGVAR(mines3D), RENDER_WORLD] call EFUNC(hud,unregisterRenderer);
 };
 
 if (!isNull _display) then {

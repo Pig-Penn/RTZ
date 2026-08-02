@@ -113,10 +113,14 @@ private _keyEH = _display displayAddEventHandler ["KeyDown", {
 // the default has to be computed from _allowRotate, which params can't express
 private _hint = param [6, [LLSTRING(PreviewHint), LLSTRING(PreviewHintRotate)] select _allowRotate, [""]];
 
-// Feedback marker + hint at the spot, drawn from a Draw3D mission EH — the
-// render pass drawIcon3D belongs in, and the one every other RTZ overlay
-// (rtz_mine, rtz_hud) draws from. It reads the helper's
-// live position, so the PFH below never has to feed it. Drawn upright (angle
+// Feedback marker + hint at the spot, drawn from a Draw3D mission EH of its own.
+// Deliberately NOT on rtz_hud's shared frame loop, which every persistent RTZ
+// overlay rides: that loop exists to stop long-lived displays each rebuilding the
+// camera basis every frame, and this draw needs no camera at all — one drawIcon3D
+// off the helper's live position — while living only for the seconds a picker is
+// open, inside Zeus by construction. Registering it would add indirection and
+// buy nothing. It reads the helper's live position, so the PFH below never has to
+// feed it. Drawn upright (angle
 // 0) rather than spun to the ghost's facing: the ghost model already shows the
 // direction, and a fixed icon reads like vanilla Zeus instead of a tumbling
 // reticle. Single-instance state is safe here — GVAR(previewActive) above

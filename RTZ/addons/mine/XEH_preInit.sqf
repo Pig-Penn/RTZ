@@ -11,7 +11,7 @@ PREP_RECOMPILE_END;
 // so re-testing each entry in the draw handlers would only re-do that work once
 // per mine per frame.
 GVAR(mines) = [];
-GVAR(draw) = -1;
+
 GVAR(pfh) = -1;
 
 // Zeus map Draw handler. The control belongs to the curator display, so both are
