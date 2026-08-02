@@ -5,45 +5,56 @@
  * it can give. The lookup is by position rather than from the curator selection,
  * so the serviced vehicles do not have to be Zeus editable.
  *
- * The capabilities are passed in rather than looked up again, and _firstOnly
- * stops at the first hit - the context menu condition only needs to know whether
- * there is any work at all.
+ * The capabilities are passed in rather than looked up again, and _limit caps the
+ * result: the context menu condition only needs to know whether there is ANY work
+ * at all, and asking for one match turns a full sweep of a parked column into a
+ * walk that stops at the first hit.
+ *
+ * The needs-test is ordered cheapest first — the ammo check walks every turret's
+ * magazines, so it only runs for vehicles already found fully repaired and
+ * fuelled, and only when this supply vehicle carries ammo in the first place.
+ *
+ * Range is measured the same way the mid-service drop test in FUNC(serviceTick)
+ * measures it (3D, hull to hull). It used to acquire in 3D and drop in 2D, which
+ * left a band where a vehicle could be too far to pick up yet too close to let go.
  *
  * Arguments:
  * 0: Supply Vehicle <OBJECT>
  * 1: Capabilities, as returned by FUNC(supplyCapabilities) <ARRAY>
- * 2: Stop At The First Match <BOOL> (default: false)
+ * 2: Stop After This Many Matches, 0 For All <NUMBER> (default: 0)
  *
  * Return Value:
  * Serviceable Vehicles <ARRAY>
  *
  * Example:
- * [_truck, [true, true, false]] call rtz_supply_fnc_findTargets
+ * [_truck, [ARR_3(true,true,false)]] call rtz_supply_fnc_findTargets
  *
  * Public: No
  */
 
-params ["_supply", "_capabilities", ["_firstOnly", false]];
+params ["_supply", "_capabilities", ["_limit", 0]];
 
 _capabilities params ["_canRepair", "_canRefuel", "_canRearm"];
 
-private _nearby = _supply nearEntities [VEHICLE_TYPES, GVAR(serviceRadius)];
+private _targets = [];
 
-// Ordered cheapest test first: the ammo check walks the turret magazines, so it
-// only runs for vehicles that are already fully repaired and fuelled
-private _serviceable = {
-    _x != _supply && {alive _x}
-    && {
+// No `alive` test in here: nearEntities defaults to aliveOnly, so the dead are
+// already gone by the time this filter sees the list.
+{
+    if (_x isEqualTo _supply) then { continue };
+
+    if !(
         (_canRepair && {damage _x > REPAIR_THRESHOLD})
         || {_canRefuel && {fuel _x < FUEL_THRESHOLD}}
         || {_canRearm && {[_x] call FUNC(needsAmmo)}}
-    }
-};
+    ) then { continue };
 
-if (_firstOnly) exitWith {
-    private _index = _nearby findIf _serviceable;
+    _targets pushBack _x;
 
-    if (_index < 0) then {[]} else {[_nearby select _index]}
-};
+    // Kept at the top level of the loop body rather than nested in the test
+    // above: this is the plain forEach break idiom that way, with no question
+    // over which scope the exit unwinds.
+    if (_limit > 0 && {count _targets >= _limit}) exitWith {};
+} forEach (_supply nearEntities [VEHICLE_TYPES, GVAR(serviceRadius)]);
 
-_nearby select _serviceable
+_targets

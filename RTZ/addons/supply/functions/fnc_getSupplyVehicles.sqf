@@ -19,12 +19,6 @@
 
 params [["_objects", [], [[]]]];
 
-private _vehicles = [];
-
-{
-    if (alive _x && {true in ([_x] call FUNC(supplyCapabilities))}) then {
-        _vehicles pushBack _x;
-    };
-} forEach ([_objects] call EFUNC(common,collectVehicles));
-
-_vehicles
+([_objects] call EFUNC(common,collectVehicles)) select {
+    alive _x && {true in ([_x] call FUNC(supplyCapabilities))}
+}

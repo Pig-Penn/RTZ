@@ -1,98 +1,93 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Runs one supply vehicle's order: damage and fuel are worked off over the
- * duration setting, ammo is topped up in one go at the end because there is no
- * way to read a partial ammo ratio back.
+ * SERVER. Starts one supply vehicle's order: validates the target list the
+ * curator's client sent, claims what is still free, snapshots it and hands the
+ * work to EFUNC(common,progressJob). The per-tick body is FUNC(serviceTick) and
+ * the completion pass is FUNC(endService).
  *
- * The loop itself is EFUNC(common,progressJob) — one per-frame handler ticking at
- * the GVAR(serviceInterval) setting, superseding any earlier order on the same
- * supply vehicle. The starting damage and fuel are snapshotted here to size the
- * job, but each tick applies its SHARE of that deficit as a DELTA against the
- * vehicle's live value — it never writes an absolute interpolated figure. That
- * distinction matters under fire: a vehicle shot up mid-service keeps the new
- * damage (the service just keeps chipping away at the original deficit) instead of
- * having it silently erased by the next write. The share is taken from elapsed
- * time rather than a fixed per-tick step, so a skipped or late tick cannot drift
- * the total.
+ * The capabilities are recomputed here rather than taken from the wire. They
+ * used to ride along with the order, which meant a stale or hand-crafted client
+ * event could ask a troop truck to rearm a tank; the lookup is class-cached, so
+ * trusting nothing costs nothing.
  *
- * Targets are dropped once they die or drive out of range and the job stops as
- * soon as the work is done or the list runs empty, so an order costs nothing once
- * it is finished. Must be executed on the server.
+ * Targets are CLAIMED for the duration of the job (plus CLAIM_GRACE). Two supply
+ * vehicles parked together see each other's targets, and each job interpolates
+ * from its own snapshot, so letting both take one vehicle makes them overwrite
+ * each other's fuel and damage every tick. FUNC(orderResupply) already
+ * de-duplicates within a single order, but that is a client-side list and cannot
+ * see an order issued a second ago, or one issued by a different curator — this
+ * is the guard that actually holds.
  *
  * Arguments:
  * 0: Supply Vehicle <OBJECT>
- * 1: Capabilities, as returned by FUNC(supplyCapabilities) <ARRAY>
- * 2: Vehicles To Service <ARRAY>
+ * 1: Vehicles To Service <ARRAY>
+ * 2: Ordering Curator <OBJECT> (default: objNull)
  *
  * Return Value:
  * None
  *
  * Example:
- * [_truck, [ARR_3(true,true,false)], _targets] call rtz_supply_fnc_serviceVehicles
+ * [_truck, _targets, player] call rtz_supply_fnc_serviceVehicles
  *
  * Public: No
  */
 
-params ["_supply", "_capabilities", "_targets"];
+params ["_supply", "_targets", ["_curator", objNull]];
 
-if (!alive _supply || {_targets isEqualTo []}) exitWith {};
+if (isNull _supply || {!alive _supply} || {_targets isEqualTo []}) exitWith {};
+
+([_supply] call FUNC(supplyCapabilities)) params ["_canRepair", "_canRefuel", "_canRearm"];
+if (!_canRepair && {!_canRefuel} && {!_canRearm}) exitWith {};
+
+private _radius   = GVAR(serviceRadius);
+private _duration = GVAR(serviceDuration) max 1;
+private _until    = CBA_missionTime + _duration + CLAIM_GRACE;
+
+// Snapshot layout per entry: [vehicle, startDamage, startFuel]. The snapshot
+// doubles as the needs-this-service test — a vehicle pulled in for fuel alone
+// never pays for a setDamage that would write back the value it already has.
+private _work     = [];
+private _vehicles = [];
+
+{
+    // Re-validated server-side: the list was resolved on the curator's client a
+    // network hop ago, so anything in it may have died, driven off or never been
+    // a vehicle at all.
+    if (!(_x isEqualType objNull)) then { continue };
+    if (isNull _x || {!alive _x} || {_x isEqualTo _supply}) then { continue };
+    if (!(_x isKindOf "AllVehicles") || {_x isKindOf "CAManBase"}) then { continue };
+    if (_x distance _supply > _radius) then { continue };
+
+    // Free if nobody holds it, the holder is this same truck (a repeat order
+    // supersedes its own job rather than being blocked by it), the holder is
+    // gone, or the claim has simply run out.
+    (_x getVariable [QGVAR(claim), []]) params [["_by", objNull], ["_expires", 0]];
+    if (!isNull _by && {_by isNotEqualTo _supply} && {alive _by} && {CBA_missionTime < _expires}) then {
+        continue;
+    };
+
+    _x setVariable [QGVAR(claim), [_supply, _until]];
+
+    _work pushBack [_x, damage _x, fuel _x];
+    _vehicles pushBack _x;
+} forEach _targets;
+
+if (_work isEqualTo []) exitWith {};
+
+// Contract read by FUNC(gatherSupply) for the supply-lines overlay: the vehicle
+// list is mutated in place by FUNC(serviceTick) as targets drop, and the start
+// time is `time` (not CBA_missionTime) because that is the clock the overlay
+// engine's snapshots are stamped against. Server-side only — the gatherer runs
+// on the server too, so there is nothing to broadcast.
+_supply setVariable [QGVAR(servicing), [_vehicles, time, _duration]];
 
 [
     _supply,
     "supply",
-    GVAR(serviceDuration),
-    (GETGVAR(serviceInterval,1)) max SERVICE_TICK_MIN,
-    {
-        params ["_args", "_step", "_progress"];
-        _args params ["_supply", "_capabilities", "_work", "_radius"];
-
-        if (!alive _supply) exitWith {false};
-
-        _capabilities params ["_canRepair", "_canRefuel", "_canRearm"];
-
-        private _finished = _progress >= 1;
-        private _dropped = false;
-
-        {
-            _x params ["_vehicle", "_startDamage", "_startFuel"];
-
-            // Mark rather than delete so the list is compacted at most once per tick
-            if (!alive _vehicle || {_vehicle distance2D _supply > _radius}) then {
-                _x set [0, objNull];
-                _dropped = true;
-            } else {
-                // The snapshot doubles as the needs-this-service test: a vehicle
-                // pulled in for fuel alone never pays for a setDamage that would
-                // write back the value it already has.
-                // useEffects false — this is scripted maintenance, not a hit, so it
-                // must not fire the damage/repair effect chain once a second.
-                if (_canRepair && {_startDamage > 0}) then {
-                    _vehicle setDamage [((damage _vehicle) - (_startDamage * _step)) max 0, false];
-                };
-
-                if (_canRefuel && {_startFuel < 1}) then {
-                    _vehicle setFuel (((fuel _vehicle) + ((1 - _startFuel) * _step)) min 1);
-                };
-
-                if (_canRearm && _finished) then {
-                    _vehicle setVehicleAmmo 1;
-                };
-            };
-        } forEach _work;
-
-        if (_dropped) then {
-            _work = _work select {!isNull (_x select 0)};
-            _args set [2, _work];
-        };
-
-        // Nothing left worth servicing — stop rather than idle out the duration
-        _work isNotEqualTo []
-    },
-    [
-        _supply,
-        _capabilities,
-        _targets apply {[_x, damage _x, fuel _x]},
-        GVAR(serviceRadius)
-    ]
+    _duration,
+    GVAR(serviceInterval) max SERVICE_TICK_MIN,
+    LINKFUNC(serviceTick),
+    [_supply, _canRepair, _canRefuel, _canRearm, _work, _radius, _curator],
+    LINKFUNC(endService)
 ] call EFUNC(common,progressJob);

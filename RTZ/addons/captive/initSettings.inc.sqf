@@ -1,10 +1,19 @@
 private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 
-// Master switch for the whole surrender / capture system. While off the context
-// action never registers and the capture watch never starts (see XEH_postInit).
+// One master switch for the whole component. Surrender and the enemy-proximity
+// capture that follows from it were two separate checkboxes; they are one
+// feature. Capture only ever acts on units this system surrendered, and a
+// surrender whose prisoners can never be taken is a pose generator — neither
+// half is meaningful alone, so neither gets its own toggle.
+//
+// Read LIVE, at the moment it matters: the context action's condition tests it
+// on every menu open and FUNC(registerSurrender) tests it before admitting a
+// unit to the capture watch. Nothing installs itself behind this flag (see
+// XEH_postInit), so switching it on or off mid-mission takes effect at once and
+// the setting does not demand a restart.
 [
-    QGVAR(enableSurrender), "CHECKBOX",
-    [LSTRING(Surrender), LSTRING(Surrender_Description)],
+    QGVAR(enabled), "CHECKBOX",
+    [LSTRING(Enabled), LSTRING(Enabled_Description)],
     _category,
     false,
     true
@@ -20,17 +29,7 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     true
 ] call CBA_fnc_addSetting;
 
-// Enemy proximity capture: a surrendered unit with a live enemy inside the
-// radius is taken prisoner — permanently surrendered, control transfers to the
-// capturing side's curators, and both curators are awarded points.
-[
-    QGVAR(enableCapture), "CHECKBOX",
-    [LSTRING(Capture), LSTRING(Capture_Description)],
-    _category,
-    false,
-    true
-] call CBA_fnc_addSetting;
-
+// How close an enemy must come to take a surrendered unit prisoner.
 [
     QGVAR(captureRadius), "SLIDER",
     [LSTRING(CaptureRadius), LSTRING(CaptureRadius_Description)],

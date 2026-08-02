@@ -1,4 +1,5 @@
 #include "script_component.hpp"
 
-// Reverse orders are executed where the vehicle is local
-[QGVAR(reverse), {_this call FUNC(reverseTo)}] call CBA_fnc_addEventHandler;
+// Reverse orders are executed where the vehicle is local — setVelocity only
+// moves an object on the machine that owns it
+[QGVAR(reverse), LINKFUNC(reverseTo)] call CBA_fnc_addEventHandler;

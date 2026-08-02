@@ -1,7 +1,13 @@
 PREP(canResupply);
+PREP(drawSupply);
+PREP(endService);
 PREP(findTargets);
+PREP(gatherSupply);
 PREP(getSupplyVehicles);
 PREP(needsAmmo);
 PREP(orderResupply);
+PREP(serviceTick);
 PREP(serviceVehicles);
 PREP(supplyCapabilities);
+PREP(supplyOverlayModifier);
+PREP(toggleSupplyOverlay);

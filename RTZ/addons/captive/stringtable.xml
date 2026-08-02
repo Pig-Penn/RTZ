@@ -10,20 +10,20 @@
         <Key ID="STR_RTZ_Captive_ActionSurrender">
             <English>Surrender</English>
         </Key>
-        <Key ID="STR_RTZ_Captive_Capture">
-            <English>Capture</English>
-        </Key>
         <Key ID="STR_RTZ_Captive_CaptureRadius">
             <English>Capture Radius</English>
         </Key>
         <Key ID="STR_RTZ_Captive_CaptureRadius_Description">
             <English>How close, in metres, an enemy must come to a surrendered unit in order to take it prisoner.</English>
         </Key>
-        <Key ID="STR_RTZ_Captive_Capture_Description">
-            <English>Surrendered units are taken prisoner when an enemy comes within the Capture Radius: the capturing curator and the owning curator each receive points worth half the unit's value.</English>
-        </Key>
         <Key ID="STR_RTZ_Captive_DisplayName">
             <English>Captives</English>
+        </Key>
+        <Key ID="STR_RTZ_Captive_Enabled">
+            <English>Enable Captives</English>
+        </Key>
+        <Key ID="STR_RTZ_Captive_Enabled_Description">
+            <English>Adds a context menu action to toggle selected units between fighting and a scripted surrender (captive, disabled AI, hands up). Surrendered units are taken prisoner when an enemy comes within the Capture Radius: the prisoner is disarmed and joins his captor's group, control passes to the capturing curator, and both the capturing and the owning curator receive points worth half the unit's value.</English>
         </Key>
         <Key ID="STR_RTZ_Captive_MsgCaptured">
             <English>%1 captured — +%2 [pts]</English>
@@ -48,12 +48,6 @@
         </Key>
         <Key ID="STR_RTZ_Captive_StandDownLockTime_Description">
             <English>Seconds after surrendering during which a unit cannot be ordered back into the fight.</English>
-        </Key>
-        <Key ID="STR_RTZ_Captive_Surrender">
-            <English>Surrender</English>
-        </Key>
-        <Key ID="STR_RTZ_Captive_Surrender_Description">
-            <English>Add a context menu action to toggle selected units between fighting and a scripted surrender (captive, disarmed AI, hands up).</English>
         </Key>
     </Package>
 </Project>

@@ -15,13 +15,8 @@
 
 #include "\x\rtz\addons\main\script_macros.hpp"
 
-// Shared preamble for every Zeus keybind handler: act only while this machine's
-// Zeus interface is open, and never hijack a keystroke the curator is typing
-// into ZEN's search box. Both paths return false so the key passes through to
-// whatever would normally receive it.
-#define CHECK_CURATOR_INPUT \
-    if (isNull curatorCamera) exitWith {false}; \
-    if (GETMVAR(RscDisplayCurator_search,false)) exitWith {false}
+// CHECK_CURATOR_INPUT moved to main's script_macros.hpp — rtz_reverse binds a
+// key too, and component script_component.hpp files cannot see each other.
 
 // Sentinel returned by the skill table for classes without an entry
 #define SKILL_NONE -1

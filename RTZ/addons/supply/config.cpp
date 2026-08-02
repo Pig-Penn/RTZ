@@ -6,7 +6,11 @@ class CfgPatches {
         units[] = {};
         weapons[] = {};
         requiredVersion = REQUIRED_VERSION;
-        requiredAddons[] = {"rtz_main", "rtz_common", "zen_context_menu"};
+        // rtz_overlays is required for ORDERING, not for features: the
+        // supply-lines overlay registers itself into that addon's stream
+        // registries from XEH_postInit, and those registries are built in the
+        // engine's own postInit. requiredAddons is what guarantees it runs first.
+        requiredAddons[] = {"rtz_main", "rtz_common", "rtz_overlays", "zen_context_menu"};
         author = "Maxim";
         authors[] = {"Maxim"};
         url = "";

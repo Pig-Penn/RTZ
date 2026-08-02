@@ -22,5 +22,17 @@
         <Key ID="STR_RTZ_Loot_Radius_Description">
             <English>How far around a squad's leader the Loot Nearby action searches for lootable bodies, crates and vehicles (meters).</English>
         </Key>
+        <Key ID="STR_RTZ_Loot_TakeItems">
+            <English>Take Specialist Items</English>
+        </Key>
+        <Key ID="STR_RTZ_Loot_TakeItems_Description">
+            <English>Allow looters to take first aid kits and night vision, a medikit for medics, a toolkit for engineers and a mine detector for explosive specialists. Disabled, the sweep covers weapons, armour and ammunition only.</English>
+        </Key>
+        <Key ID="STR_RTZ_Loot_UpgradeGear">
+            <English>Upgrade Occupied Slots</English>
+        </Key>
+        <Key ID="STR_RTZ_Loot_UpgradeGear_Description">
+            <English>Allow looters to swap gear they already have for something better, within the limits of their role - a rifleman upgrades to a better rifle but never picks up a machine gun, and only a unit whose role carries a launcher will take one. Disabled, looters only fill slots that are empty.</English>
+        </Key>
     </Package>
 </Project>

@@ -23,3 +23,28 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     [10, 100, 50, 0],
     true
 ] call CBA_fnc_addSetting;
+
+// Whether an OCCUPIED slot may be swapped for something better. Filling an EMPTY slot
+// is never gated by this - a disarmed unit picks a weapon up either way - so turning
+// it off can only ever leave a squad closer to the loadout it was placed with, never
+// worse off. Global, because FUNC(lootPlan) is the only reader and it runs on the
+// server: a curator's local copy would have no effect at all
+[
+    QGVAR(upgradeGear), "CHECKBOX",
+    [LSTRING(UpgradeGear), LSTRING(UpgradeGear_Description)],
+    _category,
+    true,
+    true
+] call CBA_fnc_addSetting;
+
+// Whether the sweep bothers with the specialist items - first aid kits, night vision,
+// a medikit for medics, a toolkit for engineers, a mine detector for EOD. Off, the
+// order is about weapons and armor only, and a crate holding nothing else stops being
+// a destination at all. Global for the same reason as above
+[
+    QGVAR(takeItems), "CHECKBOX",
+    [LSTRING(TakeItems), LSTRING(TakeItems_Description)],
+    _category,
+    true,
+    true
+] call CBA_fnc_addSetting;

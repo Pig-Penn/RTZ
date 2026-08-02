@@ -1,15 +1,17 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Resolves a Zeus selection to the unique list of men who can surrender: AI
- * only (the apply event runs on the unit's owner machine, so a player here
- * would have his controls seized), alive, conscious, on foot (not mounted —
- * forcing the hands-up pose on a seat makes no sense), and not already taken
- * prisoner (a captured unit is permanently out of its former curator's
- * hands). A selected man contributes himself; a selected vehicle contributes
- * any dismounted crew (nothing, in practice, since crew is by definition
- * mounted — mirrors EFUNC(common,collectUnits)'s expansion shape, with the
- * extra AI/alive/foot/uncaptured filters this feature needs on top).
+ * Resolves a Zeus selection to the unique list of units the surrender toggle can
+ * act on. Eligibility itself lives in CAN_SURRENDER (script_component.hpp),
+ * shared with the action's condition, its modifier and the authoritative guard
+ * in FUNC(surrenderApply).
+ *
+ * This used to expand a selected vehicle to `crew _x`, mirroring
+ * EFUNC(common,collectUnits). That branch was dead code and always had been:
+ * every crewman has an objectParent, which the on-foot half of CAN_SURRENDER
+ * rejects — a seated unit cannot be posed with its hands up. A selected vehicle
+ * therefore contributes nothing, and expanding it only bought an allocation per
+ * vehicle to throw the result away.
  *
  * Arguments:
  * 0: Objects from curatorSelected / a ZEN action's selection + hovered entity <ARRAY>
@@ -27,20 +29,12 @@ params ["_objects"];
 
 private _units = [];
 {
-    // Skip non-objects (a hovered group/waypoint can arrive here via a modifier).
-    if (_x isEqualType objNull) then {
-        private _cands = if (_x isKindOf "CAManBase") then { [_x] } else { crew _x };
-        {
-            if (
-                alive _x
-                && {!isPlayer _x}
-                && {lifeState _x isNotEqualTo "INCAPACITATED"}
-                && {isNull objectParent _x}
-                && {!(_x getVariable [QGVAR(captured), false])}
-            ) then {
-                _units pushBackUnique _x;
-            };
-        } forEach _cands;
+    // Type screen first — a hovered group or waypoint reaches this array and
+    // isKindOf inside the macro would type-error on it.
+    if (_x isEqualType objNull && {CAN_SURRENDER(_x)}) then {
+        // Unique: the hovered entity is appended to the selection by the caller
+        // and is very often already in it.
+        _units pushBackUnique _x;
     };
 } forEach _objects;
 

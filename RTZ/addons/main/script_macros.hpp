@@ -44,6 +44,18 @@
 #define SELECTED_OBJECTS (curatorSelected select 0)
 #define SELECTED_GROUPS (curatorSelected select 1)
 
+// Shared preamble for every Zeus keybind handler: act only while this machine's
+// Zeus interface is open, and never hijack a keystroke the curator is typing
+// into ZEN's search box. Both paths return false so the key passes through to
+// whatever would normally receive it.
+//
+// Lives here rather than in rtz_common because component script_component.hpp
+// files are not visible to each other — any component that binds a key needs it,
+// and only main is on everyone's include path.
+#define CHECK_CURATOR_INPUT \
+    if (isNull curatorCamera) exitWith {false}; \
+    if (GETMVAR(RscDisplayCurator_search,false)) exitWith {false}
+
 // Indices into ZEN's compiled context-menu action array — the array a
 // modifierFunction receives as `_this select 0` and mutates in place. Layout
 // per zen_context_menu_fnc_compileActions; lives here rather than in one

@@ -1,29 +1,29 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * One unit loots one lootable target it is standing next to. SERVER (the unit must be
- * local), called by FUNC(lootSquads) when the unit arrives. The scope is loadout
- * OPTIMIZATION: a slot is swapped whenever the target holds something strictly
- * better, not only when the unit's own slot is empty.
+ * Arrival hook of the loot errand: the unit is standing over his target, so work out
+ * what is worth taking and hand the queue to FUNC(lootStep). SERVER - everything
+ * downstream needs the unit local.
  *
- *   - primary weapon -> take if empty, or swap up a rank (rifle/SMG/shotgun <
- *                       sniper rifle/machine gun)
- *   - launcher       -> take if empty, or swap a rocket launcher for a missile
- *                       launcher (guided beats unguided)
- *   - vest           -> take if empty, or swap for higher chest armor (contents
- *                       transferred, LAMBS doCheckBody pattern)
- *   - headgear       -> take if unarmored and the target's is armored
- *   - backpack       -> take if empty (contents included) - capacity has no
- *                       config-exposed rank to compare, so this stays gap-fill
- *   - ammo           -> engine "rearm" action last, so magazines for anything just
- *                       taken are picked up too
+ * The plan is built HERE rather than reused from the dispatch, even though
+ * FUNC(lootSquads) already built one to decide the walk was worth making. Seconds
+ * have passed: a co-claimant may have stripped the body, the unit may have been shot
+ * and lost the vest that made a better one an upgrade, the crate may be empty. The
+ * plan is cheap and every input to it has moved, so re-deriving it on the spot is
+ * both simpler and more correct than carrying a stale one across the walk.
  *
- * The engine actions play the pickup animations and handle the networked inventory
- * sync, so the loot looks natural and needs no manual cargo bookkeeping. Every call
- * no-ops gracefully when the target was already emptied by a co-claimant.
+ * An empty plan is a normal outcome, not a failure - it just means the target was
+ * worth walking to when the order went out and is not worth taking from now.
+ *
+ * The errand token is snapshotted here, at the one moment it is known to be ours:
+ * EFUNC(common,approach) only runs this hook if its own supersede guard passed, so
+ * whatever the token reads now is this errand's. Every step down the queue compares
+ * against it, which is what lets a curator re-task a unit mid-pickup and have the
+ * abandoned queue fall silent instead of walking him back into formation on top of
+ * his new order. Same contract rtz_repair's arrival hook works under.
  *
  * Arguments:
- * 0: Unit <OBJECT> - the unit doing the looting
+ * 0: Unit <OBJECT>
  * 1: Target <OBJECT> - corpse, weapon holder, crate or vehicle
  *
  * Return Value:
@@ -37,103 +37,23 @@
 
 params ["_unit", "_target"];
 
-private _isBody = _target isKindOf "CAManBase";
+if (!alive _unit) exitWith {};
 
-// Weapons on offer: the worn weapons for a corpse, the weapon cargo otherwise
-private _weapons = if (_isBody) then {weapons _target} else {(getWeaponCargo _target) select 0};
-
-// Rank a weapon within its own slot category, 0 = not eligible for that slot. Sniper
-// rifles / machine guns outrank plain rifles-SMGs-shotguns, missile launchers
-// (guided) outrank rocket launchers (unguided)
-private _fnc_weaponRank = {
-    params ["_class", "_isLauncher"];
-
-    private _base = [_class] call BIS_fnc_baseWeapon;
-    private _rank = 0;
-
-    if (_isLauncher) then {
-        if (_base in allMissileLaunchers) then {
-            _rank = 2;
-        } else {
-            if (_base in allRocketLaunchers) then {_rank = 1};
-        };
-    } else {
-        if (_base in allSniperRifles || {_base in allMachineGuns}) then {
-            _rank = 2;
-        } else {
-            if (_base in allRifles || {_base in allSMGs} || {_base in allShotguns}) then {_rank = 1};
-        };
-    };
-
-    _rank
+// The target can be emptied and deleted by a co-claimant while this unit is still
+// walking, so it is re-checked here rather than trusted from the dispatch
+if (isNull _target) exitWith {
+    [_unit] call FUNC(clearErrand);
 };
 
-// CfgWeapons "type" is the engine's slot flag. Take if the slot is empty, or swap up
-// a rank. An empty slot ranks 0, which every eligible weapon beats
-if (_weapons isNotEqualTo []) then {
-    {
-        _x params ["_type", "_isLauncher", "_current"];
+private _plan = [_unit, _target] call FUNC(lootPlan);
 
-        private _rank = if (_current isEqualTo "") then {0} else {[_current, _isLauncher] call _fnc_weaponRank};
-        private _index = _weapons findIf {
-            getNumber (configFile >> "CfgWeapons" >> _x >> "type") == _type
-            && {([_x, _isLauncher] call _fnc_weaponRank) > _rank}
-        };
-
-        if (_index > -1) then {
-            _unit action ["TakeWeapon", _target, _weapons select _index];
-        };
-    } forEach [
-        [TYPE_WEAPON_PRIMARY, false, primaryWeapon _unit],
-        [TYPE_WEAPON_SECONDARY, true, secondaryWeapon _unit]
-    ];
+if (_plan isEqualTo []) exitWith {
+    [_unit] call FUNC(clearErrand);
 };
 
-// Corpse-only: the backpack, vest and headgear transfers keep their contents by
-// re-adding the items after the swap (matches LAMBS fnc_doCheckBody). Vest and
-// headgear swap up on protection, backpack has no comparable rank so it stays
-// gap-fill
-if (_isBody) then {
-    if (backpack _unit isEqualTo "" && {backpack _target isNotEqualTo ""}) then {
-        private _items = backpackItems _target;
-        private _backpack = backpack _target;
+// Settle on the spot and look at what he is picking up - approach resolves within a
+// couple of meters, by which point he may still be walking
+doStop _unit;
+_unit doWatch _target;
 
-        removeBackpackGlobal _target;
-        _unit addBackpack _backpack;
-
-        {
-            _unit addItemToBackpack _x;
-        } forEach _items;
-    };
-
-    private _fnc_chestArmor = {
-        params ["_vest"];
-
-        if (_vest isEqualTo "") exitWith {-1};
-
-        getNumber (configFile >> "CfgWeapons" >> _vest >> "ItemInfo" >> "HitpointsProtectionInfo" >> "Chest" >> "armor")
-    };
-
-    if (([vest _target] call _fnc_chestArmor) > ([vest _unit] call _fnc_chestArmor)) then {
-        private _items = vestItems _target;
-        private _vest = vest _target;
-
-        removeVest _target;
-        _unit addVest _vest;
-
-        {
-            _unit addItemToVest _x;
-        } forEach _items;
-    };
-
-    if (!(headgear _unit in allArmoredHeadgear) && {headgear _target in allArmoredHeadgear}) then {
-        private _headgear = headgear _target;
-
-        removeHeadgear _target;
-        _unit addHeadgear _headgear;
-    };
-};
-
-// Last: the engine rearm tops up the magazines for the unit's current weapons,
-// including anything just taken above
-_unit action ["rearm", _target];
+[_unit, _target, _plan, 0, [_unit] call EFUNC(common,errandToken)] call FUNC(lootStep);

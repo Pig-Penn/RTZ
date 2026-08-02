@@ -5,6 +5,11 @@
  * supplies and has something serviceable parked next to it. Drives the
  * visibility of the context menu action.
  *
+ * This is the hot path — ZEN re-evaluates it every time the menu is built — so
+ * both loops stop at the first hit: FUNC(findTargets) is asked for a single match
+ * rather than a full sweep, and the findIf stops at the first supply vehicle that
+ * has any work.
+ *
  * Arguments:
  * 0: Selected Objects <ARRAY>
  *
@@ -26,5 +31,5 @@ if (_supplies isEqualTo []) exitWith {false};
 
 // One serviceable vehicle anywhere in the selection is enough to offer the order
 (_supplies findIf {
-    ([_x, [_x] call FUNC(supplyCapabilities), true] call FUNC(findTargets)) isNotEqualTo []
+    ([_x, [_x] call FUNC(supplyCapabilities), 1] call FUNC(findTargets)) isNotEqualTo []
 }) > -1
