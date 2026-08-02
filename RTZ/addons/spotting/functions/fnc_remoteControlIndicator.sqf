@@ -71,52 +71,14 @@ if (hasInterface) then {
     // to suppress its chevron while the RC icon is showing.
     GVAR(rcDisplay) = createHashMap;
 
-    addMissionEventHandler ["Draw3D", {
-        // Empty-map test first: it is the overwhelmingly common case and the
-        // cheapest check. Then curator-view-only gates - no Zeus interface
-        // (display 312) or the Zeus map is open (drawIcon3D invisible anyway).
-        if (count GVAR(rcDisplay) == 0) exitWith {};
-        if (isNull (findDisplay 312) || {visibleMap}) exitWith {};
-
-        private _camPos   = positionCameraToWorld [0,0,0];   // Zeus cursor camera, for fade
-        private _viewDist = getObjectViewDistance select 0;
-        // Slow colour shift (~0.5 Hz): lerps 0→RC_COLOR_SHIFT_MAX toward white so the
-        // icon brightens cyclically without touching alpha (distance fade stays clean).
-        private _shift = RC_COLOR_SHIFT_MAX * ((sin (time * RC_COLOR_SHIFT_FREQ) + 1) / 2);
-        {
-            // _x = unitNetId (HashMap key); _y = stored display data.
-            _y params ["_unit", "_colorArray"];
-            if (!alive _unit) then { continue };   // alive objNull is false — covers deleted units too
-            private _anchor = vehicle _unit;
-            private _dist   = _camPos distance _anchor;
-
-            // On foot: chevron recipe, head + 1 m (identical to spotting chevrons).
-            // Mounted: head + 1 m sits inside the hull, so anchor to the vehicle's
-            // bounding-box roof + 1 m instead.
-            private _iconPos = if (isNull objectParent _unit) then {
-                (_unit modelToWorldVisual (_unit selectionPosition "Head")) vectorAdd [0, 0, 1]
-            } else {
-                _anchor modelToWorldVisual [0, 0, ((boundingBoxReal _anchor) select 1 select 2) + 1]
-            };
-            // ~1/4 of the chevron size table (the portrait texture fills its full
-            // bounding box whereas the thin wedge does not), as a smooth ramp.
-            private _iconW = linearConversion [RC_ICON_NEAR, RC_ICON_FAR, _dist, RC_ICON_MAX_WIDTH, RC_ICON_MIN_WIDTH, true];
-
-            // Distance fade; RGB shifted toward white on each cycle.
-            private _alpha = ((_viewDist - _dist) / _viewDist) max 0;
-            private _col   = [
-                ((_colorArray#0) + _shift * (1 - _colorArray#0)) min 1,
-                ((_colorArray#1) + _shift * (1 - _colorArray#1)) min 1,
-                ((_colorArray#2) + _shift * (1 - _colorArray#2)) min 1,
-                _alpha
-            ];
-
-            drawIcon3D [
-                RC_TEXTURE,
-                _col, _iconPos, _iconW, _iconW, 0, "", 0, 0, "RobotoCondensed", "center", false, 0, 0
-            ];
-        } forEach GVAR(rcDisplay);
-    }];
+    // The icon itself is drawn by EFUNC(hud,drawRcIndicator), registered with the
+    // ONE shared Draw3D handler rtz_hud owns. This used to be a Draw3D handler of
+    // its own, which meant re-running the Zeus test and a fresh
+    // positionCameraToWorld every frame alongside every other display doing the
+    // same. The frame loop resolves that context once and also owns the
+    // curator-view gates (Zeus open, map not covering the 3D view) this handler
+    // used to repeat.
+    [QGVAR(rcIndicator), ELINKFUNC(hud,drawRcIndicator), RENDER_WORLD, 40] call EFUNC(hud,registerRenderer);
 
     // Store/update the controlled unit and colour (idempotent re-sends are cheap).
     [QGVAR(rcDetected), {

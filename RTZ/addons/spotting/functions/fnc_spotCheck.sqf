@@ -108,7 +108,7 @@ private _officerZones = GETMVAR(RTZ_officerZoneMap,createHashMap);
 // server — a silent no-op on a dedicated server (whose keys then never age out of
 // _activeSpots), but on a listen server the host has the receivers registered and
 // would render a departed curator's entire contact picture as its own. isPlayer is
-// the same test FUNC(remoteControlIndicator) and rtz_selection already use, and
+// the same test FUNC(remoteControlIndicator) and rtz_hud already use, and
 // `isPlayer objNull` is false, so it subsumes the null check.
 // Same-side curators share the same spotter pool and see the same hostiles, so
 // the entire knowsAbout matrix is computed once per side and emitted to each.

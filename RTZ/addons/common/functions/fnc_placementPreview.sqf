@@ -115,7 +115,7 @@ private _hint = param [6, [LLSTRING(PreviewHint), LLSTRING(PreviewHintRotate)] s
 
 // Feedback marker + hint at the spot, drawn from a Draw3D mission EH — the
 // render pass drawIcon3D belongs in, and the one every other RTZ overlay
-// (rtz_mine, rtz_overlays, rtz_selection) draws from. It reads the helper's
+// (rtz_mine, rtz_hud) draws from. It reads the helper's
 // live position, so the PFH below never has to feed it. Drawn upright (angle
 // 0) rather than spun to the ghost's facing: the ghost model already shows the
 // direction, and a fixed icon reads like vanilla Zeus instead of a tumbling

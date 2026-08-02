@@ -14,7 +14,7 @@
  * with the display; the stored control is only kept so a mid-mission toggle can
  * detach it early.
  *
- * These markers stay a plain local overlay rather than moving onto rtz_overlays'
+ * These markers stay a plain local overlay rather than moving onto rtz_hud'
  * stream engine: that engine is selection-driven and server-polled, while
  * detectedMines is readable on the client and these icons must show regardless of
  * what the curator has selected. Routing them through it would buy nothing and

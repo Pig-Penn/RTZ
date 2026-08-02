@@ -45,24 +45,29 @@ if (hasInterface) then {
 };
 
 // ── Supply-lines overlay registration ────────────────────────────────────────
-// This addon owns a STREAM on rtz_overlays' engine; the engine owns no supply
-// code. Registration is a write into the two registries it builds in its own
-// postInit, which is why rtz_overlays is in requiredAddons — that is what orders
-// the two postInits.
+// This addon owns a STREAM on rtz_hud's engine; the engine owns no supply code.
+// Registration writes into registries rtz_hud builds in its own preInit/postInit,
+// which is why rtz_hud is in requiredAddons — that is what orders the two.
 //
-// The guards mirror the engine's own halves exactly: it only builds the draw
-// registry where there is an interface and only the gather registry on the
-// server, so a dedicated server has no GVAR(drawFncs) to write into and a
-// client has no GVAR(gatherFncs).
+// The guards mirror the engine's own halves exactly: it only builds the renderer
+// registry where there is an interface, and only accepts stream declarations on
+// the server.
 if (hasInterface) then {
-    EGVAR(overlays,drawFncs) set [STREAM_SUPPLY, LINKFUNC(drawSupply)];
+    EGVAR(hud,streamRenderers) set [STREAM_SUPPLY, ELINKFUNC(supply,drawSupply)];
 
     // Lets the engine's CBA_SettingChanged watchdog shut this overlay down if its
-    // master switch is turned off mid-mission, the same as its own two. Lowercased
+    // master switch is turned off mid-mission, the same as its own. Lowercased
     // because that watchdog cannot rely on the case a setting was registered with.
-    EGVAR(overlays,streamSettings) set [STREAM_SUPPLY, toLower QGVAR(enableSupplyDisplay)];
+    EGVAR(hud,streamSettings) set [STREAM_SUPPLY, toLower QGVAR(enableSupplyDisplay)];
 };
 
 if (isServer) then {
-    EGVAR(overlays,gatherFncs) set [STREAM_SUPPLY, LINKFUNC(gatherSupply)];
+    // SRC_HULLS: the gatherer reads the servicing record off a hull, so it wants
+    // the curator's selection collapsed to distinct vehicles. Cadence rides the
+    // engine's shared overlay interval, so all three AI-state overlays stay in
+    // step and one admin slider retunes them together.
+    [
+        STREAM_SUPPLY, LINKFUNC(gatherSupply), SRC_HULLS,
+        QEGVAR(hud,pollInterval), 2
+    ] call EFUNC(hud,registerStream);
 };

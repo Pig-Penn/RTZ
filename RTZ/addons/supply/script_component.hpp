@@ -50,9 +50,9 @@
 #define CLAIM_GRACE 5
 
 // ── Supply-lines overlay ─────────────────────────────────────────────────────
-// This overlay is a CLIENT of rtz_overlays' stream engine, not a part of it: the
+// This overlay is a CLIENT of rtz_hud' stream engine, not a part of it: the
 // gather/draw pair and the toggle live here, and XEH_postInit registers them
-// into the engine's registries. That is why rtz_overlays is in requiredAddons —
+// into the engine's registries. That is why rtz_hud is in requiredAddons —
 // registration writes into hashmaps the engine builds in its own postInit, and
 // requiredAddons is what orders the two.
 //

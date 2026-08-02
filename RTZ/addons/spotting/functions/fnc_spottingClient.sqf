@@ -51,7 +51,15 @@ GVAR(blinkUntil) = createHashMap;
 
 // Draw 3D world icons above each spotted enemy every frame; positions are sampled
 // live from the unit so icons track smoothly between the server's spot cycles.
-addMissionEventHandler ["Draw3D", LINKFUNC(draw3D)];
+//
+// The renderer itself is EFUNC(hud,drawSpots) — rtz_hud owns the ONE Draw3D
+// handler every RTZ display draws from, and reads the stores above through
+// EGVAR. This used to be a Draw3D handler of its own; with five other displays
+// doing the same, each frame re-ran the Zeus test and rebuilt the camera basis
+// once per handler. The frame loop resolves that once and also owns the
+// curator-view gates (Zeus open, map not covering the 3D view) that the old
+// handler repeated at the top of every pass.
+[QGVAR(spots), ELINKFUNC(hud,drawSpots), RENDER_WORLD, 41] call EFUNC(hud,registerRenderer);
 
 // Store/update icon data for a spotted enemy. Texture, colour, echelon amplifier,
 // side index, group-leader netId and display name are all pre-resolved on the server.

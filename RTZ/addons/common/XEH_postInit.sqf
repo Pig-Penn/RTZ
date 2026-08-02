@@ -16,7 +16,7 @@
 // ordered height is tracked in a public per-vehicle variable, seeded from the
 // aircraft's current altitude on the first adjustment. Broadcast so the height
 // survives locality changes (remote control) and the server-side vehicle
-// overlay (rtz_selection's vehicleDataStream) can read it.
+// overlay (rtz_hud's STREAM_VEH feed) can read it.
 [QGVAR(adjustHeliHeight), {
     params ["_heli", "_delta"];
 
@@ -59,7 +59,7 @@ if (hasInterface) then {
 [QGVAR(deploySmoke), LINKFUNC(deploySmokeApply)] call CBA_fnc_addEventHandler;
 
 // Setting-gated context features. Deferred to CBA_settingsInitialized so each
-// synced setting holds the server's value before it is read (see rtz_overlays /
+// synced setting holds the server's value before it is read (see rtz_hud /
 // rtz_officer for the same pattern), and so ZEN's own postInit has already
 // registered the actions the menu clean-up removes.
 ["CBA_settingsInitialized", {

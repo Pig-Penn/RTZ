@@ -2,7 +2,7 @@
 
 // Nothing here is gated on GVAR(enabled) and nothing waits for
 // CBA_settingsInitialized. Both were wrong, and wrong in the same way
-// rtz_overlays documents: the master switch is a live, no-restart global that
+// rtz_hud documents: the master switch is a live, no-restart global that
 // the context condition reads on every menu open, so an admin turning the
 // feature on mid-mission got a working-looking action on machines that had never
 // registered any of the receivers behind it, and the order silently evaporated.

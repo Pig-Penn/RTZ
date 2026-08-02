@@ -1,6 +1,5 @@
 PREP(chevronsActionModifier);
 PREP(contactCategory);
-PREP(draw3D);
 PREP(echelonTex);
 PREP(emitSpot);
 PREP(initCuratorDisplay);

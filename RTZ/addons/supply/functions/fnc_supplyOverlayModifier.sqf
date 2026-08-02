@@ -6,7 +6,7 @@
  * (the state is per-curator, so no broadcast variable is involved). A running
  * overlay goes grey "Hide …"; an idle one keeps the supply accent colour.
  *
- * The engine's own EFUNC(overlays,overlayActionModifier) resolves its wording
+ * The engine's own EFUNC(hud,overlayActionModifier) resolves its wording
  * from a switch over the stream ids it knows about and bails out silently on any
  * other, so a stream registered from outside that addon brings its own — see
  * FUNC(toggleSupplyOverlay) for the matching half.
@@ -29,7 +29,7 @@
 
 params ["_action"];
 
-if (STREAM_SUPPLY in EGVAR(overlays,active)) then {
+if (STREAM_SUPPLY in EGVAR(hud,activeStreams)) then {
     _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionHideSupplyLines)];
     _action set [ACTION_INDEX_ICONCOLOR, COLOR_OVERLAY_ON];   // grey — running, will hide
 } else {

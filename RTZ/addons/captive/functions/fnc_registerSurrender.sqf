@@ -15,7 +15,7 @@
  * surrenders therefore never runs a single tick of this component — the previous
  * design started an unconditional 0.5 Hz loop at mission init and ran it to the
  * end of the mission regardless, which is the pattern rtz_reverse and
- * rtz_overlays already abandoned.
+ * rtz_hud already abandoned.
  *
  * The enable setting is checked HERE rather than at init, which is what makes it
  * a live switch: turning the feature off stops new prisoners being admitted, and

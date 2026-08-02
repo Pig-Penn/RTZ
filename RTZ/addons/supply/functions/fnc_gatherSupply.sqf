@@ -2,8 +2,8 @@
 /*
  * Author: Maxim
  * SERVER. Supply-lines gatherer: turns one watched entity and its hull into a
- * snapshot entry for the rtz_overlays stream engine, or [] when that hull is not
- * currently servicing anything. EFUNC(overlays,streamServer) calls this once per
+ * snapshot entry for the rtz_hud stream engine, or [] when that hull is not
+ * currently servicing anything. EFUNC(hud,streamServer) calls this once per
  * hull per tick for every curator subscribed to STREAM_SUPPLY.
  *
  * The engine is a client of this addon here, not the other way round: the entire
@@ -17,7 +17,7 @@
  * duration are both frozen for the life of the job, so after the first send an
  * unchanging order costs nothing at all and the client interpolates the bar
  * itself — smoothly, per frame, instead of stepping once per poll. Identical
- * reasoning to EFUNC(overlays,gatherTarget) reporting sighting times.
+ * reasoning to EFUNC(hud,gatherTarget) reporting sighting times.
  *
  * Arguments:
  * 0: Watched entity <OBJECT>

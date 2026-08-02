@@ -3,9 +3,11 @@
  * Author: Maxim
  * CLIENT. Supply-lines renderer: draws a line from each watched supply vehicle to
  * every vehicle it is currently servicing, capped with a resupply icon and
- * labelled with the order's progress while the cursor is near it. Called once per
- * frame per active stream by EFUNC(overlays,streamClient), which supplies the
- * shared frame context (camera, mouse, clock) so this pays for none of it.
+ * labelled with the order's progress while the cursor is near it. Registered as a
+ * RENDER_WORLD renderer on EFUNC(hud,frameLoop), which resolves the Zeus test,
+ * the camera position and the mouse position once for every display — so this
+ * pays for none of it, and is skipped entirely while the Zeus map covers the 3D
+ * view.
  *
  * A fresh snapshot is baked once, on the first frame after it lands: the server's
  * absolute start time becomes an elapsed-at-send figure, which is then advanced
@@ -16,23 +18,28 @@
  * Baked entry: [unit, targets, elapsedAtSend, duration].
  *
  * Arguments:
- * 0: Stream record [entries, rxTime, dirty, refTime] (mutated in place) <ARRAY>
- * 1: Camera world position <ARRAY>
- * 2: Mouse position, UI coordinates <ARRAY>
- * 3: CBA_missionTime this frame <NUMBER>
+ * 0: Frame context, see the CTX_* indices in main's script_macros.hpp <ARRAY>
  *
  * Return Value:
  * None
  *
  * Example:
- * [_record, _camPos, _mouse, CBA_missionTime] call rtz_supply_fnc_drawSupply
+ * _ctx call rtz_supply_fnc_drawSupply
  *
  * Public: No
  */
 
-params ["_record", "_camPos", "_mouse", "_now"];
+params ["_ctx"];
+
+private _record = EGVAR(hud,streamData) get STREAM_SUPPLY;
+if (isNil "_record") exitWith {};                       // no snapshot yet
 
 _record params ["_entries", "_rxTime", "_dirty", "_refTime"];
+if (_entries isEqualTo []) exitWith {};
+
+private _camPos = _ctx select CTX_CAMPOS;
+private _mouse  = _ctx select CTX_MOUSE;
+private _now    = _ctx select CTX_NOW;
 
 if (_dirty) then {
     _entries = _entries apply {
