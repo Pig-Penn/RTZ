@@ -116,7 +116,7 @@ GVAR(blinkUntil) = createHashMap;
 // Flash a wedge white for a moment — fired by the server when the spotted unit shoots.
 [QGVAR(blink), {
     params ["_markerName"];
-    
+
     GVAR(blinkUntil) set [_markerName, time + BLINK_DURATION];
 }] call CBA_fnc_addEventHandler;
 

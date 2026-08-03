@@ -58,6 +58,22 @@ the wait, never before it only:
 }, [_unit, _vehicle], 5] call CBA_fnc_waitAndExecute;
 ```
 
+### A `waitUntilAndExecute` without a timeout polls forever
+
+`CBA_fnc_waitUntilAndExecute` re-evaluates its condition **every frame**, with no upper bound
+unless you give it one. A watch whose condition may simply never come true is then a permanent
+per-frame cost for the rest of the mission — and if the same watch is re-armed on each new order,
+they stack rather than replace. On a multi-hour operation that accumulates.
+
+It takes a timeout and a timeout branch; use them:
+
+```sqf
+[{ _cond }, { _onTrue }, _args, 600, { _onTimeout }] call CBA_fnc_waitUntilAndExecute;
+```
+
+Shipped in `fnc_addWaypoint`, which watched a DESTROY target for deletion with no timeout — one
+per-frame condition per attack order, forever, and re-tasking a group added another.
+
 ### `while` loops in unscheduled code silently stop at 10,000 iterations
 
 The engine caps unscheduled `while` at 10,000 iterations and quits the loop. A loop that
@@ -78,22 +94,34 @@ current scope is that single iteration, so it behaves as `continue`.
 } forEach _units;
 ```
 
-To actually break out, name an outer scope and `breakOut` of it:
+Since Arma 3 v2.02 the fix is simply **`break`**, which works in `for`, `while` and `forEach`:
 
 ```sqf
-scopeName "scan";
 {
-    if (_x == _needle) then { true breakOut "scan" };
+    if (_x == _needle) then { _found = true; break };   // actually stops
 } forEach _units;
-false
 ```
 
-**The value must ride along.** A bare `breakOut "scan"` exits with **no return value**, so the
-function hands back `nil`. That exact bug shipped in
-[fnc_collectLootables.sqf:66-74](addons/loot/functions/fnc_collectLootables.sqf#L66-L74) — the
-Loot action's condition broke precisely when there *was* loot to take. Note also that
-`breakOut` needs the scope to be named on a *parent* scope; `scopeName` inside the `forEach`
-body would name the iteration itself.
+**Put the test at the TOP of the loop body.** A `break` at the bottom still pays for the whole
+iteration's work before it fires, which defeats the point when the loop body is the expensive part.
+
+This shipped **three times**, every one of them a "stop at the first hit" early-out that silently
+did nothing — the parameter was accepted, documented, and inert:
+
+| Site | Dead parameter |
+|---|---|
+| [fnc_collectDeletables.sqf](addons/delete/functions/fnc_collectDeletables.sqf) | `_firstOnly` — and it sat *after* the crew expansion it existed to skip |
+| [fnc_findTargets.sqf](addons/supply/functions/fnc_findTargets.sqf) | `_limit` — the context-menu condition swept a whole parked column to answer a boolean |
+| [fnc_findCountermeasureWeapons.sqf](addons/common/functions/fnc_findCountermeasureWeapons.sqf) | `_firstOnly` |
+
+The older `scopeName` / `breakOut` route still works and is needed when you must unwind *several*
+scopes at once, but **the value must ride along**: a bare `breakOut "scan"` exits with no return
+value, so the function hands back `nil`. That bug shipped too, in `fnc_collectLootables` — the Loot
+action's condition broke precisely when there *was* loot to take. `breakOut` also needs the scope
+named on a *parent* scope; `scopeName` inside the `forEach` body would name the iteration itself.
+
+Note that `findIf` is **not** affected by any of this — it short-circuits natively and is the right
+tool for a pure existence test (see [fnc_canLoot.sqf](addons/loot/functions/fnc_canLoot.sqf)).
 
 ### `&&` and `||` only short-circuit with a code block on the right
 
@@ -138,16 +166,33 @@ Hoist the test out of the `switch` so `continue` sits directly in the loop body:
 } forEach _streams;
 ```
 
-### Nested `forEach` clobbers `_x` and `_forEachIndex`
+### Nested `forEach` does **not** clobber `_x` — but alias anyway for readability
 
-The inner loop overwrites both. Alias before descending:
+This entry used to claim the opposite, and that was wrong. `_x` and `_forEachIndex` are created in
+the **called** scope, not the calling one, so an inner loop's `_x` is a different variable and is
+gone the moment the inner loop ends. Nesting has been safe since Arma 2, and the same holds for the
+other iteration commands that bind `_x` (`count`, `apply`, `select`, `findIf`, `configClasses`).
+
+So this is correct, and `_x` in the `then` block is still the vehicle:
+
+```sqf
+{
+    if (crew _x findIf {isPlayer _x} == -1) then { _x setOwner _id };   // outer _x intact
+} forEach _vehicles;
+```
+
+**Alias regardless when the two are easy to confuse.** Not for correctness, but because a reader
+should not have to hold this rule in their head to follow the code:
 
 ```sqf
 {
     private _group = _x;
-    { _group addVehicle _x } forEach _vehicles;   // _x is now the vehicle
+    { _group addVehicle _x } forEach _vehicles;   // reads unambiguously
 } forEach _groups;
 ```
+
+The one thing that genuinely *does* leak is a variable you set yourself inside the block — that
+follows the ordinary `private` rules, not this one.
 
 ---
 
@@ -253,7 +298,7 @@ AI-owned-elsewhere unit, they do nothing at all, with no error. Route them with
 
 AI offloaded to a headless client, or AI in a player-led group, is local to that other machine.
 Code that assumes "AI ⇒ server" breaks on exactly the setups that matter.
-[fnc_grantCurators.sqf:10-14](addons/assemble/functions/fnc_grantCurators.sqf#L10-L14) documents
+[fnc_grantCurators.sqf:10-14](addons/common/functions/fnc_grantCurators.sqf#L10-L14) documents
 this case and forwards to the server with `CBA_fnc_serverEvent`.
 
 ### `remoteExec`'d code does not capture local variables
@@ -340,7 +385,7 @@ _curator addCuratorEditableObjects [[_object], _addCrew];
 
 Curator modules are **server-local**, and `addCuratorEditableObjects` needs its curator
 argument local — so the grant must run on the server. See
-[fnc_grantCurators.sqf](addons/assemble/functions/fnc_grantCurators.sqf).
+[fnc_grantCurators.sqf](addons/common/functions/fnc_grantCurators.sqf).
 
 ### Remote-control state cannot be read remotely
 
@@ -393,7 +438,7 @@ through the config.
 ### `curatorSelected` is `[objects, groups, waypoints, markers]`
 
 Use the `SELECTED_OBJECTS` / `SELECTED_GROUPS` macros from
-[script_macros.hpp:37-38](addons/main/script_macros.hpp#L37-L38) rather than indexing by hand,
+[script_macros.hpp:44-45](addons/main/script_macros.hpp#L44-L45) rather than indexing by hand,
 and normalize through `EFUNC(common,collectUnits)` / `collectSquads` / `collectVehicles` — a
 Zeus selection can hand you vehicles when you wanted crew, or groups when you wanted units.
 
@@ -484,5 +529,7 @@ when someone looks.
 | Baffling error pointing at an unrelated file | trailing space after `\` in a macro (§6) |
 | Variable name appears literally in-game | macro inside a string literal, missing `QUOTE` (§6) |
 | Loop skips its `continue` and runs on | `continue` inside a `switch do` case (§2) |
+| A `_limit` / `_firstOnly` parameter costs exactly as much as no limit | `exitWith` used as `break` — use `break`, at the TOP of the body (§2) |
 | A setting never takes effect, no error | `GETMVAR` given a variable instead of a name (§6) |
 | Icons draw in first person, or behind the Zeus map | own `Draw3D` handler instead of an `EFUNC(hud,registerRenderer)` renderer (see CLAUDE.md) |
+| A per-frame `waitUntilAndExecute` never stops | no timeout passed — it polls for the rest of the mission (§1) |
