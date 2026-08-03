@@ -1,6 +1,9 @@
+PREP(canSurrender);
 PREP(collectSurrenderUnits);
 PREP(surrenderToggle);
 PREP(surrenderApply);
 PREP(surrenderActionModifier);
-PREP(captureWatch);
+PREP(registerSurrender);
+PREP(captureTick);
 PREP(captureUnit);
+PREP(captureApply);

@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Supply">
+        <Key ID="STR_RTZ_Supply_ActionDrawSupplyLines">
+            <English>Show Supply Lines</English>
+        </Key>
+        <Key ID="STR_RTZ_Supply_ActionHideSupplyLines">
+            <English>Hide Supply Lines</English>
+        </Key>
         <Key ID="STR_RTZ_Supply_ActionResupply">
             <English>Resupply Vehicles</English>
         </Key>
@@ -12,6 +18,24 @@
         </Key>
         <Key ID="STR_RTZ_Supply_Enabled_Description">
             <English>Enable the Resupply Vehicles Zeus context menu action.</English>
+        </Key>
+        <Key ID="STR_RTZ_Supply_LabelServicing">
+            <English>Servicing</English>
+        </Key>
+        <Key ID="STR_RTZ_Supply_MsgNothingToService">
+            <English>Nothing left to resupply</English>
+        </Key>
+        <Key ID="STR_RTZ_Supply_MsgResupplyComplete">
+            <English>Resupply complete</English>
+        </Key>
+        <Key ID="STR_RTZ_Supply_MsgResupplying">
+            <English>Resupplying</English>
+        </Key>
+        <Key ID="STR_RTZ_Supply_MsgSupplyLinesHidden">
+            <English>Supply Lines Hidden</English>
+        </Key>
+        <Key ID="STR_RTZ_Supply_MsgSupplyLinesShown">
+            <English>Supply Lines Shown</English>
         </Key>
         <Key ID="STR_RTZ_Supply_ServiceDuration">
             <English>Service Duration</English>
@@ -30,6 +54,12 @@
         </Key>
         <Key ID="STR_RTZ_Supply_ServiceRadius_Description">
             <English>Distance in meters within which a supply vehicle can service other vehicles. Vehicles that leave this range mid-service keep whatever they were given.</English>
+        </Key>
+        <Key ID="STR_RTZ_Supply_SupplyDisplay">
+            <English>Supply Lines Overlay</English>
+        </Key>
+        <Key ID="STR_RTZ_Supply_SupplyDisplay_Description">
+            <English>Enable the Show Supply Lines Zeus context menu action, which draws a line from each selected supply vehicle to every vehicle it is currently servicing.</English>
         </Key>
     </Package>
 </Project>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Core">
+        <Key ID="STR_RTZ_Core_CategoryOverlays">
+            <English>Overlays</English>
+        </Key>
+        <Key ID="STR_RTZ_Core_MsgSelectionTruncated">
+            <English>%1 more unit(s) selected than shown (max %2)</English>
+        </Key>
+        <Key ID="STR_RTZ_Core_MsgVehicleSelectionTruncated">
+            <English>%1 more vehicle(s) selected than shown (max %2)</English>
+        </Key>
+        <Key ID="STR_RTZ_Core_PollInterval">
+            <English>Overlay Refresh Interval</English>
+        </Key>
+        <Key ID="STR_RTZ_Core_PollInterval_Description">
+            <English>Seconds between server updates of the AI-state overlays (destinations, targets, supply lines). Lower is snappier, higher reduces server and network load. Read live — can be retuned mid-mission.</English>
+        </Key>
+    </Package>
+</Project>

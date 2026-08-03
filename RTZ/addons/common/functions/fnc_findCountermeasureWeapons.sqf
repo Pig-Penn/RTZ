@@ -42,6 +42,12 @@ private _cache = GVAR(cmWeaponCache);
 private _weapons = [];
 
 {
+    // Checked at the TOP with `break`. This was an `exitWith {}` at the bottom of
+    // the body: exitWith inside a forEach unwinds only the current ITERATION, so
+    // it acted as a continue (docs/Knowledge Base/Gotchas.md §2) and _firstOnly never stopped
+    // anything — the existence check walked every magazine of every turret.
+    if (_firstOnly && {_weapons isNotEqualTo []}) then { break };
+
     _x params ["_magazine", "_turretPath", "_count"];
 
     if (_count > 0) then {
@@ -64,8 +70,6 @@ private _weapons = [];
             };
         } forEach (_vehicle weaponsTurret _turretPath);
     };
-
-    if (_firstOnly && {_weapons isNotEqualTo []}) exitWith {};
 } forEach magazinesAllTurrets _vehicle;
 
 _weapons

@@ -2,13 +2,19 @@
 /*
  * Author: Maxim
  * Context menu statement: orders every selected AI squad to sweep the lootables
- * around its leader and improve its loadout - fill gaps (missing primary/launcher,
- * backpack, ammo) and swap up better gear (higher-rank weapon, higher chest armor
- * vest, armored headgear) even where the slot isn't empty.
+ * around its leader and improve its loadout - fill gaps (missing primary or launcher,
+ * backpack, night vision, ammunition) and swap up better gear where the slot is
+ * already occupied, within what each unit's ROLE sanctions.
  *
  * The sweep must run where the units are local (the server, for the Zeus AI this
  * targets), so the whole selection is batched into a single QGVAR(loot) server event
  * (the receiver is registered in XEH_postInit).
+ *
+ * The toast counts GROUPS, which is what the curator selected and clicked on. How
+ * many units inside them end up walking anywhere is decided on the server, after
+ * FUNC(lootSquads) has worked out who would actually gain something, and is not known
+ * here - reporting the click rather than guessing at its outcome is the same contract
+ * every other RTZ order action reports under.
  *
  * Arguments:
  * 0: Selected Objects <ARRAY>
@@ -30,10 +36,4 @@ if (_groups isEqualTo []) exitWith {};
 
 [QGVAR(loot), [_groups]] call CBA_fnc_serverEvent;
 
-private _message = LLSTRING(Looting);
-
-if (count _groups > 1) then {
-    _message = format ["%1  x%2", _message, count _groups];
-};
-
-[_message] call zen_common_fnc_showMessage;
+[LLSTRING(Looting), count _groups] call EFUNC(common,showCountMessage);

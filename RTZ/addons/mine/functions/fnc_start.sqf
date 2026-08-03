@@ -14,7 +14,7 @@
  * with the display; the stored control is only kept so a mid-mission toggle can
  * detach it early.
  *
- * These markers stay a plain local overlay rather than moving onto rtz_overlays'
+ * These markers stay a plain local overlay rather than moving onto rtz_hud'
  * stream engine: that engine is selection-driven and server-polled, while
  * detectedMines is readable on the client and these icons must show regardless of
  * what the curator has selected. Routing them through it would buy nothing and
@@ -50,15 +50,13 @@ if (_wanted) then {
     };
 };
 
+// Registration with rtz_hud's shared frame loop, not a Draw3D handler of our
+// own — registering and unregistering is what makes the marker free while it is
+// switched off, exactly as adding/removing the handler used to be.
 if (GVAR(mark3D)) then {
-    if (GVAR(draw) == -1) then {
-        GVAR(draw) = addMissionEventHandler ["Draw3D", {call FUNC(draw3D)}];
-    };
+    [QGVAR(mines3D), ELINKFUNC(mine,draw3D), RENDER_WORLD, 60] call EFUNC(core,registerRenderer);
 } else {
-    if (GVAR(draw) != -1) then {
-        removeMissionEventHandler ["Draw3D", GVAR(draw)];
-        GVAR(draw) = -1;
-    };
+    [QGVAR(mines3D), RENDER_WORLD] call EFUNC(core,unregisterRenderer);
 };
 
 if (!isNull _display) then {

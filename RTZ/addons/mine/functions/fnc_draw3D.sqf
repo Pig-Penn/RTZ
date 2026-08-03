@@ -1,31 +1,40 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Draws an icon on each cached spotted mine. Called every frame, so it does as
- * little as it can get away with: the cache is already a flat list of validated
- * positions (FUNC(refreshMines)), the icon and the squared cull range are hoisted
- * out of the loop, and the range test is done on squared distances so a minefield
- * costs no square roots per frame.
+ * RENDER_WORLD renderer drawing an icon on each cached spotted mine. Called every
+ * frame, so it does as little as it can get away with: the cache is already a
+ * flat list of validated positions (FUNC(refreshMines)), the icon and the squared
+ * cull range are hoisted out of the loop, and the range test is done on squared
+ * distances so a minefield costs no square roots per frame.
  *
- * The handler is only registered while GVAR(mark3D) is on (FUNC(start)), so there
- * is no setting test here either.
+ * Registered with EFUNC(core,frameLoop) — and only while GVAR(mark3D) is on
+ * (FUNC(start)) — so there is no setting test here either. Riding the shared
+ * frame loop rather than a Draw3D handler of its own gets three things this pass
+ * used to lack: the camera position arrives already resolved (it used to make its
+ * own positionCameraToWorld call alongside every other display making theirs),
+ * the icons are confined to the Zeus view instead of also drawing in first person
+ * for a curator who is playing, and the pass is skipped entirely while the Zeus
+ * map covers the 3D view — where these have their own map markers anyway
+ * (FUNC(drawMap)).
  *
  * Arguments:
- * None
+ * 0: Frame context, see the CTX_* indices in main's script_macros.hpp <ARRAY>
  *
  * Return Value:
  * None
  *
  * Example:
- * [] call rtz_mine_fnc_draw3D
+ * _ctx call rtz_mine_fnc_draw3D
  *
  * Public: No
  */
 
+params ["_ctx"];
+
 private _mines = GVAR(mines);
 if (_mines isEqualTo []) exitWith {};
 
-(positionCameraToWorld [0, 0, 0]) params ["_camX", "_camY"];
+(_ctx select CTX_CAMPOS) params ["_camX", "_camY"];
 
 private _icon = GVAR(icon);
 private _maxDistance = GVAR(maxDistance) ^ 2;

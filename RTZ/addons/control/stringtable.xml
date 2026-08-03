@@ -4,6 +4,9 @@
         <Key ID="STR_RTZ_Control_ActionAllowDismount">
             <English>Allow Dismount</English>
         </Key>
+        <Key ID="STR_RTZ_Control_ActionDisableDynamicSimulation">
+            <English>Disable Dynamic Simulation</English>
+        </Key>
         <Key ID="STR_RTZ_Control_ActionDisableSimulation">
             <English>Dissimulate</English>
         </Key>
@@ -36,6 +39,9 @@
         </Key>
         <Key ID="STR_RTZ_Control_MsgDismountForbidden">
             <English>Dismount forbidden</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_MsgDynamicSimulationDisabled">
+            <English>Dynamic Simulation Disabled</English>
         </Key>
         <Key ID="STR_RTZ_Control_MsgNoUnitsSelected">
             <English>No units selected</English>

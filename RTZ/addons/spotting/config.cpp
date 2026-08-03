@@ -6,7 +6,10 @@ class CfgPatches {
         units[] = {};
         weapons[] = {};
         requiredVersion = REQUIRED_VERSION;
-        requiredAddons[] = {"rtz_main", "rtz_common", "zen_context_menu"};
+        // rtz_hud owns the single Draw3D handler this component's icons draw
+        // from (EFUNC(hud,drawSpots) / EFUNC(hud,drawRcIndicator)); the
+        // dependency runs one way only — rtz_hud never reads rtz_spotting.
+        requiredAddons[] = {"rtz_main", "rtz_common", "rtz_core", "rtz_hud", "zen_context_menu"};
         author = "Maxim";
         authors[] = {"Maxim"};
         url = "";

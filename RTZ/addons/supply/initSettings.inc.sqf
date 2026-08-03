@@ -9,6 +9,18 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     true // Global
 ] call CBA_fnc_addSetting;
 
+// Gates the supply-lines overlay's context action, read live by its condition.
+// Needs no mission restart: the stream machinery is registered unconditionally
+// (see XEH_postInit) and idles while nothing is subscribed, and the engine's
+// CBA_SettingChanged watchdog shuts a running overlay down if this goes off.
+[
+    QGVAR(enableSupplyDisplay), "CHECKBOX",
+    [LSTRING(SupplyDisplay), LSTRING(SupplyDisplay_Description)],
+    _category,
+    true,
+    true // Global
+] call CBA_fnc_addSetting;
+
 // Read on the curator's client when the targets are gathered, and again on the
 // server to drop targets that drive off mid-service
 [

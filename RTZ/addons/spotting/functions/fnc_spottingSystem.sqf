@@ -45,9 +45,9 @@
 //   GVAR(spotResendPlayers) — playerNetId → true, a per-destination pending
 //     request. Each client fires QGVAR(spotResync) with its own player object once
 //     its event handlers are registered. This is the ONLY recovery path for a
-//     rejoin into the same slot: the returning player keeps his unit object, so his
-//     netId — and every payload signature built from it — compares equal and the
-//     change-gated send never fires (see FUNC(emitSpot)).
+//     rejoin into the same slot: the returning player keeps his unit object, so he
+//     is neither a new recipient nor a changed payload, and the change-gated send
+//     never fires (see FUNC(emitSpot)).
 //
 // The per-player channel exists because the global flag is consumed on the very
 // next tick regardless of who was resolvable. A client fires its request from
@@ -66,7 +66,7 @@
 if (isServer) then {
     GVAR(spotForceResend)   = true;
     GVAR(spotResendPlayers) = createHashMap;
-    
+
     [QGVAR(spotResync), {
         params [["_player", objNull]];
         if (!isPlayer _player) exitWith { GVAR(spotForceResend) = true };
@@ -96,6 +96,12 @@ GVAR(blinkThrottle)      = createHashMap;   // netId → last blink-send time (r
 GVAR(spotGroupLastSeen)  = createHashMap;   // (sideStr + "_" + leaderNetId) → last time that side had the group confirmed (callout gate)
 GVAR(spotDebugLast)      = createHashMap;   // curatorNetId → last-logged resolution sig (diagnostic, on-change only)
 GVAR(markerSuffixCache)  = createHashMap;   // "m"/"v" + class → NATO symbol suffix, mission-lifetime (fnc_unitMarker)
+// (sidePrefix + suffix) → finished NATO texture path, mission-lifetime. The
+// SUFFIX lookup above was already cached, but the `format` that turns it into a
+// path was not, so every spotted group rebuilt the same handful of strings on
+// every detection pass. There are only ~3 prefixes × ~13 suffixes, so this
+// saturates within seconds and never grows again (fnc_unitMarker).
+GVAR(markerTexCache)     = createHashMap;
 GVAR(chevronLatch)       = createHashMap;   // (spotterSideStr + "_" + memberNetId) → [expiryTime, lastBestSpotter] (fnc_spotCheck)
 
 // ─────────────────────────────────────────────────────────────────────────────

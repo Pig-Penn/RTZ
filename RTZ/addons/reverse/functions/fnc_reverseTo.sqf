@@ -1,86 +1,103 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Makes a vehicle reverse in a straight line to a destination. AI cannot be
- * commanded to drive backward through its normal navigation (a long-standing
- * Arma 3 engine limitation), so the driver's MOVE/PATH AI subsystems are
- * disabled for the duration and the vehicle is driven directly with
- * setVelocity, straight back along its own facing, every frame. The maneuver
- * ends on arrival, when the vehicle gets stuck, when the driver is lost, or
- * after the timeout setting. Must be executed where the vehicle is local.
+ * Starts (or re-points) a reverse maneuver on one vehicle. Must run where the
+ * vehicle is local — FUNC(orderReverse) targets this per vehicle for exactly
+ * that reason.
+ *
+ * AI cannot be commanded to drive backward through its normal navigation — a
+ * long-standing engine limitation (BI feedback T75076), and not one this can
+ * route around: the engine's only reverse order, sendSimpleCommand "BACK", is
+ * restricted to vehicles crewed by a player, which is the one case that never
+ * applies to a Zeus ordering AI. So the driver comes off the AI navigation stack
+ * and the vehicle is pushed backward directly with setVelocity by
+ * FUNC(reverseTick).
+ *
+ * This function only registers the maneuver; nothing here loops. Every running
+ * maneuver lives as one record in GVAR(active) (layout in script_component.hpp)
+ * and a single shared per-frame handler drives all of them, so ten reversing
+ * vehicles cost one handler rather than ten. The handler is created on the first
+ * maneuver and destroyed with the last, so a mission where nobody ever reverses
+ * pays nothing at all.
+ *
+ * Re-ordering a vehicle that is already reversing supersedes the old order
+ * instead of stacking a second slide on top of it. Which of the two supersede
+ * paths applies turns on whether the driver is still the same unit — see below;
+ * that distinction is what keeps a swapped-out driver from being stranded with
+ * his AI disabled.
  *
  * Arguments:
  * 0: Vehicle <OBJECT>
- * 1: Destination AGL <ARRAY>
+ * 1: Rear axis, unit vector on the ground plane <ARRAY>
+ * 2: Destination AGL <ARRAY>
  *
  * Return Value:
  * None
  *
  * Example:
- * [_vehicle, _pos] call rtz_reverse_fnc_reverseTo
+ * [_vehicle, _axis, _pos] call rtz_reverse_fnc_reverseTo
  *
  * Public: No
  */
 
-params ["_vehicle", "_destination"];
+params ["_vehicle", "_axis", "_destination"];
 
-// Supersede any pending order so only the newest one is executed
-private _order = (_vehicle getVariable [QGVAR(order), 0]) + 1;
-_vehicle setVariable [QGVAR(order), _order];
+// Both can have changed in the time the order spent on the wire: ownership can
+// move (rtz_control hands vehicles between machines outright), and the driver
+// can be killed or bail out between the keystroke and this call.
+if (!local _vehicle) exitWith {};
+if !([_vehicle] call FUNC(canReverse)) exitWith {};
 
-// Take the driver off the AI navigation stack for the duration so it stops
-// fighting (or simply ignoring) the scripted movement below. The parking
-// brake must also be released: doStop leaves it engaged since the AI has no
-// active move order, which otherwise locks the wheel-rotation animation
-// while setVelocity physically slides the vehicle backward.
-doStop driver _vehicle;
-driver _vehicle disableAI "MOVE";
-driver _vehicle disableAI "PATH";
-_vehicle disableBrakes true;
+private _driver = driver _vehicle;
+private _endTime = CBA_missionTime + GETGVAR(timeout,10);
 
-[{
-    params ["_args", "_handle"];
-    _args params ["_vehicle", "_destination", "_order", "_endTime"];
+private _start = true;
+private _index = GVAR(active) findIf {(_x select MANEUVER_VEHICLE) isEqualTo _vehicle};
 
-    if (!alive _vehicle || {_vehicle getVariable [QGVAR(order), 0] != _order}) exitWith {
-        [_handle] call CBA_fnc_removePerFrameHandler;
+if (_index != -1) then {
+    private _record = GVAR(active) select _index;
+
+    if ((_record select MANEUVER_DRIVER) isEqualTo _driver) then {
+        // Same driver, new heading: re-point the existing record and restart its
+        // clocks. Deliberately does not tear down and rebuild — the driver is
+        // already off the navigation stack and the brakes are already released,
+        // and cycling them would hand him back to formation for a frame, which
+        // reads as a stutter mid-slide.
+        _record set [MANEUVER_AXIS, _axis];
+        _record set [MANEUVER_DESTINATION, _destination];
+        _record set [MANEUVER_END_TIME, _endTime];
+        _record set [MANEUVER_MOVED_AT, CBA_missionTime];
+        _record set [MANEUVER_CHECK_AT, CBA_missionTime + CHECK_INTERVAL];
+
+        _start = false;
+    } else {
+        // The seat changed hands since the last order. The unit the old record
+        // disabled is not the one about to be disabled, so it has to be released
+        // through the normal teardown first — drop the record on the floor
+        // instead and that unit keeps MOVE/PATH off for the rest of the mission,
+        // because nothing else remembers it was ever touched.
+        [_record] call FUNC(endReverse);
+        GVAR(active) deleteAt _index;
     };
+};
 
-    private _driver = driver _vehicle;
+if (_start) then {
+    // Take the driver off the AI navigation stack for the duration so he stops
+    // fighting (or simply ignoring) the scripted movement. The parking brake
+    // must also be released: doStop leaves it engaged since the AI has no active
+    // move order, which otherwise locks the wheel-rotation animation while
+    // setVelocity physically slides the vehicle backward.
+    doStop _driver;
+    _driver disableAI "MOVE";
+    _driver disableAI "PATH";
+    _vehicle disableBrakes true;
 
-    // Destination reached or overshot (no longer behind the vehicle)
-    private _toDestination = _destination vectorDiff getPosATL _vehicle;
-    _toDestination set [2, 0];
+    GVAR(active) pushBack [
+        _vehicle, _driver, _axis, _destination,
+        _endTime, CBA_missionTime, CBA_missionTime + CHECK_INTERVAL
+    ];
 
-    private _arrived = _vehicle distance2D _destination <= ARRIVAL_DISTANCE
-        || {_toDestination vectorDotProduct vectorDir _vehicle >= 0};
-
-    if (abs speed _vehicle > STUCK_SPEED) then {
-        _args set [4, CBA_missionTime];
+    if (GVAR(pfh) == -1) then {
+        GVAR(pfh) = [LINKFUNC(reverseTick), 0] call CBA_fnc_addPerFrameHandler;
     };
-
-    if (
-        _arrived
-        || {isNull _driver} || {!alive _driver} || {isPlayer _driver}
-        || {!canMove _vehicle}
-        || {CBA_missionTime > _endTime}
-        || {CBA_missionTime - (_args select 4) > STUCK_TIME}
-    ) exitWith {
-        [_handle] call CBA_fnc_removePerFrameHandler;
-
-        _vehicle setVelocity [0, 0, (velocity _vehicle) select 2];
-        _vehicle disableBrakes false;
-
-        // Release the driver back to formation movement
-        if (!isNull _driver && {alive _driver} && {!isPlayer _driver}) then {
-            _driver enableAI "MOVE";
-            _driver enableAI "PATH";
-            _driver doFollow leader _driver;
-        };
-    };
-
-    // Push straight backward along the vehicle's current facing; the
-    // vertical component is left to physics (gravity, suspension, terrain)
-    private _reverseVelocity = (vectorDir _vehicle) vectorMultiply (-REVERSE_SPEED / 3.6);
-    _vehicle setVelocity [_reverseVelocity select 0, _reverseVelocity select 1, (velocity _vehicle) select 2];
-}, 0, [_vehicle, _destination, _order, CBA_missionTime + GVAR(timeout), CBA_missionTime]] call CBA_fnc_addPerFrameHandler;
+};

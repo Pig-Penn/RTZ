@@ -108,12 +108,15 @@ private _officerZones = GETMVAR(RTZ_officerZoneMap,createHashMap);
 // server — a silent no-op on a dedicated server (whose keys then never age out of
 // _activeSpots), but on a listen server the host has the receivers registered and
 // would render a departed curator's entire contact picture as its own. isPlayer is
-// the same test FUNC(remoteControlIndicator) and rtz_selection already use, and
+// the same test FUNC(remoteControlIndicator) and rtz_hud already use, and
 // `isPlayer objNull` is false, so it subsumes the null check.
 // Same-side curators share the same spotter pool and see the same hostiles, so
 // the entire knowsAbout matrix is computed once per side and emitted to each.
-// Tuple: [curator, player, playerNetId (signature part), curatorNetId (key part),
-// forceResend (this destination's own force flag)].
+// Tuple: [curator, player, curatorNetId (key part), forceResend (this
+// destination's own force flag)]. The player's netId is resolved here for the
+// pending-resync lookup but is NOT carried: it used to ride along so every
+// signature could be suffixed with it, which FUNC(emitSpot) now detects directly
+// as a recipient change instead.
 private _bySide = createHashMap;   // sideStr → [side, curatorTuples[]]
 {
     private _player = getAssignedCuratorUnit _x;
@@ -130,7 +133,7 @@ private _bySide = createHashMap;   // sideStr → [side, curatorTuples[]]
     if (_pending) then { GVAR(spotResendPlayers) deleteAt _playerId };
 
     ((_bySide getOrDefault [str _curatorSide, [_curatorSide, []], true]) select 1)
-        pushBack [_x, _player, _playerId, netId _x, _forceResend || _pending];
+        pushBack [_x, _player, netId _x, _forceResend || _pending];
 } forEach _curators;
 
 // ── Classify every unit and vehicle ONCE per tick ────────────────────────
@@ -452,14 +455,14 @@ private _currentKeys = createHashMap;
 
         // Emit to each curator on this side with their own spot key and target player.
         {
-            _x params ["_curator", "_player", "_playerId", "_curId", "_curForce"];
+            _x params ["_curator", "_player", "_curId", "_curForce"];
 
             private _leaderKey = "s_" + _leaderNetId + "_" + _curId;
             _currentKeys set [_leaderKey, true];
             [
                 _leaderKey,
                 [MKR_PREFIX + _leaderKey, _leader, _leaderTex, _mrkrColor, true, _echelonTex, _sideIdx, _leaderNetId, ""],
-                _grpBaseSig + _playerId,
+                _grpBaseSig,
                 _player, _activeSpots, _drawGroup, _curForce
             ] call FUNC(emitSpot);
 
@@ -472,7 +475,7 @@ private _currentKeys = createHashMap;
                 [
                     _wedgeKey,
                     [_wedgeMrkr, _member, WEDGE_TEXTURE, _wedgeColor, false, "", _sideIdx, _leaderNetId, _memberName, _zone],
-                    _wedgeBaseSig + _playerId,
+                    _wedgeBaseSig,
                     _player, _activeSpots, true, _curForce
                 ] call FUNC(emitSpot);
 
