@@ -133,15 +133,6 @@ private _catOverlays = [ELSTRING(main,DisplayName), LSTRING(CategoryOverlays)];
     0
 ] call CBA_fnc_addSetting;
 
-[
-    QGVAR(enableVehicleOverlay),
-    "CHECKBOX",
-    [LSTRING(EnableVehicleOverlay), LSTRING(EnableVehicleOverlay_Description)],
-    _catOverlays,
-    false,
-    0
-] call CBA_fnc_addSetting;
-
 // Server-global (unlike the per-client display settings above): the cadence of
 // the selection feeds (infantry + vehicle packets) in the shared stream engine.
 // Read live each tick, so it can be retuned mid-mission.

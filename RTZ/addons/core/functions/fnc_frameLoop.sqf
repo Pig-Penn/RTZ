@@ -2,8 +2,8 @@
 /*
  * Author: Maxim
  * The ONE Draw3D handler in RTZ. Every curator-view display — unit tags, vehicle
- * tags, vehicle cards, destination and target overlays, spot icons, the
- * remote-control indicator — draws from here.
+ * tags, destination and target overlays, spot icons, the remote-control
+ * indicator — draws from here.
  *
  * Why one: a Draw3D handler runs every frame, and the work at the TOP of each is
  * identical. Six independently-registered handlers meant six `findDisplay`
@@ -18,8 +18,8 @@
  *   RENDER_WORLD — draws into the 3D scene. Skipped entirely while the Zeus MAP
  *     is up: the map covers the 3D view, so `drawIcon3D` / `drawLine3D` output
  *     is invisible and the entire pass is waste. Only the spot renderer used to
- *     test this; the tags, cards and overlays all ran their full draw with the
- *     map open, producing nothing.
+ *     test this; the tags and overlays all ran their full draw with the map
+ *     open, producing nothing.
  *
  *   RENDER_UI — drives controls on the curator display, which stay visible OVER
  *     the Zeus map. Receives the display directly (displayNull when Zeus is

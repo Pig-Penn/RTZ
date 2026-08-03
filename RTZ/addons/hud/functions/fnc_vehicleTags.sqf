@@ -7,10 +7,8 @@
  *
  * The tag is one discrete text line (e.g. "Hunter HMG · 45 km/h · CREW 3/4 ·
  * FUEL 62 · LOW FUEL") — the vehicle counterpart of the infantry head tags
- * (FUNC(unitTags)). Fed by the same live server packets the vehicle cards use
- * (EGVAR(core,selVehicles) from EFUNC(core,selectionPoll), GVAR(vehicleData) from the
- * STREAM_VEH feed). Runs independently of FUNC(vehicleOverlay) — either display
- * can be enabled without the other.
+ * (FUNC(unitTags)). Fed by EGVAR(core,selVehicles) from EFUNC(core,selectionPoll)
+ * and GVAR(vehicleData) from the STREAM_VEH feed.
  *
  * The line is assembled by FUNC(buildVtagEntry) from the fields enabled in CBA
  * settings (name, speed, crew/seats, fuel, hull, fly height, ammo, commander,
@@ -25,8 +23,7 @@
  * (FUNC(tagsContext)) — one entry drives this system and the unit tags together,
  * through FUNC(toggleTags). Unlike the infantry feed, the vehicle feed is not
  * consumer-gated — EFUNC(core,selectionPoll) reports selected vehicles whenever the set
- * changes — so hiding tags only stops the draw, not the gather (the cards consume
- * the same packets).
+ * changes — so hiding tags only stops the draw, not the gather.
  *
  * Per-frame cost: tag text/colour is cached per vehicle (GVAR(vehicleTagsCache))
  * and only rebuilt after a fresh server push or a vtag* setting change, so a

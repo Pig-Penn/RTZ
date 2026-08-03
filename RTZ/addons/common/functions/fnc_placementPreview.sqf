@@ -114,7 +114,7 @@ private _keyEH = _display displayAddEventHandler ["KeyDown", {
 private _hint = param [6, [LLSTRING(PreviewHint), LLSTRING(PreviewHintRotate)] select _allowRotate, [""]];
 
 // Feedback marker + hint at the spot, drawn from a Draw3D mission EH of its own.
-// Deliberately NOT on rtz_hud's shared frame loop, which every persistent RTZ
+// Deliberately NOT on rtz_core's shared frame loop, which every persistent RTZ
 // overlay rides: that loop exists to stop long-lived displays each rebuilding the
 // camera basis every frame, and this draw needs no camera at all — one drawIcon3D
 // off the helper's live position — while living only for the seconds a picker is
@@ -164,11 +164,20 @@ GVAR(previewDrawEH) = addMissionEventHandler ["Draw3D", {
             // surface hit on the way (rooftops, bridges)
             private _position = AGLToASL screenToWorld getMousePosition;
             private _vectorUp = surfaceNormal _position;
+            // `break`, not `exitWith`. Hits come back sorted by distance from the
+            // BEGIN position — the curator camera — so the first mostly-flat
+            // surface is the NEAREST one, i.e. the roof the cursor is actually
+            // over. This was an `exitWith`, which inside a forEach unwinds only the
+            // current ITERATION (it is continue, not break —
+            // docs/Knowledge Base/Gotchas.md §2), so every later, FURTHER surface
+            // overwrote the result and the ghost snapped through the building to
+            // the ground beneath it.
             {
                 _x params ["_intersectPos", "_surfaceNormal"];
-                if (_surfaceNormal vectorDotProduct [0, 0, 1] > 0.5) exitWith {
+                if (_surfaceNormal vectorDotProduct [0, 0, 1] > 0.5) then {
                     _position = _intersectPos;
                     _vectorUp = _surfaceNormal;
+                    break;
                 };
             } forEach lineIntersectsSurfaces [getPosASL curatorCamera, _position, _helper, _ghost, true, 5];
             _helper setPosASL _position;

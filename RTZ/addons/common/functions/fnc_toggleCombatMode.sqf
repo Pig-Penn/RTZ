@@ -64,8 +64,13 @@ if (_units isEqualTo []) exitWith {false};
 private _grps = [];
 { _grps pushBackUnique group _x } forEach _units;
 
-// Index-parallel with _grps: the icon colour each group's members get below.
-private _grpColors = [];
+// Icon colour per group, keyed by group netId. Keyed rather than index-parallel
+// with _grps for two reasons: the hint loop below walks UNITS, so a parallel array
+// cost a linear `_grps find group _x` per selected unit, and an index-parallel
+// pair is only correct for as long as both loops keep the same order — an
+// invariant nothing here enforces. A netId key is what makes this a map at all,
+// since HashMaps reject groups themselves as keys.
+private _grpColorById = createHashMap;
 private _holdCount = 0;
 private _openCount = 0;
 
@@ -77,7 +82,7 @@ private _openCount = 0;
 
     [QGVAR(toggleCombatMode), [_x, _mode, _newHold], _x] call CBA_fnc_targetEvent;
 
-    _grpColors pushBack ([COLOR_OPEN_FIRE, COLOR_HOLD_FIRE] select _newHold);
+    _grpColorById set [netId _x, [COLOR_OPEN_FIRE, COLOR_HOLD_FIRE] select _newHold];
 
     if (_newHold) then {
         _holdCount = _holdCount + 1;
@@ -86,9 +91,13 @@ private _openCount = 0;
     };
 } forEach _grps;
 
+// Every unit here passed the !isNull group filter above and its group was pushed
+// into the loop that filled the map, so the lookup always hits; the default is
+// only there so a future filter change degrades to an uncoloured icon rather than
+// a nil that aborts the rest of the hint pass.
 {
     [[
-        ["ICON", [_x, ICON_COMBAT_MODE, _grpColors select (_grps find group _x)]]
+        ["ICON", [_x, ICON_COMBAT_MODE, _grpColorById getOrDefault [netId group _x, COLOR_OPEN_FIRE]]]
     ], HINT_DURATION, _x] call zen_common_fnc_drawHint;
 } forEach _units;
 

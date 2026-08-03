@@ -15,10 +15,20 @@
  * the stream now (EFUNC(core,registerStream)), so the engine dispatches without knowing
  * what it is dispatching to.
  *
+ * The reference time is not consumed here, but NOT because the packet is free of
+ * aged fields — index 17 (dangerTimeout) is a countdown resolved at gather time,
+ * the one field in this component that reports a relative figure rather than an
+ * absolute stamp (contrast FUNC(gatherTarget), which sends the sighting time raw
+ * and lets FUNC(drawTarget) age it against exactly this argument). It is left as
+ * it is deliberately: converting it would buy nothing, because dangerDist, morale,
+ * suppression, ammo and health in the same packet all move continuously, so a unit
+ * in contact defeats EFUNC(core,streamServer)'s send diff regardless. The countdown
+ * is simply displayed a poll-interval stale.
+ *
  * Arguments:
  * 0: Stream id <STRING> (unused — one receiver, one stream)
  * 1: Snapshot entries <ARRAY>
- * 2: Server clock at send <NUMBER> (unused — these packets carry no aged field)
+ * 2: Server clock at send <NUMBER> (unused — see above)
  *
  * Return Value:
  * None

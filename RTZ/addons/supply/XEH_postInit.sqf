@@ -45,7 +45,7 @@ if (hasInterface) then {
 };
 
 // ── Supply-lines overlay registration ────────────────────────────────────────
-// This addon owns a STREAM on rtz_hud's engine; the engine owns no supply code.
+// This addon owns a STREAM on rtz_core's engine; the engine owns no supply code.
 // ONE declaration, exactly like the engine's own streams — EFUNC(core,registerStream)
 // self-gates each half, so there is nothing to guard here.
 //

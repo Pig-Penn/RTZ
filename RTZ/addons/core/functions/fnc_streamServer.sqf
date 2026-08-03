@@ -51,8 +51,8 @@
  *   (per-client display preferences); gating this on one would make a dedicated
  *   server decide whether to feed its clients based on its own copy of a client
  *   preference — flip "Vehicle Tags" off in a server CBA config and every
- *   client's tags AND cards go permanently blank with nothing in the log to
- *   explain it. Registers one CBA event handler and one PFH, no scheduled ops.
+ *   client's tags go permanently blank with nothing in the log to explain it.
+ *   Registers one CBA event handler and one PFH, no scheduled ops.
  *
  * Arguments:
  * None
@@ -143,7 +143,7 @@ GVAR(watchers) = createHashMap;
         };
 
         // ── Resolve each slice ONCE for every stream that reads it ────────────
-        // Built lazily: a curator with only the vehicle cards up never resolves
+        // Built lazily: a curator with only the vehicle tags up never resolves
         // the hull list, and vice versa. nil means "not needed yet".
         private _srcUnits = nil;
         private _srcVehs  = nil;

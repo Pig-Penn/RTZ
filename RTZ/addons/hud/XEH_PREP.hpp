@@ -22,8 +22,6 @@ PREP(receiveVehicleData);
 // data; they live here because this component owns the drawing.
 PREP(drawUnitTags);
 PREP(drawVehicleTags);
-PREP(drawVehicleCards);
-PREP(drawVehicleLinks);
 PREP(drawDestination);
 PREP(drawTarget);
 PREP(drawSpots);
@@ -32,10 +30,8 @@ PREP(drawRcIndicator);
 // ── Display start-up + runtime toggles ───────────────────────────────────────
 PREP(unitTags);
 PREP(vehicleTags);
-PREP(vehicleOverlay);
 PREP(applyTagVisibility);
 PREP(toggleTags);
-PREP(toggleVehicleCards);
 PREP(tagsContext);
 
 // ── Selection info dialog ────────────────────────────────────────────────────
@@ -45,8 +41,5 @@ PREP(buildSelectionRows);
 // ── Presentation helpers ─────────────────────────────────────────────────────
 PREP(buildTagEntry);
 PREP(buildVtagEntry);
-PREP(vehicleCardCreate);
-PREP(vehicleCardBody);
-PREP(vehicleCardLayout);
 PREP(loadTagLabels);
 PREP(textWidth);

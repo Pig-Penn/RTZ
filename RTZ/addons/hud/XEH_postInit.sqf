@@ -19,7 +19,7 @@
 // gating registration on a per-client display setting would mean a dedicated
 // server deciding whether to feed its clients from its own copy of their
 // preference (flip "Vehicle Tags" off in a server CBA config and every client's
-// tags AND cards go blank, with nothing in the log to explain it).
+// tags go blank, with nothing in the log to explain it).
 //
 // The two selection feeds are always-on and declare no overlay bundle; the two
 // AI-state overlays are toggleable and take the engine's default raw-store
@@ -76,39 +76,40 @@ if (!hasInterface) exitWith {};
 // Every function below only registers handlers and returns — no sleep/waitUntil —
 // so they are `call`ed, not `spawn`ed.
 ["CBA_settingsInitialized", {
-    if (!GVAR(enableSelectionInfo)) exitWith {};
+    // Each display below is gated on ITS OWN master switch, and the switches are
+    // independent CBA settings a curator sets separately. This block used to
+    // open with a bare `if (!GVAR(enableSelectionInfo)) exitWith {}` — which is not
+    // scoped to the dialog it reads like: `exitWith` here leaves the whole handler,
+    // so switching "Selection Info" off silently took the unit tags, the vehicle
+    // tags AND the shared "Draw Tags" toggle down with it. The guard belongs
+    // around the one action it governs.
+    if (GVAR(enableSelectionInfo)) then {
+        // Selection info dialog: its own ZEN action. This used to live inside the
+        // engine's selection poll, on the reasoning that the poll owned the selection
+        // the show-condition reads — but the action opens THIS component's dialog, and
+        // leaving it in the engine is what made an addon-agnostic poll carry one
+        // addon's menu entry.
+        private _action = [
+            "RTZ_ViewSelInfo",
+            LLSTRING(ActionBehavior),
+            ["\a3\ui_f\data\igui\cfg\simpletasks\types\intel_ca.paa", [1, 1, 1, 1]],
+            { call FUNC(openSelectionInfo) },
+            // Show-condition: ZEN lists the action when this returns true, so it must
+            // be true when units ARE selected (it was once inverted, which hid the
+            // action exactly when it had something to show).
+            { EGVAR(core,selUnits) isNotEqualTo [] },
+            [],
+            {},
+            {}
+        ] call zen_context_menu_fnc_createAction;
 
-    // Selection info dialog: its own ZEN action. This used to live inside the
-    // engine's selection poll, on the reasoning that the poll owned the selection
-    // the show-condition reads — but the action opens THIS component's dialog, and
-    // leaving it in the engine is what made an addon-agnostic poll carry one
-    // addon's menu entry.
-    private _action = [
-        "RTZ_ViewSelInfo",
-        LLSTRING(ActionBehavior),
-        ["\a3\ui_f\data\igui\cfg\simpletasks\types\intel_ca.paa", [1, 1, 1, 1]],
-        { call FUNC(openSelectionInfo) },
-        // Show-condition: ZEN lists the action when this returns true, so it must
-        // be true when units ARE selected (it was once inverted, which hid the
-        // action exactly when it had something to show).
-        { EGVAR(core,selUnits) isNotEqualTo [] },
-        [],
-        {},
-        {}
-    ] call zen_context_menu_fnc_createAction;
-
-    [_action, ["RTZ_Control"], 5] call zen_context_menu_fnc_addAction;
-
-    if (GVAR(enableVehicleOverlay)) then {
-        call FUNC(vehicleOverlay);
+        [_action, ["RTZ_Control"], 5] call zen_context_menu_fnc_addAction;
     };
 
     if (GVAR(enableUnitTags)) then {
         call FUNC(unitTags);
     };
 
-    // Independent of GVAR(enableVehicleOverlay) — either vehicle display can run
-    // without the other; they share the STREAM_VEH packets.
     if (GVAR(enableVehicleTags)) then {
         call FUNC(vehicleTags);
     };

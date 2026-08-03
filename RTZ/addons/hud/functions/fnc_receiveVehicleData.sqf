@@ -3,10 +3,9 @@
  * Author: Maxim
  * CLIENT. Snapshot receiver for the vehicle packet feed (STREAM_VEH).
  *
- * Same netId-keyed unpack as FUNC(receiveUnitData), and for the same reason: both
- * consumers index by id. Here there are two of them sharing one feed — the head
- * tags (FUNC(drawVehicleTags)) and the bottom-right stat cards
- * (FUNC(drawVehicleCards)) — hence two dirty flags off one snapshot.
+ * Same netId-keyed unpack as FUNC(receiveUnitData), and for the same reason: the
+ * consumer indexes by id. The head tags (FUNC(drawVehicleTags)) read the store;
+ * the dirty flag is what tells them their per-vehicle text cache is stale.
  *
  * Packet layout is FUNC(gatherVehicleInfo)'s; index 0 is the netId.
  *
@@ -34,4 +33,3 @@ private _m = createHashMap;
 
 GVAR(vehicleData) = _m;
 GVAR(vehicleTagsDirty) = true;
-GVAR(vehicleDataDirty) = true;

@@ -92,11 +92,21 @@ private _fnc_surfaceAt = {
     private _terrainASL = getTerrainHeightASL [_px, _py];
     private _landPos = [_px, _py, _terrainASL];
 
+    // `break`, not `exitWith`. lineIntersectsSurfaces returns its hits sorted by
+    // distance from the BEGIN position — here 200 m up — so the first mostly-flat
+    // surface is the HIGHEST one, which is the whole point of tracing downward.
+    // This was an `exitWith`, which inside a forEach unwinds only the current
+    // ITERATION (it is continue, not break — docs/Knowledge Base/Gotchas.md §2): the
+    // loop ran on and every later, LOWER surface overwrote _landPos, so the trace
+    // returned the lowest flat hit instead of the highest. A unit teleported onto a
+    // multi-storey building landed on its ground floor, and one aimed at a bridge
+    // landed under it.
     {
         _x params ["_intersectPos", "_surfaceNormal"];
 
-        if (_surfaceNormal vectorDotProduct [0, 0, 1] > 0.5) exitWith {
+        if (_surfaceNormal vectorDotProduct [0, 0, 1] > 0.5) then {
             _landPos = _intersectPos;
+            break;
         };
     } forEach lineIntersectsSurfaces [[_px, _py, _terrainASL + 200], [_px, _py, _terrainASL - 10], _ignoreObj, objNull, true, 5];
 

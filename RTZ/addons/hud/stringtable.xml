@@ -22,24 +22,6 @@
         <Key ID="STR_RTZ_HUD_ActionHideTargets">
             <English>Hide Targets</English>
         </Key>
-        <Key ID="STR_RTZ_HUD_ActionVehCardsFull">
-            <English>Vehicle Cards: FULL</English>
-        </Key>
-        <Key ID="STR_RTZ_HUD_ActionVehCardsMin">
-            <English>Vehicle Cards: MIN</English>
-        </Key>
-        <Key ID="STR_RTZ_HUD_CardBarValue">
-            <English>%1  %2%%</English>
-        </Key>
-        <Key ID="STR_RTZ_HUD_CardCommander">
-            <English>CDR</English>
-        </Key>
-        <Key ID="STR_RTZ_HUD_CardFuel">
-            <English>FUEL</English>
-        </Key>
-        <Key ID="STR_RTZ_HUD_CardHull">
-            <English>HULL</English>
-        </Key>
         <Key ID="STR_RTZ_HUD_CategoryDogTags">
             <English>Dog Tags</English>
         </Key>
@@ -114,12 +96,6 @@
         </Key>
         <Key ID="STR_RTZ_HUD_EnableUnitTags_Description">
             <English>Show a small floating status tag above each selected infantry unit in Zeus. Requires Selection Info enabled. Toggle in-mission via the RTZ context menu.</English>
-        </Key>
-        <Key ID="STR_RTZ_HUD_EnableVehicleOverlay">
-            <English>Vehicle Overlay</English>
-        </Key>
-        <Key ID="STR_RTZ_HUD_EnableVehicleOverlay_Description">
-            <English>Show stat cards (speed, fuel, ammo, crew, LAMBS task) for selected vehicles in Zeus. Requires Selection Info enabled.</English>
         </Key>
         <Key ID="STR_RTZ_HUD_EnableVehicleTags">
             <English>Vehicle Tags</English>

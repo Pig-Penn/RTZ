@@ -14,11 +14,12 @@
  * with the display; the stored control is only kept so a mid-mission toggle can
  * detach it early.
  *
- * These markers stay a plain local overlay rather than moving onto rtz_hud'
+ * These markers stay a plain local overlay rather than moving onto rtz_core's
  * stream engine: that engine is selection-driven and server-polled, while
  * detectedMines is readable on the client and these icons must show regardless of
  * what the curator has selected. Routing them through it would buy nothing and
- * cost a server round trip.
+ * cost a server round trip. (The frame loop below is a different thing entirely,
+ * and this component does use that.)
  *
  * Arguments:
  * 0: Curator Display <DISPLAY> — omitted on a setting-change refresh
@@ -50,7 +51,7 @@ if (_wanted) then {
     };
 };
 
-// Registration with rtz_hud's shared frame loop, not a Draw3D handler of our
+// Registration with rtz_core's shared frame loop, not a Draw3D handler of our
 // own — registering and unregistering is what makes the marker free while it is
 // switched off, exactly as adding/removing the handler used to be.
 if (GVAR(mark3D)) then {

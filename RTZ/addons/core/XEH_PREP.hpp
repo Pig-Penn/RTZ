@@ -15,6 +15,11 @@ PREP(streamServer);
 PREP(registerStream);
 PREP(setDemand);
 
+// "The server's picture of me is stale, send it again now." The ONE supported way
+// to force a re-subscription — consumers never build the payload or touch the
+// poll's diff baseline themselves.
+PREP(reportNow);
+
 // Default snapshot receiver: store raw, let the draw function bake it lazily.
 // A stream that wants its snapshot unpacked differently names its own.
 PREP(receiveOverlay);

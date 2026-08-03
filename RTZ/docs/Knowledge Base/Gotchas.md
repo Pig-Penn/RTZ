@@ -105,7 +105,7 @@ Since Arma 3 v2.02 the fix is simply **`break`**, which works in `for`, `while` 
 **Put the test at the TOP of the loop body.** A `break` at the bottom still pays for the whole
 iteration's work before it fires, which defeats the point when the loop body is the expensive part.
 
-This shipped **three times**, every one of them a "stop at the first hit" early-out that silently
+This shipped **five times**. The first three were "stop at the first hit" early-outs that silently
 did nothing — the parameter was accepted, documented, and inert:
 
 | Site | Dead parameter |
@@ -113,6 +113,21 @@ did nothing — the parameter was accepted, documented, and inert:
 | [fnc_collectDeletables.sqf](addons/delete/functions/fnc_collectDeletables.sqf) | `_firstOnly` — and it sat *after* the crew expansion it existed to skip |
 | [fnc_findTargets.sqf](addons/supply/functions/fnc_findTargets.sqf) | `_limit` — the context-menu condition swept a whole parked column to answer a boolean |
 | [fnc_findCountermeasureWeapons.sqf](addons/common/functions/fnc_findCountermeasureWeapons.sqf) | `_firstOnly` |
+
+The other two were worse, because the loop did not merely cost too much — it returned the
+**wrong answer**. Both walked `lineIntersectsSurfaces`, whose hits come back sorted by distance
+from the *begin* position, looking for the first mostly-flat surface. `exitWith` let the loop run
+on, so each later hit overwrote the result and the **last** surface won instead of the first:
+
+| Site | Symptom |
+|---|---|
+| [fnc_teleportToCursor.sqf](addons/common/functions/fnc_teleportToCursor.sqf) | Trace runs downward from 200 m up, so "first" means highest. Units teleported onto a multi-storey building landed on its ground floor, and units aimed at a bridge landed underneath it |
+| [fnc_placementPreview.sqf](addons/common/functions/fnc_placementPreview.sqf) | Trace runs outward from the curator camera, so "first" means nearest. The placement ghost snapped through the roof under the cursor down to the ground below it |
+
+The lesson generalises: an `exitWith` whose block **assigns** rather than merely reads is not just a
+missed optimisation, it is a silent last-wins reducer. Grep for `exitWith` inside `forEach` before
+trusting any "take the first match" loop — and note that a plain-text grep will also hit the prose
+in these entries, so confirm each match is real code.
 
 The older `scopeName` / `breakOut` route still works and is needed when you must unwind *several*
 scopes at once, but **the value must ride along**: a bare `breakOut "scan"` exits with no return

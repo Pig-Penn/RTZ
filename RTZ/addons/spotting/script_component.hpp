@@ -57,50 +57,33 @@
 // space after a line-continuation `\` silently truncates the macro (Gotchas §6).
 #define ECHELON_TEXTURES ["\a3\ui_f\data\map\markers\nato\group_0.paa", "\a3\ui_f\data\map\markers\nato\group_1.paa", "\a3\ui_f\data\map\markers\nato\group_2.paa", "\a3\ui_f\data\map\markers\nato\group_3.paa"]
 
-// Client draw distances/sizes (fnc_draw3D).
-#define WEDGE_MAX_DIST 2500
-#define CHEVRON_MAX_DIST 500
-// Chevron icon width ramp: CHEVRON_W_NEAR at the camera, tapering to
-// CHEVRON_W_FAR at WEDGE_MAX_DIST. Same endpoints as the 500 m stepped table
-// this replaced, without the visible size jumps as the camera pulls back.
-#define CHEVRON_W_NEAR 4
-#define CHEVRON_W_FAR 2
-#define HOVER_MAX_DIST 50
-#define HOVER_HIT_R2 (0.05 * 0.05)
-#define GROUP_HOVER_R2 (0.05 * 0.05)
-#define GROUP_ICON_WIDTH 1.3
+// How long a spotted unit's chevron flashes white after it fires
+// (fnc_spottingSystem's FiredMan handler).
 #define BLINK_DURATION 0.15
 
+// ── Zeus MAP icon overlay (fnc_initCuratorDisplay) ───────────────────────────
+// This component draws the spotting picture on the Zeus MAP; the 3D WORLD
+// rendering of the same data lives in rtz_hud (fnc_drawSpots, fnc_drawRcIndicator)
+// and is tuned by that component's own header. Only the map-side constants belong
+// here — the world-side twins (WEDGE_MAX_DIST, CHEVRON_*, GROUP_ZMOD_*,
+// AMP_GAPS_WORLD, RC_ICON_*) sat here as dead copies after the rtz_hud split and
+// were silently ignored by the renderers that had moved, so tuning them did
+// nothing. Keep it that way: a constant belongs to whichever component DRAWS with it.
+//
 // Echelon amplifier vertical gap above the group icon, indexed by side idx
 // (0 = BLUFOR rectangle, 1 = OPFOR diamond — peaks highest, 2 = independent/
-// civilian square). World-space (fnc_draw3D) vs. map screen-space
-// (fnc_initCuratorDisplay) use different scales.
-#define AMP_GAPS_WORLD [0.002, 0.008, 0.004]
+// civilian square), in map screen-space.
 #define AMP_GAPS_MAP [0.005, 0.011, 0.005]
 #define MAP_ICON_SIZE 24
-
-// Group icon world-space height offset over camera distance — native Zeus
-// group-icon recipe (fnc_draw3D).
-#define GROUP_ZMOD_NEAR 180
-#define GROUP_ZMOD_FAR 360
-#define GROUP_ZMOD_MIN 5
-#define GROUP_ZMOD_MAX 20
-#define GROUP_ZMOD_FLOOR_SCALE 0.88
 
 // Officer editing-area zone ring overlay (fnc_initCuratorDisplay).
 #define COLOR_ZONE_RING [0.25, 0.55, 1, 0.85]
 
-// Remote-control indicator (fnc_remoteControlIndicator). RC_CHECK_TICK is the
+// Remote-control DETECTION (fnc_remoteControlIndicator). RC_CHECK_TICK is the
 // base tick (s) of the server scan PFH; the effective cadence is the
 // GVAR(rcCheckInterval) CBA setting, read live and floored to this value.
+// The indicator's LOOK is rtz_hud's (fnc_drawRcIndicator).
 #define RC_CHECK_TICK 1
 #define RC_OWNER_VAR "bis_fnc_moduleRemoteControl_owner"
-#define RC_TEXTURE "\a3\modules_f_curator\data\portraitremotecontrol_ca.paa"
-#define RC_ICON_NEAR 500
-#define RC_ICON_FAR 3000
-#define RC_ICON_MAX_WIDTH 1.2
-#define RC_ICON_MIN_WIDTH 0.7
-#define RC_COLOR_SHIFT_MAX 0.25
-#define RC_COLOR_SHIFT_FREQ 180
 
 #define ICON_TOGGLE_CHEVRONS "\a3\ui_f\data\igui\cfg\simpletasks\types\meet_ca.paa"

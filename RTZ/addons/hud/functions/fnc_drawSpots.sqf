@@ -61,7 +61,12 @@ private _AMP_GAPS = AMP_GAPS_WORLD;
 // Hoisted once per frame: is anything actually under remote control? Testing only
 // that the map EXISTS made this true whenever the RC indicator is merely enabled,
 // so every chevron paid a netId + hashmap lookup every frame for nothing.
-private _rcDisplay = GETEGVAR(spotting,rcDisplay,createHashMap);
+// Plain read, no default: rtz_spotting's preInit creates the store unconditionally
+// on every interface machine. It used to carry a `createHashMap` default for the
+// case where the RC system is switched off — and SQF evaluates that argument
+// eagerly, so it built and threw away a hashmap on every frame of every curator's
+// session, whether or not the store existed.
+private _rcDisplay = EGVAR(spotting,rcDisplay);
 private _hasRC     = count _rcDisplay > 0;
 
 // Distance fade × stored base alpha; flash white while the unit is firing.

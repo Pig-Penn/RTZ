@@ -6,9 +6,14 @@ class CfgPatches {
         units[] = {};
         weapons[] = {};
         requiredVersion = REQUIRED_VERSION;
-        // rtz_hud owns the single Draw3D handler this component's icons draw
-        // from (EFUNC(hud,drawSpots) / EFUNC(hud,drawRcIndicator)); the
-        // dependency runs one way only — rtz_hud never reads rtz_spotting.
+        // Two separate dependencies, both one-way:
+        //   rtz_core owns the single Draw3D handler every RTZ display draws from,
+        //     which this component registers its renderers with.
+        //   rtz_hud owns the RENDERERS themselves (EFUNC(hud,drawSpots) /
+        //     EFUNC(hud,drawRcIndicator)) — this component decides what is spotted,
+        //     rtz_hud decides how it looks, and rtz_hud never reads rtz_spotting.
+        // The comment here used to credit rtz_hud with owning the handler as well,
+        // which stopped being true when the frame loop moved into rtz_core.
         requiredAddons[] = {"rtz_main", "rtz_common", "rtz_core", "rtz_hud", "zen_context_menu"};
         author = "Maxim";
         authors[] = {"Maxim"};
