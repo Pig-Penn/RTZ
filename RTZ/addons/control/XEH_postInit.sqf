@@ -1,10 +1,12 @@
 #include "script_component.hpp"
 
-// Server-only receivers. hideObjectGlobal / enableSimulationGlobal and the
-// ownership trio (setOwner / setGroupOwner / owner) are all server-only
-// commands, so both orders are dispatched here with CBA_fnc_serverEvent.
+// Server-only receivers. hideObjectGlobal / enableSimulationGlobal,
+// enableDynamicSimulation, and the ownership trio (setOwner / setGroupOwner /
+// owner) are all server-only commands, so every order here is dispatched with
+// CBA_fnc_serverEvent.
 if (isServer) then {
     [QGVAR(squadHide), LINKFUNC(squadHideApply)] call CBA_fnc_addEventHandler;
+    [QGVAR(disableDynamicSimulation), LINKFUNC(disableDynamicSimulationApply)] call CBA_fnc_addEventHandler;
     [QGVAR(takeOwnership), LINKFUNC(takeOwnershipApply)] call CBA_fnc_addEventHandler;
 };
 

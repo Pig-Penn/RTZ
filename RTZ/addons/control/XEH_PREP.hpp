@@ -1,6 +1,7 @@
 PREP(canReset);
 PREP(canTakeOwnership);
 PREP(collectDismountVehicles);
+PREP(disableDynamicSimulationApply);
 PREP(dismountActionModifier);
 PREP(dismountApply);
 PREP(dismountToggle);

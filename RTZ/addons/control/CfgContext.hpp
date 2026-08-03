@@ -42,6 +42,10 @@ class zen_context_menu_actions {
             priority = 3;
         };
 
+        // Third state, checked first by the modifier/toggle: a group still
+        // under the editor-placed Dynamic Simulation system shows blue and
+        // this click turns that off instead of hiding/freezing. See
+        // FUNC(squadHideActionModifier).
         class GVAR(squadHide) {
             displayName = CSTRING(ActionDisableSimulation);
             icon = ICON_HIDE;

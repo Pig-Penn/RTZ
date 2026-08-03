@@ -22,6 +22,12 @@
 #define COLOR_HIDE [1.00, 0.60, 0.20, 1]
 #define COLOR_SHOW [0.40, 1.00, 0.40, 1]
 
+// Third state for the same action: a group still under the editor-placed
+// Dynamic Simulation system. Reuses ICON_SHOW (blue tint) rather than a new
+// asset — clicking it turns Dynamic Simulation off, after which the toggle
+// above reverts to its normal orange/green behaviour.
+#define COLOR_DYNSIM [0.20, 0.60, 1.00, 1]
+
 #define ICON_OWNERSHIP "\x\zen\addons\context_actions\ui\add_ca.paa"
 #define ICON_RESET "\a3\3DEN\Data\CfgWaypoints\cycle_ca.paa"
 #define ICON_RELOAD "\A3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa"
