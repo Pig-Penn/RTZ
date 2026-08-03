@@ -15,6 +15,10 @@
 
 #include "\x\rtz\addons\main\script_macros.hpp"
 
+// RENDER_WORLD / CTX_* / SRC_HULLS — this component owns a supply-lines stream
+// on rtz_core's engine and the renderer that draws it.
+#include "\x\rtz\addons\core\script_macros_core.hpp"
+
 #define ICON_RESUPPLY "\A3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa"
 
 // ── Service thresholds ───────────────────────────────────────────────────────

@@ -6,15 +6,17 @@ class CfgPatches {
         units[] = {};
         weapons[] = {};
         requiredVersion = REQUIRED_VERSION;
-        // Two separate dependencies, both one-way:
-        //   rtz_core owns the single Draw3D handler every RTZ display draws from,
-        //     which this component registers its renderers with.
-        //   rtz_hud owns the RENDERERS themselves (EFUNC(hud,drawSpots) /
-        //     EFUNC(hud,drawRcIndicator)) — this component decides what is spotted,
-        //     rtz_hud decides how it looks, and rtz_hud never reads rtz_spotting.
-        // The comment here used to credit rtz_hud with owning the handler as well,
-        // which stopped being true when the frame loop moved into rtz_core.
-        requiredAddons[] = {"rtz_main", "rtz_common", "rtz_core", "rtz_hud", "zen_context_menu"};
+        // rtz_core owns the single Draw3D handler every RTZ display draws from,
+        // which this component registers FUNC(drawSpots) and FUNC(drawRcIndicator)
+        // with. That is the only RTZ dependency this component's drawing carries.
+        //
+        // rtz_hud is deliberately NOT listed. The two renderers used to live over
+        // there, which required it — but they read six of this component's globals
+        // in the process, so rtz_hud depended on rtz_spotting just as hard while
+        // declaring nothing, and a mutual requiredAddons leaves Arma's load order
+        // between the two undefined. The renderers moved here, to the data they
+        // read; now neither addon needs the other.
+        requiredAddons[] = {"rtz_main", "rtz_common", "rtz_core", "zen_context_menu"};
         author = "Maxim";
         authors[] = {"Maxim"};
         url = "";

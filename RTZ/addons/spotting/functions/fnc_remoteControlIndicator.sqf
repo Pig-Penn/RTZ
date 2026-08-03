@@ -71,25 +71,26 @@ if (hasInterface) then {
     // to suppress its chevron while the RC icon is showing.
     //
     // NOT touched here. GVAR(rcDisplay) is created in XEH_preInit because
-    // EFUNC(hud,drawSpots) reads it under a DIFFERENT setting gate and must never
+    // FUNC(drawSpots) reads it under a DIFFERENT setting gate and must never
     // find it nil. A `GVAR(rcDisplay) = createHashMap` sat here with a comment
     // claiming it merely cleared the store — it did not, it replaced it, and it
     // could not have been clearing anything either: this runs at postInit and the
     // only writer (the QGVAR(rcDetected) handler) is registered a dozen lines
     // below, so the map is provably still empty when execution reaches this point.
     //
-    // The icon itself is drawn by EFUNC(hud,drawRcIndicator), registered with the
+    // The icon itself is drawn by FUNC(drawRcIndicator), registered with the
     // ONE shared Draw3D handler rtz_core owns. This used to be a Draw3D handler of
     // its own, which meant re-running the Zeus test and a fresh
     // positionCameraToWorld every frame alongside every other display doing the
     // same. The frame loop resolves that context once and also owns the
     // curator-view gates (Zeus open, map not covering the 3D view) this handler
     // used to repeat.
-    [QGVAR(rcIndicator), ELINKFUNC(hud,drawRcIndicator), RENDER_WORLD, 40] call EFUNC(core,registerRenderer);
+    [QGVAR(rcIndicator), LINKFUNC(drawRcIndicator), RENDER_WORLD, 40] call EFUNC(core,registerRenderer);
 
     // Store/update the controlled unit and colour (idempotent re-sends are cheap).
     [QGVAR(rcDetected), {
         params ["_id", "_unit", "_colorArray"];
+        
         GVAR(rcDisplay) set [_id, [_unit, _colorArray]];
     }] call CBA_fnc_addEventHandler;
 

@@ -16,28 +16,6 @@ PREP(errandToken);
 PREP(grantCurators);
 PREP(progressJob);
 
-// Deploy countermeasures — context action (CfgZenContext.hpp), its condition,
-// and the locality-filtered handler that actually fires.
-PREP(canDeploySmoke);
-PREP(deploySmokeApply);
-PREP(findCountermeasureWeapons);
-PREP(orderDeploySmoke);
-
-// Zeus keybind handlers — RTS-style orders issued without opening a context
-// menu first. Each guards itself with CHECK_CURATOR_INPUT and returns whether
-// it consumed the press.
-PREP(curatorMapTeleport);
-PREP(flyHeight);
-PREP(openUnitInventory);
-PREP(switchStance);
-PREP(teleportToCursor);
-PREP(toggleCombatMode);
-
-// Spawned-unit setup — the CAManBase InitPost path that applies the built-in
-// skill table (defaultSkills.inc.sqf).
-PREP(applySkill);
-PREP(initMan);
-
 // Shared UI / presentation helpers.
 PREP(classInfo);
 PREP(placementPreview);

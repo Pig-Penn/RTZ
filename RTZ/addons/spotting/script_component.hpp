@@ -7,6 +7,10 @@
 
 #include "\x\rtz\addons\main\script_macros.hpp"
 
+// RENDER_WORLD / CTX_* — this component registers the spot and remote-control
+// renderers with rtz_core's frame loop.
+#include "\x\rtz\addons\core\script_macros_core.hpp"
+
 // Detection thresholds (fnc_spotCheck): knowsAbout value at/above which a
 // group counts as heard/known (NATO marker on the leader) vs. individually
 // confirmed (wedge chevron on the member).
@@ -62,13 +66,12 @@
 #define BLINK_DURATION 0.15
 
 // ── Zeus MAP icon overlay (fnc_initCuratorDisplay) ───────────────────────────
-// This component draws the spotting picture on the Zeus MAP; the 3D WORLD
-// rendering of the same data lives in rtz_hud (fnc_drawSpots, fnc_drawRcIndicator)
-// and is tuned by that component's own header. Only the map-side constants belong
-// here — the world-side twins (WEDGE_MAX_DIST, CHEVRON_*, GROUP_ZMOD_*,
-// AMP_GAPS_WORLD, RC_ICON_*) sat here as dead copies after the rtz_hud split and
-// were silently ignored by the renderers that had moved, so tuning them did
-// nothing. Keep it that way: a constant belongs to whichever component DRAWS with it.
+// This component draws the spotting picture in BOTH places: on the Zeus map
+// (fnc_initCuratorDisplay, screen-space) and in the 3D world (FUNC(drawSpots),
+// world-space). The two sets below are twins — same quantity, different space —
+// and they were split across two addons for a while, which left whichever copy
+// the renderer could not see as a dead constant that did nothing when tuned.
+// They are together again. A constant belongs to whichever component DRAWS with it.
 //
 // Echelon amplifier vertical gap above the group icon, indexed by side idx
 // (0 = BLUFOR rectangle, 1 = OPFOR diamond — peaks highest, 2 = independent/
@@ -76,14 +79,48 @@
 #define AMP_GAPS_MAP [0.005, 0.011, 0.005]
 #define MAP_ICON_SIZE 24
 
+// ── 3D world spot rendering (FUNC(drawSpots)) ────────────────────────────────
+// Draw distances/sizes for the cursor-view picture.
+#define WEDGE_MAX_DIST 2500
+#define CHEVRON_MAX_DIST 500
+// Chevron icon width ramp: CHEVRON_W_NEAR at the camera, tapering to
+// CHEVRON_W_FAR at WEDGE_MAX_DIST.
+#define CHEVRON_W_NEAR 4
+#define CHEVRON_W_FAR 2
+#define HOVER_MAX_DIST 50
+#define HOVER_HIT_R2 (0.05 * 0.05)
+#define GROUP_HOVER_R2 (0.05 * 0.05)
+#define GROUP_ICON_WIDTH 1.3
+
+// World-space twin of AMP_GAPS_MAP above: same per-side echelon amplifier gap,
+// as a fraction scaled by camera distance (constant screen gap at any zoom).
+#define AMP_GAPS_WORLD [0.002, 0.008, 0.004]
+
+// Group icon world-space height offset over camera distance — native Zeus
+// group-icon recipe (FUNC(drawSpots)).
+#define GROUP_ZMOD_NEAR 180
+#define GROUP_ZMOD_FAR 360
+#define GROUP_ZMOD_MIN 5
+#define GROUP_ZMOD_MAX 20
+#define GROUP_ZMOD_FLOOR_SCALE 0.88
+
 // Officer editing-area zone ring overlay (fnc_initCuratorDisplay).
 #define COLOR_ZONE_RING [0.25, 0.55, 1, 0.85]
 
-// Remote-control DETECTION (fnc_remoteControlIndicator). RC_CHECK_TICK is the
-// base tick (s) of the server scan PFH; the effective cadence is the
+// Remote-control indicator. RC_CHECK_TICK is the base tick (s) of the server
+// scan PFH (fnc_remoteControlIndicator); the effective cadence is the
 // GVAR(rcCheckInterval) CBA setting, read live and floored to this value.
-// The indicator's LOOK is rtz_hud's (fnc_drawRcIndicator).
 #define RC_CHECK_TICK 1
 #define RC_OWNER_VAR "bis_fnc_moduleRemoteControl_owner"
+
+// ...and how the result looks (FUNC(drawRcIndicator)): a portrait icon over the
+// puppeteered unit, size ramping down with distance, RGB cycling toward white.
+#define RC_TEXTURE "\a3\modules_f_curator\data\portraitremotecontrol_ca.paa"
+#define RC_ICON_NEAR 500
+#define RC_ICON_FAR 3000
+#define RC_ICON_MAX_WIDTH 1.2
+#define RC_ICON_MIN_WIDTH 0.7
+#define RC_COLOR_SHIFT_MAX 0.25
+#define RC_COLOR_SHIFT_FREQ 180
 
 #define ICON_TOGGLE_CHEVRONS "\a3\ui_f\data\igui\cfg\simpletasks\types\meet_ca.paa"

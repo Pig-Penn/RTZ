@@ -27,7 +27,7 @@
  *     in an identically named new group. LAMBS behaves the same way.
  *   — The old group and everything hung on it is discarded, so any RTZ attack
  *     order (the DESTROY waypoint from EFUNC(attack,orderDestroy)) and any
- *     per-group state — including EGVAR(common,holdFire) fire discipline — is
+ *     per-group state — including EGVAR(orders,holdFire) fire discipline — is
  *     gone. A reset group reverts to a fresh group's defaults (behaviour AWARE).
  *   — createGroup counts against the engine's per-side group cap (144). At the
  *     cap the reset cannot build the replacement group; same exposure as LAMBS'
@@ -55,6 +55,7 @@
  *
  * Public: No
  */
+
 params ["_grps"];
 
 {

@@ -21,6 +21,7 @@
  *
  * Public: No
  */
+
 params ["_reporter", "_reportCats", "_spotterPlayers", ["_contactPos", []]];
 
 // ── Location qualifier ──────────────────────────────────────────────────────

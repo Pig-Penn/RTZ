@@ -1,0 +1,40 @@
+#define COMPONENT orders
+#define COMPONENT_BEAUTIFIED Orders
+#include "\x\rtz\addons\main\script_mod.hpp"
+
+// #define DEBUG_MODE_FULL
+// #define DISABLE_COMPILE_CACHE
+
+#ifdef DEBUG_ENABLED_ORDERS
+    #define DEBUG_MODE_FULL
+#endif
+
+#ifdef DEBUG_SETTINGS_ORDERS
+    #define DEBUG_SETTINGS DEBUG_SETTINGS_ORDERS
+#endif
+
+#include "\x\rtz\addons\main\script_macros.hpp"
+
+// CHECK_CURATOR_INPUT, SELECTED_OBJECTS and IDD_/IDC_RSCDISPLAYCURATOR come from
+// main's script_curator.hpp — every handler in this component opens with the
+// first and reads the second.
+
+// Zeus feedback hint duration in seconds
+#define HINT_DURATION 3
+
+// Minimum helicopter fly-in height orderable by the fly-height keybinds
+#define FLY_HEIGHT_MIN 0
+
+// Move-order icon drawn by the unit teleport (ZEN's expected-destination texture)
+#define ICON_TELEPORT "\a3\ui_f\data\igui\cfg\simpleTasks\types\move_ca.paa"
+
+// 3DEN stance attribute icons drawn by the stance keybinds
+#define STANCE_ICON_UP "\a3\3DEN\Data\Attributes\Stance\up_ca.paa"
+#define STANCE_ICON_MIDDLE "\a3\3DEN\Data\Attributes\Stance\middle_ca.paa"
+#define STANCE_ICON_DOWN "\a3\3DEN\Data\Attributes\Stance\down_ca.paa"
+#define STANCE_ICON_AUTO "\a3\3DEN\Data\Attributes\default_ca.paa"
+
+// ZEN's own Combat Mode context-menu glyph, tinted the same way ZEN tints it
+#define ICON_COMBAT_MODE "\x\zen\addons\context_actions\ui\hold_ca.paa"
+#define COLOR_HOLD_FIRE [1, 0, 0, 1]
+#define COLOR_OPEN_FIRE [1, 1, 1, 1]

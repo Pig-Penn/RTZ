@@ -108,7 +108,7 @@ private _officerZones = GETMVAR(RTZ_officerZoneMap,createHashMap);
 // server — a silent no-op on a dedicated server (whose keys then never age out of
 // _activeSpots), but on a listen server the host has the receivers registered and
 // would render a departed curator's entire contact picture as its own. isPlayer is
-// the same test FUNC(remoteControlIndicator) and rtz_hud already use, and
+// the same test FUNC(remoteControlIndicator) already uses, and
 // `isPlayer objNull` is false, so it subsumes the null check.
 // Same-side curators share the same spotter pool and see the same hostiles, so
 // the entire knowsAbout matrix is computed once per side and emitted to each.
@@ -244,6 +244,7 @@ if (count _bySide > 0 || _dbg) then {
             private _curatorSide = if (!isPlayer _player) then { sideUnknown } else { side _player };
             private _repCount = count (_sideSpotterReps getOrDefault [str _curatorSide, createHashMap]);
             private _sig = format ["%1|%2|%3", _player, _curatorSide, _repCount];
+
             if (_sig != (GVAR(spotDebugLast) getOrDefault [netId _x, ""])) then {
                 GVAR(spotDebugLast) set [netId _x, _sig];
                 diag_log text format ["[RTZ] server curator %1: player=%2 owner=%3 side=%4 spotterGroups=%5",
@@ -305,6 +306,7 @@ private _currentKeys = createHashMap;
     private _allHostile = [];
     {
         _y params ["_entSide", "_entities"];
+        
         if ((_spotterSide getFriend _entSide) < 0.5) then { _allHostile append _entities };
     } forEach _sideEntities;
     if (_allHostile isEqualTo []) then { continue };
@@ -342,10 +344,10 @@ private _currentKeys = createHashMap;
         // genuinely is spotted, preferring a MAN — a crewed hull rides in _members
         // alongside its crew, and anchoring on the man both classifies correctly
         // (FUNC(unitMarker), FUNC(contactCategory)) and still renders on the hull,
-        // since EFUNC(hud,drawSpots) anchors every icon on `vehicle _unit`. findIf
+        // since FUNC(drawSpots) anchors every icon on `vehicle _unit`. findIf
         // returns -1 when the group is men-less (a UAV), where index 0 — the hull —
         // is what we want. _leaderNetId keeps the ORIGINAL leader's netId as the group
-        // key, so chevron→group association (the hover peek in EFUNC(hud,drawSpots))
+        // key, so chevron→group association (the hover peek in FUNC(drawSpots))
         // and the callout last-seen gate are unaffected; the anchor itself rides in
         // _grpBaseSig below.
         if !(_leader in _members) then {
@@ -432,6 +434,7 @@ private _currentKeys = createHashMap;
         // Chevron colour and display name — once per member, shared by every curator.
         private _chevronData = _chevrons apply {
             _x params ["_member", "_memberId"];
+            
             ([_member] call EFUNC(common,classInfo)) params ["_memberName", "_isLeaderName"];
             // NCOs — any unit whose class display name contains "leader" (Squad
             // Leader, Team Leader, …) — get the brighter "own-group" palette
@@ -470,6 +473,7 @@ private _currentKeys = createHashMap;
             // Chevrons: one per individual the team knows well (knowsAbout the unit).
             {
                 _x params ["_member", "_memberId", "_wedgeColor", "_memberName", "_zone", "_wedgeBaseSig"];
+
                 private _wedgeKey  = "w_" + _memberId + "_" + _curId;
                 private _wedgeMrkr = MKR_PREFIX + _wedgeKey;
                 _currentKeys set [_wedgeKey, true];

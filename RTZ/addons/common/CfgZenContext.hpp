@@ -5,23 +5,9 @@
 // calls across the RTZ addons target these parent paths — addAction logs an
 // error and drops the action if the parent node is missing. Most RTZ actions
 // (reload, attack, assemble, deploy countermeasures, ...) sit at the menu
-// root instead of under a submenu. Feature-addon actions are declared in
-// each addon's own CfgContext.hpp (or registered at runtime); only
-// rtz_common's own actions hang off the anchors here.
+// root instead of under a submenu, and are declared in their own addon's
+// CfgContext.hpp; this component now declares no actions of its own.
 class zen_context_menu_actions {
-    // Deploy countermeasures: fires the smoke launcher / flare / chaff
-    // dispenser of every selected vehicle that has one. The condition
-    // carries the QGVAR(enableDeploySmoke) master switch, so the setting
-    // can be toggled mid-mission. Sits at the menu root alongside the other
-    // RTS-style order actions (reload, attack, assemble, ...).
-    class GVAR(deploySmoke) {
-        displayName = CSTRING(ActionDeploySmoke);
-        icon = ICON_SMOKE;
-        statement = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(orderDeploySmoke));
-        condition = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(canDeploySmoke));
-        priority = 1;
-    };
-
     // Submenu for the toggleable draw overlays (vehicle tags, unit tags,
     // destinations, targets).
     class RTZ_Overlays {

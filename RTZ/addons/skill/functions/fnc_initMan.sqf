@@ -20,7 +20,7 @@
  * None
  *
  * Example:
- * [_unit] call rtz_common_fnc_initMan
+ * [_unit] call rtz_skill_fnc_initMan
  *
  * Public: No
  */

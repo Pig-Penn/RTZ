@@ -1,7 +1,7 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Whether a deploy-countermeasures order is possible: the QGVAR(enableDeploySmoke)
+ * Whether a deploy-countermeasures order is possible: the QGVAR(enabled)
  * setting is on and the selection resolves to at least one vehicle with a
  * countermeasure weapon. Drives the visibility of the context menu action
  * (CfgZenContext.hpp), which ZEN evaluates on right-click rather than per frame.
@@ -17,15 +17,15 @@
  * Order Possible <BOOL>
  *
  * Example:
- * [_objects, _hoveredEntity] call rtz_common_fnc_canDeploySmoke
+ * [_objects, _hoveredEntity] call rtz_smoke_fnc_canDeploySmoke
  *
  * Public: No
  */
 
 params ["_objects", "_hoveredEntity"];
 
-if (!GVAR(enableDeploySmoke)) exitWith {false};
+if (!GVAR(enabled)) exitWith {false};
 
-([_objects + [_hoveredEntity]] call FUNC(collectVehicles)) findIf {
+([_objects + [_hoveredEntity]] call EFUNC(common,collectVehicles)) findIf {
     ([_x, true] call FUNC(findCountermeasureWeapons)) isNotEqualTo []
 } != -1

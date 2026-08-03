@@ -31,7 +31,7 @@
  * Press was handled (consumed) <BOOL>
  *
  * Example:
- * [_unit] call rtz_common_fnc_openUnitInventory
+ * [_unit] call rtz_orders_fnc_openUnitInventory
  *
  * Public: No
  */

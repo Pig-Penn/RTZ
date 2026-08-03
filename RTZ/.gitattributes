@@ -1,0 +1,25 @@
+# Normalize line endings on commit, check out native. Without this the repo
+# depends on each machine's core.autocrlf setting, and the `end_of_line = lf`
+# rule in .editorconfig is advisory only — nothing enforces it. The working tree
+# is currently mixed (88 of 303 .sqf files carry CR, the rest are LF), which is
+# exactly the drift this prevents.
+* text=auto
+
+# Binaries git must never touch.
+*.paa binary
+*.pbo binary
+*.bikey binary
+*.biprivatekey binary
+*.hsb binary
+
+# GitHub counts .hpp/.cpp as C++ by default, which reports this SQF mod as a
+# C++ project. Both extensions here are Arma config/preprocessor sources.
+addons/**/*.cpp linguist-language=SQF
+addons/**/*.hpp linguist-language=SQF
+extras/**/*.cpp linguist-language=SQF
+extras/**/*.hpp linguist-language=SQF
+
+# Vendored: CBA headers HEMTT needs to resolve \x\cba\... includes, and the
+# unshipped components parked in extras/. Neither is RTZ's own code.
+include/* linguist-vendored
+extras/* linguist-vendored

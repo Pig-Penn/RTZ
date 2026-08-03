@@ -21,7 +21,7 @@
  * Press was handled (consumed) <BOOL>
  *
  * Example:
- * call rtz_common_fnc_curatorMapTeleport
+ * call rtz_orders_fnc_curatorMapTeleport
  *
  * Public: No
  */

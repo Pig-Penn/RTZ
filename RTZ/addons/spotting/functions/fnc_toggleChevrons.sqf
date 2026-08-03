@@ -2,7 +2,7 @@
 /*
  * Author: Maxim
  * Context-menu statement: master on/off switch for the individual
- * spotted-unit chevron markers (pass 2 of EFUNC(hud,drawSpots)), PER-CLIENT.
+ * spotted-unit chevron markers (pass 2 of FUNC(drawSpots)), PER-CLIENT.
  * Group icons (pass 1) are unaffected — this only hides/shows the per-member
  * wedge chevrons.
  *

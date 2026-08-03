@@ -21,7 +21,7 @@
  * Press was handled (consumed) <BOOL>
  *
  * Example:
- * ["DOWN"] call rtz_common_fnc_switchStance
+ * ["DOWN"] call rtz_orders_fnc_switchStance
  *
  * Public: No
  */

@@ -18,14 +18,13 @@ PREP(receiveUnitData);
 PREP(receiveVehicleData);
 
 // ── Renderers ────────────────────────────────────────────────────────────────
-// drawSpots / drawRcIndicator are registered by rtz_spotting, which owns their
-// data; they live here because this component owns the drawing.
+// drawSpots / drawRcIndicator are NOT here — they belong to rtz_spotting, which
+// owns the stores they read and registers them itself. Keeping them here made
+// the two components mutually dependent while only one direction was declared.
 PREP(drawUnitTags);
 PREP(drawVehicleTags);
 PREP(drawDestination);
 PREP(drawTarget);
-PREP(drawSpots);
-PREP(drawRcIndicator);
 
 // ── Display start-up + runtime toggles ───────────────────────────────────────
 PREP(unitTags);

@@ -15,13 +15,14 @@
 
 #include "\x\rtz\addons\main\script_macros.hpp"
 
-// NOTE: the two contracts this component implements are declared in main's
-// script_macros.hpp, NOT here — RENDER_WORLD / RENDER_UI and the CTX_* frame
-// context indices for the frame loop, SRC_UNITS / SRC_VEHS / SRC_HULLS for the
-// stream engine, plus SEL_MAX_UNITS / SEL_MAX_VEHICLES / VEH_SIDE_OK / SIDE_NUM
-// which the engine applies and the displays must agree with. Any component may
-// register a renderer or declare a stream, and component headers are not visible
-// to each other.
+// The two contracts this component implements — RENDER_WORLD / RENDER_UI and the
+// CTX_* frame context indices for the frame loop, SRC_UNITS / SRC_VEHS /
+// SRC_HULLS for the stream engine, plus SEL_MAX_UNITS / SEL_MAX_VEHICLES /
+// VEH_SIDE_OK / SIDE_NUM which the engine applies and the displays must agree
+// with. They are PUBLIC (any component may register a renderer or declare a
+// stream), so they sit in their own header that consumers include by absolute
+// path rather than being copied into main.
+#include "\x\rtz\addons\core\script_macros_core.hpp"
 
 // Base tick (s) of the single server stream loop (FUNC(streamServer)) — the
 // fastest any stream can run. Each stream declares its own effective cadence (see

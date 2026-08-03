@@ -14,7 +14,7 @@
  * None
  *
  * Example:
- * [_vehicles] call rtz_common_fnc_deploySmokeApply
+ * [_vehicles] call rtz_smoke_fnc_deploySmokeApply
  *
  * Public: No
  */

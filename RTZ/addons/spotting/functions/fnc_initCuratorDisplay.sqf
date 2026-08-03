@@ -48,6 +48,7 @@ if (!isNil QGVAR(spotGroups) && {!(_display getVariable [QGVAR(spotDrawAttached)
             // _y = [unit, texture, colorArray, echelonTex, sideIdx, leaderNetId] —
             // GVAR(spotGroups) holds group icons only (chevrons live in spotChevrons).
             _y params ["_unit", "_texture", "_colorArray", "_echelonTex", "_sideIdx"];
+
             if (!alive _unit) then { continue };   // alive objNull is false — covers deleted units too
             private _pos = getPosVisual _unit;
             _map drawIcon [_texture, _colorArray, _pos, MAP_ICON_SIZE, MAP_ICON_SIZE, 0, "", 0, 0.03, "RobotoCondensed"];
@@ -88,6 +89,7 @@ if (!isNil QGVAR(officerZones) && {!(_display getVariable [QGVAR(zoneDrawAttache
             // drop the moment the officer dies, before the server's next pass
             // retracts the wedge.
             _y params ["_unit", "_center", "_radius"];
+
             if (!alive _unit) then { continue };
             _map drawEllipse [_center, _radius, _radius, 0, COLOR_ZONE_RING, ""];
         } forEach GVAR(officerZones);

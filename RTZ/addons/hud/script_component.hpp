@@ -5,10 +5,11 @@
 // #define DISABLE_COMPILE_CACHE
 #include "\x\rtz\addons\main\script_macros.hpp"
 
-// NOTE: the frame-loop contract this component implements — RENDER_WORLD /
-// RENDER_UI and the CTX_* frame-context indices — lives in main's
-// script_macros.hpp, not here. Any component may register a renderer, and
-// component headers are not visible to each other.
+// rtz_core's public contract: RENDER_WORLD / RENDER_UI and the CTX_* frame
+// context indices for the renderers below, SRC_* / SEL_MAX_* / SIDE_NUM /
+// VEH_SIDE_OK for the streams. Owned by the component that implements them, and
+// included here by absolute path because this component is a consumer of both.
+#include "\x\rtz\addons\core\script_macros_core.hpp"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STREAM ENGINE
@@ -21,18 +22,13 @@
 // SINGLE-quoted deliberately: these ids appear inside QUOTE(...) in
 // CfgContext.hpp, and a double-quoted literal would terminate the config string
 // the macro builds (docs/Knowledge Base/Gotchas.md §5).
-// The SRC_* slice constants a stream is declared with live in main's
-// script_macros.hpp, alongside the frame-loop contract — any component may
-// declare a stream, and component headers are not visible to each other.
+// The SRC_* slice constants a stream is declared with, and the SEL_MAX_* /
+// SIDE_NUM / VEH_SIDE_OK rules the engine applies and the displays below must
+// agree with, come from core's script_macros_core.hpp included above.
 #define STREAM_UNIT 'unit'
 #define STREAM_VEH  'veh'
 #define STREAM_DEST 'dest'
 #define STREAM_TGT  'tgt'
-
-// NOTE: SEL_MAX_UNITS / SEL_MAX_VEHICLES / SIDE_NUM / VEH_SIDE_OK are NOT here.
-// The stream engine applies them and the displays below must agree, so they live
-// in main.s script_macros.hpp alongside the RENDER_* / CTX_* / SRC_* contracts --
-// component headers are not visible to each other.
 
 // Bright per-side UI palette, indexed by SIDE_NUM — the selection dialog's
 // group-separator tint.
@@ -166,49 +162,9 @@
 #define ICON_TGT_MARK       "\a3\ui_f\data\igui\cfg\targeting\impactpoint_ca.paa"
 #define TGT_SIZE            0.9
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SPOT RENDERING (data produced by rtz_spotting's server detection pass)
-// ─────────────────────────────────────────────────────────────────────────────
-// rtz_spotting decides WHAT is spotted; this component decides how it looks.
-// Draw distances/sizes for FUNC(drawSpots).
-#define WEDGE_MAX_DIST 2500
-#define CHEVRON_MAX_DIST 500
-// Chevron icon width ramp: CHEVRON_W_NEAR at the camera, tapering to
-// CHEVRON_W_FAR at WEDGE_MAX_DIST.
-#define CHEVRON_W_NEAR 4
-#define CHEVRON_W_FAR 2
-#define HOVER_MAX_DIST 50
-#define HOVER_HIT_R2 (0.05 * 0.05)
-#define GROUP_HOVER_R2 (0.05 * 0.05)
-#define GROUP_ICON_WIDTH 1.3
-
-// Echelon amplifier vertical gap above the group icon, indexed by side idx
-// (0 = BLUFOR rectangle, 1 = OPFOR diamond — peaks highest, 2 = independent/
-// civilian square), in world space (FUNC(drawSpots)).
-//
-// The map screen-space twin (AMP_GAPS_MAP, MAP_ICON_SIZE) belongs to
-// rtz_spotting, which owns the Zeus MAP overlay; it sat here as a dead copy after
-// the rtz_hud split and tuning it did nothing. A constant belongs to whichever
-// component DRAWS with it — the blink duration, the RC scan cadence and the RC
-// owner variable are likewise rtz_spotting's, since that component detects; this
-// one only renders what it is told.
-#define AMP_GAPS_WORLD [0.002, 0.008, 0.004]
-
-// Group icon world-space height offset over camera distance — native Zeus
-// group-icon recipe (FUNC(drawSpots)).
-#define GROUP_ZMOD_NEAR 180
-#define GROUP_ZMOD_FAR 360
-#define GROUP_ZMOD_MIN 5
-#define GROUP_ZMOD_MAX 20
-#define GROUP_ZMOD_FLOOR_SCALE 0.88
-
-// ─────────────────────────────────────────────────────────────────────────────
-// REMOTE-CONTROL INDICATOR — look only; the scan that feeds it is rtz_spotting's.
-// ─────────────────────────────────────────────────────────────────────────────
-#define RC_TEXTURE "\a3\modules_f_curator\data\portraitremotecontrol_ca.paa"
-#define RC_ICON_NEAR 500
-#define RC_ICON_FAR 3000
-#define RC_ICON_MAX_WIDTH 1.2
-#define RC_ICON_MIN_WIDTH 0.7
-#define RC_COLOR_SHIFT_MAX 0.25
-#define RC_COLOR_SHIFT_FREQ 180
+// NOTE: the spot-rendering and remote-control-indicator tunables moved to
+// rtz_spotting's script_component.hpp along with FUNC(drawSpots) and
+// FUNC(drawRcIndicator). A constant belongs to whichever component DRAWS with
+// it, and those two renderers now live with the data they read — which is what
+// removed the mutual rtz_hud/rtz_spotting dependency. AMP_GAPS_WORLD in
+// particular is finally beside its map-space twin AMP_GAPS_MAP.

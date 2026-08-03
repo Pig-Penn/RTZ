@@ -6,7 +6,10 @@ class CfgPatches {
         units[] = {};
         weapons[] = {};
         requiredVersion = REQUIRED_VERSION;
-        requiredAddons[] = {"rtz_main", "rtz_common", "rtz_core", "zen_context_menu"};
+        // rtz_orders is required for one read: FUNC(gatherVehicleInfo) reports
+        // the commanded fly-in height that component's keybind writes onto the
+        // vehicle. One-way — rtz_orders knows nothing about this component.
+        requiredAddons[] = {"rtz_main", "rtz_common", "rtz_core", "rtz_orders", "zen_context_menu"};
         author = "Maxim";
         authors[] = {"Maxim"};
         url = "";

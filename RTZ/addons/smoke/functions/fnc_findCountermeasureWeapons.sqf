@@ -31,7 +31,7 @@
  * Unique weapon class names, may be empty <ARRAY>
  *
  * Example:
- * [_vehicle] call rtz_common_fnc_findCountermeasureWeapons
+ * [_vehicle] call rtz_smoke_fnc_findCountermeasureWeapons
  *
  * Public: No
  */

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Smoke">
+        <Key ID="STR_RTZ_Smoke_ActionDeploySmoke">
+            <English>Countermeasures</English>
+        </Key>
+        <Key ID="STR_RTZ_Smoke_DeploySmoke">
+            <English>Deploy Countermeasures</English>
+        </Key>
+        <Key ID="STR_RTZ_Smoke_DeploySmoke_Description">
+            <English>Add a context menu action to fire a selected vehicle's smoke launcher or flare/chaff dispenser.</English>
+        </Key>
+        <Key ID="STR_RTZ_Smoke_DisplayName">
+            <English>Countermeasures</English>
+        </Key>
+    </Package>
+</Project>

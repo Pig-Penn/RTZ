@@ -18,14 +18,14 @@
  * None
  *
  * Example:
- * [_objects, _hoveredEntity] call rtz_common_fnc_orderDeploySmoke
+ * [_objects, _hoveredEntity] call rtz_smoke_fnc_orderDeploySmoke
  *
  * Public: No
  */
 
 params ["_objects", "_hoveredEntity"];
 
-private _vehicles = ([_objects + [_hoveredEntity]] call FUNC(collectVehicles)) select {
+private _vehicles = ([_objects + [_hoveredEntity]] call EFUNC(common,collectVehicles)) select {
     ([_x] call FUNC(findCountermeasureWeapons)) isNotEqualTo []
 };
 
@@ -33,4 +33,4 @@ if (_vehicles isEqualTo []) exitWith {};
 
 [QGVAR(deploySmoke), [_vehicles], _vehicles] call CBA_fnc_targetEvent;
 
-[LLSTRING(ActionDeploySmoke), count _vehicles] call FUNC(showCountMessage);
+[LLSTRING(ActionDeploySmoke), count _vehicles] call EFUNC(common,showCountMessage);

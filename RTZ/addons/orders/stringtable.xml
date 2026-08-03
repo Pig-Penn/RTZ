@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Orders">
+        <Key ID="STR_RTZ_Orders_CameraToCursor">
+            <English>Camera to Cursor</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_CameraToCursor_Description">
+            <English>Teleport the Zeus camera to the position under the map cursor. Works inside curator editing areas, where the native middle-click map teleport is blocked.</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_DisplayName">
+            <English>Orders</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_HeliHeightDown">
+            <English>Decrease Altitude</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_HeliHeightDown_Description">
+            <English>Lower the selected aircraft's altitude by the step setting.</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_HeliHeightStep">
+            <English>Altitude Step</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_HeliHeightStep_Description">
+            <English>Metres the fly-height keybinds add or subtract per press.</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_HeliHeightUp">
+            <English>Increase Altitude</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_HeliHeightUp_Description">
+            <English>Raise the selected aircraft's altitude by the step setting.</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_MsgBeyondRange">
+            <English>Beyond %1 [m]</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_MsgCooldown">
+            <English>%1 [s] Cooldown</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_MsgFlyHeight">
+            <English>Altitude %1%2 [m]</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_MsgHoldFireCount">
+            <English>Hold Fire x%1</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_MsgInCombat">
+            <English>In Combat</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_MsgNoCrew">
+            <English>Vehicle has no crew to access its cargo</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_MsgNoUnitSelected">
+            <English>No unit selected</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_MsgOpenFireCount">
+            <English>Open Fire x%1</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_MsgTeleported">
+            <English>Teleported</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_OpenUnitInventory">
+            <English>Open Inventory</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_OpenUnitInventory_Description">
+            <English>Open the selected unit's inventory to loot nearby crates, vehicles, or bodies.</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_StanceAuto">
+            <English>Stance Auto</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_StanceAuto_Description">
+            <English>Let the selected AI infantry choose their own stance again.</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_StanceDown">
+            <English>Stance Down</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_StanceDown_Description">
+            <English>Set the selected AI infantry's stance to prone.</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_StanceMiddle">
+            <English>Stance Middle</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_StanceMiddle_Description">
+            <English>Set the selected AI infantry's stance to crouched.</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_StanceUp">
+            <English>Stance Up</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_StanceUp_Description">
+            <English>Set the selected AI infantry's stance to standing.</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_TeleportCooldown">
+            <English>Teleport Cooldown</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_TeleportCooldown_Description">
+            <English>Seconds before the teleport keybind can be used again after a successful teleport. 0 disables the cooldown.</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_TeleportRange">
+            <English>Teleport Range</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_TeleportRange_Description">
+            <English>Maximum distance in metres between a unit and the cursor position for the teleport keybind to move it.</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_TeleportToCursor">
+            <English>Teleport Units to Cursor</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_TeleportToCursor_Description">
+            <English>Teleport the selected units to the cursor position, preserving their formation. Units in combat are skipped; the Unit Teleport settings control range and cooldown.</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_ToggleCombatMode">
+            <English>Toggle Hold Fire</English>
+        </Key>
+        <Key ID="STR_RTZ_Orders_ToggleCombatMode_Description">
+            <English>Flip the selected AI groups between forced Hold Fire and the standard Open Fire, maintain formation posture.</English>
+        </Key>
+    </Package>
+</Project>

@@ -90,8 +90,10 @@ if (local _veh) then {
     // vehicle class (fullCrew allocates the whole position list every call).
     GVAR(seatCntCache) getOrDefaultCall [typeOf _veh, { count (fullCrew [_veh, "", true]) }, true],
     // Commanded AI fly-in height set by the fly-height keybinds (broadcast
-    // public by rtz_common's adjustHeliHeight event handler); -1 for a
-    // vehicle never adjusted.
-    _veh getVariable [QEGVAR(common,flyHeight), -1],
+    // public by rtz_orders' adjustHeliHeight event handler); -1 for a
+    // vehicle never adjusted. This read is why rtz_orders is in this
+    // component's requiredAddons — the order writes the variable, this
+    // display reports it.
+    _veh getVariable [QEGVAR(orders,flyHeight), -1],
     _selAmmo
 ]

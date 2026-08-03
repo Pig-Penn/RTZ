@@ -25,120 +25,19 @@
 #define GETGVAR(var1,var2) GETMVAR(GVAR(var1),var2)
 #define GETEGVAR(var1,var2,var3) GETMVAR(EGVAR(var1,var2),var3)
 
-// CfgWeapons >> type — engine weapon slot flags
-#define TYPE_WEAPON_PRIMARY 1
-#define TYPE_WEAPON_HANDGUN 2
-#define TYPE_WEAPON_SECONDARY 4
-
 // Entity classes considered "a vehicle" by the servicing features (rtz_repair,
 // rtz_supply). StaticWeapon is listed alongside the LandVehicle it inherits
 // from, so a config hierarchy change cannot silently drop statics out of a
 // nearEntities lookup.
 #define VEHICLE_TYPES ["LandVehicle", "Air", "Ship", "StaticWeapon"]
 
-// Zeus display
-#define IDD_RSCDISPLAYCURATOR 312
-#define IDC_RSCDISPLAYCURATOR_MAINMAP 50
-
-// Zeus selected entities (ZEN's script_curator.hpp convention)
-#define SELECTED_OBJECTS (curatorSelected select 0)
-#define SELECTED_GROUPS (curatorSelected select 1)
-
-// ── rtz_core frame-loop contract ──────────────────────────────────────────────
-// RTZ draws every curator-view display from ONE Draw3D handler
-// (EFUNC(core,frameLoop)); a component that wants to draw registers a renderer
-// with EFUNC(core,registerRenderer) instead of adding a handler of its own.
-// These live here rather than in rtz_hud's script_component.hpp because
-// component headers are not visible to each other — same reason
-// CHECK_CURATOR_INPUT does — and any component may register.
-//
-//   RENDER_WORLD — draws into the 3D scene (drawIcon3D / drawLine3D). Receives
-//                  the frame context array below. Skipped while the Zeus MAP is
-//                  up: the map covers the 3D view, so the output is invisible
-//                  and the whole pass is waste.
-//   RENDER_UI    — drives controls on the curator display, which stay visible
-//                  OVER the Zeus map. Receives the display, or displayNull when
-//                  Zeus is closed — and is called on those frames too, so it can
-//                  tear its controls down.
-#define RENDER_WORLD 0
-#define RENDER_UI    1
-
-// Index into the frame context array a RENDER_WORLD renderer receives. Named so
-// a renderer can `select` the one or two it needs without a `params` over all
-// seven. Camera-right/up are unit vectors in WORLD space — the axes screen-space
-// offsets ride, so "right of the text" holds at any camera orientation.
-#define CTX_CAMPOS   0
-#define CTX_CAMRIGHT 1
-#define CTX_CAMUP    2
-#define CTX_MOUSE    3
-#define CTX_NOW      4
-#define CTX_VIEWDIST 5
-#define CTX_DISPLAY  6
-
-// Caps on how much of a Zeus selection the stream engine will carry, applied by
-// the client poll, re-applied by the server gather, and respected by every
-// renderer — one definition keeps all three in lockstep. Here rather than in the
-// engine's own header because the DISPLAYS enforce them too (rtz_hud's card
-// stack), and component headers are not visible to each other.
-#define SEL_MAX_UNITS 24
-#define SEL_MAX_VEHICLES 8
-
-// A vehicle's effective side is its CREW's side — but an unmanned vehicle has
-// `grpNull` for a group, and `side grpNull` matches no real side, so a plain
-// `side (group veh) == side curator` test silently hides every parked truck and
-// unmanned static from a side-restricted curator. Crewless vehicles are treated
-// as visible to everyone instead (they belong to nobody yet, and Zeus can edit
-// them regardless). Shared by the client poll, the server gather and both vehicle
-// render paths so all four agree on what is visible.
-#define VEH_SIDE_OK(veh,curSide) (isNull (group veh) || { side (group veh) == curSide })
-
-// Side index carried in every packet: 0 west, 1 east, 2 independent, 3 everything
-// else (civilian / logic / sideEmpty). Computed on the server where the real side
-// is known, then carried so the client can colour by it without a side lookup.
-#define SIDE_NUM(s) (switch (s) do { case west: {0}; case east: {1}; case independent: {2}; default {3} })
-
-// ── rtz_core stream-engine contract ──────────────────────────────────────────
-// Which slice of a watcher's selection a stream's gatherer is fed, resolved ONCE
-// per watcher per tick by EFUNC(core,streamServer) and shared by every stream
-// that wants it. Passed to EFUNC(core,registerStream), so — like the frame-loop
-// contract above — any component declaring a stream needs these, and component
-// headers cannot see each other.
-//   SRC_UNITS — selected infantry, as [object, netId, dialogOpen]; side-filtered
-//               and capped client-side, re-validated server-side.
-//   SRC_VEHS  — selected vehicles, same shape and treatment.
-//   SRC_HULLS — the whole selection resolved to distinct hulls, as
-//               [watchedEntity, hull, dialogOpen]: a crewman resolves to his
-//               vehicle, which moves and fights as one. What the AI-state
-//               overlays want.
-#define SRC_UNITS 0
-#define SRC_VEHS  1
-#define SRC_HULLS 2
-
-// Shared preamble for every Zeus keybind handler: act only while this machine's
-// Zeus interface is open, and never hijack a keystroke the curator is typing
-// into ZEN's search box. Both paths return false so the key passes through to
-// whatever would normally receive it.
-//
-// Lives here rather than in rtz_common because component script_component.hpp
-// files are not visible to each other — any component that binds a key needs it,
-// and only main is on everyone's include path.
-#define CHECK_CURATOR_INPUT \
-    if (isNull curatorCamera) exitWith {false}; \
-    if (GETMVAR(RscDisplayCurator_search,false)) exitWith {false}
-
-// Indices into ZEN's compiled context-menu action array — the array a
-// modifierFunction receives as `_this select 0` and mutates in place. Layout
-// per zen_context_menu_fnc_compileActions; lives here rather than in one
-// component because every RTZ *ActionModifier needs it.
-#define ACTION_INDEX_NAME 0
-#define ACTION_INDEX_DISPLAYNAME 1
-#define ACTION_INDEX_ICON 2
-#define ACTION_INDEX_ICONCOLOR 3
-#define ACTION_INDEX_STATEMENT 4
-#define ACTION_INDEX_CONDITION 5
-#define ACTION_INDEX_ARGS 6
-#define ACTION_INDEX_INSERTCHILDREN 7
-#define ACTION_INDEX_MODIFIERFUNCTION 8
+// NOTE: rtz_core's frame-loop and stream contracts (RENDER_*, CTX_*, SRC_*,
+// SEL_MAX_*, VEH_SIDE_OK, SIDE_NUM) are NOT here. They are ONE component's own
+// contract, and they live in addons/core/script_macros_core.hpp, which the
+// components that draw or stream include by absolute path — the way ACE3's
+// medical components include medical_engine's script_macros_medical.hpp. Only
+// what is genuinely mod-wide belongs in this file; a constant that concerns a
+// single subsystem belongs to that subsystem.
 
 #ifdef DISABLE_COMPILE_CACHE
     #undef PREP
@@ -148,4 +47,5 @@
     #define PREP(fncName) [QPATHTOF(functions\DOUBLES(fnc,fncName).sqf), QFUNC(fncName)] call CBA_fnc_compileFunction
 #endif
 
+#include "script_curator.hpp"
 #include "script_debug.hpp"

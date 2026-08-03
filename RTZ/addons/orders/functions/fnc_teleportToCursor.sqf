@@ -39,7 +39,7 @@
  * Press was handled (consumed) <BOOL>
  *
  * Example:
- * call rtz_common_fnc_teleportToCursor
+ * call rtz_orders_fnc_teleportToCursor
  *
  * Public: No
  */

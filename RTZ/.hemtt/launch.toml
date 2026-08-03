@@ -1,0 +1,21 @@
+# `hemtt launch` presets. RTZ cannot run at all without CBA and ZEN (they are
+# its requiredAddons), and LAMBS is loaded alongside it in every real session —
+# rtz_control's reset, rtz_hud's danger labels and rtz_spotting all read LAMBS
+# state — so the default preset carries all three.
+[default]
+mission = "test.VR"
+workshop = [
+    "450814997",  # CBA_A3
+    "1779063631", # Zeus Enhanced (ZEN)
+    "1858075458", # LAMBS_Danger.fsm
+]
+
+# Same, minus LAMBS: verifies the LAMBS-optional paths still behave when the
+# mod is absent (rtz_hud inlines LAMBS' danger-cause table precisely so the
+# addon never hard-depends on it — see DANGER_LABEL_KEYS).
+[nolambs]
+mission = "test.VR"
+workshop = [
+    "450814997",  # CBA_A3
+    "1779063631", # Zeus Enhanced (ZEN)
+]

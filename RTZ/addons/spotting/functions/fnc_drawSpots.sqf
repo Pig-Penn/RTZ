@@ -7,11 +7,14 @@
  * between the server's spot cycles; texture, colour, echelon amplifier, side
  * index and display name are all pre-resolved server-side.
  *
- * The DATA is owned by rtz_spotting, which decides what is spotted and keeps the
- * client stores current; this component owns how it looks. Hence the EGVAR reads
- * below — they mark exactly where the detection/presentation seam runs. The
- * renderer is registered by rtz_spotting's client half, so it only ever runs when
- * those stores exist, and rtz_hud carries no dependency on rtz_spotting.
+ * Lives in this component because this component owns the DATA: FUNC(spotCheck)
+ * decides what is spotted and FUNC(spottingClient) keeps the stores below
+ * current. It used to sit in rtz_hud on the reasoning that rtz_hud owns every
+ * display — but reading seven of this component's globals from over there made
+ * the two addons mutually dependent (rtz_spotting required rtz_hud to register
+ * the renderer, rtz_hud needed rtz_spotting's stores to run it) while only one
+ * direction was ever declared, leaving their load order undefined. rtz_supply
+ * and rtz_mine already own their own renderers; this follows them.
  *
  * Registered with EFUNC(core,frameLoop), which resolves the Zeus test, the camera
  * position and the mouse position once for every display — this pass does no
@@ -28,15 +31,15 @@
  * None
  *
  * Example:
- * _ctx call rtz_hud_fnc_drawSpots
+ * _ctx call rtz_spotting_fnc_drawSpots
  *
  * Public: No
  */
 
 params ["_ctx"];
 
-private _groups   = EGVAR(spotting,spotGroups);
-private _chevrons = EGVAR(spotting,spotChevrons);
+private _groups   = GVAR(spotGroups);
+private _chevrons = GVAR(spotChevrons);
 // Empty-store test first: cheapest check and the common case on a quiet mission.
 if (count _groups == 0 && {count _chevrons == 0}) exitWith {};
 
@@ -48,7 +51,7 @@ private _viewDist = _ctx select CTX_VIEWDIST;
 // instead of once per icon, and the map is empty except in the moments right
 // after a spotted unit fires — so the common case skips the per-icon lookup
 // outright.
-private _blinkUntil = EGVAR(spotting,blinkUntil);
+private _blinkUntil = GVAR(blinkUntil);
 private _now        = time;
 private _anyBlink   = count _blinkUntil > 0;
 
@@ -61,12 +64,12 @@ private _AMP_GAPS = AMP_GAPS_WORLD;
 // Hoisted once per frame: is anything actually under remote control? Testing only
 // that the map EXISTS made this true whenever the RC indicator is merely enabled,
 // so every chevron paid a netId + hashmap lookup every frame for nothing.
-// Plain read, no default: rtz_spotting's preInit creates the store unconditionally
+// Plain read, no default: this component's preInit creates the store unconditionally
 // on every interface machine. It used to carry a `createHashMap` default for the
 // case where the RC system is switched off — and SQF evaluates that argument
 // eagerly, so it built and threw away a hashmap on every frame of every curator's
 // session, whether or not the store existed.
-private _rcDisplay = EGVAR(spotting,rcDisplay);
+private _rcDisplay = GVAR(rcDisplay);
 private _hasRC     = count _rcDisplay > 0;
 
 // Distance fade × stored base alpha; flash white while the unit is firing.
@@ -82,7 +85,7 @@ private _fnc_drawColor = {
 // Also records which group leaders the mouse is currently near, so pass 2 can
 // reveal that group's chevrons past the cutoff. The hover test only feeds pass 2 —
 // with no chevrons stored, skip the per-icon worldToScreen entirely.
-private _chevronsEnabled    = EGVAR(spotting,chevronsEnabled);
+private _chevronsEnabled    = GVAR(chevronsEnabled);
 private _anyChevrons        = _chevronsEnabled && {count _chevrons > 0};
 private _groupHoverByLeader = createHashMap;
 {
@@ -130,11 +133,11 @@ private _groupHoverByLeader = createHashMap;
 } forEach _groups;
 
 // ── Pass 2: individual chevrons ─────────────────────────────────────────────
-// Skipped entirely while chevrons are toggled off (EFUNC(spotting,toggleChevrons)) —
+// Skipped entirely while chevrons are toggled off (FUNC(toggleChevrons)) —
 // group icons above are unaffected.
 if (!_chevronsEnabled) exitWith {};
 
-private _chevronNames = EGVAR(spotting,chevronNames);
+private _chevronNames = GVAR(chevronNames);
 {
     _y params ["_unit", "_texture", "_colorArray", "_ldrId", "_name"];
     if (!alive _unit) then { continue };

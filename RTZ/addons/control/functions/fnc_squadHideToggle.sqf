@@ -31,6 +31,7 @@
  */
 
 params ["_objects"];
+
 private _grps = [_objects] call EFUNC(common,collectSquads);
 if (_grps isEqualTo []) exitWith {
     [LLSTRING(MsgNoUnitsSelected)] call zen_common_fnc_showMessage;

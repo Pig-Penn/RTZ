@@ -23,7 +23,7 @@
  * Press was handled (consumed) <BOOL>
  *
  * Example:
- * [1] call rtz_common_fnc_flyHeight
+ * [1] call rtz_orders_fnc_flyHeight
  *
  * Public: No
  */

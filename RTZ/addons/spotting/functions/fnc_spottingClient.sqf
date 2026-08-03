@@ -2,7 +2,7 @@
 /*
  * Author: Maxim
  * Client half of the spotting system: per-player icon stores, the per-frame
- * renderer registration (EFUNC(hud,drawSpots)), the CBA event receivers
+ * renderer registration (FUNC(drawSpots)), the CBA event receivers
  * (spotDetected / spotLost / spotAlert / blink), the Zeus map overlay attach
  * fallback, and the JIP resync request.
  *
@@ -52,14 +52,14 @@ GVAR(blinkUntil) = createHashMap;
 // Draw 3D world icons above each spotted enemy every frame; positions are sampled
 // live from the unit so icons track smoothly between the server's spot cycles.
 //
-// The renderer itself is EFUNC(hud,drawSpots), which reads the stores above
+// The renderer itself is FUNC(drawSpots), which reads the stores above
 // through EGVAR; rtz_core owns the ONE Draw3D handler every RTZ display draws
 // from, and is what calls it. This used to be a Draw3D handler of its own; with
 // five other displays doing the same, each frame re-ran the Zeus test and rebuilt
 // the camera basis once per handler. The frame loop resolves that once and also
 // owns the curator-view gates (Zeus open, map not covering the 3D view) that the
 // old handler repeated at the top of every pass.
-[QGVAR(spots), ELINKFUNC(hud,drawSpots), RENDER_WORLD, 41] call EFUNC(core,registerRenderer);
+[QGVAR(spots), LINKFUNC(drawSpots), RENDER_WORLD, 41] call EFUNC(core,registerRenderer);
 
 // Store/update icon data for a spotted enemy. Texture, colour, echelon amplifier,
 // side index, group-leader netId and display name are all pre-resolved on the server.
@@ -67,16 +67,8 @@ GVAR(blinkUntil) = createHashMap;
     params ["_markerName", "_unit", "_texture", "_colorArray", "_isGroupMarker", "_echelonTex", "_sideIdx", "_ldrId", "_name", ["_zone", []]];
 
     if (_isGroupMarker) then {
-        // Diagnostic: log the first receipt of each marker so we can confirm the
-        // server's targeted event is actually reaching THIS client (RTZ_debug).
-        if ((GETMVAR(RTZ_debug,false)) && {!(_markerName in GVAR(spotGroups))}) then {
-            diag_log text format ["[RTZ] client received spotDetected: %1 (group=true)", _markerName];
-        };
         GVAR(spotGroups) set [_markerName, [_unit, _texture, _colorArray, _echelonTex, _sideIdx, _ldrId]];
     } else {
-        if ((GETMVAR(RTZ_debug,false)) && {!(_markerName in GVAR(spotChevrons))}) then {
-            diag_log text format ["[RTZ] client received spotDetected: %1 (group=false)", _markerName];
-        };
         GVAR(spotChevrons) set [_markerName, [_unit, _texture, _colorArray, _ldrId, _name]];
         // Officer zone ring: only wedge (individually-identified) entries ever
         // carry a non-empty [plantedCenter, radius] zone (see the server's

@@ -10,14 +10,7 @@ PREP_RECOMPILE_END;
 // every caller (spotting server loop, RC indicator) is safe on every machine.
 GVAR(classInfoCache) = createHashMap;
 
-// Memoised "magazine|weapon" countermeasure verdicts for
-// FUNC(findCountermeasureWeapons), which the deploy-countermeasures context
-// action evaluates on every right-click. Config-derived, so it never expires.
-GVAR(cmWeaponCache) = createHashMap;
-
 #include "initSideColors.inc.sqf"
-#include "defaultSkills.inc.sqf"
 #include "initSettings.inc.sqf"
-#include "initKeybinds.inc.sqf"
 
 ADDON = true;

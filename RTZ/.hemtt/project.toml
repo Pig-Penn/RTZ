@@ -3,8 +3,12 @@ prefix = "rtz"
 author = "Maxim"
 mainprefix = "x"
 
+# Copied into every build alongside the PBOs. LICENSE is required here, not
+# optional: GPL-3.0 §4 obliges a distributor to give recipients a copy of the
+# license, and a release zip that ships only .pbo files would not.
 [files]
 include = [
+    "LICENSE",
     "mod.cpp",
     "README.md",
 ]

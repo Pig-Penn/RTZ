@@ -18,7 +18,7 @@
  * None
  *
  * Example:
- * [_unit] call rtz_common_fnc_applySkill
+ * [_unit] call rtz_skill_fnc_applySkill
  *
  * Public: No
  */

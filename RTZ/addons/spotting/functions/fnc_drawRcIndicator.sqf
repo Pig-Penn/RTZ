@@ -7,7 +7,7 @@
  *
  * The DATA is owned by rtz_spotting, whose server scan resolves who is
  * controlling what and pushes viewer-diffed events into GVAR(rcDisplay) — see
- * EFUNC(spotting,remoteControlIndicator) for the detection reasoning (the engine
+ * FUNC(remoteControlIndicator) for the detection reasoning (the engine
  * has no global getter for "who is remote controlling X"). This component owns
  * only how it looks, hence the EGVAR read; the renderer is registered by that
  * function, so it only ever runs when the store exists.
@@ -23,14 +23,14 @@
  * None
  *
  * Example:
- * _ctx call rtz_hud_fnc_drawRcIndicator
+ * _ctx call rtz_spotting_fnc_drawRcIndicator
  *
  * Public: No
  */
 
 params ["_ctx"];
 
-private _rcDisplay = EGVAR(spotting,rcDisplay);
+private _rcDisplay = GVAR(rcDisplay);
 // Empty-map test first: it is the overwhelmingly common case and the cheapest
 // check.
 if (count _rcDisplay == 0) exitWith {};
