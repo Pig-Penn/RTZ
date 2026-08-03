@@ -52,6 +52,14 @@ if (GVAR(surrenderedUnits) isEqualTo []) exitWith {
 
 private _radius = GVAR(captureRadius);
 
+// Hostile-side sets memoised for the duration of THIS pass, keyed by the
+// prisoner's side. getFriend is a relation between two sides, not a property of
+// a unit, so every prisoner of a given side resolves the identical list — it was
+// being rebuilt (a fresh `select` allocation over MAN_SIDES) once per prisoner
+// per tick. A mass surrender is exactly when this loop is longest, and there are
+// only ever a handful of distinct sides.
+private _hostileBySide = createHashMap;
+
 for "_i" from (count GVAR(surrenderedUnits)) - 1 to 0 step -1 do {
     private _unit = GVAR(surrenderedUnits) select _i;
 
@@ -68,7 +76,9 @@ for "_i" from (count GVAR(surrenderedUnits)) - 1 to 0 step -1 do {
     };
 
     private _unitSide = side group _unit;
-    private _hostileSides = MAN_SIDES select {_x getFriend _unitSide < HOSTILE_THRESHOLD};
+    private _hostileSides = _hostileBySide getOrDefaultCall [str _unitSide, {
+        MAN_SIDES select {_x getFriend _unitSide < HOSTILE_THRESHOLD}
+    }, true];
 
     private _nearby = _unit nearEntities [["CAManBase"], _radius];
     private _index = _nearby findIf {

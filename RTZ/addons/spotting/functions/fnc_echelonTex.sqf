@@ -56,4 +56,9 @@ private _n = call {
     3                                    // 2+ squads → 3 dots
 };
 
-if (_n < 0) then { "" } else { format ["\a3\ui_f\data\map\markers\nato\group_%1.paa", _n] }
+// Indexed, not formatted. _n is always -1..3, so the result is one of four fixed
+// strings — building it with `format` meant one string allocation per spotted
+// group per curator side per detection tick for no variability at all.
+// ECHELON_TEXTURES is ordered to match _n directly (script_component.hpp).
+if (_n < 0) exitWith { "" };
+ECHELON_TEXTURES select _n

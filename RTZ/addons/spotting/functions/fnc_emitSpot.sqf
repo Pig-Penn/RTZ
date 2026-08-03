@@ -3,15 +3,22 @@
  * Author: Maxim
  * Send/refresh one spot to its spotter Zeus. The client samples icon position
  * live every frame, so position never needs re-sending. spotDetected is sent
- * only when the payload signature changed (or _force is set). The signature
- * embeds the destination player's netId, so a curator module handed to a
- * DIFFERENT player changes every one of that curator's signatures and triggers a
- * one-shot full re-send automatically. A rejoin into the SAME slot does NOT:
- * Arma returns the same unit object to the returning player, so the netId — and
- * every signature built from it — is unchanged. That case is recovered solely by
- * the client's QGVAR(spotResync) request (see FUNC(spottingClient)), which the
- * server holds per-player until that player resolves to a curator and then feeds
- * back in here as _force.
+ * only when the payload signature changed, when the RECIPIENT changed, or when
+ * _force is set.
+ *
+ * The signature describes the payload only — it deliberately does NOT carry the
+ * destination player's netId. It used to, purely so that a curator module handed
+ * to a DIFFERENT player would re-send; that made every caller concatenate the
+ * player id onto every signature, per icon, per curator, per tick. The recipient
+ * change is now detected directly below, which is both cheaper and more honest
+ * about what a "signature" means.
+ *
+ * A rejoin into the SAME slot is not covered by either mechanism: Arma returns
+ * the same unit object to the returning player, so the recipient compares equal
+ * and the payload is unchanged. That case is recovered solely by the client's
+ * QGVAR(spotResync) request (see FUNC(spottingClient)), which the server holds
+ * per-player until that player resolves to a curator and then feeds back in here
+ * as _force.
  *
  * _draw = false records the contact for new-contact detection, report dedupe
  * and cleanup, but draws no icon (used for lone units that don't warrant a
@@ -45,15 +52,24 @@ private _mrkr   = _payload select 0;
 if (_draw) then {
     // Hand-over: this key's previous recipient is not the current destination, i.e.
     // the curator module changed hands (the key is per curator MODULE, not per
-    // player). The signature embeds the player netId, so the new owner is sent to
-    // below — but the old one would keep the icon in its store for the rest of the
-    // mission, and render it as its own the moment it is made a curator again.
+    // player).
+    //
+    // Tested here as a flag rather than by embedding the destination's netId in
+    // the signature string. It used to be embedded, which meant every caller
+    // concatenated the player id onto every signature for every icon for every
+    // curator, every tick — on a busy side that is hundreds of throwaway string
+    // allocations a tick to express a condition this branch already computes.
+    // Same semantics: a changed recipient forces the send below.
+    private _newRecipient = !_isNew && { (_prev select 1) != _player };
+
+    // The OLD recipient would otherwise keep the icon in its store for the rest of
+    // the mission, and render it as its own the moment it is made a curator again.
     // isPlayer, not isNull, for the departed-player-body reason described below.
-    if (!_isNew && { (_prev select 1) != _player } && { isPlayer (_prev select 1) }) then {
+    if (_newRecipient && { isPlayer (_prev select 1) }) then {
         [QGVAR(spotLost), [_prev select 0], _prev select 1] call CBA_fnc_targetEvent;
     };
-    
-    if (_force || { _isNew } || { (_prev select 2) != _sig }) then {
+
+    if (_force || { _isNew } || { _newRecipient } || { (_prev select 2) != _sig }) then {
         [QGVAR(spotDetected), _payload, _player] call CBA_fnc_targetEvent;
     };
 

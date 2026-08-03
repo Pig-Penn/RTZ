@@ -50,6 +50,13 @@
 #define ECHELON_SQUAD_MAX 8
 #define ECHELON_MULTI_SQUAD_MAX 15
 
+// The four amplifier textures, indexed by the dot count FUNC(echelonTex) resolves
+// (0 = fire team … 3 = 2+ squads). A literal table rather than a `format` on the
+// index: the function runs once per spotted group per curator side per detection
+// tick, and the result never varies beyond these four. Kept on ONE line — a stray
+// space after a line-continuation `\` silently truncates the macro (Gotchas §6).
+#define ECHELON_TEXTURES ["\a3\ui_f\data\map\markers\nato\group_0.paa", "\a3\ui_f\data\map\markers\nato\group_1.paa", "\a3\ui_f\data\map\markers\nato\group_2.paa", "\a3\ui_f\data\map\markers\nato\group_3.paa"]
+
 // Client draw distances/sizes (fnc_draw3D).
 #define WEDGE_MAX_DIST 2500
 #define CHEVRON_MAX_DIST 500

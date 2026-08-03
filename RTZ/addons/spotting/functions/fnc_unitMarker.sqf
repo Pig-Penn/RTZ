@@ -111,4 +111,13 @@ private _suffix = call {
     _s
 };
 
-[format ["\a3\ui_f\data\map\markers\nato\%1%2.paa", _prefix, _suffix], _color, _sideIdx]
+// Texture path memoised alongside the suffix. Only the config lookups used to be
+// cached, so the `format` ran once per spotted group per curator side per tick to
+// rebuild one of a couple of dozen fixed strings. The key set is bounded by
+// (3 prefixes × the suffix vocabulary), so this fills once and never grows.
+private _texKey = _prefix + _suffix;
+private _tex = GVAR(markerTexCache) getOrDefaultCall [_texKey, {
+    format ["\a3\ui_f\data\map\markers\nato\%1.paa", _this]
+}, true];
+
+[_tex, _color, _sideIdx]

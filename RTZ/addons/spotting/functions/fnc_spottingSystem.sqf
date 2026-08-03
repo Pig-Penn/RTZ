@@ -96,6 +96,12 @@ GVAR(blinkThrottle)      = createHashMap;   // netId → last blink-send time (r
 GVAR(spotGroupLastSeen)  = createHashMap;   // (sideStr + "_" + leaderNetId) → last time that side had the group confirmed (callout gate)
 GVAR(spotDebugLast)      = createHashMap;   // curatorNetId → last-logged resolution sig (diagnostic, on-change only)
 GVAR(markerSuffixCache)  = createHashMap;   // "m"/"v" + class → NATO symbol suffix, mission-lifetime (fnc_unitMarker)
+// (sidePrefix + suffix) → finished NATO texture path, mission-lifetime. The
+// SUFFIX lookup above was already cached, but the `format` that turns it into a
+// path was not, so every spotted group rebuilt the same handful of strings on
+// every detection pass. There are only ~3 prefixes × ~13 suffixes, so this
+// saturates within seconds and never grows again (fnc_unitMarker).
+GVAR(markerTexCache)     = createHashMap;
 GVAR(chevronLatch)       = createHashMap;   // (spotterSideStr + "_" + memberNetId) → [expiryTime, lastBestSpotter] (fnc_spotCheck)
 
 // ─────────────────────────────────────────────────────────────────────────────
