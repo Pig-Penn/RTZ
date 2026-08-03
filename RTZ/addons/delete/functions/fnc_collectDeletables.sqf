@@ -51,7 +51,7 @@ private _targets = [];
     //
     // `break`, and at the TOP of the body. This was an `exitWith {}` at the
     // BOTTOM, which is wrong twice over: exitWith inside a forEach exits only
-    // the current ITERATION (it is continue, not break — docs/Gotchas.md §2), so
+    // the current ITERATION (it is continue, not break — docs/Knowledge Base/Gotchas.md §2), so
     // the loop ran on regardless, and sitting after the expansion it could not
     // have skipped the work it exists to skip even if it had broken. _firstOnly
     // was inert: every candidate's crew compartment was expanded every time.

@@ -48,7 +48,7 @@ GVAR(vehicleDataDirty) = true;
 
 // Engine planningMode → short label (FUNC(drawDestination)). Keys are normalized
 // (uppercase, spaces stripped) because the engine reports e.g. "LEADER PLANNED"
-// at runtime while the wiki documents "LeaderPlanned" (docs/Gotchas.md §4).
+// at runtime while the wiki documents "LeaderPlanned" (docs/Knowledge Base/Gotchas.md §4).
 // VEHICLEPLANNED is the mode every driving vehicle reports — without it they all
 // showed the raw engine string. DONOTPLAN means "not moving", which is a plan of
 // its own, not a direct one.

@@ -44,7 +44,7 @@ private _weapons = [];
 {
     // Checked at the TOP with `break`. This was an `exitWith {}` at the bottom of
     // the body: exitWith inside a forEach unwinds only the current ITERATION, so
-    // it acted as a continue (docs/Gotchas.md §2) and _firstOnly never stopped
+    // it acted as a continue (docs/Knowledge Base/Gotchas.md §2) and _firstOnly never stopped
     // anything — the existence check walked every magazine of every turret.
     if (_firstOnly && {_weapons isNotEqualTo []}) then { break };
 

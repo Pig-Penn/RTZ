@@ -44,7 +44,7 @@ private _targets = [];
     // Checked at the TOP with `break`. This was an `exitWith {}` at the bottom of
     // the body, described as "the plain forEach break idiom" — it is not one:
     // exitWith inside a forEach unwinds only the current ITERATION, making it a
-    // continue (docs/Gotchas.md §2). _limit was therefore inert, and the context
+    // continue (docs/Knowledge Base/Gotchas.md §2). _limit was therefore inert, and the context
     // menu condition — which asks for exactly one match — swept the whole parked
     // column, running FUNC(needsAmmo) (a walk over every turret's magazines) on
     // every vehicle in radius to answer a boolean.

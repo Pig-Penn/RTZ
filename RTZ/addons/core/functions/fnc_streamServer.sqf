@@ -13,7 +13,7 @@
  *
  * Why the server: expectedDestination, assignedTarget, targetKnowledge and the
  * unit-state reads behind the packets are all AI brain state, which exists only
- * where the unit is LOCAL (docs/Gotchas.md §4). Normal AI is server-local, so
+ * where the unit is LOCAL (docs/Knowledge Base/Gotchas.md §4). Normal AI is server-local, so
  * the server reads it and streams per-curator snapshots back. Per-curator
  * streams also keep it PvP-fair: a Zeus only watches what they can select, and
  * only sees what those units know.
@@ -100,7 +100,7 @@ GVAR(watchers) = createHashMap;
 
 // ── Poll loop ────────────────────────────────────────────────────────────────
 // Unscheduled per-frame handler rather than a spawned while/sleep: no scheduler
-// starvation (docs/Gotchas.md §1). Bails cheaply when nobody is subscribed; no
+// starvation (docs/Knowledge Base/Gotchas.md §1). Bails cheaply when nobody is subscribed; no
 // suspending commands in the body.
 [{
     // _nextRuns: stream id -> the CBA_missionTime it may next run. Lives in the
@@ -131,7 +131,7 @@ GVAR(watchers) = createHashMap;
 
     {
         // _x: player netId (key), _y: the watcher record. ALIAS THE KEY — the
-        // inner loops rebind _x and leave it clobbered (docs/Gotchas.md §2).
+        // inner loops rebind _x and leave it clobbered (docs/Knowledge Base/Gotchas.md §2).
         private _pk = _x;
         _y params ["_player", "_units", "_vehs", "_hulls", "_streams", "_detailed", "_lastSent"];
 

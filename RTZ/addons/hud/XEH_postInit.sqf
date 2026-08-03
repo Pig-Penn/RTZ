@@ -72,7 +72,7 @@ if (!hasInterface) exitWith {};
 // server-side "disabled"). CBA fires the event one frame after postInit, once
 // every GVAR(enable*) holds the server's synced value.
 // NOTE: CBA has no CBA_fnc_runAfterSettingsInit — that helper is ACE3/ZEN-only;
-// calling the CBA_ name is a silent nil no-op (docs/Gotchas.md §4).
+// calling the CBA_ name is a silent nil no-op (docs/Knowledge Base/Gotchas.md §4).
 // Every function below only registers handlers and returns — no sleep/waitUntil —
 // so they are `call`ed, not `spawn`ed.
 ["CBA_settingsInitialized", {

@@ -42,7 +42,7 @@ if (!isNil QGVAR(unitTagsVisible)) then {
     // exactly the display knowledge that kept it welded to this component; it also
     // needed a defensive GETGVAR there, because this flag does not exist until the
     // tag system starts and a nil would have aborted the whole subscription
-    // (docs/Gotchas.md §2). Declaring it from the consumer side removes both
+    // (docs/Knowledge Base/Gotchas.md §2). Declaring it from the consumer side removes both
     // problems — and this is the one place every visibility change funnels
     // through, so the demand cannot drift out of step with the renderer.
     // No `detailed`: the tags show no field that needs the expensive intel.

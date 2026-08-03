@@ -20,7 +20,7 @@
 // subscribe/diff/push machinery.
 // SINGLE-quoted deliberately: these ids appear inside QUOTE(...) in
 // CfgContext.hpp, and a double-quoted literal would terminate the config string
-// the macro builds (docs/Gotchas.md §5).
+// the macro builds (docs/Knowledge Base/Gotchas.md §5).
 // The SRC_* slice constants a stream is declared with live in main's
 // script_macros.hpp, alongside the frame-loop contract — any component may
 // declare a stream, and component headers are not visible to each other.
@@ -134,7 +134,7 @@
 // Localized ONCE into GVAR(dangerLabels) at preInit — never localize these per
 // row/per frame; the render paths read that array.
 // Kept on one line on purpose: a stray space after a line-continuation `\`
-// silently truncates the macro (see docs/Gotchas.md §6).
+// silently truncates the macro (see docs/Knowledge Base/Gotchas.md §6).
 #define DANGER_LABEL_KEYS [LSTRING(DangerForcedAI), "", LSTRING(DangerEnemyDetected), LSTRING(DangerFire), LSTRING(DangerHit), LSTRING(DangerEnemyNear), LSTRING(DangerExplosion), LSTRING(DangerFriendlyDead), LSTRING(DangerDeadBody), LSTRING(DangerScreamHeard), LSTRING(DangerCanFire), LSTRING(DangerBulletClose), LSTRING(DangerAssessing)]
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -142,7 +142,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Context-action icons and their idle tints. The labels and tints themselves are
 // resolved by EFUNC(core,overlayActionModifier) from the stream id — localize inside a
-// QUOTE would hit the nested-quote problem (docs/Gotchas.md §5) — and a running
+// QUOTE would hit the nested-quote problem (docs/Knowledge Base/Gotchas.md §5) — and a running
 // overlay goes grey regardless of which one it is.
 #define ICON_DEST "\a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa"
 #define ICON_TGT  "\a3\ui_f\data\igui\cfg\simpletasks\types\kill_ca.paa"

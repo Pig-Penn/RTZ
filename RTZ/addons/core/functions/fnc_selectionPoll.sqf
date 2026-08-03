@@ -135,7 +135,7 @@ if (!hasInterface) exitWith {};
     // component; it also had to be spelled GETGVAR rather than a bare read,
     // because a nil from a display that had not initialised yet would abort the
     // rest of this handler — the whole subscription — rather than read false
-    // (docs/Gotchas.md §2). Demand entries only exist once set, so there is
+    // (docs/Knowledge Base/Gotchas.md §2). Demand entries only exist once set, so there is
     // nothing to read defensively.
     private _wantUnits = false;
     private _detailed  = false;
@@ -188,7 +188,7 @@ if (!hasInterface) exitWith {};
         // directly — no netId round-trip for a set the client already holds.
         // ALIAS THE KEY: the inner `select` block rebinds _x to a snapshot entry
         // and leaves it clobbered for the rest of this iteration
-        // (docs/Gotchas.md §2).
+        // (docs/Knowledge Base/Gotchas.md §2).
         {
             private _stream = _x;
             private _rec = GVAR(streamData) get _stream;
