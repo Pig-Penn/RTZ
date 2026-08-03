@@ -17,7 +17,7 @@
  * its own colour (red), rendered as a second drawIcon3D split at a measured
  * text-width boundary from the rest of the line (same screen-space trick as the
  * flag icon). DOWN / FLEEING always shows regardless of the status field
- * setting. Mounted units are skipped (the vehicle cards cover their vehicle);
+ * setting. Mounted units are skipped (the vehicle tag covers their vehicle);
  * tags fade out approaching GVAR(tagMaxDistance) from the camera.
  *
  * Two optional icons ride the same screen-space placement trick, each

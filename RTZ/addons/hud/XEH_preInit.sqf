@@ -37,14 +37,13 @@ if (!hasInterface) exitWith { ADDON = true };
 
 // Snapshot stores, filled by this component's own stream receivers
 // (FUNC(receiveUnitData) / FUNC(receiveVehicleData)) — netId → packet, because
-// the tags, cards and dialog rows all index by id.
+// the tags and the dialog rows all index by id.
 GVAR(unitData)    = createHashMap;
 GVAR(vehicleData) = createHashMap;
 
 // Dirty flags — set on receipt, cleared by the consumer once it has rebuilt.
 GVAR(unitTagsDirty)    = true;
 GVAR(vehicleTagsDirty) = true;
-GVAR(vehicleDataDirty) = true;
 
 // Engine planningMode → short label (FUNC(drawDestination)). Keys are normalized
 // (uppercase, spaces stripped) because the engine reports e.g. "LEADER PLANNED"

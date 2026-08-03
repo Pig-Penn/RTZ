@@ -34,24 +34,17 @@
 // in main.s script_macros.hpp alongside the RENDER_* / CTX_* / SRC_* contracts --
 // component headers are not visible to each other.
 
-// Bright per-side UI palette, indexed by SIDE_NUM. ONE source of truth for both
-// the selection dialog's group-separator tint and the vehicle overlay cards, so
-// the two overlays always read as the same colour system.
+// Bright per-side UI palette, indexed by SIDE_NUM — the selection dialog's
+// group-separator tint.
 #define SIDE_TINTS [[0.36, 0.61, 1.00, 1], [1.00, 0.42, 0.42, 1], [0.44, 0.85, 0.34, 1], [0.78, 0.49, 0.92, 1]]
 
 // Shared status palette — one urgency colour system across the selection dialog
-// rows, the unit head tags, and the vehicle overlay cards. RGBA for engine
-// draw / listbox colour; the HEX_* set is the same colours (plus body-text
-// shades) for structured-text markup.
+// rows and the unit head tags. RGBA, for engine draw / listbox colour.
 #define COL_NORMAL [0.88, 0.95, 1.00, 1.0]
 #define COL_DIM    [0.55, 0.55, 0.55, 1.0]
 #define COL_WARN   [1.00, 0.78, 0.30, 1.0]
 #define COL_BAD    [1.00, 0.38, 0.38, 1.0]
 #define COL_GOLD   [1.00, 0.84, 0.40, 1.0]
-#define HEX_BODY   "#D9DDE1"
-#define HEX_DIM    "#8A9096"
-#define HEX_TASK   "#9FB8C8"
-#define HEX_WARN   "#FFC74D"
 
 // BIS simpletask icon family shared by the selection dialog rows
 // (FUNC(buildSelectionRows)) and the unit head tags (FUNC(unitTags)) —
@@ -89,26 +82,12 @@
 #define ICON_GAP           0.3
 #define ICON_HOVER_RADIUS  0.03
 
-// ── Vehicle overlay card geometry (absolute UI units) and card colours ───────
-// Shared by FUNC(vehicleOverlay) (stacking), FUNC(vehicleCardCreate) (control
-// backgrounds) and FUNC(vehicleCardLayout) (positioning) — one set of numbers so
-// the three cannot drift out of agreement about a card's shape.
-#define CARD_W    0.225
-#define ACCENT_W  0.0045
-#define TITLE_H   0.0320
-#define PAD_X     0.0080
-#define BAR_H     0.0165
-#define BAR_GAP   0.0045
-#define CARD_GAP  0.0100
-#define CARD_BG   [0, 0, 0, 0.65]
-#define BAR_BG    [1, 1, 1, 0.10]
-
 // ── Status-flag tokens ───────────────────────────────────────────────────────
 // The flags[] field of both packet layouts. These are WIRE values, not display
 // text: the server writes them, the client tests them (FLAG_FLEEING in _flags)
 // and looks each one's localized label up in GVAR(tagLabels) at render time.
 // Never print a token directly — that is what put untranslatable English in the
-// tags and cards in the first place.
+// tags in the first place.
 #define FLAG_PATH_OFF "PATH OFF"
 #define FLAG_MOVE_OFF "MOVE OFF"
 #define FLAG_FORCED   "FORCED"

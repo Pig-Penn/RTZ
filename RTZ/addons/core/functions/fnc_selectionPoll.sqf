@@ -163,7 +163,7 @@ if (!hasInterface) exitWith {};
     //
     // Delivered as an EMPTY SNAPSHOT to each affected stream's own receiver rather
     // than by clearing the stores directly. Clearing directly is what this used to
-    // do — GVAR(unitData), GVAR(vehicleData), GVAR(vehicleDataDirty) — which meant
+    // do — GVAR(unitData), GVAR(vehicleData) and their dirty flags — which meant
     // the engine reached into one particular component's stores by name, and could
     // not have cleared anyone else's. Every receiver already handles "here are the
     // current entries"; [] is simply the case where there are none, so this needs

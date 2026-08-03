@@ -34,7 +34,7 @@
 
 // Row colours (COL_*), group separator tint (SIDE_TINTS), row icons (ICON_*) and
 // the flag tokens (FLAG_*) all come from script_component.hpp — one
-// palette/icon/token system shared with the unit head tags and vehicle cards.
+// palette/icon/token system shared with the unit and vehicle head tags.
 // Danger-cause labels come from GVAR(dangerLabels), localized once at preInit.
 
 // Spaced middot separator between the segments of a row / header line.

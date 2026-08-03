@@ -34,8 +34,8 @@
 params ["_pkt"];
 
 _pkt params [
-    "_vNet", "", "_dName", "_speedKmh", "_fuelPct", "_healthPct",
-    "_crewCnt", "_ecNet", "_flags", "_task", "_tactic", "",
+    "_vNet", "_dName", "_speedKmh", "_fuelPct", "_healthPct",
+    "_crewCnt", "_ecNet", "_flags", "_task", "_tactic",
     ["_seatCnt", -1], ["_flyHeight", -1], ["_selAmmo", -1]
 ];
 

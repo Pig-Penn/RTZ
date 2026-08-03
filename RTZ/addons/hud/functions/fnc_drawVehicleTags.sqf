@@ -39,7 +39,7 @@ private _fadeIn  = _maxDist * 0.85;
 private _size    = GVAR(vtagSize);
 private _zOff    = GVAR(vtagHeight);
 // A virtual Zeus (VirtualMan_F) is the game master, not a PvP officer — exempt
-// from the own-side render filter (mirrors the overlay cards).
+// from the own-side render filter (mirrors the selection poll and the gather).
 private _anySide = player isKindOf "VirtualMan_F";
 private _curSide = side player;
 
@@ -57,7 +57,7 @@ private _curSide = side player;
     private _veh = objectFromNetId _x;
     if (isNull _veh || {!alive _veh}) then { continue };
     // Side re-check between server pushes (crew change can flip a vehicle's
-    // effective side) — same filter the overlay cards apply.
+    // effective side) — same filter the selection poll applies.
     if (!_anySide && {!(VEH_SIDE_OK(_veh,_curSide))}) then { continue };
 
     private _base = unitAimPositionVisual _veh;

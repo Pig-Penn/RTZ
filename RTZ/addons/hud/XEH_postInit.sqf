@@ -19,7 +19,7 @@
 // gating registration on a per-client display setting would mean a dedicated
 // server deciding whether to feed its clients from its own copy of their
 // preference (flip "Vehicle Tags" off in a server CBA config and every client's
-// tags AND cards go blank, with nothing in the log to explain it).
+// tags go blank, with nothing in the log to explain it).
 //
 // The two selection feeds are always-on and declare no overlay bundle; the two
 // AI-state overlays are toggleable and take the engine's default raw-store
@@ -76,13 +76,13 @@ if (!hasInterface) exitWith {};
 // Every function below only registers handlers and returns — no sleep/waitUntil —
 // so they are `call`ed, not `spawn`ed.
 ["CBA_settingsInitialized", {
-    // Each display below is gated on ITS OWN master switch, and the four switches
-    // are independent CBA settings a curator sets separately. This block used to
+    // Each display below is gated on ITS OWN master switch, and the switches are
+    // independent CBA settings a curator sets separately. This block used to
     // open with a bare `if (!GVAR(enableSelectionInfo)) exitWith {}` — which is not
     // scoped to the dialog it reads like: `exitWith` here leaves the whole handler,
     // so switching "Selection Info" off silently took the unit tags, the vehicle
-    // tags, the vehicle cards AND the shared "Draw Tags" toggle down with it. The
-    // guard belongs around the one action it governs.
+    // tags AND the shared "Draw Tags" toggle down with it. The guard belongs
+    // around the one action it governs.
     if (GVAR(enableSelectionInfo)) then {
         // Selection info dialog: its own ZEN action. This used to live inside the
         // engine's selection poll, on the reasoning that the poll owned the selection
@@ -106,16 +106,10 @@ if (!hasInterface) exitWith {};
         [_action, ["RTZ_Control"], 5] call zen_context_menu_fnc_addAction;
     };
 
-    if (GVAR(enableVehicleOverlay)) then {
-        call FUNC(vehicleOverlay);
-    };
-
     if (GVAR(enableUnitTags)) then {
         call FUNC(unitTags);
     };
 
-    // Independent of GVAR(enableVehicleOverlay) — either vehicle display can run
-    // without the other; they share the STREAM_VEH packets.
     if (GVAR(enableVehicleTags)) then {
         call FUNC(vehicleTags);
     };

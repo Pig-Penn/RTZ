@@ -16,7 +16,7 @@ Current components:
 | `delete` | Point-free deletion of units, vehicles, bodies and wrecks (context action + keybind); protects players, curator modules and headless clients |
 | `economy` | Zeus point costs: categorization, cost registration, per-curator coefficients (`defaultCosts/`) |
 | `loot` | AI orders to sweep nearby bodies, weapon holders, crates and unmanned vehicles and improve their loadout. Gear is classified through a lazily memoized `BIS_fnc_itemType` wrapper (`fnc_itemCategory` / `fnc_weaponScore`), and every take is ROLE-locked against the unit's *config* loadout (`fnc_unitRole`) so a sweep cannot rewrite squad composition. `fnc_lootPlan` is pure and decides what one unit would take from one target — run before dispatch, so nobody is marched to a target they have no use for — while `fnc_lootStep` executes it one step at a time, since engine take actions cannot be stacked and `rearm` must land last. Errand ownership rides entirely on `EFUNC(common,errandToken)`; there is deliberately no separate claim flag |
-| `hud` | **Every curator-view display.** The selection info dialog, unit/vehicle tags, vehicle stat cards, and the destination/target overlays. Owns their gatherers and renderers, and the drawing of `spotting`'s contact icons; owns no engine — it is a consumer of `core` like any other component |
+| `hud` | **Every curator-view display.** The selection info dialog, unit/vehicle tags, and the destination/target overlays. Owns their gatherers and renderers, and the drawing of `spotting`'s contact icons; owns no engine — it is a consumer of `core` like any other component |
 | `mine` | Mine placement, detection drawing, and disarm orders |
 | `officer` | Officer auras and area buffs with cooldowns and monitors |
 | `repair` | AI orders to repair vehicles |
@@ -58,7 +58,7 @@ Current components:
 
 All the shared contracts (`RENDER_*`, `CTX_*`, `SRC_*`, `SEL_MAX_*`, `VEH_SIDE_OK`, `SIDE_NUM`) live in `main/script_macros.hpp`, not in `core`'s own header, because component headers are not visible to each other.
 
-**Nothing in `core` may name a specific display.** That is the invariant the whole split exists to protect: it was violated by a `case STREAM_UNIT` in the snapshot receiver, by hardcoded renderer/setting tables in preInit, and by the poll reading two of `hud`'s globals to decide what to stream — which is what forced `mine`, `spotting` and `supply` to depend on a component full of tags and cards. If you find yourself adding a stream id or a display's variable name to `core`, the contract is missing something instead.
+**Nothing in `core` may name a specific display.** That is the invariant the whole split exists to protect: it was violated by a `case STREAM_UNIT` in the snapshot receiver, by hardcoded renderer/setting tables in preInit, and by the poll reading two of `hud`'s globals to decide what to stream — which is what forced `mine`, `spotting` and `supply` to depend on a component full of tags and dialogs. If you find yourself adding a stream id or a display's variable name to `core`, the contract is missing something instead.
 
 Gatherers report **absolute** times, never ages or progress figures: an age changes every tick and defeats the send diff, while a frozen timestamp diffs away and is aged client-side each frame — which also makes the readout climb smoothly between polls instead of stepping.
 

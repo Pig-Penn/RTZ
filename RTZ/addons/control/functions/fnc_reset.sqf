@@ -58,7 +58,7 @@ if (_grps isEqualTo []) exitWith {};
 // wrong with that: this component does not depend on rtz_hud (it is not in
 // requiredAddons) and has no business knowing that component owns tags, let alone
 // which of its display flags is the interesting one; and the guard was wrong
-// anyway, since the vehicle cards, the dialog and the AI-state overlays all read
+// anyway, since the vehicle tags, the dialog and the AI-state overlays all read
 // the same feed and all wanted the refresh. The comment also still described the
 // baseline as rtz_hud's, which stopped being true when the engine moved to
 // rtz_core. One call, no cross-component reach, no stale ownership claim.

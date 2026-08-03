@@ -3,7 +3,7 @@
  * Author: Maxim
  * ── THE ONE PLACE TO RENAME TAG TEXT ─────────────────────────────────────────
  * Fills GVAR(tagLabels) — the display-label remap every render path in this
- * component (unit tags, vehicle tags, overlay cards) runs its LAMBS task /
+ * component (unit tags, vehicle tags, dialog rows) runs its LAMBS task /
  * tactic strings and RTZ's own status tokens through before drawing.
  *
  * The table has two halves, and they are edited differently:
