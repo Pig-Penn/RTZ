@@ -61,21 +61,24 @@ GVAR(unitTagsDirty)    = true;
 GVAR(vehicleTagsDirty) = true;
 GVAR(vehicleDataDirty) = true;
 
-// Overlay streams this curator has switched on, and the renderer each maps to.
-// LINKFUNC rather than a stored Code value so a PREP recompile is picked up.
-GVAR(activeStreams)   = [];
-GVAR(streamRenderers) = createHashMapFromArray [
-    [STREAM_DEST, LINKFUNC(drawDestination)],
-    [STREAM_TGT,  LINKFUNC(drawTarget)]
-];
+// Overlay streams this curator has switched on.
+GVAR(activeStreams) = [];
 
-// Stream id → the master setting that must stay true for it to run. Lowercased
-// because CBA_SettingChanged is not guaranteed to report the name in the case it
-// was registered with.
-GVAR(streamSettings) = createHashMapFromArray [
-    [STREAM_DEST, toLower QGVAR(enableDestinationDisplay)],
-    [STREAM_TGT,  toLower QGVAR(enableTargetDisplay)]
-];
+// ── Stream presentation registries, all filled by FUNC(registerStream) ───────
+// These used to be literal tables naming STREAM_DEST and STREAM_TGT here, which
+// is what made the shared engine know the ids of this addon's own displays — and
+// left a stream declared elsewhere (rtz_supply) writing into them by hand from its
+// own postInit. Empty here, populated by each stream's declaration, so the engine
+// carries no display knowledge and an external stream completes itself.
+//   streamReceivers — stream id → snapshot handler (FUNC(streamClient) dispatch)
+//   streamRenderers — stream id → world renderer, switched on with the overlay
+//   streamSettings  — stream id → lowercased master setting, for the watchdog
+//   streamLook      — stream id → [[toastHidden, toastShown],
+//                                  [labelOff, labelOn], accentColour]
+GVAR(streamReceivers) = createHashMap;
+GVAR(streamRenderers) = createHashMap;
+GVAR(streamSettings)  = createHashMap;
+GVAR(streamLook)      = createHashMap;
 
 // Engine planningMode → short label (FUNC(drawDestination)). Keys are normalized
 // (uppercase, spaces stripped) because the engine reports e.g. "LEADER PLANNED"

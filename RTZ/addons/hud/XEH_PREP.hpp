@@ -19,6 +19,15 @@ PREP(gatherVehicleInfo);
 PREP(gatherDestination);
 PREP(gatherTarget);
 
+// ── Per-stream client receivers: one snapshot -> the store its display reads ─
+// Registered with the stream (FUNC(registerStream)) and dispatched blindly by
+// FUNC(streamClient); receiveOverlay is the default for any stream that does not
+// name one. These were `case` branches inside streamClient, which is what made
+// the shared engine know the ids of specific displays.
+PREP(receiveOverlay);
+PREP(receiveUnitData);
+PREP(receiveVehicleData);
+
 // ── Renderers ────────────────────────────────────────────────────────────────
 // drawSpots / drawRcIndicator are registered by rtz_spotting, which owns their
 // data; they live here because this component owns the drawing.

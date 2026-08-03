@@ -22,18 +22,56 @@ call FUNC(streamClient);
 call FUNC(streamServer);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SERVER — stream declarations
+// STREAM DECLARATIONS — one block per data feed, both halves
 // ─────────────────────────────────────────────────────────────────────────────
-// One line per data feed. The engine owns the registry, the poll loop, the diff
-// and the push; a stream is just a gatherer, the selection slice it reads, and
-// the setting naming its cadence. Registered unconditionally for the same reason
-// the engine is — a stream nobody subscribes to never runs.
-if (isServer) then {
-    [STREAM_UNIT, LINKFUNC(gatherUnitInfo),    SRC_UNITS, QGVAR(gatherInterval), 0.3] call FUNC(registerStream);
-    [STREAM_VEH,  LINKFUNC(gatherVehicleInfo), SRC_VEHS,  QGVAR(gatherInterval), 0.3] call FUNC(registerStream);
-    [STREAM_DEST, LINKFUNC(gatherDestination), SRC_HULLS, QGVAR(pollInterval),   2  ] call FUNC(registerStream);
-    [STREAM_TGT,  LINKFUNC(gatherTarget),      SRC_HULLS, QGVAR(pollInterval),   2  ] call FUNC(registerStream);
-};
+// The engine owns the registry, the poll loop, the diff, the push and the
+// dispatch; a stream is its gatherer, the selection slice it reads, the setting
+// naming its cadence, where its snapshots land, and — for a toggleable overlay —
+// its renderer and its wording.
+//
+// Called on EVERY machine, not under isServer: FUNC(registerStream) self-gates
+// each half, and the CLIENT half is the point. It used to be server-only, with
+// the client side hardcoded in XEH_preInit and in switches inside
+// FUNC(toggleOverlay) / FUNC(overlayActionModifier) — see FUNC(registerStream)
+// for what that cost. Registered unconditionally for the same reason the engine
+// is: a stream nobody subscribes to never runs.
+//
+// The two selection feeds are always-on (implied by a non-empty selection) and so
+// declare no overlay bundle; the two AI-state overlays are toggleable and take the
+// default raw-store receiver.
+[
+    STREAM_UNIT, LINKFUNC(gatherUnitInfo), SRC_UNITS, QGVAR(gatherInterval), 0.3,
+    LINKFUNC(receiveUnitData)
+] call FUNC(registerStream);
+
+[
+    STREAM_VEH, LINKFUNC(gatherVehicleInfo), SRC_VEHS, QGVAR(gatherInterval), 0.3,
+    LINKFUNC(receiveVehicleData)
+] call FUNC(registerStream);
+
+[
+    STREAM_DEST, LINKFUNC(gatherDestination), SRC_HULLS, QGVAR(pollInterval), 2,
+    LINKFUNC(receiveOverlay),
+    [
+        LINKFUNC(drawDestination),
+        QGVAR(enableDestinationDisplay),
+        [LLSTRING(MsgDestinationsHidden), LLSTRING(MsgDestinationsShown)],
+        [LLSTRING(ActionDrawDestinations), LLSTRING(ActionHideDestinations)],
+        COLOR_DEST
+    ]
+] call FUNC(registerStream);
+
+[
+    STREAM_TGT, LINKFUNC(gatherTarget), SRC_HULLS, QGVAR(pollInterval), 2,
+    LINKFUNC(receiveOverlay),
+    [
+        LINKFUNC(drawTarget),
+        QGVAR(enableTargetDisplay),
+        [LLSTRING(MsgTargetsHidden), LLSTRING(MsgTargetsShown)],
+        [LLSTRING(ActionDrawTargets), LLSTRING(ActionHideTargets)],
+        COLOR_TGT
+    ]
+] call FUNC(registerStream);
 
 if (!hasInterface) exitWith {};
 

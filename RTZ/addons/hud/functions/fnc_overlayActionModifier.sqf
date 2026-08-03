@@ -25,20 +25,17 @@
 
 params ["_action", "_stream"];
 
-// [label while OFF, label while ON, tint while OFF]
-private _look = switch (_stream) do {
-    case STREAM_DEST: {
-        [LLSTRING(ActionDrawDestinations), LLSTRING(ActionHideDestinations), COLOR_DEST]
-    };
-    case STREAM_TGT: {
-        [LLSTRING(ActionDrawTargets), LLSTRING(ActionHideTargets), COLOR_TGT]
-    };
-    default { [] };
-};
+// Labels and tint come from the stream's own declaration (FUNC(registerStream)).
+// This was a switch over the ids this addon owns, bailing silently on any other —
+// which is why rtz_supply carried a near-identical copy of this function purely to
+// name its own action. One implementation now serves every registered stream.
+private _look = GVAR(streamLook) get _stream;
+if (isNil "_look") exitWith {};
 
-if (_look isEqualTo []) exitWith {};
+_look params ["", "_labels", "_colorOff"];
+_labels params ["_labelOff", "_labelOn"];
 
-_look params ["_labelOff", "_labelOn", "_colorOff"];
+if (_labelOff isEqualTo "") exitWith {};
 
 if (_stream in GVAR(activeStreams)) then {
     _action set [ACTION_INDEX_DISPLAYNAME, _labelOn];

@@ -9,5 +9,3 @@ PREP(orderResupply);
 PREP(serviceTick);
 PREP(serviceVehicles);
 PREP(supplyCapabilities);
-PREP(supplyOverlayModifier);
-PREP(toggleSupplyOverlay);

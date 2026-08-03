@@ -19,13 +19,20 @@ class zen_context_menu_actions {
     // curator's live selection rather than the current context-menu one, so the
     // condition is a plain settings check. Both settings are read LIVE, so
     // flipping either mid-mission just works.
+    //
+    // Statement and modifierFunction are the engine's OWN shared halves, exactly
+    // as rtz_hud's two overlays use them. They used to be local copies
+    // (FUNC(toggleSupplyOverlay), FUNC(supplyOverlayModifier)) because those
+    // shared halves resolved their wording from a switch over the stream ids
+    // rtz_hud knew about and fell through to blank for this one; the wording now
+    // arrives with the stream declaration in XEH_postInit, so the copies are gone.
     class RTZ_Overlays {
         class GVAR(toggleSupplyLines) {
             displayName = CSTRING(ActionDrawSupplyLines);
             icon = ICON_RESUPPLY;
-            statement = QUOTE(call FUNC(toggleSupplyOverlay));
+            statement = QUOTE([STREAM_SUPPLY] call EFUNC(hud,toggleOverlay));
             condition = QUOTE(GVAR(enabled) && GVAR(enableSupplyDisplay));
-            modifierFunction = QUOTE([_this select 0] call FUNC(supplyOverlayModifier));
+            modifierFunction = QUOTE([ARR_2(_this select 0,STREAM_SUPPLY)] call EFUNC(hud,overlayActionModifier));
             priority = 2;
         };
     };

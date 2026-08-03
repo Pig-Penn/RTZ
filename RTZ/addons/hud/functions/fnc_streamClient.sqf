@@ -4,25 +4,11 @@
  * CLIENT ONLY. The ONE receiver for every snapshot the server's stream engine
  * pushes (QGVAR(update)), and the master-setting watchdog.
  *
- * Snapshots are routed by stream id into the store the display that consumes
- * them reads. The two selection feeds are unpacked into netId-keyed maps here,
- * because their consumers (tags, cards, dialog rows) look entities up by id; the
- * overlay feeds are stored RAW and baked lazily by their draw function on the
- * first frame after receipt, then reused — the same cache-on-dirty pattern the
- * tag renderers use, and the reason a snapshot carries an absolute reference
- * time rather than pre-computed ages.
- *
- * Overlay record layout, per stream id, in GVAR(streamData):
- *
- *   [_entries, _rxTime, _dirty, _refTime]
- *     _entries — raw server entries, replaced in place by their baked form
- *     _rxTime  — CBA_missionTime the snapshot landed, for client-side ageing
- *     _dirty   — set on receipt, cleared by the draw function once baked
- *     _refTime — server clock at send, the zero point of any age in _entries
- *
- * Every overlay entry, raw or baked, keeps the watched entity at index 0 — that
- * is what the deselect prune in FUNC(selectionPoll) and the in-flight filter
- * below both test.
+ * Snapshots are routed to the receiver the stream registered with
+ * FUNC(registerStream) — this file holds no knowledge of any particular feed.
+ * The receivers themselves are FUNC(receiveOverlay) (the default: store raw, bake
+ * lazily at draw time), FUNC(receiveUnitData) and FUNC(receiveVehicleData) (unpack
+ * into netId-keyed maps, because their consumers index by id).
  *
  * Loading: called unconditionally from XEH_postInit on every interface machine —
  * it reads no setting to install itself, and a store nothing writes to costs
@@ -43,37 +29,18 @@
 if (!hasInterface) exitWith {};
 
 // ── Snapshot receiver ────────────────────────────────────────────────────────
+// Pure dispatch. This was a `switch (_stream)` with a case per feed, which meant
+// the shared engine hardcoded the ids of rtz_hud's own two selection displays and
+// silently gave every other stream the overlay treatment by falling through to
+// `default`. A stream now declares its receiver with FUNC(registerStream), so this
+// neither knows nor needs to know what any of them are.
 [QGVAR(update), {
-    params ["_stream", "_entries", "_refTime"];
-
-    switch (_stream) do {
-        // Infantry packets: netId -> packet. The tag renderer and the dialog both
-        // index by id, so unpack once here rather than per lookup per frame.
-        case STREAM_UNIT: {
-            private _m = createHashMap;
-            { _m set [_x select 0, _x] } forEach _entries;
-            GVAR(unitData) = _m;
-            GVAR(unitTagsDirty) = true;
-        };
-
-        // Vehicle packets: same shape, feeding both the head tags and the cards.
-        case STREAM_VEH: {
-            private _m = createHashMap;
-            { _m set [_x select 0, _x] } forEach _entries;
-            GVAR(vehicleData) = _m;
-            GVAR(vehicleTagsDirty) = true;
-            GVAR(vehicleDataDirty) = true;
-        };
-
-        // Overlay streams: stored raw and marked dirty for the draw function to
-        // bake. Entries for entities deselected while the snapshot was in flight
-        // are dropped here rather than surviving to the draw.
-        default {
-            private _hulls = GVAR(selHulls);
-            _entries = _entries select {!isNull (_x select 0) && {(_x select 0) in _hulls}};
-            GVAR(streamData) set [_stream, [_entries, CBA_missionTime, true, _refTime]];
-        };
-    };
+    // getOrDefault, not get: a snapshot can outrun its registration on a JIP
+    // client (the server is already streaming when this machine's postInit runs),
+    // and the overlay store is the right home for anything unclaimed — it is what
+    // the `default` case did.
+    private _receiver = GVAR(streamReceivers) getOrDefault [_this select 0, LINKFUNC(receiveOverlay)];
+    _this call _receiver;
 }] call CBA_fnc_addEventHandler;
 
 // ── Master setting watchdog ──────────────────────────────────────────────────

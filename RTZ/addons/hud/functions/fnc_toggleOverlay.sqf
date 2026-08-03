@@ -49,10 +49,14 @@ GVAR(reported) = [];
 
 if (!_report) exitWith {};
 
-private _msgs = switch (_stream) do {
-    case STREAM_DEST: {[LLSTRING(MsgDestinationsHidden), LLSTRING(MsgDestinationsShown)]};
-    case STREAM_TGT:  {[LLSTRING(MsgTargetsHidden), LLSTRING(MsgTargetsShown)]};
-    default {["", ""]};
-};
+// Toast wording comes from the stream's own declaration (FUNC(registerStream)),
+// not from a switch over the ids this addon happens to own. That switch fell
+// through to ["", ""] for anything else, so rtz_supply had to call this with
+// reporting OFF and emit its own toast from a function that existed for no other
+// reason. Registered labels mean one shared implementation serves every stream.
+private _toasts = (GVAR(streamLook) getOrDefault [_stream, [["", ""]]]) select 0;
+private _msg = _toasts select _on;
 
-[_msgs select _on] call EFUNC(common,showCountMessage);
+if (_msg isEqualTo "") exitWith {};
+
+[_msg] call EFUNC(common,showCountMessage);
