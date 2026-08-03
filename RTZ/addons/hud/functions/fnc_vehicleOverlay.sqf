@@ -29,8 +29,8 @@
  * context menu entry — FUNC(toggleVehicleCards), the same toggle pattern the tags
  * use.
  *
- * FUNC(selectionPoll) tracks which vehicles are selected and sets
- * GVAR(selVehicles); the per-vehicle packets (netId → packet) arrive on the
+ * EFUNC(core,selectionPoll) tracks which vehicles are selected and sets
+ * EGVAR(core,selVehicles); the per-vehicle packets (netId → packet) arrive on the
  * STREAM_VEH feed into GVAR(vehicleData), shared with FUNC(vehicleTags) so either
  * display can run without the other. Card creation, body markup and per-card
  * layout live in FUNC(vehicleCardCreate) / FUNC(vehicleCardBody) /
@@ -82,8 +82,8 @@ GVAR(vehThemeColor) = [
     (profileNamespace getVariable ["GUI_BCG_RGB_A", 0.8]) max 0.7
 ];
 
-[QGVAR(vehicleCards), LINKFUNC(drawVehicleCards), RENDER_UI,    10] call FUNC(registerRenderer);
-[QGVAR(vehicleLinks), LINKFUNC(drawVehicleLinks), RENDER_WORLD, 10] call FUNC(registerRenderer);
+[QGVAR(vehicleCards), LINKFUNC(drawVehicleCards), RENDER_UI,    10] call EFUNC(core,registerRenderer);
+[QGVAR(vehicleLinks), LINKFUNC(drawVehicleLinks), RENDER_WORLD, 10] call EFUNC(core,registerRenderer);
 
 // ── ZEN context menu toggle (label/tint mirror the current state) ────────────
 // Under the shared RTZ_Overlays submenu alongside "Draw Tags" — this used to be

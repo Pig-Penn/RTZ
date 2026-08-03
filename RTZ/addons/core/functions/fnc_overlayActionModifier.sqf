@@ -18,7 +18,7 @@
  * None
  *
  * Example:
- * [_action, STREAM_DEST] call rtz_hud_fnc_overlayActionModifier
+ * [_action, "dest"] call rtz_core_fnc_overlayActionModifier
  *
  * Public: No
  */

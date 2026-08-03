@@ -14,9 +14,9 @@
 // STREAM ENGINE
 // ─────────────────────────────────────────────────────────────────────────────
 // A "stream" is one curator-scoped data feed: an id, a server gather function,
-// the slice of the selection it reads, and a cadence. FUNC(streamServer) owns
+// the slice of the selection it reads, and a cadence. EFUNC(core,streamServer) owns
 // the single watcher registry and the single poll loop; a new display costs a
-// gather/draw pair and one FUNC(registerStream) call, never another copy of the
+// gather/draw pair and one EFUNC(core,registerStream) call, never another copy of the
 // subscribe/diff/push machinery.
 // SINGLE-quoted deliberately: these ids appear inside QUOTE(...) in
 // CfgContext.hpp, and a double-quoted literal would terminate the config string
@@ -29,28 +29,10 @@
 #define STREAM_DEST 'dest'
 #define STREAM_TGT  'tgt'
 
-// Cap on selected infantry reported by the client poll, gathered by the server,
-// and rendered by the dialog — one define keeps all three stages in lockstep.
-#define SEL_MAX_UNITS 24
-
-// Same idea for vehicles: capped in the client poll, the server gather
-// (FUNC(gatherVehicleInfo)), and the bottom-right card render
-// (FUNC(vehicleOverlay)) so they never disagree.
-#define SEL_MAX_VEHICLES 8
-
-// Side index used throughout the addon's packets: 0 west, 1 east, 2 independent,
-// 3 everything else (civilian / logic / sideEmpty). Computed on the server where
-// the real side is known, then carried in each packet for the client to colour by.
-#define SIDE_NUM(s) (switch (s) do { case west: {0}; case east: {1}; case independent: {2}; default {3} })
-
-// A vehicle's effective side is its CREW's side — but an unmanned vehicle has
-// `grpNull` for a group, and `side grpNull` matches no real side, so a plain
-// `side (group _veh) == side _curator` test silently hides every parked truck
-// and unmanned static from a side-restricted curator. Crewless vehicles are
-// treated as visible to everyone instead (they belong to nobody yet, and Zeus
-// can edit them regardless). Used by the client poll, the server gather, and
-// both vehicle render paths so all four agree on what is visible.
-#define VEH_SIDE_OK(veh,curSide) (isNull (group veh) || { side (group veh) == curSide })
+// NOTE: SEL_MAX_UNITS / SEL_MAX_VEHICLES / SIDE_NUM / VEH_SIDE_OK are NOT here.
+// The stream engine applies them and the displays below must agree, so they live
+// in main.s script_macros.hpp alongside the RENDER_* / CTX_* / SRC_* contracts --
+// component headers are not visible to each other.
 
 // Bright per-side UI palette, indexed by SIDE_NUM. ONE source of truth for both
 // the selection dialog's group-separator tint and the vehicle overlay cards, so
@@ -121,19 +103,6 @@
 #define CARD_BG   [0, 0, 0, 0.65]
 #define BAR_BG    [1, 1, 1, 0.10]
 
-// Base tick (s) of the single server stream loop (FUNC(streamServer)) — the
-// fastest any stream can run. Each stream declares its own effective cadence
-// (see FUNC(registerStream)), read live from its CBA setting each tick and
-// floored to this value, so one loop serves feeds that want 0.3 s and feeds
-// that want 2 s without either paying the other's rate.
-#define STREAM_TICK 0.25
-
-// Client selection poll (s). ONE poll owns the curator's selection for every
-// display and every stream subscription — the overlays used to re-resolve
-// `curatorSelected` inside their Draw3D handler, i.e. sixty times a second, to
-// notice a change this poll already tracks four times a second.
-#define SEL_POLL_INTERVAL 0.25
-
 // ── Status-flag tokens ───────────────────────────────────────────────────────
 // The flags[] field of both packet layouts. These are WIRE values, not display
 // text: the server writes them, the client tests them (FLAG_FLEEING in _flags)
@@ -172,14 +141,13 @@
 // AI-STATE OVERLAYS (destination / target streams)
 // ─────────────────────────────────────────────────────────────────────────────
 // Context-action icons and their idle tints. The labels and tints themselves are
-// resolved by FUNC(overlayActionModifier) from the stream id — localize inside a
+// resolved by EFUNC(core,overlayActionModifier) from the stream id — localize inside a
 // QUOTE would hit the nested-quote problem (docs/Gotchas.md §5) — and a running
 // overlay goes grey regardless of which one it is.
 #define ICON_DEST "\a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa"
 #define ICON_TGT  "\a3\ui_f\data\igui\cfg\simpletasks\types\kill_ca.paa"
 #define COLOR_DEST [1.00, 0.80, 0.40, 1]
 #define COLOR_TGT  [0.60, 0.20, 0.20, 1]
-#define COLOR_OVERLAY_ON [0.50, 0.50, 0.50, 1]
 
 // Overlays start fading at FADE_NEAR and bottom out at MAX_DRAW_DIST (matches
 // the spotting wedge outer cap); labels only render while the cursor is within

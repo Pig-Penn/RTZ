@@ -30,9 +30,9 @@ class zen_context_menu_actions {
         class GVAR(toggleSupplyLines) {
             displayName = CSTRING(ActionDrawSupplyLines);
             icon = ICON_RESUPPLY;
-            statement = QUOTE([STREAM_SUPPLY] call EFUNC(hud,toggleOverlay));
+            statement = QUOTE([STREAM_SUPPLY] call EFUNC(core,toggleOverlay));
             condition = QUOTE(GVAR(enabled) && GVAR(enableSupplyDisplay));
-            modifierFunction = QUOTE([ARR_2(_this select 0,STREAM_SUPPLY)] call EFUNC(hud,overlayActionModifier));
+            modifierFunction = QUOTE([ARR_2(_this select 0,STREAM_SUPPLY)] call EFUNC(core,overlayActionModifier));
             priority = 2;
         };
     };

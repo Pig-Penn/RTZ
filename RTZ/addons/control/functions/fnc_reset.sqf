@@ -53,7 +53,7 @@ if (_grps isEqualTo []) exitWith {};
 // firing the subscribe event directly keeps the payload's shape rtz_hud's own
 // business. No-op if that addon isn't running (absent, or the display gated off).
 if (GETEGVAR(hud,unitTagsVisible,false)) then {
-    EGVAR(hud,reported) = [];
+    EGVAR(core,reported) = [];
 };
 
 [LLSTRING(MsgReset), count _grps] call EFUNC(common,showCountMessage);

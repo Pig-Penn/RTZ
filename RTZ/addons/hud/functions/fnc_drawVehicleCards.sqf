@@ -2,7 +2,7 @@
 /*
  * Author: Maxim
  * RENDER_UI renderer for the bottom-right vehicle stat cards. Called once per
- * frame by FUNC(frameLoop) with the curator display — or displayNull when Zeus is
+ * frame by EFUNC(core,frameLoop) with the curator display — or displayNull when Zeus is
  * closed or this player is not a curator, which is what drives the teardown
  * below.
  *
@@ -51,7 +51,7 @@ private _pool = GETUVAR(GVAR(veh_pool),[]);
 
 // Nothing selected. Cards are hidden once on the transition; idle frames after
 // that skip the pool sweep entirely.
-if (GVAR(selVehicles) isEqualTo []) exitWith {
+if (EGVAR(core,selVehicles) isEqualTo []) exitWith {
     GVAR(vehicleRenderList) = [];
     if ((GETUVAR(GVAR(veh_lastIds),[])) isNotEqualTo []) then {
         { (_x select 0) ctrlShow false } forEach _pool;
@@ -59,7 +59,7 @@ if (GVAR(selVehicles) isEqualTo []) exitWith {
     };
 };
 
-private _ids = GVAR(selVehicles) select [0, SEL_MAX_VEHICLES];
+private _ids = EGVAR(core,selVehicles) select [0, SEL_MAX_VEHICLES];
 // A virtual Zeus (VirtualMan_F) is the game master, not a PvP officer — exempt
 // from the own-side render filter (mirrors the selection poll and the server
 // gather).

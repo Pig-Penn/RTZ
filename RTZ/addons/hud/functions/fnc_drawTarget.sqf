@@ -5,7 +5,7 @@
  * unit to where it BELIEVES its target is, capped with an impact icon and
  * labelled with the target's name and knowledge freshness while the cursor is
  * near it (modelled on the LAMBS debug renderer). Called once per frame per
- * active stream by FUNC(streamClient), which supplies the shared frame context.
+ * active stream by EFUNC(core,streamClient), which supplies the shared frame context.
  *
  * A fresh snapshot is baked once, on the first frame after it lands: the
  * target's side colour, its display name and the age of the sighting AT SEND
@@ -30,7 +30,7 @@
 
 params ["_ctx"];
 
-private _record = GVAR(streamData) get STREAM_TGT;
+private _record = EGVAR(core,streamData) get STREAM_TGT;
 if (isNil "_record") exitWith {};                       // no snapshot yet
 
 _record params ["_entries", "_rxTime", "_dirty", "_refTime"];

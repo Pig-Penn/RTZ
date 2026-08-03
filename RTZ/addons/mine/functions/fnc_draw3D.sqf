@@ -7,7 +7,7 @@
  * cull range are hoisted out of the loop, and the range test is done on squared
  * distances so a minefield costs no square roots per frame.
  *
- * Registered with EFUNC(hud,frameLoop) — and only while GVAR(mark3D) is on
+ * Registered with EFUNC(core,frameLoop) — and only while GVAR(mark3D) is on
  * (FUNC(start)) — so there is no setting test here either. Riding the shared
  * frame loop rather than a Draw3D handler of its own gets three things this pass
  * used to lack: the camera position arrives already resolved (it used to make its

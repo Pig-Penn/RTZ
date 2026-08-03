@@ -46,7 +46,7 @@ if (hasInterface) then {
 
 // ── Supply-lines overlay registration ────────────────────────────────────────
 // This addon owns a STREAM on rtz_hud's engine; the engine owns no supply code.
-// ONE declaration, exactly like the engine's own streams — EFUNC(hud,registerStream)
+// ONE declaration, exactly like the engine's own streams — EFUNC(core,registerStream)
 // self-gates each half, so there is nothing to guard here.
 //
 // This used to be two blocks: a hasInterface block writing STREAM_SUPPLY into
@@ -64,8 +64,8 @@ if (hasInterface) then {
 // admin slider retunes them together.
 [
     STREAM_SUPPLY, LINKFUNC(gatherSupply), SRC_HULLS,
-    QEGVAR(hud,pollInterval), 2,
-    ELINKFUNC(hud,receiveOverlay),
+    QEGVAR(core,pollInterval), 2,
+    ELINKFUNC(core,receiveOverlay),
     [
         LINKFUNC(drawSupply),
         QGVAR(enableSupplyDisplay),
@@ -73,4 +73,4 @@ if (hasInterface) then {
         [LLSTRING(ActionDrawSupplyLines), LLSTRING(ActionHideSupplyLines)],
         COLOR_SUPPLY
     ]
-] call EFUNC(hud,registerStream);
+] call EFUNC(core,registerStream);

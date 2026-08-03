@@ -12,18 +12,18 @@ class zen_context_menu_actions {
         class GVAR(toggleDestination) {
             displayName = CSTRING(ActionDrawDestinations);
             icon = ICON_DEST;
-            statement = QUOTE([STREAM_DEST] call FUNC(toggleOverlay));
+            statement = QUOTE([STREAM_DEST] call EFUNC(core,toggleOverlay));
             condition = QUOTE(GVAR(enableDestinationDisplay));
-            modifierFunction = QUOTE([ARR_2(_this select 0,STREAM_DEST)] call FUNC(overlayActionModifier));
+            modifierFunction = QUOTE([ARR_2(_this select 0,STREAM_DEST)] call EFUNC(core,overlayActionModifier));
             priority = 4;
         };
 
         class GVAR(toggleTarget) {
             displayName = CSTRING(ActionDrawTargets);
             icon = ICON_TGT;
-            statement = QUOTE([STREAM_TGT] call FUNC(toggleOverlay));
+            statement = QUOTE([STREAM_TGT] call EFUNC(core,toggleOverlay));
             condition = QUOTE(GVAR(enableTargetDisplay));
-            modifierFunction = QUOTE([ARR_2(_this select 0,STREAM_TGT)] call FUNC(overlayActionModifier));
+            modifierFunction = QUOTE([ARR_2(_this select 0,STREAM_TGT)] call EFUNC(core,overlayActionModifier));
             priority = 3;
         };
     };

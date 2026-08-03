@@ -2,7 +2,7 @@
 /*
  * Author: Maxim
  * RENDER_WORLD renderer for the vehicle head tags. Called once per frame by
- * FUNC(frameLoop) with the shared frame context — the Zeus test, the camera basis
+ * EFUNC(core,frameLoop) with the shared frame context — the Zeus test, the camera basis
  * and the mouse position are already resolved, so this pass does no camera query
  * of its own.
  *
@@ -20,7 +20,7 @@
 
 params ["_ctx"];
 
-private _ids = GVAR(selVehicles);
+private _ids = EGVAR(core,selVehicles);
 if (_ids isEqualTo []) exitWith {};
 
 if (GVAR(vehicleTagsDirty)) then {

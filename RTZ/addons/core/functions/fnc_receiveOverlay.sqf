@@ -32,7 +32,7 @@
  * None
  *
  * Example:
- * [_stream, _entries, _refTime] call rtz_hud_fnc_receiveOverlay
+ * [_stream, _entries, _refTime] call rtz_core_fnc_receiveOverlay
  *
  * Public: No
  */

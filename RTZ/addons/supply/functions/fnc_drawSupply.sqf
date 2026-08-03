@@ -4,7 +4,7 @@
  * CLIENT. Supply-lines renderer: draws a line from each watched supply vehicle to
  * every vehicle it is currently servicing, capped with a resupply icon and
  * labelled with the order's progress while the cursor is near it. Registered as a
- * RENDER_WORLD renderer on EFUNC(hud,frameLoop), which resolves the Zeus test,
+ * RENDER_WORLD renderer on EFUNC(core,frameLoop), which resolves the Zeus test,
  * the camera position and the mouse position once for every display — so this
  * pays for none of it, and is skipped entirely while the Zeus map covers the 3D
  * view.
@@ -31,7 +31,7 @@
 
 params ["_ctx"];
 
-private _record = EGVAR(hud,streamData) get STREAM_SUPPLY;
+private _record = EGVAR(core,streamData) get STREAM_SUPPLY;
 if (isNil "_record") exitWith {};                       // no snapshot yet
 
 _record params ["_entries", "_rxTime", "_dirty", "_refTime"];

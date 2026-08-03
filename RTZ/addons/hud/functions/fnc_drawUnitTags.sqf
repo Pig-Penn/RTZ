@@ -2,7 +2,7 @@
 /*
  * Author: Maxim
  * RENDER_WORLD renderer for the infantry head tags. Called once per frame by
- * FUNC(frameLoop) with the shared frame context — the Zeus test, the camera
+ * EFUNC(core,frameLoop) with the shared frame context — the Zeus test, the camera
  * basis and the mouse position are already resolved, so this pass does no camera
  * query of its own.
  *
@@ -25,7 +25,7 @@
 
 params ["_ctx"];
 
-private _ids = GVAR(selUnits);
+private _ids = EGVAR(core,selUnits);
 if (_ids isEqualTo []) exitWith {};
 
 if (GVAR(unitTagsDirty)) then {

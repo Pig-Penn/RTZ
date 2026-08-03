@@ -30,7 +30,7 @@ if (GVAR(pfh) != -1) then {
 // itself, so leaving it registered would draw nothing — but an unregistered
 // renderer is not called at all, and with every renderer gone the loop skips
 // building its camera basis outright.
-[QGVAR(mines3D), RENDER_WORLD] call EFUNC(hud,unregisterRenderer);
+[QGVAR(mines3D), RENDER_WORLD] call EFUNC(core,unregisterRenderer);
 
 GVAR(mapCtrl) = controlNull;
 GVAR(mapEH) = -1;

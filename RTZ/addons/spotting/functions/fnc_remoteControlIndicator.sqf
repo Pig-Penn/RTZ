@@ -78,7 +78,7 @@ if (hasInterface) then {
     // same. The frame loop resolves that context once and also owns the
     // curator-view gates (Zeus open, map not covering the 3D view) this handler
     // used to repeat.
-    [QGVAR(rcIndicator), ELINKFUNC(hud,drawRcIndicator), RENDER_WORLD, 40] call EFUNC(hud,registerRenderer);
+    [QGVAR(rcIndicator), ELINKFUNC(hud,drawRcIndicator), RENDER_WORLD, 40] call EFUNC(core,registerRenderer);
 
     // Store/update the controlled unit and colour (idempotent re-sends are cheap).
     [QGVAR(rcDetected), {

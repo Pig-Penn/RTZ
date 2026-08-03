@@ -54,9 +54,9 @@ if (_wanted) then {
 // own — registering and unregistering is what makes the marker free while it is
 // switched off, exactly as adding/removing the handler used to be.
 if (GVAR(mark3D)) then {
-    [QGVAR(mines3D), ELINKFUNC(mine,draw3D), RENDER_WORLD, 60] call EFUNC(hud,registerRenderer);
+    [QGVAR(mines3D), ELINKFUNC(mine,draw3D), RENDER_WORLD, 60] call EFUNC(core,registerRenderer);
 } else {
-    [QGVAR(mines3D), RENDER_WORLD] call EFUNC(hud,unregisterRenderer);
+    [QGVAR(mines3D), RENDER_WORLD] call EFUNC(core,unregisterRenderer);
 };
 
 if (!isNull _display) then {

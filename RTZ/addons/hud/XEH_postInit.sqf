@@ -1,57 +1,45 @@
 #include "script_component.hpp"
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ENGINE — registered UNCONDITIONALLY on every machine
-// ─────────────────────────────────────────────────────────────────────────────
-// Neither half reads a setting to install itself, and both are free while
-// nothing uses them: the client registers one early-exiting Draw3D handler plus
-// a snapshot receiver, the server one subscribe receiver plus a PFH that bails
-// on `count == 0` while nobody is watching.
-//
-// Gating the engine on a setting is a trap worth spelling out. Every enable*
-// setting here is isGlobal 0 — a PER-CLIENT display preference — so a dedicated
-// server would decide whether to feed its clients based on its OWN copy of a
-// client's preference: flip "Vehicle Tags" off in a server CBA config and every
-// client's tags AND cards go permanently blank, with nothing in the log to
-// explain it. On the client side the context actions read their settings LIVE,
-// so gating there surfaced a working-looking action on a machine that had never
-// registered the machinery, and the toggle silently did nothing.
-// `call`, not `spawn`: every body registers handlers and returns.
-call FUNC(frameLoop);
-call FUNC(streamClient);
-call FUNC(streamServer);
+// The frame loop, the stream engine and the selection poll are NOT started here —
+// rtz_core owns and starts them. This component declares streams on that engine
+// and registers renderers with it, exactly as rtz_mine, rtz_spotting and
+// rtz_supply do.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STREAM DECLARATIONS — one block per data feed, both halves
 // ─────────────────────────────────────────────────────────────────────────────
-// The engine owns the registry, the poll loop, the diff, the push and the
-// dispatch; a stream is its gatherer, the selection slice it reads, the setting
-// naming its cadence, where its snapshots land, and — for a toggleable overlay —
-// its renderer and its wording.
+// A stream is its gatherer, the selection slice it reads, the setting naming its
+// cadence, where its snapshots land, and — for a toggleable overlay — its
+// renderer and its wording. The engine owns the registry, the poll loop, the
+// diff, the push and the dispatch.
 //
-// Called on EVERY machine, not under isServer: FUNC(registerStream) self-gates
-// each half, and the CLIENT half is the point. It used to be server-only, with
-// the client side hardcoded in XEH_preInit and in switches inside
-// FUNC(toggleOverlay) / FUNC(overlayActionModifier) — see FUNC(registerStream)
-// for what that cost. Registered unconditionally for the same reason the engine
-// is: a stream nobody subscribes to never runs.
+// Called on EVERY machine, not under isServer: EFUNC(core,registerStream)
+// self-gates each half, and the CLIENT half is the point. Registered
+// unconditionally, because a stream nobody subscribes to never runs — and because
+// gating registration on a per-client display setting would mean a dedicated
+// server deciding whether to feed its clients from its own copy of their
+// preference (flip "Vehicle Tags" off in a server CBA config and every client's
+// tags AND cards go blank, with nothing in the log to explain it).
 //
-// The two selection feeds are always-on (implied by a non-empty selection) and so
-// declare no overlay bundle; the two AI-state overlays are toggleable and take the
-// default raw-store receiver.
+// The two selection feeds are always-on and declare no overlay bundle; the two
+// AI-state overlays are toggleable and take the engine's default raw-store
+// receiver. Cadence: the selection feeds ride this component's own gatherInterval,
+// the overlays the engine's shared pollInterval — they read far heavier state
+// (expectedDestination / targetKnowledge) and are useful an order of magnitude
+// slower.
 [
     STREAM_UNIT, LINKFUNC(gatherUnitInfo), SRC_UNITS, QGVAR(gatherInterval), 0.3,
     LINKFUNC(receiveUnitData)
-] call FUNC(registerStream);
+] call EFUNC(core,registerStream);
 
 [
     STREAM_VEH, LINKFUNC(gatherVehicleInfo), SRC_VEHS, QGVAR(gatherInterval), 0.3,
     LINKFUNC(receiveVehicleData)
-] call FUNC(registerStream);
+] call EFUNC(core,registerStream);
 
 [
-    STREAM_DEST, LINKFUNC(gatherDestination), SRC_HULLS, QGVAR(pollInterval), 2,
-    LINKFUNC(receiveOverlay),
+    STREAM_DEST, LINKFUNC(gatherDestination), SRC_HULLS, QEGVAR(core,pollInterval), 2,
+    ELINKFUNC(core,receiveOverlay),
     [
         LINKFUNC(drawDestination),
         QGVAR(enableDestinationDisplay),
@@ -59,11 +47,11 @@ call FUNC(streamServer);
         [LLSTRING(ActionDrawDestinations), LLSTRING(ActionHideDestinations)],
         COLOR_DEST
     ]
-] call FUNC(registerStream);
+] call EFUNC(core,registerStream);
 
 [
-    STREAM_TGT, LINKFUNC(gatherTarget), SRC_HULLS, QGVAR(pollInterval), 2,
-    LINKFUNC(receiveOverlay),
+    STREAM_TGT, LINKFUNC(gatherTarget), SRC_HULLS, QEGVAR(core,pollInterval), 2,
+    ELINKFUNC(core,receiveOverlay),
     [
         LINKFUNC(drawTarget),
         QGVAR(enableTargetDisplay),
@@ -71,7 +59,7 @@ call FUNC(streamServer);
         [LLSTRING(ActionDrawTargets), LLSTRING(ActionHideTargets)],
         COLOR_TGT
     ]
-] call FUNC(registerStream);
+] call EFUNC(core,registerStream);
 
 if (!hasInterface) exitWith {};
 
@@ -88,13 +76,28 @@ if (!hasInterface) exitWith {};
 // Every function below only registers handlers and returns — no sleep/waitUntil —
 // so they are `call`ed, not `spawn`ed.
 ["CBA_settingsInitialized", {
-    // The selection poll owns GVAR(selUnits) / GVAR(selVehicles) / GVAR(selHulls)
-    // and is what subscribes to the server at all — every display below is dead
-    // without it, hence the shared gate. It also registers the info dialog's
-    // context action, whose show-condition reads that same selection.
     if (!GVAR(enableSelectionInfo)) exitWith {};
 
-    call FUNC(selectionPoll);
+    // Selection info dialog: its own ZEN action. This used to live inside the
+    // engine's selection poll, on the reasoning that the poll owned the selection
+    // the show-condition reads — but the action opens THIS component's dialog, and
+    // leaving it in the engine is what made an addon-agnostic poll carry one
+    // addon's menu entry.
+    private _action = [
+        "RTZ_ViewSelInfo",
+        LLSTRING(ActionBehavior),
+        ["\a3\ui_f\data\igui\cfg\simpletasks\types\intel_ca.paa", [1, 1, 1, 1]],
+        { call FUNC(openSelectionInfo) },
+        // Show-condition: ZEN lists the action when this returns true, so it must
+        // be true when units ARE selected (it was once inverted, which hid the
+        // action exactly when it had something to show).
+        { EGVAR(core,selUnits) isNotEqualTo [] },
+        [],
+        {},
+        {}
+    ] call zen_context_menu_fnc_createAction;
+
+    [_action, ["RTZ_Control"], 5] call zen_context_menu_fnc_addAction;
 
     if (GVAR(enableVehicleOverlay)) then {
         call FUNC(vehicleOverlay);

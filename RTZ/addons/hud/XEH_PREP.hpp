@@ -1,17 +1,7 @@
-// ── Frame pipeline ───────────────────────────────────────────────────────────
-// ONE Draw3D handler for every curator-view display in RTZ; any component
-// registers a renderer with it rather than adding a handler of its own.
-PREP(frameLoop);
-PREP(registerRenderer);
-PREP(unregisterRenderer);
-
-// ── Stream engine ────────────────────────────────────────────────────────────
-// ONE client selection poll, ONE server watcher registry and poll loop, ONE
-// snapshot receiver — shared by every curator data feed.
-PREP(selectionPoll);
-PREP(streamClient);
-PREP(streamServer);
-PREP(registerStream);
+// NOTE: the frame loop, the renderer registry and the stream engine are NOT here.
+// They belong to rtz_core; this component is one of their consumers. It declares
+// streams (XEH_postInit) and registers renderers (FUNC(applyTagVisibility)) like
+// any other addon does.
 
 // ── Per-stream server gatherers: one slice entry -> one snapshot entry ───────
 PREP(gatherUnitInfo);
@@ -20,11 +10,10 @@ PREP(gatherDestination);
 PREP(gatherTarget);
 
 // ── Per-stream client receivers: one snapshot -> the store its display reads ─
-// Registered with the stream (FUNC(registerStream)) and dispatched blindly by
-// FUNC(streamClient); receiveOverlay is the default for any stream that does not
+// Registered with the stream (EFUNC(core,registerStream)) and dispatched blindly by
+// EFUNC(core,streamClient); receiveOverlay is the default for any stream that does not
 // name one. These were `case` branches inside streamClient, which is what made
 // the shared engine know the ids of specific displays.
-PREP(receiveOverlay);
 PREP(receiveUnitData);
 PREP(receiveVehicleData);
 
@@ -47,9 +36,7 @@ PREP(vehicleOverlay);
 PREP(applyTagVisibility);
 PREP(toggleTags);
 PREP(toggleVehicleCards);
-PREP(toggleOverlay);
 PREP(tagsContext);
-PREP(overlayActionModifier);
 
 // ── Selection info dialog ────────────────────────────────────────────────────
 PREP(openSelectionInfo);

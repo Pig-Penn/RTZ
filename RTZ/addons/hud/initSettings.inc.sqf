@@ -158,7 +158,7 @@ private _catOverlays = [ELSTRING(main,DisplayName), LSTRING(CategoryOverlays)];
 // Neither master switch needs a mission restart. The stream machinery is
 // registered unconditionally on every machine (see XEH_postInit) and is idle
 // while nothing is subscribed, so these only gate the context ACTION — read live
-// by its condition — and FUNC(streamClient) watches CBA_SettingChanged to shut a
+// by its condition — and EFUNC(core,streamClient) watches CBA_SettingChanged to shut a
 // running overlay down if its switch goes off mid-mission.
 
 [
@@ -185,14 +185,8 @@ private _catOverlays = [ELSTRING(main,DisplayName), LSTRING(CategoryOverlays)];
     0 // Client
 ] call CBA_fnc_addSetting;
 
-// Cadence of both AI-state overlay streams. Separate from GVAR(gatherInterval)
-// because these read much heavier engine state (expectedDestination /
-// targetKnowledge) and are useful an order of magnitude slower — the stream
-// engine runs each feed at its own rate off one loop.
-[
-    QGVAR(pollInterval), "SLIDER",
-    [LSTRING(PollInterval), LSTRING(PollInterval_Description)],
-    _catOverlays,
-    [0.5, 10, 2, 1],
-    true // Global
-] call CBA_fnc_addSetting;
+// NOTE: the cadence of the AI-state overlay streams is NOT declared here. It is
+// EGVAR(core,pollInterval), registered by the engine that runs them, because
+// rtz_supply's supply-lines overlay rides the same knob and should not have to
+// name a setting owned by a display component. It is declared with the same
+// category text as these switches, so it still appears alongside them.

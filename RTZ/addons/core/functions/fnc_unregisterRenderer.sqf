@@ -17,7 +17,7 @@
  * None
  *
  * Example:
- * [QGVAR(unitTags), RENDER_WORLD] call rtz_hud_fnc_unregisterRenderer
+ * [QGVAR(unitTags), RENDER_WORLD] call rtz_core_fnc_unregisterRenderer
  *
  * Public: No
  */

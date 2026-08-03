@@ -61,7 +61,7 @@
  * None
  *
  * Example:
- * call rtz_hud_fnc_streamServer
+ * call rtz_core_fnc_streamServer
  *
  * Public: No
  */

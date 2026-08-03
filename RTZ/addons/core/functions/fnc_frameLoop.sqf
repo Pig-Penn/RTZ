@@ -48,7 +48,7 @@
  * None
  *
  * Example:
- * call rtz_hud_fnc_frameLoop
+ * call rtz_core_fnc_frameLoop
  *
  * Public: No
  */

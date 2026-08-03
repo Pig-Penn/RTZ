@@ -3,7 +3,7 @@
  * Author: Maxim
  * SERVER. Destination-stream gatherer: turns one watched entity and its hull
  * into a snapshot entry, or [] when there is nothing worth drawing.
- * FUNC(streamServer) calls this once per hull per tick.
+ * EFUNC(core,streamServer) calls this once per hull per tick.
  *
  * The entry carries the WATCHED entity, not the hull — that is what the client
  * matches its selection against — and the raw planningMode string, which the

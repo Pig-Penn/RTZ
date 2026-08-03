@@ -12,7 +12,7 @@
  * only how it looks, hence the EGVAR read; the renderer is registered by that
  * function, so it only ever runs when the store exists.
  *
- * Registered with FUNC(frameLoop), which resolves the Zeus test, the camera
+ * Registered with EFUNC(core,frameLoop), which resolves the Zeus test, the camera
  * position and the view distance once for every display — this pass does no
  * camera query of its own, and is skipped entirely while the Zeus map is up.
  *

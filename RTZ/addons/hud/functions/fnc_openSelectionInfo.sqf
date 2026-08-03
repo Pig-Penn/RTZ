@@ -4,7 +4,7 @@
  * Opens the ZEN-styled selection info dialog and keeps it live. After the dialog
  * is created, the listbox and header controls are grabbed back out of it and a
  * per-frame handler refreshes them ~4×/s from the latest selection state
- * (GVAR(selUnits) / GVAR(unitData), maintained by FUNC(selectionPoll)).
+ * (EGVAR(core,selUnits) / GVAR(unitData), maintained by EFUNC(core,selectionPoll)).
  *
  * The server only streams infantry data while a consumer is active, and only
  * gathers the expensive leader intel while a DIALOG is open, so this reports the
@@ -42,7 +42,7 @@
 // default anyway, so there is nothing here worth persisting per-selection.
 #define DIALOG_SAVE_ID QGVAR(selInfoDialog)
 
-if (GVAR(selUnits) isEqualTo []) exitWith {
+if (EGVAR(core,selUnits) isEqualTo []) exitWith {
     [LLSTRING(MsgNoUnitsSelected)] call zen_common_fnc_showMessage;
 };
 
@@ -52,22 +52,22 @@ if (GVAR(dialogOpen)) exitWith {};
 // Report the selection to the server right now, flagged as dialog-open so the
 // gather starts including the leader intel only the dialog shows — the rows fill
 // on the first refresh instead of waiting for the poll and stream ticks to line
-// up. GVAR(reported) is the poll's own diff baseline, so writing it here is what
+// up. EGVAR(core,reported) is the poll's own diff baseline, so writing it here is what
 // stops the next tick re-sending the same payload; if the dialog fails to create
 // below, GVAR(dialogOpen) stays false and that next tick re-reports without the
 // flag, so there is no stranded subscription to clean up.
 // The hull slice is gated on an overlay actually being on, EXACTLY as
-// FUNC(selectionPoll) gates it — report it ungated here and the very next poll
+// EFUNC(core,selectionPoll) gates it — report it ungated here and the very next poll
 // tick would see its own payload differ and re-send the whole subscription.
-private _streams = GVAR(activeStreams);
-GVAR(reported) = [
-    +GVAR(selUnits),
-    +GVAR(selVehicles),
-    [[], +GVAR(selHulls)] select (_streams isNotEqualTo []),
+private _streams = EGVAR(core,activeStreams);
+EGVAR(core,reported) = [
+    +EGVAR(core,selUnits),
+    +EGVAR(core,selVehicles),
+    [[], +EGVAR(core,selHulls)] select (_streams isNotEqualTo []),
     +_streams,
     true
 ];
-[QGVAR(watch), [player] + GVAR(reported)] call CBA_fnc_serverEvent;
+[QGVAR(watch), [player] + EGVAR(core,reported)] call CBA_fnc_serverEvent;
 
 ([] call FUNC(buildSelectionRows)) params ["_header", "_rows", "_keys"];
 
@@ -92,14 +92,18 @@ private _visRows = (((count _rows) max 6) min _maxRows) max 3;
 private _created = [
     LLSTRING(EnableSelectionInfo),
     [["LIST", _header, [[], _labels, 0, _visRows, false], true]],
-    { GVAR(dialogOpen) = false },
-    { GVAR(dialogOpen) = false },
+    { GVAR(dialogOpen) = false; [ARR_2(QGVAR(dialog),false)] call EFUNC(core,setDemand) },
+    { GVAR(dialogOpen) = false; [ARR_2(QGVAR(dialog),false)] call EFUNC(core,setDemand) },
     [],
     DIALOG_SAVE_ID
 ] call zen_dialog_fnc_create;
 
 if (!_created) exitWith {};
 GVAR(dialogOpen) = true;
+// The dialog is the ONLY consumer of the expensive per-unit intel (targetsQuery
+// / checkVisibility in FUNC(gatherUnitInfo)), so it demands both the slice and
+// the detail. The engine used to infer this by reading GVAR(dialogOpen) itself.
+[ARR_3(QGVAR(dialog),true,true)] call EFUNC(core,setDemand);
 
 // Grab the freshly-created dialog's controls. ZEN stashes the display in
 // uiNamespace and the per-row controls groups under "zen_dialog_params".
@@ -107,7 +111,7 @@ private _display = GETUVAR(zen_common_display,displayNull);
 private _controls = _display getVariable ["zen_dialog_params", []] param [0, []];
 private _group = _controls param [0, []] param [0, controlNull];
 
-if (isNull _display || { isNull _group }) exitWith { GVAR(dialogOpen) = false };
+if (isNull _display || { isNull _group }) exitWith { GVAR(dialogOpen) = false; [ARR_2(QGVAR(dialog),false)] call EFUNC(core,setDemand) };
 
 private _listCtrl  = _group controlsGroupCtrl ZEN_IDC_ROW_COMBO;
 private _labelCtrl = _group controlsGroupCtrl ZEN_IDC_ROW_LABEL;
@@ -164,6 +168,7 @@ private _fnc_apply = {
     // back to the cheap gather.
     if (isNull _display) exitWith {
         GVAR(dialogOpen) = false;
+        [QGVAR(dialog), false] call EFUNC(core,setDemand);
         [_handle] call CBA_fnc_removePerFrameHandler;
     };
 
@@ -172,6 +177,7 @@ private _fnc_apply = {
     // shell too.
     if (isNull (findDisplay IDD_RSCDISPLAYCURATOR)) exitWith {
         GVAR(dialogOpen) = false;
+        [QGVAR(dialog), false] call EFUNC(core,setDemand);
         [_handle] call CBA_fnc_removePerFrameHandler;
         _display closeDisplay 2;
     };

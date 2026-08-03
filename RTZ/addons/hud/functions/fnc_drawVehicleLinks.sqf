@@ -2,7 +2,7 @@
 /*
  * Author: Maxim
  * RENDER_WORLD renderer for the faint side-coloured line joining each vehicle
- * card to its vehicle's commander. Called once per frame by FUNC(frameLoop),
+ * card to its vehicle's commander. Called once per frame by EFUNC(core,frameLoop),
  * after FUNC(drawVehicleCards) has published this frame's renderable set — so
  * the packet/alive/side filter is not repeated here.
  *

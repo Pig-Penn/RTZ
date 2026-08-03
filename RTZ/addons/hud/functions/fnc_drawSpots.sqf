@@ -13,7 +13,7 @@
  * renderer is registered by rtz_spotting's client half, so it only ever runs when
  * those stores exist, and rtz_hud carries no dependency on rtz_spotting.
  *
- * Registered with FUNC(frameLoop), which resolves the Zeus test, the camera
+ * Registered with EFUNC(core,frameLoop), which resolves the Zeus test, the camera
  * position and the mouse position once for every display — this pass does no
  * camera query of its own, and is skipped entirely while the Zeus map is up.
  *

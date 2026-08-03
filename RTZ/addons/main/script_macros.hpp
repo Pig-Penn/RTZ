@@ -44,10 +44,10 @@
 #define SELECTED_OBJECTS (curatorSelected select 0)
 #define SELECTED_GROUPS (curatorSelected select 1)
 
-// ── rtz_hud frame-loop contract ──────────────────────────────────────────────
+// ── rtz_core frame-loop contract ──────────────────────────────────────────────
 // RTZ draws every curator-view display from ONE Draw3D handler
-// (EFUNC(hud,frameLoop)); a component that wants to draw registers a renderer
-// with EFUNC(hud,registerRenderer) instead of adding a handler of its own.
+// (EFUNC(core,frameLoop)); a component that wants to draw registers a renderer
+// with EFUNC(core,registerRenderer) instead of adding a handler of its own.
 // These live here rather than in rtz_hud's script_component.hpp because
 // component headers are not visible to each other — same reason
 // CHECK_CURATOR_INPUT does — and any component may register.
@@ -75,10 +75,32 @@
 #define CTX_VIEWDIST 5
 #define CTX_DISPLAY  6
 
-// ── rtz_hud stream-engine contract ───────────────────────────────────────────
+// Caps on how much of a Zeus selection the stream engine will carry, applied by
+// the client poll, re-applied by the server gather, and respected by every
+// renderer — one definition keeps all three in lockstep. Here rather than in the
+// engine's own header because the DISPLAYS enforce them too (rtz_hud's card
+// stack), and component headers are not visible to each other.
+#define SEL_MAX_UNITS 24
+#define SEL_MAX_VEHICLES 8
+
+// A vehicle's effective side is its CREW's side — but an unmanned vehicle has
+// `grpNull` for a group, and `side grpNull` matches no real side, so a plain
+// `side (group veh) == side curator` test silently hides every parked truck and
+// unmanned static from a side-restricted curator. Crewless vehicles are treated
+// as visible to everyone instead (they belong to nobody yet, and Zeus can edit
+// them regardless). Shared by the client poll, the server gather and both vehicle
+// render paths so all four agree on what is visible.
+#define VEH_SIDE_OK(veh,curSide) (isNull (group veh) || { side (group veh) == curSide })
+
+// Side index carried in every packet: 0 west, 1 east, 2 independent, 3 everything
+// else (civilian / logic / sideEmpty). Computed on the server where the real side
+// is known, then carried so the client can colour by it without a side lookup.
+#define SIDE_NUM(s) (switch (s) do { case west: {0}; case east: {1}; case independent: {2}; default {3} })
+
+// ── rtz_core stream-engine contract ──────────────────────────────────────────
 // Which slice of a watcher's selection a stream's gatherer is fed, resolved ONCE
-// per watcher per tick by EFUNC(hud,streamServer) and shared by every stream
-// that wants it. Passed to EFUNC(hud,registerStream), so — like the frame-loop
+// per watcher per tick by EFUNC(core,streamServer) and shared by every stream
+// that wants it. Passed to EFUNC(core,registerStream), so — like the frame-loop
 // contract above — any component declaring a stream needs these, and component
 // headers cannot see each other.
 //   SRC_UNITS — selected infantry, as [object, netId, dialogOpen]; side-filtered

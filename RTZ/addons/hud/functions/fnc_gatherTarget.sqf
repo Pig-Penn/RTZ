@@ -3,14 +3,14 @@
  * Author: Maxim
  * SERVER. Target-stream gatherer: turns one watched entity and its hull into a
  * snapshot entry, or [] when there is nothing worth drawing.
- * FUNC(streamServer) calls this once per hull per tick.
+ * EFUNC(core,streamServer) calls this once per hull per tick.
  *
  * The position reported is the AI's ESTIMATED target position (targetKnowledge),
  * not the target's true one — stale knowledge points at where the target was
  * last seen, and the client dims the overlay as that sighting ages.
  *
  * The sighting time is reported ABSOLUTE (server clock) rather than as an age.
- * An age would change every tick and defeat FUNC(streamServer)'s send diff; a
+ * An age would change every tick and defeat EFUNC(core,streamServer)'s send diff; a
  * frozen absolute timestamp lets an unchanged snapshot cost nothing, and the
  * client ages it per frame against the reference time in the packet — which is
  * also what makes the stale-dim fade smoothly instead of stepping once per poll.

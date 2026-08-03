@@ -7,7 +7,7 @@
  *
  * The tag is one discrete text line (e.g. "Rifleman · HP 62 · FLEEING") fed by
  * the same live server packets the selection info dialog uses
- * (GVAR(selUnits) / GVAR(unitData), maintained by FUNC(selectionPoll) and the
+ * (EGVAR(core,selUnits) / GVAR(unitData), maintained by EFUNC(core,selectionPoll) and the
  * STREAM_UNIT feed).
  *
  * The line is assembled by FUNC(buildTagEntry) from the fields enabled in CBA
@@ -32,7 +32,7 @@
  * entry (FUNC(tagsContext)) — one entry drives this system and the vehicle tags
  * together, through FUNC(toggleTags). Hiding the tags UNREGISTERS the renderer
  * rather than merely flagging it, so hidden tags cost nothing per frame; and
- * FUNC(selectionPoll) stops reporting the selection once neither the tags nor
+ * EFUNC(core,selectionPoll) stops reporting the selection once neither the tags nor
  * the dialog want it, so they cost zero gather/network traffic too.
  *
  * Per-frame cost: tag text/colour is cached per unit (GVAR(unitTagsCache)) and
@@ -66,13 +66,13 @@ if (!hasInterface) exitWith {};
 
 // Runtime visibility switch (context menu). The master CBA setting gates whether
 // this system exists at all; this flips it mid-mission. Read defensively by
-// FUNC(selectionPoll), which reports the selection to the server while it is
+// EFUNC(core,selectionPoll), which reports the selection to the server while it is
 // true so the STREAM_UNIT feed runs.
 GVAR(unitTagsVisible) = true;
 
 // netId → FUNC(buildTagEntry) result, built lazily during the draw pass; wiped
 // whenever the underlying data or a tag* setting changes. The data-change half
-// is flagged by FUNC(streamClient) as each STREAM_UNIT snapshot lands.
+// is flagged by EFUNC(core,streamClient) as each STREAM_UNIT snapshot lands.
 GVAR(unitTagsCache) = createHashMap;
 GVAR(unitTagsDirty) = true;
 

@@ -3,7 +3,7 @@
  * Author: Maxim
  * SERVER. Supply-lines gatherer: turns one watched entity and its hull into a
  * snapshot entry for the rtz_hud stream engine, or [] when that hull is not
- * currently servicing anything. EFUNC(hud,streamServer) calls this once per
+ * currently servicing anything. EFUNC(core,streamServer) calls this once per
  * hull per tick for every curator subscribed to STREAM_SUPPLY.
  *
  * The engine is a client of this addon here, not the other way round: the entire

@@ -10,9 +10,9 @@
  *
  * Packet layout is FUNC(gatherUnitInfo)'s; index 0 is the netId.
  *
- * This was a `case STREAM_UNIT` inside FUNC(streamClient), which is what made that
+ * This was a `case STREAM_UNIT` inside EFUNC(core,streamClient), which is what made that
  * "generic" receiver know the ids of two specific displays. It is registered with
- * the stream now (FUNC(registerStream)), so the engine dispatches without knowing
+ * the stream now (EFUNC(core,registerStream)), so the engine dispatches without knowing
  * what it is dispatching to.
  *
  * Arguments:

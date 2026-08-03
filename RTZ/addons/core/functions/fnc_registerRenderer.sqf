@@ -28,7 +28,7 @@
  * None
  *
  * Example:
- * [QGVAR(unitTags), LINKFUNC(drawUnitTags), RENDER_WORLD, 30] call rtz_hud_fnc_registerRenderer
+ * [QGVAR(unitTags), LINKFUNC(drawUnitTags), RENDER_WORLD, 30] call rtz_core_fnc_registerRenderer
  *
  * Public: No
  */

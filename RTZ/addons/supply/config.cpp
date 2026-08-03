@@ -10,7 +10,7 @@ class CfgPatches {
         // supply-lines overlay registers itself into that addon's stream
         // registries from XEH_postInit, and those registries are built in the
         // engine's own postInit. requiredAddons is what guarantees it runs first.
-        requiredAddons[] = {"rtz_main", "rtz_common", "rtz_hud", "zen_context_menu"};
+        requiredAddons[] = {"rtz_main", "rtz_common", "rtz_core", "zen_context_menu"};
         author = "Maxim";
         authors[] = {"Maxim"};
         url = "";

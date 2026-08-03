@@ -10,7 +10,7 @@
  *
  * Packet layout is FUNC(gatherVehicleInfo)'s; index 0 is the netId.
  *
- * Was a `case STREAM_VEH` inside FUNC(streamClient); see FUNC(registerStream) for
+ * Was a `case STREAM_VEH` inside EFUNC(core,streamClient); see EFUNC(core,registerStream) for
  * why the engine no longer carries it.
  *
  * Arguments:

@@ -64,7 +64,7 @@
  * None
  *
  * Example:
- * [STREAM_VEH, LINKFUNC(gatherVehicleInfo), SRC_VEHS, QGVAR(gatherInterval), 0.3, LINKFUNC(receiveVehicleData)] call rtz_hud_fnc_registerStream
+ * ["veh", LINKFUNC(gatherVehicleInfo), SRC_VEHS, QGVAR(gatherInterval), 0.3, LINKFUNC(receiveVehicleData)] call rtz_core_fnc_registerStream
  *
  * Public: No
  */
@@ -88,6 +88,11 @@ if (!hasInterface) exitWith {};
 // thing that breaks under DISABLE_COMPILE_CACHE, where LINKFUNC expands to a
 // fresh wrapper literal on every expansion rather than a stable reference.
 GVAR(streamReceivers) set [_stream, _onReceive];
+
+// The client needs the slice too, not just the server: when a slice empties,
+// FUNC(selectionPoll) delivers an empty snapshot to the receivers that read it so
+// each display clears its own store.
+GVAR(streamSources) set [_stream, _source];
 
 if (_overlay isEqualTo []) exitWith {};
 

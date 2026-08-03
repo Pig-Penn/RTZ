@@ -2,8 +2,8 @@
 /*
  * Author: Maxim
  * Builds the display model for the selection info dialog from the current
- * curator selection state. Reads GVAR(selUnits) and GVAR(unitData), maintained
- * by FUNC(selectionPoll).
+ * curator selection state. Reads EGVAR(core,selUnits) and GVAR(unitData), maintained
+ * by EFUNC(core,selectionPoll).
  *
  * Each unit becomes one spaced listbox line — "» Role · STATUS · Morale x% ·
  * Supp y% · HP z%" plus the current danger OR target when present — carrying a
@@ -56,7 +56,7 @@
 #define PKT_GRPNET  24
 
 
-private _ids = GVAR(selUnits) select [0, SEL_MAX_UNITS];
+private _ids = EGVAR(core,selUnits) select [0, SEL_MAX_UNITS];
 
 // ── Bucket the selection into groups, preserving selection order ───
 private _groupOrder   = [];
@@ -182,11 +182,11 @@ switch (true) do {
 };
 
 // Selections beyond SEL_MAX_UNITS are silently dropped by the client poll
-// (FUNC(selectionPoll)) before they ever reach GVAR(selUnits) — note it here
+// (EFUNC(core,selectionPoll)) before they ever reach EGVAR(core,selUnits) — note it here
 // so the curator has some indication their selection was cut down, instead of
 // extra units just never appearing anywhere.
-if (GETGVAR(selOverflow,0) > 0) then {
-    _header = _header + " — " + format [LLSTRING(MsgSelectionTruncated), GVAR(selOverflow), SEL_MAX_UNITS];
+if (GETEGVAR(core,selOverflow,0) > 0) then {
+    _header = _header + " — " + format [LELSTRING(core,MsgSelectionTruncated), EGVAR(core,selOverflow), SEL_MAX_UNITS];
 };
 
 // ── Entry rows ────────────────────────────────────────────────────

@@ -4,7 +4,7 @@
  * CLIENT. Destination-stream renderer: draws a line + move icon from each
  * watched unit to its AI pathing destination, labelled with distance and
  * pathing mode while the cursor is near the icon (modelled on the LAMBS debug
- * renderer). Called once per frame per active stream by FUNC(streamClient),
+ * renderer). Called once per frame per active stream by EFUNC(core,streamClient),
  * which supplies the shared frame context.
  *
  * A fresh snapshot is baked once, on the first frame after it lands: the
@@ -27,7 +27,7 @@
 
 params ["_ctx"];
 
-private _record = GVAR(streamData) get STREAM_DEST;
+private _record = EGVAR(core,streamData) get STREAM_DEST;
 if (isNil "_record") exitWith {};                       // no snapshot yet
 
 _record params ["_entries", "", "_dirty"];

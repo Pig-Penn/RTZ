@@ -59,7 +59,7 @@ GVAR(blinkUntil) = createHashMap;
 // once per handler. The frame loop resolves that once and also owns the
 // curator-view gates (Zeus open, map not covering the 3D view) that the old
 // handler repeated at the top of every pass.
-[QGVAR(spots), ELINKFUNC(hud,drawSpots), RENDER_WORLD, 41] call EFUNC(hud,registerRenderer);
+[QGVAR(spots), ELINKFUNC(hud,drawSpots), RENDER_WORLD, 41] call EFUNC(core,registerRenderer);
 
 // Store/update icon data for a spotted enemy. Texture, colour, echelon amplifier,
 // side index, group-leader netId and display name are all pre-resolved on the server.

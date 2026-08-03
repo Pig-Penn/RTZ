@@ -8,7 +8,7 @@
  * The tag is one discrete text line (e.g. "Hunter HMG · 45 km/h · CREW 3/4 ·
  * FUEL 62 · LOW FUEL") — the vehicle counterpart of the infantry head tags
  * (FUNC(unitTags)). Fed by the same live server packets the vehicle cards use
- * (GVAR(selVehicles) from FUNC(selectionPoll), GVAR(vehicleData) from the
+ * (EGVAR(core,selVehicles) from EFUNC(core,selectionPoll), GVAR(vehicleData) from the
  * STREAM_VEH feed). Runs independently of FUNC(vehicleOverlay) — either display
  * can be enabled without the other.
  *
@@ -24,7 +24,7 @@
  * Visibility toggles at runtime via the shared "Draw Tags" ZEN context menu entry
  * (FUNC(tagsContext)) — one entry drives this system and the unit tags together,
  * through FUNC(toggleTags). Unlike the infantry feed, the vehicle feed is not
- * consumer-gated — FUNC(selectionPoll) reports selected vehicles whenever the set
+ * consumer-gated — EFUNC(core,selectionPoll) reports selected vehicles whenever the set
  * changes — so hiding tags only stops the draw, not the gather (the cards consume
  * the same packets).
  *
@@ -57,7 +57,7 @@ GVAR(vehicleTagsVisible) = true;
 
 // netId → FUNC(buildVtagEntry) result, built lazily during the draw pass; wiped
 // whenever the underlying data or a vtag* setting changes. The data-change half
-// is flagged by FUNC(streamClient) as each STREAM_VEH snapshot lands.
+// is flagged by EFUNC(core,streamClient) as each STREAM_VEH snapshot lands.
 GVAR(vehicleTagsCache) = createHashMap;
 GVAR(vehicleTagsDirty) = true;
 

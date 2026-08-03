@@ -19,7 +19,7 @@
  * None
  *
  * Example:
- * [STREAM_DEST] call rtz_hud_fnc_toggleOverlay
+ * ["dest"] call rtz_core_fnc_toggleOverlay
  *
  * Public: No
  */

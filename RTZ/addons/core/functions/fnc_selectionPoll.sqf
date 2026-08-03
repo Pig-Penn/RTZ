@@ -21,15 +21,17 @@
  *   GVAR(selOverflow) — eligible units dropped by the cap, for the dialog header
  *
  * Subscription: one QGVAR(watch) event carrying all three slices plus the active
- * stream ids, sent only when the payload actually changes. Streams are
- * consumer-gated — the infantry slice is only reported while something is
- * LOOKING at it (info dialog open, or unit tags visible), so an idle curator
- * streams nothing — and the flag for whether the DIALOG specifically is open
- * rides along, because the dialog is the only consumer of the expensive leader
- * intel (see FUNC(gatherUnitInfo)).
+ * stream ids, sent only when the payload actually changes. The infantry slice is
+ * consumer-gated through FUNC(setDemand) — reported only while some display has
+ * asked for it, so an idle curator streams nothing — and a second demand flag for
+ * the expensive per-unit intel rides along, since only a consumer that displays it
+ * should make the server gather it (see rtz_hud's gatherUnitInfo).
  *
- * Loading: called from XEH_postInit after CBA_settingsInitialized. Registers one
- * PFH, no scheduled ops — `call`ed, not `spawn`ed.
+ * Loading: called unconditionally from XEH_postInit — it is engine infrastructure
+ * and reads no setting to install itself. It used to be deferred behind rtz_hud's
+ * "Selection Info" setting, which meant an admin switching off one display also
+ * silently killed the hull slice that other addons' overlays (rtz_supply) depend
+ * on. Registers one PFH, no scheduled ops — `call`ed, not `spawn`ed.
  *
  * Arguments:
  * None
@@ -38,7 +40,7 @@
  * None
  *
  * Example:
- * call rtz_hud_fnc_selectionPoll
+ * call rtz_core_fnc_selectionPoll
  *
  * Public: No
  */
@@ -121,23 +123,36 @@ if (!hasInterface) exitWith {};
     _state set [1, _vehOverflow > 0];
 
     // ── Subscription ─────────────────────────────────────────────────────────
-    // Infantry is consumer-gated: reported only while the info dialog is open or
-    // the unit tags are visible. The other slices are not — a vehicle card is
-    // expected the instant a vehicle is selected, and the overlays are already
-    // gated by being switched on at all (GVAR(activeStreams)).
-    // GETGVAR, not a bare read: GVAR(unitTagsVisible) only exists once
-    // FUNC(unitTags) has run, and that system is independently setting-gated. A
-    // nil here would not merely read false — it aborts the rest of this handler
-    // (docs/Gotchas.md §2), which is the whole subscription.
-    private _wantUnits = GVAR(dialogOpen) || {GETGVAR(unitTagsVisible,false)};
-    private _streams   = GVAR(activeStreams);
+    // Infantry is consumer-gated: reported only while some display has asked for
+    // it through FUNC(setDemand), and the "detailed" flag — which gates the two
+    // expensive server reads — only while a consumer asks for that too. The other
+    // slices are not gated here: a vehicle card is expected the instant a vehicle
+    // is selected, and the overlays are already gated by being switched on at all
+    // (GVAR(activeStreams)).
+    //
+    // A registry, not two reads of rtz_hud's display globals. That is what this
+    // used to be, and it is why the engine could not be separated from that one
+    // component; it also had to be spelled GETGVAR rather than a bare read,
+    // because a nil from a display that had not initialised yet would abort the
+    // rest of this handler — the whole subscription — rather than read false
+    // (docs/Gotchas.md §2). Demand entries only exist once set, so there is
+    // nothing to read defensively.
+    private _wantUnits = false;
+    private _detailed  = false;
+    {
+        _y params ["_u", "_d"];
+        if (_u) then { _wantUnits = true };
+        if (_d) then { _detailed  = true };
+    } forEach GVAR(demands);
+
+    private _streams = GVAR(activeStreams);
 
     // Empty out the slices no active consumer wants, so the server neither
     // gathers nor sends them. An entirely empty payload unsubscribes.
     private _repUnits = [[], _ids] select _wantUnits;
     private _repHulls = [[], _hulls] select (_streams isNotEqualTo []);
 
-    private _report = [_repUnits, _vehs, _repHulls, _streams, GVAR(dialogOpen)];
+    private _report = [_repUnits, _vehs, _repHulls, _streams, _detailed];
     if (_report isEqualTo GVAR(reported)) exitWith {};
     GVAR(reported) = _report;
 
@@ -145,13 +160,28 @@ if (!hasInterface) exitWith {};
 
     // Drop data the server will now stop refreshing, so a stale packet can never
     // outlive its subscription and be drawn as if it were current.
-    if (_repUnits isEqualTo []) then { GVAR(unitData) = createHashMap };
-    if (_vehs isEqualTo []) then {
-        GVAR(vehicleData) = createHashMap;
-        GVAR(vehicleDataDirty) = true;
+    //
+    // Delivered as an EMPTY SNAPSHOT to each affected stream's own receiver rather
+    // than by clearing the stores directly. Clearing directly is what this used to
+    // do — GVAR(unitData), GVAR(vehicleData), GVAR(vehicleDataDirty) — which meant
+    // the engine reached into one particular component's stores by name, and could
+    // not have cleared anyone else's. Every receiver already handles "here are the
+    // current entries"; [] is simply the case where there are none, so this needs
+    // no second code path in any of them.
+    private _fnc_clearSlice = {
+        params ["_source"];
+        {
+            if (_y != _source) then { continue };
+            private _receiver = GVAR(streamReceivers) getOrDefault [_x, LINKFUNC(receiveOverlay)];
+            [_x, [], time] call _receiver;
+        } forEach GVAR(streamSources);
     };
+
+    if (_repUnits isEqualTo []) then { [SRC_UNITS] call _fnc_clearSlice };
+    if (_vehs isEqualTo [])     then { [SRC_VEHS]  call _fnc_clearSlice };
+
     if (_repHulls isEqualTo []) then {
-        GVAR(streamData) = createHashMap;
+        [SRC_HULLS] call _fnc_clearSlice;
     } else {
         // Entries for entities deselected since the last snapshot drop on the
         // spot rather than lingering until the next server push. Objects compare
@@ -168,23 +198,3 @@ if (!hasInterface) exitWith {};
         } forEach _streams;
     };
 }, SEL_POLL_INTERVAL, [false, false]] call CBA_fnc_addPerFrameHandler;
-
-// ── Zeus Enhanced context menu action ────────────────────────────────────────
-// Registered here rather than alongside the dialog itself because this poll is
-// what owns GVAR(selUnits) — the action's show-condition — and is the gate every
-// display shares.
-private _action = [
-    "RTZ_ViewSelInfo",
-    LLSTRING(ActionBehavior),
-    ["\a3\ui_f\data\igui\cfg\simpletasks\types\intel_ca.paa", [1, 1, 1, 1]],
-    { call FUNC(openSelectionInfo) },
-    // Show-condition: ZEN lists the action when this returns true, so it must be
-    // true when units ARE selected (it was once inverted, which hid the action
-    // exactly when it had something to show).
-    { GVAR(selUnits) isNotEqualTo [] },
-    [],
-    {},
-    {}
-] call zen_context_menu_fnc_createAction;
-
-[_action, ["RTZ_Control"], 5] call zen_context_menu_fnc_addAction;
