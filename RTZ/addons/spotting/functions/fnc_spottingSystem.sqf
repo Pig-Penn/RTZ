@@ -15,7 +15,9 @@
  * The pieces live in:
  *   FUNC(spotCheck)       — one full server detection pass
  *   FUNC(spottingClient)  — per-player icon stores, event receivers, resync
- *   FUNC(draw3D)          — per-frame Zeus-view icon renderer
+ *   EFUNC(hud,drawSpots)  — per-frame Zeus-view icon renderer. This component
+ *                           decides WHAT is spotted; rtz_hud owns how it looks,
+ *                           and rtz_core's frame loop is what calls it
  *   FUNC(unitMarker)      — NATO symbol classification for a group leader
  *   FUNC(echelonTex)      — echelon/size amplifier texture
  *   FUNC(emitSpot)        — signature-gated spotDetected/spotLost send

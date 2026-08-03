@@ -50,24 +50,33 @@
 #define CLAIM_GRACE 5
 
 // ── Supply-lines overlay ─────────────────────────────────────────────────────
-// This overlay is a CLIENT of rtz_hud' stream engine, not a part of it: the
-// gather/draw pair and the toggle live here, and XEH_postInit registers them
-// into the engine's registries. That is why rtz_hud is in requiredAddons —
-// registration writes into hashmaps the engine builds in its own postInit, and
-// requiredAddons is what orders the two.
+// This overlay is a CLIENT of rtz_core's stream engine, not a part of it: the
+// gather/draw pair and the toggle live here, and XEH_postInit declares the whole
+// stream in one EFUNC(core,registerStream) call. That is why rtz_core is in
+// requiredAddons — registration writes into registries the engine builds in its
+// own postInit, and requiredAddons is what orders the two.
+//
+// This said rtz_hud, on both counts, and had done since the engine moved out of
+// that component. rtz_hud is not in this addon's requiredAddons and never needed
+// to be — it is a sibling consumer of the same engine, not the engine. Naming a
+// display addon as the owner of shared machinery is the exact confusion the
+// rtz_core split exists to prevent (see CLAUDE.md, "Nothing in core may name a
+// specific display").
 //
 // SINGLE-quoted deliberately, matching the engine's own ids: this appears inside
 // QUOTE(...) in CfgContext.hpp, and a double-quoted literal would terminate the
 // config string the macro builds.
 #define STREAM_SUPPLY 'sup'
 
-// Idle accent for the toggle action and the tint of the lines themselves; the
-// grey is the engine's shared "this overlay is running, clicking hides it" tint,
-// mirrored here rather than included because component headers cannot see each
-// other.
+// Idle accent for the toggle action and the tint of the lines themselves. The
+// "overlay is running, clicking hides it" grey is NOT mirrored here: that tint
+// belongs to the shared modifierFunction (EFUNC(core,overlayActionModifier)),
+// which applies it from rtz_core's own header. A copy lived here while this
+// component still carried its own toggle and modifier functions; those went when
+// EFUNC(core,registerStream) absorbed both halves, and the constant stayed behind
+// unreferenced. Tuning it did nothing, which is precisely how a dead copy misleads.
 #define COLOR_SUPPLY     [0.40, 0.80, 0.50, 1]
 #define COLOR_SUPPLY_RGB [0.40, 0.80, 0.50]
-#define COLOR_OVERLAY_ON [0.50, 0.50, 0.50, 1]
 
 // Draw tuning, matched to the engine's other overlays so the three read as one
 // system: lines start fading at FADE_NEAR and bottom out at MAX_DRAW_DIST, and

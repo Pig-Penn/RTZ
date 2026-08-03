@@ -69,10 +69,17 @@ if (hasInterface) then {
     // client-side each frame so the icon tracks the unit smoothly between the
     // server's check cycles. Also read by the spotting system (`netId in`)
     // to suppress its chevron while the RC icon is showing.
-    GVAR(rcDisplay) = createHashMap;
-
+    //
+    // NOT touched here. GVAR(rcDisplay) is created in XEH_preInit because
+    // EFUNC(hud,drawSpots) reads it under a DIFFERENT setting gate and must never
+    // find it nil. A `GVAR(rcDisplay) = createHashMap` sat here with a comment
+    // claiming it merely cleared the store — it did not, it replaced it, and it
+    // could not have been clearing anything either: this runs at postInit and the
+    // only writer (the QGVAR(rcDetected) handler) is registered a dozen lines
+    // below, so the map is provably still empty when execution reaches this point.
+    //
     // The icon itself is drawn by EFUNC(hud,drawRcIndicator), registered with the
-    // ONE shared Draw3D handler rtz_hud owns. This used to be a Draw3D handler of
+    // ONE shared Draw3D handler rtz_core owns. This used to be a Draw3D handler of
     // its own, which meant re-running the Zeus test and a fresh
     // positionCameraToWorld every frame alongside every other display doing the
     // same. The frame loop resolves that context once and also owns the

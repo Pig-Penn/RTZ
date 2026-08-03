@@ -9,6 +9,9 @@
  * clickable, and a click while on cooldown is caught and messaged by
  * FUNC(toggleArea) instead of doing anything.
  *
+ * Slots addressed through the ACTION_INDEX_* macros in main/script_macros.hpp,
+ * as every other action modifier in the mod does.
+ *
  * Arguments:
  * 0: Action <ARRAY>
  * 1: Objects <ARRAY>
@@ -30,27 +33,27 @@ if (_officers isEqualTo []) exitWith {};
 private _officer = _officers select 0;
 
 if (netId _officer in GVAR(areas)) exitWith {
-    _action set [1, LLSTRING(ActionRemove)];
-    _action set [2, ICON_REMOVE];
-    _action set [3, COLOR_REMOVE];
+    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionRemove)];
+    _action set [ACTION_INDEX_ICON, ICON_REMOVE];
+    _action set [ACTION_INDEX_ICONCOLOR, COLOR_REMOVE];
 };
 
 // Command aura active — an area cannot be added (see FUNC(setArea));
 // cosmetic grey like the cooldown state below
 if (GETVAR(_officer,GVAR(auraActive),false)) exitWith {
-    _action set [1, LLSTRING(ActionAdd)];
-    _action set [2, ICON_ADD];
-    _action set [3, COLOR_COOLDOWN];
+    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionAdd)];
+    _action set [ACTION_INDEX_ICON, ICON_ADD];
+    _action set [ACTION_INDEX_ICONCOLOR, COLOR_COOLDOWN];
 };
 
 private _cooldown = [_officer] call FUNC(isOnCooldown);
 
 if (_cooldown > 0) then {
-    _action set [1, format [LLSTRING(ActionCooldown), ceil _cooldown]];
-    _action set [2, ICON_ADD];
-    _action set [3, COLOR_COOLDOWN];
+    _action set [ACTION_INDEX_DISPLAYNAME, format [LLSTRING(ActionCooldown), ceil _cooldown]];
+    _action set [ACTION_INDEX_ICON, ICON_ADD];
+    _action set [ACTION_INDEX_ICONCOLOR, COLOR_COOLDOWN];
 } else {
-    _action set [1, LLSTRING(ActionAdd)];
-    _action set [2, ICON_ADD];
-    _action set [3, COLOR_ADD_ZONE];
+    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionAdd)];
+    _action set [ACTION_INDEX_ICON, ICON_ADD];
+    _action set [ACTION_INDEX_ICONCOLOR, COLOR_ADD_ZONE];
 };

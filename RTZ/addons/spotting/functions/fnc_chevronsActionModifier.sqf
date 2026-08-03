@@ -2,9 +2,14 @@
 /*
  * Author: Maxim
  * CfgContext modifierFunction for the chevron-display toggle: sets the
- * action's label (index 1) and tint (index 3) to reflect whether individual
- * chevrons are currently shown FOR THIS CLIENT (the state is per-curator, so
- * no broadcast variable is involved).
+ * action's label and tint to reflect whether individual chevrons are currently
+ * shown FOR THIS CLIENT (the state is per-curator, so no broadcast variable is
+ * involved).
+ *
+ * Slots addressed through the ACTION_INDEX_* macros in main/script_macros.hpp,
+ * as every other action modifier in the mod does. They were spelled here as bare
+ * 1 and 3 — the only two magic indices left into ZEN's action array, and the one
+ * place a slot reshuffle would have gone unnoticed.
  *
  * Arguments:
  * 0: Action array, mutated in place <ARRAY>
@@ -21,9 +26,9 @@
 params ["_action"];
 
 if (GVAR(chevronsEnabled)) then {
-    _action set [1, LLSTRING(ActionHideChevrons)];
-    _action set [3, [1, 1, 1, 1]];
+    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionHideChevrons)];
+    _action set [ACTION_INDEX_ICONCOLOR, [1, 1, 1, 1]];             // white — showing, will hide
 } else {
-    _action set [1, LLSTRING(ActionShowChevrons)]; // On
-    _action set [3, [0.5, 0.5, 0.5, 1]]; // Grey
+    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionShowChevrons)];
+    _action set [ACTION_INDEX_ICONCOLOR, [0.5, 0.5, 0.5, 1]];       // grey — hidden, will show
 };

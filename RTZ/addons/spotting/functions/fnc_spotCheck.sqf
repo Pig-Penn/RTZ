@@ -342,11 +342,12 @@ private _currentKeys = createHashMap;
         // genuinely is spotted, preferring a MAN — a crewed hull rides in _members
         // alongside its crew, and anchoring on the man both classifies correctly
         // (FUNC(unitMarker), FUNC(contactCategory)) and still renders on the hull,
-        // since FUNC(draw3D) anchors every icon on `vehicle _unit`. findIf returns -1
-        // when the group is men-less (a UAV), where index 0 — the hull — is what we
-        // want. _leaderNetId keeps the ORIGINAL leader's netId as the group key, so
-        // chevron→group association (the hover peek in FUNC(draw3D)) and the callout
-        // last-seen gate are unaffected; the anchor itself rides in _grpBaseSig below.
+        // since EFUNC(hud,drawSpots) anchors every icon on `vehicle _unit`. findIf
+        // returns -1 when the group is men-less (a UAV), where index 0 — the hull —
+        // is what we want. _leaderNetId keeps the ORIGINAL leader's netId as the group
+        // key, so chevron→group association (the hover peek in EFUNC(hud,drawSpots))
+        // and the callout last-seen gate are unaffected; the anchor itself rides in
+        // _grpBaseSig below.
         if !(_leader in _members) then {
             _leader = _members select ((_members findIf { _x isKindOf "CAManBase" }) max 0);
         };

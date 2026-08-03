@@ -49,25 +49,24 @@ if (EGVAR(core,selUnits) isEqualTo []) exitWith {
 // Don't stack a second dialog on top of an open one.
 if (GVAR(dialogOpen)) exitWith {};
 
-// Report the selection to the server right now, flagged as dialog-open so the
-// gather starts including the leader intel only the dialog shows — the rows fill
-// on the first refresh instead of waiting for the poll and stream ticks to line
-// up. EGVAR(core,reported) is the poll's own diff baseline, so writing it here is what
-// stops the next tick re-sending the same payload; if the dialog fails to create
-// below, GVAR(dialogOpen) stays false and that next tick re-reports without the
+// Report the selection to the server right now, with the leader intel only this
+// dialog shows forced on, so the rows fill on the first refresh instead of waiting
+// for the poll and stream ticks to line up. The `true` is an override rather than
+// a demand read because FUNC(setDemand) is not called until the dialog has
+// actually been created below — if creation fails, GVAR(dialogOpen) stays false,
+// no demand was ever registered, and the next poll tick re-reports without the
 // flag, so there is no stranded subscription to clean up.
-// The hull slice is gated on an overlay actually being on, EXACTLY as
-// EFUNC(core,selectionPoll) gates it — report it ungated here and the very next poll
-// tick would see its own payload differ and re-send the whole subscription.
-private _streams = EGVAR(core,activeStreams);
-EGVAR(core,reported) = [
-    +EGVAR(core,selUnits),
-    +EGVAR(core,selVehicles),
-    [[], +EGVAR(core,selHulls)] select (_streams isNotEqualTo []),
-    +_streams,
-    true
-];
-[QGVAR(watch), [player] + EGVAR(core,reported)] call CBA_fnc_serverEvent;
+//
+// This is one call because the engine builds the payload. It used to be built
+// here: the slices, the hull gate re-derived from EFUNC(core,selectionPoll) with a
+// comment warning it had to match EXACTLY, a write into that poll's private diff
+// baseline, and the subscribe event — which was spelled QGVAR(watch) in THIS
+// component and so expanded to "rtz_hud_watch", an event with no handler anywhere.
+// The baseline write made that fail loudly rather than harmlessly: the poll then
+// found its own next report identical to the baseline and suppressed the genuine
+// send too, so the intel rows stayed empty until an unrelated selection change
+// made the payload differ again.
+[true] call EFUNC(core,reportNow);
 
 ([] call FUNC(buildSelectionRows)) params ["_header", "_rows", "_keys"];
 

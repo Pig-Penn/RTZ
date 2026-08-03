@@ -45,15 +45,26 @@ if (_grps isEqualTo []) exitWith {};
 
 [QGVAR(reset), [_grps], _grps] call CBA_fnc_targetEvent;
 
-// Force an immediate head-tag refresh instead of waiting for the next stream
-// tick: clearing rtz_hud's subscription baseline makes its selection poll
-// re-report on its very next tick, and a fresh report resets the server's diff
-// baseline so the next gather is sent in full rather than diffed away — which
-// invalidates the tag cache as soon as it lands. Poking the baseline rather than
-// firing the subscribe event directly keeps the payload's shape rtz_hud's own
-// business. No-op if that addon isn't running (absent, or the display gated off).
-if (GETEGVAR(hud,unitTagsVisible,false)) then {
-    EGVAR(core,reported) = [];
-};
+// Force an immediate refresh of everything watching this selection, instead of
+// waiting for the next poll and stream tick: a fresh subscription resets the
+// server's diff baseline, so the next gather is sent in full rather than diffed
+// away, and whatever it lands in is invalidated as soon as it arrives. A reset
+// changes AI state the packets describe (waypoints cleared, LAMBS task dropped)
+// without changing the selection, so nothing else would prompt a re-send.
+//
+// Unconditional, and through the engine's own API. This used to poke
+// EGVAR(core,reported) — the poll's private diff baseline — directly, and only
+// when GETEGVAR(hud,unitTagsVisible) said rtz_hud's head tags were up. Two things
+// wrong with that: this component does not depend on rtz_hud (it is not in
+// requiredAddons) and has no business knowing that component owns tags, let alone
+// which of its display flags is the interesting one; and the guard was wrong
+// anyway, since the vehicle cards, the dialog and the AI-state overlays all read
+// the same feed and all wanted the refresh. The comment also still described the
+// baseline as rtz_hud's, which stopped being true when the engine moved to
+// rtz_core. One call, no cross-component reach, no stale ownership claim.
+// `[] call`, not a bare `call`: a bare one forwards THIS function's _this, which
+// here is [_objects, _groups, _hoveredEntity], and the first element would land on
+// reportNow's detail-override parameter.
+[] call EFUNC(core,reportNow);
 
 [LLSTRING(MsgReset), count _grps] call EFUNC(common,showCountMessage);

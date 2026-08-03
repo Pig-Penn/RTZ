@@ -202,15 +202,18 @@
 #define HOVER_HIT_R2 (0.05 * 0.05)
 #define GROUP_HOVER_R2 (0.05 * 0.05)
 #define GROUP_ICON_WIDTH 1.3
-#define BLINK_DURATION 0.15
 
 // Echelon amplifier vertical gap above the group icon, indexed by side idx
 // (0 = BLUFOR rectangle, 1 = OPFOR diamond — peaks highest, 2 = independent/
-// civilian square). World-space (FUNC(drawSpots)) vs. map screen-space
-// (FUNC(initCuratorDisplay)) use different scales.
+// civilian square), in world space (FUNC(drawSpots)).
+//
+// The map screen-space twin (AMP_GAPS_MAP, MAP_ICON_SIZE) belongs to
+// rtz_spotting, which owns the Zeus MAP overlay; it sat here as a dead copy after
+// the rtz_hud split and tuning it did nothing. A constant belongs to whichever
+// component DRAWS with it — the blink duration, the RC scan cadence and the RC
+// owner variable are likewise rtz_spotting's, since that component detects; this
+// one only renders what it is told.
 #define AMP_GAPS_WORLD [0.002, 0.008, 0.004]
-#define AMP_GAPS_MAP [0.005, 0.011, 0.005]
-#define MAP_ICON_SIZE 24
 
 // Group icon world-space height offset over camera distance — native Zeus
 // group-icon recipe (FUNC(drawSpots)).
@@ -220,18 +223,9 @@
 #define GROUP_ZMOD_MAX 20
 #define GROUP_ZMOD_FLOOR_SCALE 0.88
 
-// Officer editing-area zone ring overlay (FUNC(initCuratorDisplay)).
-#define COLOR_ZONE_RING [0.25, 0.55, 1, 0.85]
-
-#define ICON_TOGGLE_CHEVRONS "\a3\ui_f\data\igui\cfg\simpletasks\types\meet_ca.paa"
-
 // ─────────────────────────────────────────────────────────────────────────────
-// REMOTE-CONTROL INDICATOR
+// REMOTE-CONTROL INDICATOR — look only; the scan that feeds it is rtz_spotting's.
 // ─────────────────────────────────────────────────────────────────────────────
-// RC_CHECK_TICK is the base tick (s) of the server scan PFH; the effective
-// cadence is the GVAR(rcCheckInterval) CBA setting, read live and floored to it.
-#define RC_CHECK_TICK 1
-#define RC_OWNER_VAR "bis_fnc_moduleRemoteControl_owner"
 #define RC_TEXTURE "\a3\modules_f_curator\data\portraitremotecontrol_ca.paa"
 #define RC_ICON_NEAR 500
 #define RC_ICON_FAR 3000
