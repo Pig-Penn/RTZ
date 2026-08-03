@@ -12,6 +12,10 @@ Zeus Enhanced (ZEN), Community Base Addons (CBA), and LAMBS Danger FSM (LAMBS) w
 
 All other Arma 3 mods that are developed and structured correctly can be utilized as references for the development of Real-Time Zeus (RTZ). Advanced Combat Environment 3 (ACE3) is an example of a great reference.
 
+## Usage
+
+Real-Time Zeus (RTZ) will be used in servers with several curators, large numbers of units, and long operations lasting several hours. While it will not happen often, some players may connect and disconnect while the mission is in progress.
+
 ## Environment & Verification
 
 - A Stop hook (`.claude/settings.json`) runs `hemtt check` automatically at the end of every session and blocks with the error output if it fails. Fix any reported errors before finishing.
@@ -73,3 +77,5 @@ Gatherers report **absolute** times, never ages or progress figures: an age chan
 - One function per `fnc_*.sqf` file, registered in `XEH_PREP.hpp`.
 - Update the component's `stringtable.xml` whenever adding user-facing text; `hemtt check` validates stringtables.
 - Mind locality: orders are typically initiated on the curator's client and executed where the unit is local (CBA target events / remoteExec patterns already used throughout the codebase).
+- To stop a `forEach` early, use `break`, and test at the **top** of the loop body. `exitWith` there exits only the current *iteration* — it is a `continue`. Three "stop at the first hit" parameters shipped written that way and were completely inert; see `docs/Gotchas.md` §2. For a pure existence test prefer `findIf`, which short-circuits natively.
+- Anything that runs per tick or per frame is a **multi-hour** cost here (see Usage above): give every `waitUntilAndExecute` a timeout, bound every long-lived HashMap, and keep `format`/`str` off paths that run per entity per tick — cache the finished string instead.
