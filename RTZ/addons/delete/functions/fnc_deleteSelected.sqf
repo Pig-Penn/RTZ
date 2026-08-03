@@ -31,4 +31,4 @@ if (!GVAR(enabled)) exitWith { false };
 
 [SELECTED_OBJECTS, SELECTED_GROUPS, objNull] call FUNC(orderDelete);
 
-true // handled
+true // Handled

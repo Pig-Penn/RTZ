@@ -15,7 +15,7 @@
 
 #include "\x\rtz\addons\main\script_macros.hpp"
 
-#define ICON_DELETE "\x\zen\addons\context_actions\ui\remove_ca.paa"
+#define ICON_DELETE "\a3\3DEN\Data\Displays\Display3DEN\PanelLeft\entityList_delete_ca.paa"
 
 // Seconds the group-cleanup pass waits before counting a group's members.
 // The deletions are issued on the server and reach a remote owner a network
