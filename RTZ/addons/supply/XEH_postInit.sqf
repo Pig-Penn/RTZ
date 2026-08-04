@@ -56,21 +56,47 @@ if (hasInterface) then {
 // context-menu halves unable to name this overlay — which is why this addon
 // carried FUNC(toggleSupplyOverlay) and FUNC(supplyOverlayModifier), two functions
 // that duplicated the engine's own purely to supply wording it had no way to ask
-// for. The labels ride the declaration now and both are gone.
+// for. Both are gone.
 //
 // SRC_HULLS: the gatherer reads the servicing record off a hull, so it wants the
 // curator's selection collapsed to distinct vehicles. Cadence rides the engine's
 // shared overlay interval, so all three AI-state overlays stay in step and one
 // admin slider retunes them together.
+//
+// The overlay bundle carries the renderer and the master setting ONLY — no toasts,
+// no context-menu labels, no idle accent. Those three describe an action a curator
+// clicks, and this overlay has none: it is always on (see FUNC(syncDisplay)), so
+// the engine's defaults are exactly right and anything filled in here would be
+// wording nothing can ever display.
 [
     STREAM_SUPPLY, LINKFUNC(gatherSupply), SRC_HULLS,
     QEGVAR(core,pollInterval), 2,
     ELINKFUNC(core,receiveOverlay),
-    [
-        LINKFUNC(drawSupply),
-        QGVAR(enableSupplyDisplay),
-        [LLSTRING(MsgSupplyLinesHidden), LLSTRING(MsgSupplyLinesShown)],
-        [LLSTRING(ActionDrawSupplyLines), LLSTRING(ActionHideSupplyLines)],
-        COLOR_SUPPLY
-    ]
+    [LINKFUNC(drawSupply), QGVAR(enableSupplyDisplay)]
 ] call EFUNC(core,registerStream);
+
+// ── Always-on activation ─────────────────────────────────────────────────────
+// Nothing else switches this stream on, so it is switched on here: once at
+// settings-sync, and again whenever the master setting changes. Deferred to
+// CBA_settingsInitialized for the usual reason — a setting read straight from
+// postInit races the server→client sync and reads nil, which aborts the rest of
+// the handler (docs/Knowledge Base/Gotchas.md §2). The engine's own watchdog
+// already handles the setting going OFF; the second handler is what brings the
+// overlay back when an admin turns it on again mid-mission.
+//
+// FUNC(syncDisplay) compares wanted against actual before touching the toggle, so
+// the two handlers overlapping is harmless.
+if (hasInterface) then {
+    ["CBA_settingsInitialized", {
+        call FUNC(syncDisplay);
+    }] call CBA_fnc_addEventHandler;
+
+    ["CBA_SettingChanged", {
+        params ["_name"];
+        // Lowercased: CBA_SettingChanged is not guaranteed to report the name in
+        // the case it was registered with.
+        if (toLower _name != toLower QGVAR(enableSupplyDisplay)) exitWith {};
+
+        call FUNC(syncDisplay);
+    }] call CBA_fnc_addEventHandler;
+};

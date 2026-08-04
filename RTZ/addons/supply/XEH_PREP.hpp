@@ -6,6 +6,8 @@ PREP(gatherSupply);
 PREP(getSupplyVehicles);
 PREP(needsAmmo);
 PREP(orderResupply);
+PREP(resupplyActionModifier);
 PREP(serviceTick);
 PREP(serviceVehicles);
 PREP(supplyCapabilities);
+PREP(syncDisplay);

@@ -98,7 +98,7 @@ if (_isLocal) then {
         private _mag = primaryWeaponMagazine _unit param [0, ""];
         if (_mag != "") then {
             _ammoCap = GVAR(magCapCache) getOrDefaultCall [_mag, {
-                getNumber (configFile >> "CfgMagazines" >> _this >> "count")
+                getNumber (configFile >> "CfgMagazines" >> _mag >> "count")
             }, true];
         };
     };

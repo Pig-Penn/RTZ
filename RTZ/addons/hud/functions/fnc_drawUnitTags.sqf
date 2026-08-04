@@ -70,6 +70,11 @@ private _records = [];
     if (isNull _unit || {!alive _unit} || {!isNull objectParent _unit}) then { continue };
 
     private _head = _unit modelToWorldVisual (_unit selectionPosition "Head");
+    // modelToWorldVisual yields [] while the model has not resolved on this machine
+    // (the frames right after Zeus creates the unit), and `distance` throws a
+    // Generic error on []. That error ABORTS THE WHOLE forEach, so one unresolved
+    // unit dropped every tag after it in the store — not just its own.
+    if (count _head < 3) then { continue };
     private _dist = _camPos distance _head;
     if (_dist > _maxDist) then { continue };
     // Screen-space vertical lift: offset along camera-up, NOT world +Z (which

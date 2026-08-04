@@ -14,9 +14,10 @@ GVAR(mines) = [];
 
 GVAR(pfh) = -1;
 
-// Zeus map Draw handler. The control belongs to the curator display, so both are
-// dropped when that display closes and re-resolved when it next opens.
-GVAR(mapCtrl) = controlNull;
+// Zeus map Draw handler id. The control it sits on belongs to the curator display
+// and is never stored (controls are not serializable, and one left in the mission
+// namespace trips an engine warning on save) — FUNC(start) re-resolves it. The id
+// is dropped when the display closes so the next one re-attaches.
 GVAR(mapEH) = -1;
 
 // Both filled in XEH_preStart, where the config scans they come from are paid once

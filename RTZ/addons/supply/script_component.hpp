@@ -15,11 +15,26 @@
 
 #include "\x\rtz\addons\main\script_macros.hpp"
 
+// ZEN action array indices (ACTION_INDEX_*) come from main/script_macros.hpp.
+
 // RENDER_WORLD / CTX_* / SRC_HULLS — this component owns a supply-lines stream
 // on rtz_core's engine and the renderer that draws it.
 #include "\x\rtz\addons\core\script_macros_core.hpp"
 
-#define ICON_RESUPPLY "\A3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa"
+// The icon ZEN puts on its "Vehicle Logistics" submenu folder, so this order
+// reads as part of the same family in the context menu rather than borrowing
+// rearm_ca.paa — which names only one of the three services this order covers.
+#define ICON_RESUPPLY "\a3\ui_f\data\igui\cfg\simpleTasks\types\truck_ca.paa"
+
+// Per-service icons, swapped in by FUNC(resupplyActionModifier) when every
+// selected supply vehicle offers only one of the three — the same three
+// simpleTasks/types icons ZEN's own Repair / Rearm / Refuel entries use under
+// its VehicleLogistics submenu (addons/context_actions/CfgContext.hpp in the
+// ZEN source), so a single-service selection reads as the exact action ZEN
+// already names rather than the generic multi-service ICON_RESUPPLY above.
+#define ICON_REPAIR "\a3\ui_f\data\igui\cfg\simpleTasks\types\repair_ca.paa"
+#define ICON_REFUEL "\a3\ui_f\data\igui\cfg\simpleTasks\types\refuel_ca.paa"
+#define ICON_REARM  "\a3\ui_f\data\igui\cfg\simpleTasks\types\rearm_ca.paa"
 
 // ── Service thresholds ───────────────────────────────────────────────────────
 // Damage below this is treated as intact, so a scratched vehicle does not keep
@@ -55,8 +70,9 @@
 
 // ── Supply-lines overlay ─────────────────────────────────────────────────────
 // This overlay is a CLIENT of rtz_core's stream engine, not a part of it: the
-// gather/draw pair and the toggle live here, and XEH_postInit declares the whole
-// stream in one EFUNC(core,registerStream) call. That is why rtz_core is in
+// gather/draw pair lives here, and XEH_postInit declares the whole stream in one
+// EFUNC(core,registerStream) call and switches it on for good (FUNC(syncDisplay)) —
+// unlike rtz_hud's two overlays, this one has no context-menu toggle. That is why rtz_core is in
 // requiredAddons — registration writes into registries the engine builds in its
 // own postInit, and requiredAddons is what orders the two.
 //
@@ -72,14 +88,10 @@
 // config string the macro builds.
 #define STREAM_SUPPLY 'sup'
 
-// Idle accent for the toggle action and the tint of the lines themselves. The
-// "overlay is running, clicking hides it" grey is NOT mirrored here: that tint
-// belongs to the shared modifierFunction (EFUNC(core,overlayActionModifier)),
-// which applies it from rtz_core's own header. A copy lived here while this
-// component still carried its own toggle and modifier functions; those went when
-// EFUNC(core,registerStream) absorbed both halves, and the constant stayed behind
-// unreferenced. Tuning it did nothing, which is precisely how a dead copy misleads.
-#define COLOR_SUPPLY     [0.40, 0.80, 0.50, 1]
+// Tint of the lines themselves. There is no matching RGBA constant: the four-part
+// COLOR_SUPPLY that used to sit here was the idle accent of a context-menu toggle
+// this overlay no longer has, and a dead constant that looks tunable is precisely
+// how a copy misleads. FUNC(drawSupply) appends its own distance-fade alpha.
 #define COLOR_SUPPLY_RGB [0.40, 0.80, 0.50]
 
 // Draw tuning, matched to the engine's other overlays so the three read as one
@@ -92,3 +104,19 @@
 #define LABEL_TEXT_SIZE     0.03
 #define LABEL_FONT          "RobotoCondensed"
 #define ICON_SIZE_SERVICE   0.7
+
+// The overlay hangs its icon and label at the MIDPOINT of each supply line, not
+// over the serviced vehicle. Anything drawn on a vehicle lands underneath Zeus's
+// own unit icon — which is drawn by the engine, always on top, and cannot be
+// moved — so the readout was simply invisible on exactly the vehicles it
+// described. The midpoint of a line between two hulls is empty screen space by
+// construction, and it also reads as belonging to the LINK rather than to the
+// target. Lifted clear of the terrain so a line running across a slope does not
+// bury it.
+#define SERVICE_ICON_LIFT   1.5
+
+// Progress is shown by the line itself: the stretch from the supply vehicle up to
+// the progress point draws at full strength, the remainder at this fraction of
+// its alpha. Gives every line an at-a-glance readout with no text at all, which
+// is what makes the percentage affordable as a cursor-only detail.
+#define LINE_PENDING_ALPHA  0.3

@@ -7,7 +7,7 @@ mission = "test.VR"
 workshop = [
     "450814997",  # CBA_A3
     "1779063631", # Zeus Enhanced (ZEN)
-    "1858075458", # LAMBS_Danger.fsm
+    "2434257231", # LAMBS_Danger.fsm (DEV)
 ]
 
 # Same, minus LAMBS: verifies the LAMBS-optional paths still behave when the

@@ -2,12 +2,19 @@
 /*
  * Author: Maxim
  * CLIENT. Supply-lines renderer: draws a line from each watched supply vehicle to
- * every vehicle it is currently servicing, capped with a resupply icon and
- * labelled with the order's progress while the cursor is near it. Registered as a
- * RENDER_WORLD renderer on EFUNC(core,frameLoop), which resolves the Zeus test,
- * the camera position and the mouse position once for every display — so this
- * pays for none of it, and is skipped entirely while the Zeus map covers the 3D
- * view.
+ * every vehicle it is currently servicing. The line doubles as the progress bar —
+ * it is drawn bright from the supply vehicle up to the progress point and dim for
+ * the remainder — and the resupply icon rides the MIDPOINT of that line, showing
+ * the exact percentage while the cursor is near it. Registered as a RENDER_WORLD
+ * renderer on EFUNC(core,frameLoop), which resolves the Zeus test, the camera
+ * position and the mouse position once for every display — so this pays for none
+ * of it, and is skipped entirely while the Zeus map covers the 3D view.
+ *
+ * Nothing is drawn ON the serviced vehicle, and that is deliberate: Zeus draws its
+ * own icon over every unit it can edit, the engine puts it on top of anything a
+ * script draws, and it cannot be moved — so an icon anchored to the target hull is
+ * hidden behind exactly the thing it is annotating. See SERVICE_ICON_LIFT in
+ * script_component.hpp.
  *
  * A fresh snapshot is baked once, on the first frame after it lands: the server's
  * absolute start time becomes an elapsed-at-send figure, which is then advanced
@@ -67,7 +74,9 @@ private _sinceRx = _now - _rxTime;
     if (_camDist > MAX_DRAW_DIST) then { continue };
 
     // Distant overlays recede instead of stacking into clutter
-    private _color    = COLOR_SUPPLY_RGB + [linearConversion [FADE_NEAR, MAX_DRAW_DIST, _camDist, 1, 0.3, true]];
+    private _alpha    = linearConversion [FADE_NEAR, MAX_DRAW_DIST, _camDist, 1, 0.3, true];
+    private _color    = COLOR_SUPPLY_RGB + [_alpha];
+    private _pending  = COLOR_SUPPLY_RGB + [_alpha * LINE_PENDING_ALPHA];
     private _progress = ((_elapsedAtSend + _sinceRx) / _duration) min 1;
 
     {
@@ -76,12 +85,22 @@ private _sinceRx = _now - _rxTime;
         if (isNull _x || {!alive _x}) then { continue };
 
         private _to = (getPosATLVisual _x) vectorAdd [0, 0, 0.5];
-        drawLine3D [_from, _to, _color];
 
-        // Label only near the cursor — a percentage over every vehicle in a
-        // serviced column is noise
+        // The line IS the progress bar: bright from the supply vehicle out to the
+        // progress point, dim the rest of the way. One order services every target
+        // on the same clock, so the whole fan fills in step and a glance at any
+        // single line reads the job.
+        private _split = _from vectorAdd ((_to vectorDiff _from) vectorMultiply _progress);
+        drawLine3D [_from, _split, _color];
+        drawLine3D [_split, _to, _pending];
+
+        // Midpoint, lifted — clear of the Zeus icons sitting on both hulls.
+        private _iconPos = ((_from vectorAdd _to) vectorMultiply 0.5) vectorAdd [0, 0, SERVICE_ICON_LIFT];
+
+        // Exact percentage only near the cursor — a readout on every line of a
+        // serviced column is noise, and the fill above already carries the gist
         private _text = "";
-        private _scr  = worldToScreen _to;
+        private _scr  = worldToScreen _iconPos;
         if (_scr isNotEqualTo [] && {_mouse distance2D _scr < LABEL_CURSOR_RADIUS}) then {
             _text = format ["%1 %2%3", LLSTRING(LabelServicing), round (_progress * 100), "%"];
         };
@@ -89,7 +108,7 @@ private _sinceRx = _now - _rxTime;
         drawIcon3D [
             ICON_RESUPPLY,
             _color,
-            _to,
+            _iconPos,
             ICON_SIZE_SERVICE, ICON_SIZE_SERVICE, 0,
             _text,
             1, LABEL_TEXT_SIZE, LABEL_FONT

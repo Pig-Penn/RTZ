@@ -236,6 +236,39 @@ private _b = +_a;   // deep copy
 Returning an internal array from a getter hands the caller a live handle to your state. Copy
 with `+` at the boundary if the caller might mutate it.
 
+### `getOrDefaultCall` passes `[key, hashMap]` as `_this`, not the key
+
+The default-value code runs with `_this` set to an **array** — the key is `_this select 0`.
+Treating `_this` as the key itself is the trap:
+
+```sqf
+_cap = GVAR(magCapCache) getOrDefaultCall [_mag, {
+    getNumber (configFile >> "CfgMagazines" >> _this >> "count")     // BAD - Type Array, expected String
+}, true];
+
+_cap = GVAR(magCapCache) getOrDefaultCall [_mag, {
+    getNumber (configFile >> "CfgMagazines" >> _mag >> "count")      // GOOD - close over the key
+}, true];
+```
+
+The code block is not a fresh scope like `spawn` (§3), so simply **closing over the outer
+variable holding the key** is the clearest fix and is what the rest of the codebase does
+([fnc_needsAmmo.sqf:28](addons/supply/functions/fnc_needsAmmo.sqf#L28),
+[fnc_draw3D.sqf:90](extras/vehicle_info/functions/fnc_draw3D.sqf#L90)).
+
+This shipped twice, and **only one of the two errored**:
+
+| Site | Symptom |
+|---|---|
+| [fnc_gatherUnitInfo.sqf](addons/hud/functions/fnc_gatherUnitInfo.sqf) | `configFile >> _this` is a type error → *Type Array, expected String*, loud and obvious |
+| [fnc_unitMarker.sqf](addons/spotting/functions/fnc_unitMarker.sqf) | `format` accepts any type, so it silently built `…\nato\[o_inf,[HashMap]].paa` — **and cached it**, so every later hit returned the broken path with no error at all |
+
+A default block that feeds `_this` into anything stringly-typed (`format`, `+`, a marker or
+texture path) fails silently and then poisons the cache. Note that `params ["_key"]` at the top
+of the block also works, and is why [fnc_getCost.sqf:37](addons/economy/functions/fnc_getCost.sqf#L37)'s
+`{_this call FUNC(categorize)}` is correct by accident — `categorize` opens with `params ["_class"]`,
+which reads index 0.
+
 ### `==` on strings is case-**in**sensitive; `isEqualTo` is case-sensitive
 
 ```sqf
@@ -260,6 +293,64 @@ So off-by-one reads fail quietly and land as `nil` somewhere far from the cause.
 params [["_radius", 50, [0]], ["_limit", 0, [0]]];
 private _mode = _args param [2, "default"];
 ```
+
+### `params` destructures `_this` — passing one array gives the callee its first element
+
+`params` always treats `_this` as an *argument list*. So a callee written `params ["_ctx"]`
+does not receive the array you passed — it receives `_this select 0`:
+
+```sqf
+private _ctx = [_camPos, _camRight, _camUp, _mouse, _now, _viewDist, _display];
+_ctx call _renderer;      // WRONG — renderer's _ctx is _camPos
+[_ctx] call _renderer;    // right  — renderer's _ctx is the whole context
+```
+
+This shipped in `rtz_core`'s frame loop and broke **every** `RENDER_WORLD` renderer at once.
+Each one's `_ctx select CTX_CAMPOS` read a bare number instead of a position, so its first
+`distance` threw *Generic error*; `_ctx select CTX_VIEWDIST` then ran off the end of the
+3-element position and threw *Zero Divisor* (see the `select` entry above). Because a runtime
+error **aborts the whole scope**, one throw killed the rest of that renderer's `forEach` — so
+the mod drew nothing at all while the native Zeus icons underneath kept working, which made it
+look like a rendering quirk rather than a total failure.
+
+Two lessons worth more than the fix: an error's *reported line* can be the propagation point,
+not the fault (the `Zero Divisor` was blamed on the line that merely read the value), and a
+guard placed **after** the throwing statement can never run — instrument *before* it.
+
+If the function header says `Arguments: 0: <thing>`, the caller owes it `[thing]`.
+
+### Position commands return `[]`, and one fallback is not enough
+
+`unitAimPositionVisual` returns `[]` for a vehicle with no crew aim point to resolve through —
+an empty hull, or the frames between Zeus creating a crewed vehicle and its crew being moved
+in. **`modelToWorldVisual` returns `[]` too** while the object's model has not resolved on this
+machine, which is the same handful of frames. So the obvious fallback is `[]` exactly when it
+is needed:
+
+```sqf
+private _base = unitAimPositionVisual _veh;
+if (_base isEqualTo []) then {
+    _base = _veh modelToWorldVisual [0, 0, (boundingBoxReal _veh) select 1 select 2];
+};
+private _dist = _camPos distance _base;    // BAD - still [] → Generic error in expression
+
+private _base = unitAimPositionVisual _veh;
+if (count _base < 3) then {
+    private _top = ((boundingBoxReal _veh) param [1, []]) param [2, 0];
+    _base = _veh modelToWorldVisual [0, 0, _top];
+};
+if (count _base < 3) then { continue };    // GOOD - skip the frame, it resolves on the next
+```
+
+Test `count _base < 3`, not `isEqualTo []`, so a short array is caught as well, and **re-test
+after the fallback**. What an `[]` position does next decides whether you ever find out:
+
+| Consumer | Symptom |
+|---|---|
+| `distance` ([fnc_drawVehicleTags.sqf](addons/hud/functions/fnc_drawVehicleTags.sqf)) | *Generic error in expression* — and the throw kills the rest of that renderer's pass for the frame |
+| `vectorAdd`, then `drawIcon3D` ([fnc_drawSpots.sqf](addons/spotting/functions/fnc_drawSpots.sqf)) | `[] vectorAdd [...]` stays `[]` and the draw is a silent no-op — no error, the icon just is not there |
+
+Both shipped from the same edit; only the `distance` one announced itself.
 
 ### `findIf` returns `-1`, so test `!= -1`
 
@@ -548,3 +639,5 @@ when someone looks.
 | A setting never takes effect, no error | `GETMVAR` given a variable instead of a name (§6) |
 | Icons draw in first person, or behind the Zeus map | own `Draw3D` handler instead of an `EFUNC(hud,registerRenderer)` renderer (see CLAUDE.md) |
 | A per-frame `waitUntilAndExecute` never stops | no timeout passed — it polls for the rest of the mission (§1) |
+| *Type Array, expected String* inside a hashmap default block, or a cached value built from a stringified array | `_this` in `getOrDefaultCall` is `[key, hashMap]`, not the key (§3) |
+| *Generic error in expression* on `distance`, only for freshly Zeus-placed objects | `unitAimPositionVisual` **and** `modelToWorldVisual` both return `[]` for those frames (§3) |

@@ -6,8 +6,9 @@
  * is local — required by setCaptive / disableAI / playMoveNow). Forces one unit
  * into, or restores it out of, a scripted surrender: captive (ignored as a
  * target), AI targeting/movement/animation disabled, and the vanilla hands-up
- * pose. disableAI "ANIM" holds the pose without a per-frame watcher, so this is
- * a one-shot state change and the feature costs nothing while active.
+ * pose — or the bound-hands prisoner pose, if the unit has since been captured.
+ * disableAI "ANIM" holds the pose without a per-frame watcher, so this is a
+ * one-shot state change and the feature costs nothing while active.
  *
  * Authoritative guards — the client-side toggle filters too, but this is where
  * the unit is local, so it has the last word:
@@ -85,13 +86,23 @@ if (_surrender) then {
     // LAMBS is not loaded.
     _unit setVariable ["lambs_danger_disableAI", true, true];
 
+    // Which pose depends on how far along the unit is: hands up while he has
+    // only given up, bound behind the back once he has actually been taken.
+    // Reading QGVAR(captured) is what keeps the forced re-apply honest — that
+    // path exists to restore a prisoner after an ownership change, and restoring
+    // him to the surrender pose would put a bound man's hands back up every time
+    // a headless client rebalanced. The flag is a public variable, so it has
+    // reached this machine by the time the unit can be local to it.
+    private _captured = _unit getVariable [QGVAR(captured), false];
+    private _state = [ANIM_SURRENDER_STATE, ANIM_CAPTURED_STATE] select _captured;
+
     // The pose is global, so a re-apply after an ownership change normally finds
     // it intact; replaying it unconditionally would make every locality change
     // visibly twitch. Testing the state instead of the reason covers both
     // callers in one line — a fresh surrender is never already in it, and a
     // re-apply only pays when the new owner's AI has knocked the unit out of it.
-    if (animationState _unit != ANIM_SURRENDER_STATE) then {
-        _unit playMoveNow ANIM_SURRENDER_ENTER;
+    if (animationState _unit != _state) then {
+        _unit playMoveNow ([ANIM_SURRENDER_ENTER, ANIM_CAPTURED_ENTER] select _captured);
     };
 } else {
     SETPVAR(_unit,GVAR(surrenderTime),nil);

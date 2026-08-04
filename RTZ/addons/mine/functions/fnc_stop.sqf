@@ -5,9 +5,9 @@
  * display closes.
  *
  * The map Draw handler needs no removal — it lives on a control of the display
- * that has just been destroyed — but its stored id and control DO have to be
- * dropped, or the next curator display would be handed a stale handle from the
- * last one and skip re-attaching.
+ * that has just been destroyed — but its stored id DOES have to be dropped, or
+ * the next curator display would be handed a stale handle from the last one and
+ * skip re-attaching.
  *
  * Arguments:
  * None
@@ -32,6 +32,5 @@ if (GVAR(pfh) != -1) then {
 // building its camera basis outright.
 [QGVAR(mines3D), RENDER_WORLD] call EFUNC(core,unregisterRenderer);
 
-GVAR(mapCtrl) = controlNull;
 GVAR(mapEH) = -1;
 GVAR(mines) = [];

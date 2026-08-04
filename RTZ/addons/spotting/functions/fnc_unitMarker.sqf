@@ -117,7 +117,7 @@ private _suffix = call {
 // (3 prefixes × the suffix vocabulary), so this fills once and never grows.
 private _texKey = _prefix + _suffix;
 private _tex = GVAR(markerTexCache) getOrDefaultCall [_texKey, {
-    format ["\a3\ui_f\data\map\markers\nato\%1.paa", _this]
+    format ["\a3\ui_f\data\map\markers\nato\%1.paa", _texKey]
 }, true];
 
 [_tex, _color, _sideIdx]

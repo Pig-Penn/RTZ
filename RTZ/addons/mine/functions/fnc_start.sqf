@@ -11,8 +11,8 @@
  * nothing. With both markers off the component costs exactly zero.
  *
  * The map Draw handler is attached to a control of the curator display, so it dies
- * with the display; the stored control is only kept so a mid-mission toggle can
- * detach it early.
+ * with the display; only its id is kept, so a mid-mission toggle can detach it
+ * early.
  *
  * These markers stay a plain local overlay rather than moving onto rtz_core's
  * stream engine: that engine is selection-driven and server-polled, while
@@ -60,21 +60,27 @@ if (GVAR(mark3D)) then {
     [QGVAR(mines3D), RENDER_WORLD] call EFUNC(core,unregisterRenderer);
 };
 
-if (!isNull _display) then {
-    GVAR(mapCtrl) = _display displayCtrl IDC_RSCDISPLAYCURATOR_MAINMAP;
+// Re-resolved from the curator display on every call rather than cached in a
+// GVAR: a CONTROL cannot be serialized, and the engine warns about — and drops —
+// any such handle left in the mission namespace when the mission state is saved.
+// The lookup is two commands and only runs on display open or a setting toggle.
+if (isNull _display) then {
+    _display = findDisplay IDD_RSCDISPLAYCURATOR;
 };
 
-if (isNull GVAR(mapCtrl)) exitWith {};
+private _mapCtrl = _display displayCtrl IDC_RSCDISPLAYCURATOR_MAINMAP;
+
+if (isNull _mapCtrl) exitWith {};
 
 // Added and removed by id rather than cleared wholesale — ctrlRemoveAllEventHandlers
 // would take ZEN's own Draw handlers on the same map with it
 if (GVAR(markMap)) then {
     if (GVAR(mapEH) == -1) then {
-        GVAR(mapEH) = GVAR(mapCtrl) ctrlAddEventHandler ["Draw", {_this call FUNC(drawMap)}];
+        GVAR(mapEH) = _mapCtrl ctrlAddEventHandler ["Draw", {_this call FUNC(drawMap)}];
     };
 } else {
     if (GVAR(mapEH) != -1) then {
-        GVAR(mapCtrl) ctrlRemoveEventHandler ["Draw", GVAR(mapEH)];
+        _mapCtrl ctrlRemoveEventHandler ["Draw", GVAR(mapEH)];
         GVAR(mapEH) = -1;
     };
 };

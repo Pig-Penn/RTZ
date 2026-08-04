@@ -68,7 +68,36 @@ params ["_grps"];
         [_grp] call CBA_fnc_clearWaypoints;
 
         // Hard reset: no flags — LAMBS' module / ZEN default. Returns the new
-        // group; nothing here needs it, the units carry themselves across.
-        [_grp] call lambs_wp_fnc_taskReset;
+        // group the units were carried across into; needed below to find them,
+        // since after this line the old group is empty.
+        private _grpNew = [_grp] call lambs_wp_fnc_taskReset;
+
+        // taskReset does not clear the watch direction. It resets stance, speed,
+        // animation, the AI subsystems and its own variables, and it doMove /
+        // doFollow's everyone back into formation — but a doWatch survives all of
+        // that, so the units re-form facing wherever the pre-reset task pointed
+        // them and keep staring at it. LAMBS' other reset paths (tacticsGarrison,
+        // tacticsHide, doAssaultUnitReset) all clear it by hand for this reason;
+        // taskReset is the one that forgot, so do it here.
+        //
+        // objNull, not [0,0,0]: objNull hands the direction back to the unit's own
+        // AI, a zero position would be a watch order pointed at the map corner.
+        // lookAt as well — the head/aim look (brainHide, taskCQB, doAssault) is a
+        // separate engine channel from doWatch and outlives it.
+        //
+        // Vehicles are watched as the vehicle, not the crewman (brainVehicle,
+        // doVehicleRotate, taskAssault all target the vehicle object), so every
+        // occupied vehicle in the group needs the same clear — once, not once per
+        // seat.
+        private _watchers = +(units _grpNew);
+        {
+            private _veh = objectParent _x;
+            if (!isNull _veh) then { _watchers pushBackUnique _veh };
+        } forEach (units _grpNew);
+
+        {
+            _x doWatch objNull;
+            _x lookAt objNull;
+        } forEach _watchers;
     };
 } forEach _grps;

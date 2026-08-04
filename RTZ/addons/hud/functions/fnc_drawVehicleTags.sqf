@@ -60,7 +60,20 @@ private _curSide = side player;
     // effective side) — same filter the selection poll applies.
     if (!_anySide && {!(VEH_SIDE_OK(_veh,_curSide))}) then { continue };
 
+    // unitAimPositionVisual resolves through the crew's aim point and returns []
+    // for vehicles that have none to offer — empty hulls, and any vehicle in the
+    // frames between Zeus creating it and its crew being moved in. Fall back to the
+    // model's bounding-box top centre.
     private _base = unitAimPositionVisual _veh;
+    if (count _base < 3) then {
+        private _top = ((boundingBoxReal _veh) param [1, []]) param [2, 0];
+        _base = _veh modelToWorldVisual [0, 0, _top];
+    };
+    // The fallback is NOT guaranteed either: an object whose model has not resolved
+    // on this machine yet — the frames right after Zeus creates it — gives [] from
+    // BOTH commands. An [] here reaches `distance` as a generic error and kills the
+    // whole render pass, so drop the tag and pick it up next frame.
+    if (count _base < 3) then { continue };
     private _dist = _camPos distance _base;
     if (_dist > _maxDist) then { continue };
     // Screen-space vertical lift (see FUNC(drawUnitTags)): along camera-up and

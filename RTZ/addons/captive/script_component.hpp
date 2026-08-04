@@ -17,11 +17,18 @@
 
 // ZEN action array indices (ACTION_INDEX_*) come from main/script_macros.hpp.
 
-// Surrender toggle icon/tint — white pause while fighting (will surrender),
-// green/grey play once surrendered (will stand down, grey while lock-timed).
-#define ICON_SURRENDER "\x\rtz\addons\captive\ui\pause_ca.paa"
-#define ICON_STANDDOWN "\x\rtz\addons\captive\ui\play_ca.paa"
-#define COLOR_SURRENDER [1.00, 1.00, 1.00, 1]
+// Surrender toggle icon/tint. One hands-up icon for both directions of the
+// toggle — the tint alone carries the state: purple while fighting (will
+// surrender), green once surrendered (will stand down), grey while lock-timed.
+// The icon is ACE3's own surrender icon (ace_captives UI\Surrender_ca.paa),
+// copied in rather than referenced at \z\ace\... because ACE3 is not a dependency:
+// RTZ only guarantees CBA/ZEN/LAMBS, and an absent path draws as a missing texture.
+// Both mods are GPL, so the copy carries over cleanly.
+#define ICON_SURRENDER "\x\rtz\addons\captive\ui\surrender_ca.paa"
+// Vanilla's civilian purple (CfgMarkerColors >> ColorCivilian), the same value
+// rtz_common's side palette gives civilians — surrendering is the step that takes
+// a unit out of the fight, so the button wears the non-combatant colour.
+#define COLOR_SURRENDER [0.40, 0.00, 0.50, 1]
 #define COLOR_STANDDOWN [0.40, 1.00, 0.40, 1]
 #define COLOR_LOCKED [0.55, 0.55, 0.55, 1]
 
@@ -45,6 +52,14 @@
 // to enter it.
 #define ANIM_SURRENDER_STATE "amovpercmstpssurwnondnon"
 #define ANIM_SURRENDER_ENTER "AmovPercMstpSnonWnonDnon_AmovPercMstpSsurWnonDnon"
+
+// The prisoner pose — hands bound behind the back — declared by this component
+// in CfgMoves.hpp, because vanilla ships the animation file without a state.
+// It is a single looped state, so there is no separate transition to enter it:
+// the same class is both what gets played and what animationState reports back
+// (the class is named lowercase precisely so the two can be one macro).
+#define ANIM_CAPTURED_STATE QGVAR(animcaptured)
+#define ANIM_CAPTURED_ENTER QGVAR(animcaptured)
 
 // Can this object be put into (or taken out of) a scripted surrender? Shared by
 // the context condition, the selection collector, the action modifier and the

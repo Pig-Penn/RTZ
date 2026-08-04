@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Supply">
-        <Key ID="STR_RTZ_Supply_ActionDrawSupplyLines">
-            <English>Show Supply Lines</English>
+        <Key ID="STR_RTZ_Supply_ActionRearm">
+            <English>Rearm</English>
         </Key>
-        <Key ID="STR_RTZ_Supply_ActionHideSupplyLines">
-            <English>Hide Supply Lines</English>
+        <Key ID="STR_RTZ_Supply_ActionRefuel">
+            <English>Refuel</English>
+        </Key>
+        <Key ID="STR_RTZ_Supply_ActionRepair">
+            <English>Repair</English>
         </Key>
         <Key ID="STR_RTZ_Supply_ActionResupply">
-            <English>Resupply Vehicles</English>
+            <English>Resupply</English>
         </Key>
         <Key ID="STR_RTZ_Supply_DisplayName">
             <English>Supply</English>
@@ -30,12 +33,6 @@
         </Key>
         <Key ID="STR_RTZ_Supply_MsgResupplying">
             <English>Resupplying</English>
-        </Key>
-        <Key ID="STR_RTZ_Supply_MsgSupplyLinesHidden">
-            <English>Supply Lines Hidden</English>
-        </Key>
-        <Key ID="STR_RTZ_Supply_MsgSupplyLinesShown">
-            <English>Supply Lines Shown</English>
         </Key>
         <Key ID="STR_RTZ_Supply_ServiceDuration">
             <English>Service Duration</English>
@@ -59,7 +56,7 @@
             <English>Supply Lines Overlay</English>
         </Key>
         <Key ID="STR_RTZ_Supply_SupplyDisplay_Description">
-            <English>Enable the Show Supply Lines Zeus context menu action, which draws a line from each selected supply vehicle to every vehicle it is currently servicing.</English>
+            <English>Draw a line from each selected supply vehicle to every vehicle it is currently servicing, filling as the service progresses. Always shown while enabled — there is no context menu toggle.</English>
         </Key>
     </Package>
 </Project>

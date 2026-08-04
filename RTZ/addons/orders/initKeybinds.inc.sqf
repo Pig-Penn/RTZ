@@ -44,4 +44,6 @@ private _category = ELSTRING(main,DisplayName);
 // and the engine's networked inventory sync carries the item transfers even when
 // the unit/container is remote (see fnc_openUnitInventory).
 [_category, QGVAR(openUnitInventory), [LSTRING(OpenUnitInventory), LSTRING(OpenUnitInventory_Description)],
-    {call FUNC(openUnitInventory)}, {}, [0x17, [false, false, false]]] call CBA_fnc_addKeybind; // Default: I
+    // `[] call`, NOT bare `call`: CBA hands the keybind handler the Zeus display,
+    // and the function's `params` would then try to read it as the unit.
+    {[] call FUNC(openUnitInventory)}, {}, [0x17, [false, false, false]]] call CBA_fnc_addKeybind; // Default: I

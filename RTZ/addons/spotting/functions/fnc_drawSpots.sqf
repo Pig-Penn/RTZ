@@ -94,6 +94,11 @@ private _groupHoverByLeader = createHashMap;
     if (!alive _unit) then { continue };   // alive objNull is false — covers deleted units too
     // Anchor on the vehicle so a mounted leader is handled (vehicle = unit on foot).
     private _anchor = vehicle _unit;
+    // `distance` throws a Generic error on a null object, and a runtime error
+    // ABORTS THE WHOLE forEach — so a single bad entry costs every icon after it
+    // in the store, not just its own. `alive` does not cover this: it is false for
+    // objNull, but a live unit can still resolve to a null vehicle.
+    if (isNull _anchor) then { continue };
     private _dist   = _camPos distance _anchor;
     // Past view distance the fade alpha is 0 — there was never anything to see, so
     // skip the icon (and its hover worldToScreen) rather than issue invisible
@@ -106,7 +111,19 @@ private _groupHoverByLeader = createHashMap;
     // from the VEHICLE, not the crewman (else it skews out along the gun).
     private _zMod = linearConversion [GROUP_ZMOD_NEAR, GROUP_ZMOD_FAR, _dist, GROUP_ZMOD_MIN, GROUP_ZMOD_MAX, true];
     if (_dist >= GROUP_ZMOD_NEAR) then { _zMod = _zMod * GROUP_ZMOD_FLOOR_SCALE };
-    private _iconPos = (unitAimPositionVisual _anchor) vectorAdd [0, 0, _zMod];
+    // unitAimPositionVisual returns [] for a vehicle with no crew aim point to
+    // resolve through (empty hull, or the frames before Zeus moves its crew in),
+    // and [] vectorAdd [...] stays [] — fall back to the bounding-box top centre.
+    // That fallback returns [] as well while the model has not resolved on this
+    // machine (the frames right after Zeus creates the object), so re-test: every
+    // draw below would be an invisible no-op on an [] position anyway.
+    private _aim = unitAimPositionVisual _anchor;
+    if (count _aim < 3) then {
+        private _top = ((boundingBoxReal _anchor) param [1, []]) param [2, 0];
+        _aim = _anchor modelToWorldVisual [0, 0, _top];
+    };
+    if (count _aim < 3) then { continue };
+    private _iconPos = _aim vectorAdd [0, 0, _zMod];
     // Size amplifier lifted in world space (drawIcon3D offsetY is clamped); scaled
     // by _dist (not _zMod, which floors close up) for a constant screen gap. Each
     // side's frame peaks at a different height, so the gap comes from the per-side
@@ -142,6 +159,7 @@ private _chevronNames = GVAR(chevronNames);
     _y params ["_unit", "_texture", "_colorArray", "_ldrId", "_name"];
     if (!alive _unit) then { continue };
     private _anchor = vehicle _unit;
+    if (isNull _anchor) then { continue };   // see the group pass above
     private _dist   = _camPos distance _anchor;
     if (_dist > WEDGE_MAX_DIST || {_dist >= _viewDist}) then { continue };
 

@@ -76,8 +76,11 @@ if (!hasInterface) exitWith {};
     // UI pass. Runs even with Zeus closed (displayNull) so each renderer can drop
     // its control references on the transition rather than leaking them until the
     // next time Zeus opens.
+    // Wrapped for the same reason as the world pass below — one call convention for
+    // both, so a UI renderer written with `params [...]` cannot fall into the same
+    // trap the moment someone hands it more than a display.
     {
-        _uiDisp call (_x select 1);
+        [_uiDisp] call (_x select 1);
     } forEach _ui;
 
     // World pass. Zeus open, curator assigned, and the map NOT covering the view.
@@ -89,17 +92,29 @@ if (!hasInterface) exitWith {};
     // along, so "right of the text" and "one line down" hold at any camera
     // orientation (a world +Z lift projects to nothing from a top-down camera).
     private _camPos = positionCameraToWorld [0, 0, 0];
+
+    // Renderers divide by this for their distance fade, so it must never be 0.
+    private _viewDist = getObjectViewDistance select 0;
+    if (_viewDist <= 0) then { _viewDist = viewDistance };
+
     private _ctx = [
         _camPos,
         (positionCameraToWorld [1, 0, 0]) vectorDiff _camPos,
         (positionCameraToWorld [0, 1, 0]) vectorDiff _camPos,
         getMousePosition,
         CBA_missionTime,
-        getObjectViewDistance select 0,
+        _viewDist,
         _uiDisp
     ];
 
+    // Wrapped in an argument array, NOT passed bare. Every renderer opens with
+    // `params ["_ctx"]`, and `params` DESTRUCTURES `_this` — so a bare `_ctx call`
+    // handed each renderer `_this select 0` (the camera position) as its whole
+    // context. `_ctx select CTX_CAMPOS` then read a bare number and `_ctx select
+    // CTX_VIEWDIST` ran off the end, so every renderer threw on its first
+    // `distance` and aborted, drawing nothing. Matches each renderer's documented
+    // "Arguments: 0: Frame context".
     {
-        _ctx call (_x select 1);
+        [_ctx] call (_x select 1);
     } forEach _world;
 }] call CBA_fnc_addBISEventHandler;

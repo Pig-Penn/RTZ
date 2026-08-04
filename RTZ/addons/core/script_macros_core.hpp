@@ -38,6 +38,10 @@
 // a renderer can `select` the one or two it needs without a `params` over all
 // seven. Camera-right/up are unit vectors in WORLD space — the axes screen-space
 // offsets ride, so "right of the text" holds at any camera orientation.
+// CTX_VIEWDIST is floored to a positive value by the loop, so renderers may divide
+// by it for their distance fade without guarding.
+// The context is passed as `[_ctx] call <renderer>`, so a renderer reads it with
+// `params ["_ctx"]` — see the frame loop for why the wrapping array is required.
 #define CTX_CAMPOS   0
 #define CTX_CAMRIGHT 1
 #define CTX_CAMUP    2

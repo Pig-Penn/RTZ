@@ -9,10 +9,11 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     true // Global
 ] call CBA_fnc_addSetting;
 
-// Gates the supply-lines overlay's context action, read live by its condition.
-// Needs no mission restart: the stream machinery is registered unconditionally
-// (see XEH_postInit) and idles while nothing is subscribed, and the engine's
-// CBA_SettingChanged watchdog shuts a running overlay down if this goes off.
+// The ONLY switch the supply-lines overlay has — there is no context action, the
+// lines are drawn whenever this is on. Needs no mission restart: the stream
+// machinery is registered unconditionally (see XEH_postInit) and idles while
+// nothing is subscribed, and FUNC(syncDisplay) starts or stops the overlay from
+// CBA_SettingChanged either way this is flipped.
 [
     QGVAR(enableSupplyDisplay), "CHECKBOX",
     [LSTRING(SupplyDisplay), LSTRING(SupplyDisplay_Description)],

@@ -2,11 +2,14 @@
 /*
  * Author: Maxim
  * CfgContext modifierFunction for the surrender toggle (see CfgContext.hpp).
- * Mutates the action's displayName, icon and iconColor to reflect whether the
- * first eligible unit in the selection is currently surrendered:
- *   fighting            -> white "Surrender"
+ * Mutates the action's displayName and iconColor to reflect whether the first
+ * eligible unit in the selection is currently surrendered:
+ *   fighting            -> purple "Surrender"
  *   surrendered, locked -> grey  "Stand Down — Xs" (inside the lock window)
  *   surrendered, free   -> green "Stand Down"
+ *
+ * The icon itself never changes — ICON_SURRENDER as declared in CfgContext.hpp
+ * serves both directions — so only the tint is set here.
  *
  * "First eligible" has to agree with FUNC(surrenderToggle), which derives the
  * whole selection's target state from the same unit — the label would otherwise
@@ -43,11 +46,8 @@ private _unit = _objects select _index;
 
 if !(_unit getVariable [QGVAR(surrendered), false]) exitWith {
     _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionSurrender)];
-    _action set [ACTION_INDEX_ICON, ICON_SURRENDER];
     _action set [ACTION_INDEX_ICONCOLOR, COLOR_SURRENDER];
 };
-
-_action set [ACTION_INDEX_ICON, ICON_STANDDOWN];
 
 private _remaining = ceil (GVAR(standDownLockTime)
     - (CBA_missionTime - (_unit getVariable [QGVAR(surrenderTime), CBA_missionTime])));
