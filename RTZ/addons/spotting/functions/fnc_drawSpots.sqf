@@ -174,7 +174,15 @@ private _chevronNames = GVAR(chevronNames);
     // Native EG-spectator chevron (ACE recipe): head + 1 m, size scaled by
     // distance. Smooth ramp rather than a stepped table — same endpoints, one
     // engine call, and no per-chevron `call {}` scope per frame.
-    private _iconPos = (_unit modelToWorldVisual (_unit selectionPosition "Head")) vectorAdd [0, 0, 1];
+    private _iconPos = (_unit modelToWorldVisual ([_unit] call EFUNC(common,headOffset))) vectorAdd [0, 0, 1];
+    // modelToWorldVisual returns [] while the model has not resolved on this
+    // machine — the handful of frames after Zeus places a unit — and
+    // [] vectorAdd [...] stays []. drawIcon3D would then silently draw nothing
+    // and worldToScreen below would throw, aborting the scope and dropping
+    // every REMAINING chevron this frame. The group pass above guards the same
+    // way (Gotchas §3).
+    if (count _iconPos < 3) then { continue };
+
     private _iconW   = linearConversion [0, WEDGE_MAX_DIST, _dist, CHEVRON_W_NEAR, CHEVRON_W_FAR, true];
 
     private _col = [_dist, _colorArray, _x] call _fnc_drawColor;

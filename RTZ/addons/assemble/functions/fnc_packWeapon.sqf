@@ -55,7 +55,7 @@ if (isNull _gunner || {!alive _gunner}) exitWith {
     [_weaponBag, _position] call FUNC(dropBag);
     [_baseBag, _position vectorAdd [sin _direction, cos _direction, 0]] call FUNC(dropBag);
     [_gunner, _assistant, _weapon] call FUNC(finishPack);
-    [_curator, LLSTRING(Packed)] call FUNC(notifyCurator);
+    [_curator, LLSTRING(Packed)] call EFUNC(common,notifyCurator);
 };
 
 // One transient context var on the gunner: [state, assistant, curator, EH id, weapon].
@@ -118,7 +118,7 @@ private _fnc_directPack = {
     };
 
     if (!alive _gunner) then {
-        [_ctx param [2, objNull], LLSTRING(Packed)] call FUNC(notifyCurator);
+        [_ctx param [2, objNull], LLSTRING(Packed)] call EFUNC(common,notifyCurator);
     };
 
     [_gunner, _assistant, _weapon] call FUNC(finishPack);

@@ -41,7 +41,7 @@ if (isNull _gunner || {!alive _gunner}) exitWith {};
 if (!isClass (configFile >> "CfgVehicles" >> _staticClass)) exitWith {};
 
 if (!local _gunner) exitWith {
-    [_curator, LLSTRING(GunnerNotLocal)] call FUNC(notifyCurator);
+    [_curator, LLSTRING(GunnerNotLocal)] call EFUNC(common,notifyCurator);
 };
 
 // The bag is re-read here rather than trusted from the order: the gunner may have

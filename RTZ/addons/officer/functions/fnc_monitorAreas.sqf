@@ -63,6 +63,20 @@ if (!hasInterface) exitWith {};
         (_this select 0) set [0, _curator];
     };
 
+    // Sweep expired cooldowns. FUNC(isOnCooldown) forgets an entry only when a
+    // read happens to land on an expired one, so an officer who is killed — or
+    // simply never right-clicked again — leaves his entry for the rest of the
+    // mission. Deliberately ABOVE the early-exit below: cooldowns are armed by
+    // area REMOVAL, so the state that needs pruning is exactly the state in
+    // which GVAR(areas) is empty and that exit fires.
+    if (count GVAR(cooldowns) > 0) then {
+        private _expired = [];
+        {
+            if (_y <= CBA_missionTime) then { _expired pushBack _x };
+        } forEach GVAR(cooldowns);
+        {GVAR(cooldowns) deleteAt _x} forEach _expired;
+    };
+
     if (isNull _curator || {count GVAR(areas) == 0}) exitWith {};
 
     // Prune areas whose anchor is gone or is no longer in a state that earns

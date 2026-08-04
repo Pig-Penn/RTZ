@@ -36,10 +36,4 @@ if (_sets isEqualTo []) exitWith {};
     [QGVAR(disassemble), _x + [player], _x select 0] call CBA_fnc_targetEvent;
 } forEach _sets;
 
-private _message = LLSTRING(Disassembling);
-
-if (count _sets > 1) then {
-    _message = format ["%1  x%2", _message, count _sets];
-};
-
-[_message] call zen_common_fnc_showMessage;
+[LLSTRING(Disassembling), count _sets] call EFUNC(common,showCountMessage);

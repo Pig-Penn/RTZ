@@ -28,14 +28,21 @@
     if (GETMVAR(RscDisplayCurator_search,false)) exitWith {false}
 
 // Indices into ZEN's compiled context-menu action array — the array a
-// modifierFunction receives as `_this select 0` and mutates in place. Layout
-// per zen_context_menu_fnc_compileActions; every RTZ *ActionModifier needs it.
-#define ACTION_INDEX_NAME 0
+// modifierFunction receives as `_this select 0` and mutates in place. Layout per
+// zen_context_menu_fnc_compileActions, recorded here in full:
+//   0 name | 1 displayName | 2 icon | 3 iconColor | 4 statement
+//   5 condition | 6 args | 7 insertChildren | 8 modifierFunction
+// Only the three RTZ actually writes are defined — the other six were never
+// referenced anywhere in the mod, and the comment claiming "every RTZ
+// *ActionModifier needs it" was true of three of the nine.
 #define ACTION_INDEX_DISPLAYNAME 1
 #define ACTION_INDEX_ICON 2
 #define ACTION_INDEX_ICONCOLOR 3
-#define ACTION_INDEX_STATEMENT 4
-#define ACTION_INDEX_CONDITION 5
-#define ACTION_INDEX_ARGS 6
-#define ACTION_INDEX_INSERTCHILDREN 7
-#define ACTION_INDEX_MODIFIERFUNCTION 8
+
+// Every RTZ *ActionModifier restyles an action the same way — a label, an icon
+// and a tint, written into those three slots. Spelled out as three `set` calls it
+// appeared fifteen times across six functions in five components.
+#define SET_ACTION(action,label,icon,color) \
+    action set [ACTION_INDEX_DISPLAYNAME, label]; \
+    action set [ACTION_INDEX_ICON, icon]; \
+    action set [ACTION_INDEX_ICONCOLOR, color]

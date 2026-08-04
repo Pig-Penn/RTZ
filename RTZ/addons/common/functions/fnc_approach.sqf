@@ -81,9 +81,7 @@ _lead setVariable [QGVAR(approachOrder), _order];
         // Superseded by a newer order — stay silent, that order owns the lead.
         if (_lead getVariable [QGVAR(approachOrder), 0] != _order) exitWith {};
 
-        if (!isNull _curator && {_timeoutMsg isNotEqualTo ""}) then {
-            [QGVAR(approachMsg), [_timeoutMsg], _curator] call CBA_fnc_targetEvent;
-        };
+        [_curator, _timeoutMsg] call FUNC(notifyCurator);
         _args call _onFail;
     }
 ] call CBA_fnc_waitUntilAndExecute;

@@ -62,13 +62,7 @@ private _previewIcon = [_previewClass] call zen_common_fnc_getVehicleIcon;
             [QGVAR(assemble), [_gunner, _staticClass, _assistant, _target, _direction, player], _gunner] call CBA_fnc_targetEvent;
         } forEach _sets;
 
-        private _message = LLSTRING(Assembling);
-
-        if (count _sets > 1) then {
-            _message = format ["%1  x%2", _message, count _sets];
-        };
-
-        [_message] call zen_common_fnc_showMessage;
+        [LLSTRING(Assembling), count _sets] call EFUNC(common,showCountMessage);
     },
     _sets,
     _previewIcon,

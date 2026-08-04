@@ -46,3 +46,6 @@ private _m = createHashMap;
 
 GVAR(unitData) = _m;
 GVAR(unitTagsDirty) = true;
+// The selection dialog reads GVAR(unitData) too, and its row model is far more
+// expensive to build than a tag string — see the gate in FUNC(openSelectionInfo).
+GVAR(selRowsDirty) = true;

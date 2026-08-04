@@ -50,7 +50,7 @@ params ["_gunner", "_staticClass", "_assistant", ["_direction", -1], ["_curator"
 // Gunner down mid-errand, abort and clear any errand state
 if (isNull _gunner || {!alive _gunner} || {lifeState _gunner isEqualTo "INCAPACITATED"}) exitWith {
     [objNull, _gunner, _assistant] call FUNC(finishBuild);
-    [_curator, LLSTRING(Aborted)] call FUNC(notifyCurator);
+    [_curator, LLSTRING(Aborted)] call EFUNC(common,notifyCurator);
 };
 
 _gunner doWatch objNull;
@@ -98,7 +98,7 @@ private _fnc_directBuild = {
     // Gunner died inside the animation window, don't build off a corpse
     if (!alive _gunner) exitWith {
         [objNull, _gunner, _assistant] call FUNC(finishBuild);
-        [_ctx param [2, objNull], LLSTRING(Aborted)] call FUNC(notifyCurator);
+        [_ctx param [2, objNull], LLSTRING(Aborted)] call EFUNC(common,notifyCurator);
     };
 
     _bags params ["_gunnerBag", "_assistantBag"];

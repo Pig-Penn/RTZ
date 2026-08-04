@@ -48,7 +48,8 @@
 #define CTX_MOUSE    3
 #define CTX_NOW      4
 #define CTX_VIEWDIST 5
-#define CTX_DISPLAY  6
+// No CTX_DISPLAY: a RENDER_WORLD renderer never needs the display, and a
+// RENDER_UI one receives it as its whole argument instead.
 
 // Caps on how much of a Zeus selection the stream engine will carry, applied by
 // the client poll, re-applied by the server gather, and respected by every
@@ -86,3 +87,23 @@
 #define SRC_UNITS 0
 #define SRC_VEHS  1
 #define SRC_HULLS 2
+
+// ── Overlay draw contract ────────────────────────────────────────────────────
+// How a world-space overlay label is drawn. Shared, not per-component: these
+// describe one visual system, and the whole point of the rule is that the
+// destination, target and supply-line overlays must fade and reveal IDENTICALLY
+// or they stop reading as one mod.
+//
+// They lived as byte-identical copies in rtz_hud's and rtz_supply's own headers,
+// with rtz_supply's comment saying they were "matched to the engine's other
+// overlays" — which is an argument for one definition, not two that must be
+// hand-synced. Both components already include this file.
+//
+// Overlays start fading at FADE_NEAR and bottom out at MAX_DRAW_DIST (matching
+// the spotting wedge's outer cap); a label only renders while the cursor is
+// within LABEL_CURSOR_RADIUS of its icon, in GUI screen units.
+#define MAX_DRAW_DIST       2500
+#define FADE_NEAR           800
+#define LABEL_CURSOR_RADIUS 0.05
+#define LABEL_TEXT_SIZE     0.03
+#define LABEL_FONT          "RobotoCondensed"

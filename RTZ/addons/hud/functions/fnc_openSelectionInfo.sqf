@@ -160,7 +160,7 @@ private _fnc_apply = {
 
 [{
     params ["_args", "_handle"];
-    _args params ["_display", "_listCtrl", "_labelCtrl", "_lastKeys", "_lastRows", "_fnc_apply"];
+    _args params ["_display", "_listCtrl", "_labelCtrl", "_lastKeys", "_lastRows", "_fnc_apply", "_lastSel"];
 
     // Dialog gone (OK / Cancel / ESC / Zeus closed) — stop and release the lock;
     // the selection poll notices open=false and re-reports so the server drops
@@ -181,9 +181,31 @@ private _fnc_apply = {
         _display closeDisplay 2;
     };
 
-    ([] call FUNC(buildSelectionRows)) params ["_header", "_rows", "_keys"];
-    private _rebuild = _keys isNotEqualTo _lastKeys;
-    [_listCtrl, _labelCtrl, _header, _rows, _keys, _rebuild, _lastRows] call _fnc_apply;
-    if (_rebuild) then { _args set [3, _keys] };
-    _args set [4, _rows];
-}, 0.25, [_display, _listCtrl, _labelCtrl, _keys, _rows, _fnc_apply]] call CBA_fnc_addPerFrameHandler;
+    // FUNC(buildSelectionRows) is the expensive half and was being run every tick
+    // regardless — the _rebuild diff below only ever saved the engine-side lbSet*
+    // calls. Building the model runs a hashmap, a bucketing pass, a leader
+    // reorder and two tallies, then roughly eight `format`s, three switch(true)
+    // chains and two joinStrings PER UNIT (up to SEL_MAX_UNITS), plus five more
+    // per group. At 4 Hz that was several hundred `format` calls a second
+    // producing byte-identical strings — exactly the per-tick string building
+    // CLAUDE.md rules out on a multi-hour operation.
+    //
+    // Two things can change the model: a new snapshot (GVAR(selRowsDirty), set by
+    // FUNC(receiveUnitData)) and the curator changing selection. The second is
+    // NOT covered by the first — EGVAR(core,selUnits) updates locally the moment
+    // the selection changes, a poll interval before the matching snapshot lands,
+    // so gating on the flag alone would leave a deselected unit on screen until
+    // the server caught up. Comparing the id list is at most 24 string compares,
+    // against the several hundred formats it guards.
+    private _sel = EGVAR(core,selUnits);
+    if (GVAR(selRowsDirty) || {_sel isNotEqualTo _lastSel}) then {
+        GVAR(selRowsDirty) = false;
+        _args set [6, +_sel];
+
+        ([] call FUNC(buildSelectionRows)) params ["_header", "_rows", "_keys"];
+        private _rebuild = _keys isNotEqualTo _lastKeys;
+        [_listCtrl, _labelCtrl, _header, _rows, _keys, _rebuild, _lastRows] call _fnc_apply;
+        if (_rebuild) then { _args set [3, _keys] };
+        _args set [4, _rows];
+    };
+}, 0.25, [_display, _listCtrl, _labelCtrl, _keys, _rows, _fnc_apply, []]] call CBA_fnc_addPerFrameHandler;

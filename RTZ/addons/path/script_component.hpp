@@ -191,7 +191,12 @@
 // One record per unit currently executing a path ON THIS MACHINE — the one the
 // unit is local to, which is the only machine an AI order does anything on.
 // Written by FUNC(startFollow), driven by FUNC(followTick), torn down by
-// FUNC(endFollow). Same macro-indexed shape as rtz_reverse's maneuver record.
+// FUNC(endFollow). Structurally the same idea as rtz_reverse's maneuver record,
+// but NOT indexed the same way in practice: rtz_reverse reads its record through
+// all seven MANEUVER_* macros, whereas FUNC(followTick) destructures this one with
+// `params` in one go and only writes back through INDEX, MOVED_AT and CHECK_AT.
+// The remaining names below document the layout that `params` line depends on —
+// if you reorder one, reorder the other.
 //
 // UNIT is load-bearing for the same reason it is there: teardown hands back the
 // unit this record actually stopped, not whoever is in the seat when it ends.

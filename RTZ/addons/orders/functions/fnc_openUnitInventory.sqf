@@ -15,10 +15,16 @@
  * For a vehicle: the gear is opened through a crew member, since the acting
  * entity for the "Gear" action must be a man.
  *
- * Locality: runs on the curator's client. `action ["Gear", ...]` opens the
- * dialog locally; the engine's networked inventory sync carries the item
- * transfers even when the unit / container is remote — the same path that lets
- * you loot a server-side body from a client.
+ * Locality: runs on the curator's client. The engine's networked inventory sync
+ * carries the item TRANSFERS even when the unit / container is remote — the same
+ * path that lets you loot a server-side body from a client — but that does not
+ * extend to OPENING the dialog. `action` / `actionNow` are argument- and
+ * effect-local, so the acting entity must be local to this machine; issued
+ * against Zeus AI owned by the server or a headless client they do nothing at
+ * all, silently. This worked in SP and on a listen server (where the curator is
+ * the host, so the AI is local) and nowhere else. Both branches below therefore
+ * act as the unit only when it is local, and otherwise fall back to the
+ * curator's own body as the actor.
  *
  * Requires the player to be an assigned curator with the Zeus display open
  * (guarded by the caller / keybind).
@@ -64,7 +70,15 @@ if !(_unit isKindOf "CAManBase") exitWith {
         [LLSTRING(MsgNoCrew)] call zen_common_fnc_showMessage;
         true
     };
-    (_crew select 0) actionNow ["Gear", _veh];
+    // Acting AS the crewman needs him local (see the locality note in the header).
+    // A vehicle is a plain container, so the fallback loses nothing: the curator
+    // gets the same cargo, reached from his own body instead.
+    private _actor = _crew select 0;
+    if (local _actor) then {
+        _actor actionNow ["Gear", _veh];
+    } else {
+        player action ["Gear", _veh];
+    };
     true
 };
 
@@ -82,6 +96,16 @@ private _ti       = _nearby findIf { _x isNotEqualTo _unit && {!(_x isKindOf "CA
 // to discarding it.
 private _target   = if (_ti > -1) then { _nearby select _ti } else { objNull };
 
-_unit action ["Gear", _target];
+// Acting AS the unit gives the richest dialog — its own inventory on the left and
+// everything within ITS reach on the right — but `action` is argument- and
+// effect-local, so it needs the unit local. Where it is not, fall back to the
+// curator's own body as the actor with the unit as the container (the ACE3
+// "open inventory" recipe): the loadout is still fully editable, but the panels
+// are the curator's gear and the unit's rather than the unit's and its surroundings.
+if (local _unit) then {
+    _unit action ["Gear", _target];
+} else {
+    player action ["Gear", _unit];
+};
 
 true

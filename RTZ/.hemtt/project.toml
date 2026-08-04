@@ -15,3 +15,11 @@ include = [
 
 [version]
 git_hash = 0
+
+# Pinned rather than left to HEMTT's default. Without an explicit authority HEMTT
+# generates one per release, so every build signs under a DIFFERENT key name — on a
+# server running verifySignatures = 2 that invalidates the previously whitelisted
+# .bikey and locks clients out on every update. Fixing the authority means one key
+# is valid for the life of the mod.
+[signing]
+authority = "rtz"

@@ -18,6 +18,8 @@ PREP(progressJob);
 
 // Shared UI / presentation helpers.
 PREP(classInfo);
+PREP(headOffset);
+PREP(notifyCurator);
 PREP(placementPreview);
 PREP(removeContextActions);
 PREP(showCountMessage);

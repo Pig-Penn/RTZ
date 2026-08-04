@@ -1,8 +1,18 @@
 #define COMPONENT hud
 #define COMPONENT_BEAUTIFIED HUD
 #include "\x\rtz\addons\main\script_mod.hpp"
+
 // #define DEBUG_MODE_FULL
 // #define DISABLE_COMPILE_CACHE
+
+#ifdef DEBUG_ENABLED_HUD
+    #define DEBUG_MODE_FULL
+#endif
+
+#ifdef DEBUG_SETTINGS_HUD
+    #define DEBUG_SETTINGS DEBUG_SETTINGS_HUD
+#endif
+
 #include "\x\rtz\addons\main\script_macros.hpp"
 
 // rtz_core's public contract: RENDER_WORLD / RENDER_UI and the CTX_* frame
@@ -124,14 +134,9 @@
 #define COLOR_DEST [1.00, 0.80, 0.40, 1]
 #define COLOR_TGT  [0.60, 0.20, 0.20, 1]
 
-// Overlays start fading at FADE_NEAR and bottom out at MAX_DRAW_DIST (matches
-// the spotting wedge outer cap); labels only render while the cursor is within
-// LABEL_CURSOR_RADIUS of the icon (GUI screen units).
-#define MAX_DRAW_DIST       2500
-#define FADE_NEAR           800
-#define LABEL_CURSOR_RADIUS 0.05
-#define LABEL_TEXT_SIZE     0.03
-#define LABEL_FONT          "RobotoCondensed"
+// MAX_DRAW_DIST / FADE_NEAR / LABEL_CURSOR_RADIUS / LABEL_TEXT_SIZE / LABEL_FONT
+// come from core/script_macros_core.hpp, included above — they are the shared
+// overlay draw contract, not this component's to set.
 
 // Server-side sanity cap (m) on unit → destination / estimated-target
 // distance — mirrors the LAMBS debug renderer's cap.

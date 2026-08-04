@@ -103,9 +103,11 @@ if (!hasInterface) exitWith {};
         (positionCameraToWorld [0, 1, 0]) vectorDiff _camPos,
         getMousePosition,
         CBA_missionTime,
-        _viewDist,
-        _uiDisp
+        _viewDist
     ];
+    // The display is deliberately NOT a seventh element. RENDER_UI renderers get
+    // it as their whole argument above; RENDER_WORLD renderers never read it, so
+    // carrying it here was one array slot built per frame for nobody.
 
     // Wrapped in an argument array, NOT passed bare. Every renderer opens with
     // `params ["_ctx"]`, and `params` DESTRUCTURES `_this` — so a bare `_ctx call`

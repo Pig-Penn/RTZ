@@ -89,7 +89,7 @@ private _fnc_payOut = {
         // own payout notification. `isPlayer objNull` is false, so this still covers
         // the null case. Same guard as rtz_spotting's curator resolution.
         if (isPlayer _player) then {
-            [QGVAR(captureMsg), [_msgKey, _name, round _share], _player] call CBA_fnc_targetEvent;
+            [_player, [_msgKey, _name, round _share]] call EFUNC(common,notifyCurator);
         };
     } forEach _curators;
 };

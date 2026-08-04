@@ -1,9 +1,6 @@
 #include "\x\cba\addons\main\script_macros_common.hpp"
 #include "\x\cba\addons\xeh\script_xeh.hpp"
 
-// Default versioning level
-#define DEFAULT_VERSIONING_LEVEL 2
-
 #define GETVAR_SYS(var1,var2) getVariable [ARR_2(QUOTE(var1),var2)]
 #define SETVAR_SYS(var1,var2) setVariable [ARR_2(QUOTE(var1),var2)]
 
@@ -13,7 +10,6 @@
 
 #undef SETVAR
 #define SETVAR(var1,var2,var3) var1 SETVAR_SYS(var2,var3)
-#define SETMVAR(var1,var2) missionNamespace SETVAR_SYS(var1,var2)
 
 #define GETUVAR(var1,var2) (uiNamespace GETVAR_SYS(var1,var2))
 #define SETUVAR(var1,var2) uiNamespace SETVAR_SYS(var1,var2)

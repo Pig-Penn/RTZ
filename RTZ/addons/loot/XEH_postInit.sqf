@@ -12,3 +12,8 @@
 if (isServer) then {
     [QGVAR(loot), LINKFUNC(lootSquads)] call CBA_fnc_addEventHandler;
 };
+
+// NOT isServer-gated, unlike the sweep above: the worn-gear strip has to run where
+// the BODY is local, and a corpse owned by a headless client or by a player-led
+// group is local on that machine rather than the server. See FUNC(stripWorn).
+[QGVAR(strip), LINKFUNC(stripWorn)] call CBA_fnc_addEventHandler;

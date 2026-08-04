@@ -46,11 +46,9 @@
     [_unit, true, true] call FUNC(surrenderApply);
 }] call CBA_fnc_addClassEventHandler;
 
-// Capture payout toast, fired at one specific curator's player by
-// FUNC(captureUnit).
-if (hasInterface) then {
-    [QGVAR(captureMsg), {_this call zen_common_fnc_showMessage}] call CBA_fnc_addEventHandler;
-};
+// The capture payout toast FUNC(captureUnit) fires at one curator goes through
+// EFUNC(common,notifyCurator) — one receiver for the whole mod, registered in
+// rtz_common's postInit.
 
 // FUNC(surrenderApply) runs on the unit's owner, which is not necessarily the
 // server, so every state flip is reported here to keep the capture watch's

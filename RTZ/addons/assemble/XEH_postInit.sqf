@@ -16,7 +16,6 @@
 // The Zeus grant for a freshly built weapon rides EGVAR(common,grantCurators), whose
 // server-side receiver lives in rtz_common's own postInit.
 //
-// Feedback toasts raised by the errands (FUNC(notifyCurator))
-if (hasInterface) then {
-    [QGVAR(message), {_this call zen_common_fnc_showMessage}] call CBA_fnc_addEventHandler;
-};
+// Feedback toasts raised by the errands go through EFUNC(common,notifyCurator),
+// whose receiver is registered once in rtz_common's postInit — this component
+// used to carry an identical private copy on its own event name.

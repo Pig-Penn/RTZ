@@ -33,27 +33,19 @@ if (_officers isEqualTo []) exitWith {};
 private _officer = _officers select 0;
 
 if (netId _officer in GVAR(areas)) exitWith {
-    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionRemove)];
-    _action set [ACTION_INDEX_ICON, ICON_REMOVE];
-    _action set [ACTION_INDEX_ICONCOLOR, COLOR_REMOVE];
+    SET_ACTION(_action,LLSTRING(ActionRemove),ICON_REMOVE,COLOR_REMOVE);
 };
 
 // Command aura active — an area cannot be added (see FUNC(setArea));
 // cosmetic grey like the cooldown state below
 if (GETVAR(_officer,GVAR(auraActive),false)) exitWith {
-    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionAdd)];
-    _action set [ACTION_INDEX_ICON, ICON_ADD];
-    _action set [ACTION_INDEX_ICONCOLOR, COLOR_COOLDOWN];
+    SET_ACTION(_action,LLSTRING(ActionAdd),ICON_ADD,COLOR_COOLDOWN);
 };
 
 private _cooldown = [_officer] call FUNC(isOnCooldown);
 
 if (_cooldown > 0) then {
-    _action set [ACTION_INDEX_DISPLAYNAME, format [LLSTRING(ActionCooldown), ceil _cooldown]];
-    _action set [ACTION_INDEX_ICON, ICON_ADD];
-    _action set [ACTION_INDEX_ICONCOLOR, COLOR_COOLDOWN];
+    SET_ACTION(_action,format [ARR_2(LLSTRING(ActionCooldown),ceil _cooldown)],ICON_ADD,COLOR_COOLDOWN);
 } else {
-    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionAdd)];
-    _action set [ACTION_INDEX_ICON, ICON_ADD];
-    _action set [ACTION_INDEX_ICONCOLOR, COLOR_ADD_ZONE];
+    SET_ACTION(_action,LLSTRING(ActionAdd),ICON_ADD,COLOR_ADD_ZONE);
 };

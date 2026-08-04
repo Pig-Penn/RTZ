@@ -74,7 +74,9 @@ GVAR(watchers) = createHashMap;
 // active-stream list whenever any of them changes. A payload with nothing in any
 // slice unsubscribes.
 [QGVAR(watch), {
-    params ["_player", "_units", "_vehs", "_hulls", "_streams", ["_detailed", false]];
+    // _detailed is type-checked: it arrives over a CLIENT-fired server event, and
+    // the per-tick gather memo indexes on it.
+    params ["_player", "_units", "_vehs", "_hulls", "_streams", ["_detailed", false, [false]]];
     if (isNull _player) exitWith {};
 
     private _pk = netId _player;
@@ -128,6 +130,38 @@ GVAR(watchers) = createHashMap;
 
     private _sendTime = time;
     private _stale = [];
+
+    // ── Per-tick gather memo ─────────────────────────────────────────────────
+    // stream id -> (slice entry -> gathered entry).
+    //
+    // Every registered gatherer is a PURE function of its slice entry: it reads
+    // the entity and nothing else — not the curator, not the player, not the
+    // watcher record. So N curators whose selections overlap were paying N times
+    // over for byte-identical answers, and gatherUnitInfo is not cheap (morale,
+    // suppression, unit state, current command, life state, seven AI-feature
+    // reads, weapon and magazine reads, a LAMBS variable, target resolution, and
+    // a full targetsQuery when the dialog is open). Four curators on a shared
+    // selection meant four times that per unit per tick.
+    //
+    // Keyed on the entry's ENTITY — element 0, an object in every slice shape —
+    // and split into a plain and a detailed map per stream, so a curator with
+    // the selection dialog open never receives the cheaper answer built for one
+    // without. Objects are used as keys rather than the entry array because the
+    // entity alone determines the result: for the hull slice the vehicle is
+    // `vehicle _unit`, and two curators whose hull entries name different crewmen
+    // of the same vehicle genuinely want separate answers, which this gives them.
+    //
+    // Everything downstream is untouched: each watcher still runs its own send
+    // diff and gets its own targeted event. Only the COMPUTATION is shared,
+    // turning O(curators x entities) into O(entities).
+    //
+    // Safe to share the resulting entry arrays by reference: no receiver or
+    // renderer mutates one in place — the three overlay renderers' lazy bake
+    // builds new arrays with `apply` and writes back to the RECORD, not the entry.
+    //
+    // Rebuilt every tick and dropped when this scope ends, so it cannot grow —
+    // which matters on a multi-hour operation.
+    private _memo = createHashMap;
 
     {
         // _x: player netId (key), _y: the watcher record. ALIAS THE KEY — the
@@ -220,9 +254,21 @@ GVAR(watchers) = createHashMap;
             // Slice entries are built with the "dialog open" flag already appended,
             // so the gatherer's argument list is flat and no array is allocated
             // per entity per tick just to carry it.
+            // Shared across every watcher this tick — see the memo note above.
+            // [plain, detailed]; isEqualTo rather than a bare select so a
+            // malformed flag can never throw on the index (it returns false).
+            private _streamMemo = _memo getOrDefault [_stream, [createHashMap, createHashMap], true];
+            private _entryMemo  = _streamMemo select (parseNumber (_detailed isEqualTo true));
+
             private _entries = [];
             {
-                private _entry = _x call _gather;
+                // Closed over rather than read from `_this`: getOrDefaultCall
+                // runs its default block with _this set to [key, hashMap], not
+                // the key (docs/Knowledge Base/Gotchas.md §3).
+                private _sliceEntry = _x;
+                private _entry = _entryMemo getOrDefaultCall [
+                    _sliceEntry select 0, {_sliceEntry call _gather}, true
+                ];
                 if (_entry isNotEqualTo []) then { _entries pushBack _entry };
             } forEach _list;
 

@@ -65,6 +65,10 @@ GVAR(destModeLabels) = createHashMapFromArray [
 // through EFUNC(core,setDemand) instead, so the engine does not have to read one
 // of this component's globals by name to know whether anyone wants the feed.
 GVAR(dialogOpen) = false;
+// Set by FUNC(receiveUnitData) when a new snapshot lands; consumed by the selection
+// dialog's tick, which otherwise rebuilds its whole row model four times a second
+// whether or not anything changed. Same contract as GVAR(unitTagsDirty) above.
+GVAR(selRowsDirty) = true;
 
 // Display-label tables. Both hold LOCALIZED text: the packets carry stable wire
 // tokens (FLAG_*, STATUS_*, LAMBS' own task/tactic strings) and these turn them

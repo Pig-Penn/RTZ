@@ -112,7 +112,7 @@ did nothing — the parameter was accepted, documented, and inert:
 |---|---|
 | [fnc_collectDeletables.sqf](addons/delete/functions/fnc_collectDeletables.sqf) | `_firstOnly` — and it sat *after* the crew expansion it existed to skip |
 | [fnc_findTargets.sqf](addons/supply/functions/fnc_findTargets.sqf) | `_limit` — the context-menu condition swept a whole parked column to answer a boolean |
-| [fnc_findCountermeasureWeapons.sqf](addons/common/functions/fnc_findCountermeasureWeapons.sqf) | `_firstOnly` |
+| [fnc_findCountermeasureWeapons.sqf](addons/smoke/functions/fnc_findCountermeasureWeapons.sqf) | `_firstOnly` |
 
 The other two were worse, because the loop did not merely cost too much — it returned the
 **wrong answer**. Both walked `lineIntersectsSurfaces`, whose hits come back sorted by distance
@@ -121,8 +121,26 @@ on, so each later hit overwrote the result and the **last** surface won instead 
 
 | Site | Symptom |
 |---|---|
-| [fnc_teleportToCursor.sqf](addons/common/functions/fnc_teleportToCursor.sqf) | Trace runs downward from 200 m up, so "first" means highest. Units teleported onto a multi-storey building landed on its ground floor, and units aimed at a bridge landed underneath it |
+| [fnc_teleportToCursor.sqf](addons/orders/functions/fnc_teleportToCursor.sqf) | Trace runs downward from 200 m up, so "first" means highest. Units teleported onto a multi-storey building landed on its ground floor, and units aimed at a bridge landed underneath it |
 | [fnc_placementPreview.sqf](addons/common/functions/fnc_placementPreview.sqf) | Trace runs outward from the curator camera, so "first" means nearest. The placement ghost snapped through the roof under the cursor down to the ground below it |
+
+### `params` with the same name twice silently discards the first argument
+
+```sqf
+params ["_path", "_path"];   // BAD - the SECOND binding wins; argument 0 is lost
+```
+
+No error, no warning: the function simply runs on the wrong data. It shipped in
+`fnc_splicePath`, whose caller compounded it by shadowing the engine's answer
+(`params ["_agent", "_path"]` immediately followed by `private _path = _agent getVariable ...`)
+and then passing `[_path, _path]`. The result was that `rtz_path`'s
+route-around-obstacles feature handed an 11-element *path record* to a function
+expecting a list of positions, threw twice per blocked drag, and **had never once
+worked** — while every reader of the code saw a plausible-looking argument list.
+
+Two habits kill this: give the engine's answer and your own state visibly
+different names (`_calculated` vs `_record`, never both `_path`), and treat a
+shadowing `private` immediately after `params` as a smell rather than a shortcut.
 
 The lesson generalises: an `exitWith` whose block **assigns** rather than merely reads is not just a
 missed optimisation, it is a silent last-wins reducer. Grep for `exitWith` inside `forEach` before
@@ -627,6 +645,7 @@ when someone looks.
 | Delay does nothing, code runs instantly | `sleep` in unscheduled (§1) |
 | Loop only processes some elements | `exitWith` acting as `continue` (§2), or the 10k unscheduled `while` cap (§1) |
 | Function returns `nil` exactly when it succeeds | bare `breakOut` with no value (§2) |
+| Function runs on the wrong argument, no error | duplicate name in `params`, or a `private` shadowing it on the next line (§2) |
 | Error on the *left* guard's own condition | `&&` without `{}` on the right (§2) |
 | Rest of `postInit` silently missing | `if (nil) then` on an unsynced CBA setting (§4) |
 | Order works in SP / as host, not on dedicated | locality (§4) |

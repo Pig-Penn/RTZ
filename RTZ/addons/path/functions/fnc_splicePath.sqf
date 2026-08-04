@@ -23,14 +23,14 @@
  * Points were spliced in <BOOL>
  *
  * Example:
- * [_path, _path] call rtz_path_fnc_splicePath
+ * [_record, _calculated] call rtz_path_fnc_splicePath
  *
  * Public: No
  */
 
-params ["_path", "_path"];
+params ["_path", "_calculated"];
 
-if (!GVAR(planning) || {_path isEqualTo []} || {count _path < 2}) exitWith {false};
+if (!GVAR(planning) || {_calculated isEqualTo []} || {count _calculated < 2}) exitWith {false};
 
 // The session may have turned over entirely while the engine worked, so the
 // record that matters is whichever one is live for this unit NOW
@@ -46,7 +46,7 @@ private _points = _live select PATH_POINTS;
 private _limit = _profile select PROF_MAX_POINTS;
 
 // The engine samples far finer than a traced path does
-private _legs = [_path, _profile select PROF_SPACING] call FUNC(reducePath);
+private _legs = [_calculated, _profile select PROF_SPACING] call FUNC(reducePath);
 
 private _added = false;
 {

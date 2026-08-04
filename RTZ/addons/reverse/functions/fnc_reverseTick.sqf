@@ -65,7 +65,14 @@ for "_i" from (count GVAR(active)) - 1 to 0 step -1 do {
     // frame it dies rather than up to CHECK_INTERVAL later, which is the
     // difference between a clean stop and a wreck that slides for a quarter
     // second after exploding.
+    // `local` sits here for the same reason as `alive`, and is just as cheap: it
+    // gates the setVelocity at the bottom of this loop. Left in the throttled
+    // block below it, an ownership transfer mid-slide meant up to CHECK_INTERVAL
+    // of pushing a hull this machine no longer drives — silently doing nothing —
+    // and endReverse's driver restore not running until that long after the
+    // handover.
     private _finished = !alive _vehicle
+        || {!local _vehicle}
         || {_remaining <= 0}
         || {_vehicle distance2D _destination <= ARRIVAL_DISTANCE};
 
@@ -82,12 +89,9 @@ for "_i" from (count GVAR(active)) - 1 to 0 step -1 do {
         };
 
         _finished =
-            // Ownership moved mid-slide (rtz_control's transfer, a JIP handover,
-            // a headless client rebalancing). setVelocity would silently do
-            // nothing from here on, so hand the vehicle over cleanly instead of
-            // pushing at something this machine no longer drives.
-            !local _vehicle
-            || {!canMove _vehicle}
+            // Ownership (!local) is tested per frame above, not here — it decides
+            // whether the setVelocity at the bottom of the loop does anything.
+            !canMove _vehicle
             // Not "is there a driver" but "is it still HIM" — a swapped seat ends
             // this maneuver so teardown can release the unit it actually disabled
             || {(driver _vehicle) isNotEqualTo _driver}

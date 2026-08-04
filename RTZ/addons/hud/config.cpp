@@ -9,7 +9,7 @@ class CfgPatches {
         // rtz_orders is required for one read: FUNC(gatherVehicleInfo) reports
         // the commanded fly-in height that component's keybind writes onto the
         // vehicle. One-way — rtz_orders knows nothing about this component.
-        requiredAddons[] = {"rtz_main", "rtz_common", "rtz_core", "rtz_orders", "zen_context_menu"};
+        requiredAddons[] = {"rtz_main", "rtz_common", "rtz_core", "rtz_orders", "zen_common", "zen_context_menu", "zen_dialog"};
         author = "Maxim";
         authors[] = {"Maxim"};
         url = "";

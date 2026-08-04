@@ -9,7 +9,7 @@ class CfgPatches {
         // rtz_common for the selection normalizer (EFUNC(common,collectVehicles))
         // and the curator toast (EFUNC(common,showCountMessage)); zen_context_menu
         // for the action in CfgContext.hpp.
-        requiredAddons[] = {"rtz_main", "rtz_common", "zen_context_menu"};
+        requiredAddons[] = {"rtz_main", "rtz_common", "zen_common", "zen_context_menu"};
         author = "Maxim";
         authors[] = {"Maxim"};
         url = "";

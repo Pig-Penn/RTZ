@@ -33,18 +33,14 @@ if (_grps isEqualTo []) exitWith {};
 private _grp = _grps select 0;
 
 if (dynamicSimulationEnabled _grp && {!(_grp getVariable [QGVAR(dynSimDisabled), false])}) exitWith {
-    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionDisableDynamicSimulation)];
-    _action set [ACTION_INDEX_ICON, ICON_SHOW];
-    _action set [ACTION_INDEX_ICONCOLOR, COLOR_DYNSIM];
+    SET_ACTION(_action,LLSTRING(ActionDisableDynamicSimulation),ICON_SHOW,COLOR_DYNSIM);
 };
 
 private _hidden = _grp getVariable [QGVAR(squadHidden), false];
 if (_hidden) then {
-    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionEnableSimulation)];
-    _action set [ACTION_INDEX_ICON, ICON_SHOW];
-    _action set [ACTION_INDEX_ICONCOLOR, COLOR_SHOW];   // green — currently hidden, will restore
+    // green — currently hidden, will restore
+    SET_ACTION(_action,LLSTRING(ActionEnableSimulation),ICON_SHOW,COLOR_SHOW);
 } else {
-    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionDisableSimulation)];
-    _action set [ACTION_INDEX_ICON, ICON_HIDE];
-    _action set [ACTION_INDEX_ICONCOLOR, COLOR_HIDE];   // orange — will hide & freeze
+    // orange — will hide & freeze
+    SET_ACTION(_action,LLSTRING(ActionDisableSimulation),ICON_HIDE,COLOR_HIDE);
 };

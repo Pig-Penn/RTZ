@@ -25,9 +25,6 @@
         <Key ID="STR_RTZ_HUD_CategoryDogTags">
             <English>Dog Tags</English>
         </Key>
-        <Key ID="STR_RTZ_HUD_CategoryOverlays">
-            <English>Overlays</English>
-        </Key>
         <Key ID="STR_RTZ_HUD_CategoryVehicleTags">
             <English>Vehicle Tags</English>
         </Key>

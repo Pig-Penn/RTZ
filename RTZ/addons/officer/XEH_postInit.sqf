@@ -36,6 +36,18 @@
             addMissionEventHandler ["HandleDisconnect", {
                 params ["_unit"];
 
+                // A bodyless disconnect — a headless client, or a player who
+                // leaves from the lobby / slot screen — reports objNull here.
+                // getAssignedCuratorUnit also returns objNull for every
+                // UNASSIGNED curator module, and objNull isEqualTo objNull is
+                // true, so without this guard such a disconnect matched every
+                // vacant module and cleared areas belonging to curators who
+                // never left. Tested on _unit rather than isPlayer on the
+                // assigned body: by the time this fires the engine may already
+                // have deassigned the player, which would make the match never
+                // succeed and reinstate the leak this handler exists to close.
+                if (isNull _unit) exitWith {false};
+
                 {
                     if (getAssignedCuratorUnit _x isEqualTo _unit) then {
                         ["clear", _x] call FUNC(applyArea);
@@ -73,7 +85,9 @@
             // aura registry, so only it knows whether a request actually applied.
             // (The GVAR(auraZones) map-ring mirror and its QGVAR(auraZone) handler
             // are NOT here — they must be up before CBA's JIP replay, see XEH_preInit.)
-            [QGVAR(auraMsg), {(_this select 0) call zen_common_fnc_showMessage}] call CBA_fnc_addEventHandler;
+            // Aura verdicts go through EFUNC(common,notifyCurator) now. This was
+            // the copy that had drifted: it unwrapped `_this select 0` where the
+            // other three passed `_this` straight through.
 
             // Normally attached by FUNC(initCuratorDisplay) via the XEH DisplayLoad
             // event each time the curator display is created. If Zeus is somehow

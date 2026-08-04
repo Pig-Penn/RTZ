@@ -35,17 +35,11 @@ if (_officers isEqualTo []) exitWith {};
 private _officer = _officers select 0;
 
 if (GETVAR(_officer,GVAR(auraActive),false)) exitWith {
-    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionAuraRemove)];
-    _action set [ACTION_INDEX_ICON, ICON_REMOVE];
-    _action set [ACTION_INDEX_ICONCOLOR, COLOR_REMOVE];
+    SET_ACTION(_action,LLSTRING(ActionAuraRemove),ICON_REMOVE,COLOR_REMOVE);
 };
 
 if (netId _officer in GVAR(areas)) exitWith {
-    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionAuraAdd)];
-    _action set [ACTION_INDEX_ICON, ICON_ADD];
-    _action set [ACTION_INDEX_ICONCOLOR, COLOR_COOLDOWN];
+    SET_ACTION(_action,LLSTRING(ActionAuraAdd),ICON_ADD,COLOR_COOLDOWN);
 };
 
-_action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionAuraAdd)];
-_action set [ACTION_INDEX_ICON, ICON_ADD];
-_action set [ACTION_INDEX_ICONCOLOR, COLOR_ADD_AURA];
+SET_ACTION(_action,LLSTRING(ActionAuraAdd),ICON_ADD,COLOR_ADD_AURA);

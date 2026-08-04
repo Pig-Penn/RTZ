@@ -10,5 +10,6 @@ PREP(lootStep);
 PREP(lootTarget);
 PREP(offersAmmo);
 PREP(orderLoot);
+PREP(stripWorn);
 PREP(unitRole);
 PREP(weaponScore);

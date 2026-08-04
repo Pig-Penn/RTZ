@@ -5,6 +5,14 @@
 // #define DEBUG_MODE_FULL
 // #define DISABLE_COMPILE_CACHE
 
+#ifdef DEBUG_ENABLED_OFFICER
+    #define DEBUG_MODE_FULL
+#endif
+
+#ifdef DEBUG_SETTINGS_OFFICER
+    #define DEBUG_SETTINGS DEBUG_SETTINGS_OFFICER
+#endif
+
 #include "\x\rtz\addons\main\script_macros.hpp"
 
 // Editing-area IDs allocated by this client start here. IDs only need to be

@@ -6,7 +6,12 @@ class CfgPatches {
         units[] = {};
         weapons[] = {};
         requiredVersion = REQUIRED_VERSION;
-        requiredAddons[] = {"rtz_main", "rtz_common", "zen_common", "zen_attributes"};
+        // No rtz_common: this component calls nothing in it. It used to be listed
+        // only because initSettings.inc.sqf borrowed ELSTRING(common,DisplayName)
+        // for its settings category — which also put every Restrict setting under
+        // "Real-Time Zeus > Common" in CBA — to paper over a missing
+        // STR_RTZ_Restrict_DisplayName. The key exists now.
+        requiredAddons[] = {"rtz_main", "zen_common", "zen_attributes"};
         author = "Maxim";
         authors[] = {"Maxim"};
         url = "";

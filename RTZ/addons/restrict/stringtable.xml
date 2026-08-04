@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Restrict">
+        <Key ID="STR_RTZ_Restrict_DisplayName">
+            <English>Restrict</English>
+        </Key>
         <Key ID="STR_RTZ_Restrict_Enabled">
             <English>Restrict Servicing</English>
         </Key>

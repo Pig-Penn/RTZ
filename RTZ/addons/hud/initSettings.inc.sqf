@@ -5,7 +5,12 @@
 
 private _catTags     = [ELSTRING(main,DisplayName), LSTRING(CategoryDogTags)];
 private _catVehTags  = [ELSTRING(main,DisplayName), LSTRING(CategoryVehicleTags)];
-private _catOverlays = [ELSTRING(main,DisplayName), LSTRING(CategoryOverlays)];
+// rtz_core's key, NOT a local copy. CBA groups settings by the LOCALIZED STRING,
+// so this component's overlay switches and the engine's cadence knob shared a
+// category only because two separate stringtable entries happened to hold
+// byte-identical English. The first translation of either would have silently
+// split them into two categories. rtz_core is already a hard dependency.
+private _catOverlays = [ELSTRING(main,DisplayName), ELSTRING(core,CategoryOverlays)];
 
 [
     QGVAR(enableUnitTags),

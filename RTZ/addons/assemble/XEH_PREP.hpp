@@ -13,7 +13,6 @@ PREP(ejectCrew);
 PREP(findAssembleSets);
 PREP(finishBuild);
 PREP(finishPack);
-PREP(notifyCurator);
 PREP(orderAssemble);
 PREP(orderDisassemble);
 PREP(packWeapon);

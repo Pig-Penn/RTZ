@@ -53,10 +53,15 @@ private _shift = RC_COLOR_SHIFT_MAX * ((sin (time * RC_COLOR_SHIFT_FREQ) + 1) / 
     // Mounted: head + 1 m sits inside the hull, so anchor to the vehicle's
     // bounding-box roof + 1 m instead.
     private _iconPos = if (isNull objectParent _unit) then {
-        (_unit modelToWorldVisual (_unit selectionPosition "Head")) vectorAdd [0, 0, 1]
+        (_unit modelToWorldVisual ([_unit] call EFUNC(common,headOffset))) vectorAdd [0, 0, 1]
     } else {
         _anchor modelToWorldVisual [0, 0, ((boundingBoxReal _anchor) select 1 select 2) + 1]
     };
+    // Both branches return [] while the model has not resolved on this machine,
+    // and the on-foot branch's [] vectorAdd [...] stays []. Skip the frame — it
+    // resolves on the next one (Gotchas §3).
+    if (count _iconPos < 3) then { continue };
+
     // ~1/4 of the chevron size table (the portrait texture fills its full bounding
     // box whereas the thin wedge does not), as a smooth ramp.
     private _iconW = linearConversion [RC_ICON_NEAR, RC_ICON_FAR, _dist, RC_ICON_MAX_WIDTH, RC_ICON_MIN_WIDTH, true];

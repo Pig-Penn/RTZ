@@ -171,6 +171,13 @@ private _hwLayout = [_halfFull, _flush + (_iconW / 2) + ([0, _step] select (_nRi
 private _hasContent = _mainText != "" || { _status != "" } || { _hasFlag }
     || { _threatIcon != "" };
 
+// Baked here rather than in the renderer: the main line and its separator are
+// both fixed by this entry, so `_mainText + _sep` was building an identical fresh
+// string per unit per FRAME (and twice over in the split-status branch). Same
+// reasoning as the measured widths below — anything the cache can settle should
+// not be settled sixty times a second.
+private _mainSep = _mainText + _sep;
+
 [
     _mainText,
     _col select [0, 3],
@@ -186,5 +193,6 @@ private _hasContent = _mainText != "" || { _status != "" } || { _hasFlag }
     _threatCenterUI,
     _flagCenterUI,
     _hwLayout,
-    _hasContent
+    _hasContent,
+    _mainSep
 ]

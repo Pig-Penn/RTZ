@@ -2,8 +2,17 @@
 /*
  * Author: Maxim
  * Moves one thing from a target into a unit with plain inventory commands, no engine
- * action and no animation of its own. SERVER - every command here needs both objects
- * local, which for the Zeus AI this targets is the same machine.
+ * action and no animation of its own. Runs where the UNIT is local, which
+ * FUNC(lootSquads) guarantees by filtering on it.
+ *
+ * The TARGET is a separate question and must not be assumed to share that machine:
+ * bodies of AI owned by a headless client or by a player-led group are local
+ * elsewhere. Where a *Global command exists (weapons, backpacks, and every cargo
+ * container) it is used and locality is a non-issue. The worn slots have no such
+ * variant — `removeVest`, `removeHeadgear` and `removeItem` are argument- AND
+ * effect-local — so those strips are routed to the body's owner through
+ * FUNC(stripWorn). Doing them inline duplicated the item: the looter gained it and
+ * the corpse kept its copy.
  *
  * Two callers, for two different reasons. The worn-gear steps use it because there IS
  * no engine action to wear a vest or a helmet - it is the only way that step can
@@ -74,9 +83,11 @@ switch (_kind) do {
     // Vest and headgear are only ever planned against a body, which is the only thing
     // that wears them - a crate holds them as item cargo with no slot to take from
     case "vest": {
+        // Read the contents BEFORE dispatching the strip - the strip may land on
+        // another machine a frame later, and this has to see the body still dressed
         private _contents = vestItems _target;
 
-        removeVest _target;
+        [QGVAR(strip), [_target, "vest", _class], _target] call CBA_fnc_targetEvent;
         _unit addVest _class;
 
         {
@@ -85,7 +96,7 @@ switch (_kind) do {
     };
 
     case "headgear": {
-        removeHeadgear _target;
+        [QGVAR(strip), [_target, "headgear", _class], _target] call CBA_fnc_targetEvent;
         _unit addHeadgear _class;
     };
 
@@ -93,7 +104,7 @@ switch (_kind) do {
     // weight, and the head slot is what the AI actually sees through
     case "nvg": {
         if (_isBody) then {
-            _target removeItem _class;
+            [QGVAR(strip), [_target, "item", _class], _target] call CBA_fnc_targetEvent;
         } else {
             _target addItemCargoGlobal [_class, -1];
         };
@@ -103,7 +114,7 @@ switch (_kind) do {
 
     case "item": {
         if (_isBody) then {
-            _target removeItem _class;
+            [QGVAR(strip), [_target, "item", _class], _target] call CBA_fnc_targetEvent;
         } else {
             _target addItemCargoGlobal [_class, -1];
         };

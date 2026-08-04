@@ -38,7 +38,7 @@ params ["_weapon", "_gunner", "_weaponBag", ["_baseBags", []], ["_curator", objN
 if (isNull _weapon) exitWith {};
 
 if (!local _weapon) exitWith {
-    [_curator, LLSTRING(WeaponNotLocal)] call FUNC(notifyCurator);
+    [_curator, LLSTRING(WeaponNotLocal)] call EFUNC(common,notifyCurator);
 };
 
 // Claim the weapon, so a double right-click can't pack it twice - and so the context

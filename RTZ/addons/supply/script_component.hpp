@@ -94,15 +94,10 @@
 // how a copy misleads. FUNC(drawSupply) appends its own distance-fade alpha.
 #define COLOR_SUPPLY_RGB [0.40, 0.80, 0.50]
 
-// Draw tuning, matched to the engine's other overlays so the three read as one
-// system: lines start fading at FADE_NEAR and bottom out at MAX_DRAW_DIST, and
-// labels only render while the cursor is within LABEL_CURSOR_RADIUS of the icon
-// (GUI screen units).
-#define MAX_DRAW_DIST       2500
-#define FADE_NEAR           800
-#define LABEL_CURSOR_RADIUS 0.05
-#define LABEL_TEXT_SIZE     0.03
-#define LABEL_FONT          "RobotoCondensed"
+// MAX_DRAW_DIST / FADE_NEAR / LABEL_CURSOR_RADIUS / LABEL_TEXT_SIZE / LABEL_FONT
+// come from core/script_macros_core.hpp, included above. They used to be copied
+// here to keep this overlay "matched to the engine's other overlays" — which is
+// exactly why they belong in one place instead.
 #define ICON_SIZE_SERVICE   0.7
 
 // The overlay hangs its icon and label at the MIDPOINT of each supply line, not

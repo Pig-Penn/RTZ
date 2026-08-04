@@ -53,5 +53,9 @@ GVAR(surrenderedUnits) pushBackUnique _unit;
 // First prisoner on the list — raise the engine. The tick takes itself down when
 // the list empties again.
 if (GVAR(pfh) < 0) then {
-    GVAR(pfh) = [FUNC(captureTick), CAPTURE_INTERVAL] call CBA_fnc_addPerFrameHandler;
+    // LINKFUNC, not bare FUNC: FUNC captures the compiled body at registration, so
+    // under DISABLE_COMPILE_CACHE a running watch would keep executing the stale
+    // copy after a recompile. rtz_reverse and rtz_path register their ticks the
+    // same way.
+    GVAR(pfh) = [LINKFUNC(captureTick), CAPTURE_INTERVAL] call CBA_fnc_addPerFrameHandler;
 };

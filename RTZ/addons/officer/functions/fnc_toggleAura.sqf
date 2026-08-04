@@ -9,7 +9,7 @@
  * Unlike editing areas the aura registry lives on the SERVER (FUNC(applyAura))
  * — an aura is a world effect, not per-curator state — so this dispatches one
  * request and all feedback except the local pre-check comes back via
- * QGVAR(auraMsg): only the server knows whether a request actually applied.
+ * EFUNC(common,notifyCurator): only the server knows whether a request applied.
  *
  * Arguments:
  * N: Objects <OBJECT>

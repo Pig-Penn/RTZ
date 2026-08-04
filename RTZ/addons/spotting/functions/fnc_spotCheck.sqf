@@ -91,7 +91,15 @@ private _dbg = GETMVAR(RTZ_debug,false);
 // move once placed (see EFUNC(officer,monitorAreas)) — so the ring the client
 // draws from it marks the ground the enemy Zeus can actually edit, not
 // wherever the officer has since wandered.
-private _officerZones = GETMVAR(RTZ_officerZoneMap,createHashMap);
+// One shared empty map for every "missing" fallback in this pass. SQF evaluates
+// getVariable / getOrDefault arguments EAGERLY, so spelling createHashMap inline
+// allocated and immediately discarded a map on every single call — the same
+// mistake XEH_preInit documents having already fixed once for GVAR(rcDisplay).
+// Safe to share because every use below only ever READS the result (a plain
+// getOrDefault, a count, a values), so no caller can write into the sentinel.
+private _emptyMap = createHashMap;
+
+private _officerZones = GETMVAR(RTZ_officerZoneMap,_emptyMap);
 
 // ── Group manned curators by side ─────────────────────────────────────────
 // Resolved BEFORE the unit/vehicle classification so a tick with no manned
@@ -242,7 +250,7 @@ if (count _bySide > 0 || _dbg) then {
         {
             private _player = getAssignedCuratorUnit _x;
             private _curatorSide = if (!isPlayer _player) then { sideUnknown } else { side _player };
-            private _repCount = count (_sideSpotterReps getOrDefault [str _curatorSide, createHashMap]);
+            private _repCount = count (_sideSpotterReps getOrDefault [str _curatorSide, _emptyMap]);
             private _sig = format ["%1|%2|%3", _player, _curatorSide, _repCount];
 
             if (_sig != (GVAR(spotDebugLast) getOrDefault [netId _x, ""])) then {
@@ -265,7 +273,7 @@ private _currentKeys = createHashMap;
     private _spotterSideStr = str _spotterSide;
 
     // One representative per local AI group on this side — the spotter set.
-    private _spotterReps = values (_sideSpotterReps getOrDefault [_x, createHashMap]);
+    private _spotterReps = values (_sideSpotterReps getOrDefault [_x, _emptyMap]);
     if (_spotterReps isEqualTo []) then { continue };
 
     // ── Invert the knowledge matrix ───────────────────────────────────

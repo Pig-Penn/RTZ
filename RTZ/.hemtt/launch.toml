@@ -9,13 +9,3 @@ workshop = [
     "1779063631", # Zeus Enhanced (ZEN)
     "2434257231", # LAMBS_Danger.fsm (DEV)
 ]
-
-# Same, minus LAMBS: verifies the LAMBS-optional paths still behave when the
-# mod is absent (rtz_hud inlines LAMBS' danger-cause table precisely so the
-# addon never hard-depends on it — see DANGER_LABEL_KEYS).
-[nolambs]
-mission = "test.VR"
-workshop = [
-    "450814997",  # CBA_A3
-    "1779063631", # Zeus Enhanced (ZEN)
-]

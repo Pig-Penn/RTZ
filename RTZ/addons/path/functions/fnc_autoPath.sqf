@@ -65,11 +65,13 @@ if (isNull _agent) exitWith {
 // carries the identity.
 _agent setVariable [QGVAR(path), _path];
 
+// The engine's answer arrives as the event's second argument; the record it
+// belongs to rides on the agent. Both are needed — bind them to DIFFERENT names.
 _agent addEventHandler ["PathCalculated", {
-    params ["_agent", "_path"];
-    private _path = _agent getVariable [QGVAR(path), []];
+    params ["_agent", "_calculated"];
+    private _record = _agent getVariable [QGVAR(path), []];
     deleteVehicle _agent;
-    [_path, _path] call FUNC(splicePath);
+    [_record, _calculated] call FUNC(splicePath);
 }];
 
 // The event is not guaranteed. Without this the agent outlives the search for

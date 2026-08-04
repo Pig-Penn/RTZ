@@ -19,14 +19,17 @@
 // its modifierFunction.
 #define ICON_HIDE "\x\rtz\addons\control\ui\pause_ca.paa"
 #define ICON_SHOW "\x\rtz\addons\control\ui\play_ca.paa"
-#define COLOR_HIDE [1.00, 0.60, 0.20, 1] // Orange
-#define COLOR_SHOW [0.40, 1.00, 0.40, 1] // Green
+// Orange
+#define COLOR_HIDE [1.00, 0.60, 0.20, 1]
+// Green
+#define COLOR_SHOW [0.40, 1.00, 0.40, 1]
 
 // Third state for the same action: a group still under the editor-placed
 // Dynamic Simulation system. Reuses ICON_SHOW (blue tint) rather than a new
 // asset — clicking it turns Dynamic Simulation off, after which the toggle
 // above reverts to its normal orange/green behaviour.
-#define COLOR_DYNSIM [0.20, 0.60, 1.00, 1] // Blue
+// Blue
+#define COLOR_DYNSIM [0.20, 0.60, 1.00, 1]
 
 #define ICON_OWNERSHIP "\x\zen\addons\context_actions\ui\add_ca.paa"
 #define ICON_RESET "\a3\3DEN\Data\CfgWaypoints\cycle_ca.paa"
@@ -37,5 +40,7 @@
 // unlock once locked (will release).
 #define ICON_LOCKED "\a3\modules_f\data\iconlock_ca.paa"
 #define ICON_UNLOCKED "\a3\modules_f\data\iconunlock_ca.paa"
-#define COLOR_LOCKED [1.00, 0.78, 0.22, 1] // Amber
-#define COLOR_UNLOCKED [0.40, 0.80, 1.00, 1] // Cyan
+// Amber
+#define COLOR_LOCKED [1.00, 0.78, 0.22, 1]
+// Cyan
+#define COLOR_UNLOCKED [0.40, 0.80, 1.00, 1]

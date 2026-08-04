@@ -69,7 +69,7 @@ private _records = [];
     // objectParent re-check: the unit can mount between server pushes.
     if (isNull _unit || {!alive _unit} || {!isNull objectParent _unit}) then { continue };
 
-    private _head = _unit modelToWorldVisual (_unit selectionPosition "Head");
+    private _head = _unit modelToWorldVisual ([_unit] call EFUNC(common,headOffset));
     // modelToWorldVisual yields [] while the model has not resolved on this machine
     // (the frames right after Zeus creates the unit), and `distance` throws a
     // Generic error on []. That error ABORTS THE WHOLE forEach, so one unresolved
@@ -143,8 +143,14 @@ private _showFlags = GVAR(tagShowFlagIcon);
     _entry params [
         "_mainText", "_rgbMain", "_statusText", "_rgbStatus", "_sep", "_flagsText",
         "_threatIcon", "_rgbThreat", "_threatHover",
-        "_wMainSep", "_wStatus", "_threatCenterUI", "_flagCenterUI"
+        "_wMainSep", "_wStatus", "_threatCenterUI", "_flagCenterUI",
+        "", "", "_mainSep"
     ];
+
+    // The distance fade is the only per-frame part of the colour, so build each
+    // RGBA once here instead of re-concatenating inside every drawIcon3D below.
+    private _colMain   = _rgbMain + [_alpha];
+    private _colThreat = _rgbThreat + [_alpha];
 
     private _dpos = _pos;
     if (_yShift != 0) then {
@@ -165,12 +171,12 @@ private _showFlags = GVAR(tagShowFlagIcon);
     // drawIcon3D textAlign names the SIDE of the anchor the text sits on (not
     // typographic alignment): "left" ends at the anchor, "right" starts there.
     if (_statusText == "") then {
-        drawIcon3D ["", _rgbMain + [_alpha], _dpos, 0, 0, 0, _mainText + _sep, 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
+        drawIcon3D ["", _colMain, _dpos, 0, 0, 0, _mainSep, 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
     } else {
         private _boundaryUI  = ((_wMainSep + _wStatus) / 2) - _wStatus;
         private _boundaryPos = _dpos vectorAdd (_camRight vectorMultiply (_boundaryUI / _perMetre));
-        drawIcon3D ["", _rgbMain   + [_alpha], _boundaryPos, 0, 0, 0, _mainText + _sep, 2, _size, "RobotoCondensedBold", "left",  false, 0, 0];
-        drawIcon3D ["", _rgbStatus + [_alpha], _boundaryPos, 0, 0, 0, _statusText,      2, _size, "RobotoCondensedBold", "right", false, 0, 0];
+        drawIcon3D ["", _colMain,              _boundaryPos, 0, 0, 0, _mainSep,    2, _size, "RobotoCondensedBold", "left",  false, 0, 0];
+        drawIcon3D ["", _rgbStatus + [_alpha], _boundaryPos, 0, 0, 0, _statusText, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
     };
 
     // Icons ride the flush centre offsets measured at cache-build time (UI-x from
@@ -182,9 +188,9 @@ private _showFlags = GVAR(tagShowFlagIcon);
     if (_threatIcon != "") then {
         private _iconPos = _dpos vectorAdd (_camRight vectorMultiply (_threatCenterUI / _perMetre));
         if ([_scrX + _threatCenterUI, _scrY] distance2D _mouse < ICON_HOVER_RADIUS) then {
-            drawIcon3D [_threatIcon, _rgbThreat + [_alpha], _iconPos, _iconDraw, _iconDraw, 0, _threatHover, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
+            drawIcon3D [_threatIcon, _colThreat, _iconPos, _iconDraw, _iconDraw, 0, _threatHover, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
         } else {
-            drawIcon3D [_threatIcon, _rgbThreat + [_alpha], _iconPos, _iconDraw, _iconDraw, 0, "", 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
+            drawIcon3D [_threatIcon, _colThreat, _iconPos, _iconDraw, _iconDraw, 0, "", 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
         };
     };
 
@@ -195,7 +201,7 @@ private _showFlags = GVAR(tagShowFlagIcon);
         if ([_scrX + _flagCenterUI, _scrY] distance2D _mouse < ICON_HOVER_RADIUS) then {
             drawIcon3D [FLAG_ICON, COL_GOLD, _iconPos, _iconDraw, _iconDraw, 0, _flagsText, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
         } else {
-            drawIcon3D [FLAG_ICON, _rgbMain + [_alpha], _iconPos, _iconDraw, _iconDraw, 0, "", 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
+            drawIcon3D [FLAG_ICON, _colMain, _iconPos, _iconDraw, _iconDraw, 0, "", 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
         };
     };
 } forEach _records;

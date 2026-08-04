@@ -29,11 +29,9 @@ private _vehs = [_objects] call FUNC(collectDismountVehicles);
 if (_vehs isEqualTo []) exitWith {};
 
 if ((_vehs findIf {_x getVariable [QGVAR(dismountAllowed), true]}) != -1) then {
-    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionForbidDismount)];
-    _action set [ACTION_INDEX_ICON, ICON_LOCKED];
-    _action set [ACTION_INDEX_ICONCOLOR, COLOR_LOCKED];     // amber — will lock crew in
+    // amber — will lock crew in
+    SET_ACTION(_action,LLSTRING(ActionForbidDismount),ICON_LOCKED,COLOR_LOCKED);
 } else {
-    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionAllowDismount)];
-    _action set [ACTION_INDEX_ICON, ICON_UNLOCKED];
-    _action set [ACTION_INDEX_ICONCOLOR, COLOR_UNLOCKED];   // cyan — currently locked, will release
+    // cyan — currently locked, will release
+    SET_ACTION(_action,LLSTRING(ActionAllowDismount),ICON_UNLOCKED,COLOR_UNLOCKED);
 };

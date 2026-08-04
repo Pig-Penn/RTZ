@@ -6,12 +6,23 @@
  *
  * Two narrow lookups instead of one broad one. `nearSupplies` is the engine's own
  * "containers holding something" query and answers for crates, weapon holders and
- * vehicles in a single spatial pass; corpses come from `allDeadMen`, an array the
- * engine already maintains, filtered by distance. That replaces a nearestObjects
- * sweep over ["ThingX", "WeaponHolder", "WeaponHolderSimulated", "AllVehicles"] which
- * paid for three overlapping type filters and then dragged in every LIVING soldier in
- * radius purely to throw them away again. nearSupplies still returns live units, so
- * they are filtered here too - ACE's CSW reloading does the same with the same call.
+ * vehicles in a single spatial pass. That replaces a nearestObjects sweep over
+ * ["ThingX", "WeaponHolder", "WeaponHolderSimulated", "AllVehicles"] which paid for
+ * three overlapping type filters and then dragged in every LIVING soldier in radius
+ * purely to throw them away again. nearSupplies still returns live units, so they are
+ * filtered here too - ACE's CSW reloading does the same with the same call.
+ *
+ * Corpses come from a SECOND, deliberately narrow spatial query over CAManBase alone.
+ * This used to walk `allDeadMen` and filter by distance, on the reasoning that the
+ * engine maintains that array for free. It does - but the array is every corpse in the
+ * mission and it only ever grows, while this function is reached from the context-menu
+ * CONDITION (FUNC(canLoot)), which runs on every right-click, once PER GROUP, and the
+ * memo below is keyed on position so no two groups share an entry. Four hours in, an
+ * eight-group selection meant eight walks over a four-figure array on the frame the
+ * menu opened. A CAManBase query drags in the living soldiers the note above warns
+ * about, but that is a handful inside the radius against an unbounded list outside it,
+ * and `!alive` is the cheapest test in the predicate. Unsorted - nothing here reads the
+ * order, and sorting is the expensive half of nearestObjects.
  *
  * The two lists can overlap (whether nearSupplies counts a corpse as a container is
  * not worth depending on either way), so the merge is pushBackUnique.
@@ -99,7 +110,12 @@ private _lootables = [];
 {
     private _body = _x;
 
-    private _lootable = _body distance2D _position < _radius
+    // !alive leads: it is the cheapest test and rejects the living men the
+    // CAManBase query necessarily includes. distance2D is kept behind it because
+    // nearestObjects culls on a sphere, so it would otherwise admit a body on a
+    // rooftop that is outside the flat radius the rest of the errand assumes.
+    private _lootable = !alive _body
+        && {_body distance2D _position < _radius}
         && {!isObjectHidden _body}
         && {isNull objectParent _body}
         && {
@@ -114,7 +130,7 @@ private _lootables = [];
     if (_lootable) then {
         _lootables pushBackUnique _body;
     };
-} forEach allDeadMen;
+} forEach nearestObjects [_position, ["CAManBase"], _radius, false];
 
 GVAR(scanCache) set [_key, [CBA_missionTime, _lootables]];
 

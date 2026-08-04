@@ -10,8 +10,19 @@ if (!isServer && {!hasInterface}) exitWith {};
     [{
         // Curators are set up even with the economy disabled, so that disabled
         // reliably means free rather than whatever the mission's Zeus modules
-        // were configured with
-        {_x call FUNC(initCurator)} forEach allCurators;
+        // were configured with.
+        //
+        // SERVER ONLY. This used to run on every interface machine as well, which
+        // meant a getVariable per curator module every TICK_INTERVAL on every
+        // client for the whole mission, to catch an event that happens a handful
+        // of times. The client half of FUNC(initCurator) only attaches a
+        // CuratorObjectRegistered handler, and that handler only ever fires "on
+        // the machine of the player entering the curator interface" — so the
+        // client is served exactly as well by doing it when the curator display
+        // actually opens (see the zen_curatorDisplayLoaded handler below).
+        if (isServer) then {
+            {_x call FUNC(initCurator)} forEach allCurators;
+        };
 
         if (isServer && {GVAR(enable)} && {GVAR(income) > 0}) then {
             private _points = GVAR(income) * TICK_INTERVAL / 60;
@@ -26,6 +37,12 @@ if (!hasInterface) exitWith {};
 // and its controls are recreated on every open, so these handlers go with them
 ["zen_curatorDisplayLoaded", {
     params ["_display"];
+
+    // Client-side half of the lazy curator detection the income tick used to do
+    // for everyone (see above). FUNC(initCurator) is idempotent, and this is the
+    // moment the handler it attaches starts to matter — a module created
+    // mid-mission is picked up the next time anyone opens Zeus.
+    {_x call FUNC(initCurator)} forEach allCurators;
 
     {
         (_display displayCtrl _x) ctrlAddEventHandler ["TreeSelChanged", LINKFUNC(placementToast)];

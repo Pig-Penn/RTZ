@@ -5,6 +5,14 @@
 // #define DEBUG_MODE_FULL
 // #define DISABLE_COMPILE_CACHE
 
+#ifdef DEBUG_ENABLED_SPOTTING
+    #define DEBUG_MODE_FULL
+#endif
+
+#ifdef DEBUG_SETTINGS_SPOTTING
+    #define DEBUG_SETTINGS DEBUG_SETTINGS_SPOTTING
+#endif
+
 #include "\x\rtz\addons\main\script_macros.hpp"
 
 // RENDER_WORLD / CTX_* — this component registers the spot and remote-control

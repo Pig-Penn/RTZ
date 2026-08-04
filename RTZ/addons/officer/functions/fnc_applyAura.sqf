@@ -21,7 +21,7 @@
  * holding are released by the next FUNC(monitorAuras) pass (≤ AURA_INTERVAL
  * seconds), so removal never needs to know who was inside.
  *
- * Curator feedback is sent from here via QGVAR(auraMsg) to the requester —
+ * Curator feedback is sent from here via EFUNC(common,notifyCurator) to the requester —
  * only the server knows whether a request actually applied.
  *
  * Every add/remove also broadcasts QGVAR(auraZone) to ALL clients (keyed by
@@ -94,4 +94,4 @@ private _msg = if (_mode isEqualTo "add") then {
     [LSTRING(MsgAuraRemoved)]
 };
 
-[QGVAR(auraMsg), [_msg], _requester] call CBA_fnc_targetEvent;
+[_requester, _msg] call EFUNC(common,notifyCurator);
