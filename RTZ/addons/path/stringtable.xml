@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Path">
+        <Key ID="STR_RTZ_Path_DisplayName">
+            <English>Path Planning</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_Enable">
+            <English>Enable Path Planning</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_Enable_Description">
+            <English>Enables the path planning mode: drag a path in front of a selected unit or vehicle and it drives, flies, sails or walks it. Off by default.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_FormationTrail">
+            <English>Trail the Rest of the Selection</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_FormationTrail_Description">
+            <English>While tracing one path, give every other selected unit of the same kind the same path ending a fixed distance further back, so a column is one gesture instead of six. Only paths nothing has been drawn on are recruited, and grabbing a handle takes that path back under manual control.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_FreezeWhilePlanning">
+            <English>Hold Units While Planning</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_FreezeWhilePlanning_Description">
+            <English>Stop the selected units in place for as long as a path is being drawn for them, so they do not walk out from under it. Released when planning ends. Note that a unit already being held still by something else — a LAMBS garrison, for example — is released along with the rest.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_MaxVehicleSpeed">
+            <English>Maximum Path Speed</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_MaxVehicleSpeed_Description">
+            <English>Fastest a vehicle will drive a planned path, in km/h. Capped well below most vehicles' top speed on purpose: a vehicle given its full config speed drives a traced path like a time trial and loses the line on the first corner. A group set to Limited speed halves this again.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_MsgCancelled">
+            <English>Path planning cancelled</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_MsgExecuting">
+            <English>Executing paths</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_MsgNonePathable">
+            <English>Nothing in the selection can be given a path</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_MsgPlanning">
+            <English>Planning paths</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_Timeout">
+            <English>Path Timeout</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_Timeout_Description">
+            <English>Time in minutes a unit may spend following a planned path before the path is abandoned. A backstop, not the usual way a path ends — it exists so a unit whose destination became unreachable is not still walking towards it hours later.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_TogglePlanning">
+            <English>Toggle Path Planning</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_TogglePlanning_Description">
+            <English>Opens path planning for the selected units and vehicles: drag the arrow in front of one to trace the path it should take. Press again to execute every path drawn, or Escape to cancel. Selecting a crew member plans for the vehicle he is riding in.</English>
+        </Key>
+    </Package>
+</Project>
