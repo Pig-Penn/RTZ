@@ -451,7 +451,21 @@ private _currentKeys = createHashMap;
                 then { [side _member, true] call EFUNC(common,sideColor) }
                 else { _mrkrColor };
             private _wedgeColor = [_base#0, _base#1, _base#2, WEDGE_ALPHA];
+            // Surrendered (rtz_captive) overrides → white-flag chevron, so a
+            // curator can pick the men who have given up out of a firefight
+            // without hovering them. Captured prisoners keep the flag: capture
+            // never clears QEGVAR(captive,surrendered).
+            //
+            // A SOFT read, like the officer zone map below and rtz_hud's read of
+            // QEGVAR(orders,flyHeight): a public variable by name, with a false
+            // default, so rtz_captive being absent is a supported configuration
+            // and no requiredAddons edge is implied (see config.cpp).
+            if (_member getVariable [QEGVAR(captive,surrendered), false]) then {
+                _wedgeColor = COLOR_SURRENDERED;
+            };
             // Incapacitated (BIS revive / setUnconscious) overrides → civilian-purple chevron.
+            // Last, so it wins over the surrender flag above: a man who gave up and
+            // was then dropped anyway is down first and surrendered second.
             if (lifeState _member isEqualTo "INCAPACITATED") then {
                 _wedgeColor = COLOR_INCAPACITATED;
             };

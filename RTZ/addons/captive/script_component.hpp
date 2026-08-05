@@ -25,10 +25,7 @@
 // RTZ only guarantees CBA/ZEN/LAMBS, and an absent path draws as a missing texture.
 // Both mods are GPL, so the copy carries over cleanly.
 #define ICON_SURRENDER "\x\rtz\addons\captive\ui\surrender_ca.paa"
-// Vanilla's civilian purple (CfgMarkerColors >> ColorCivilian), the same value
-// rtz_common's side palette gives civilians — surrendering is the step that takes
-// a unit out of the fight, so the button wears the non-combatant colour.
-#define COLOR_SURRENDER [0.40, 0.00, 0.50, 1]
+#define COLOR_SURRENDER [0.65, 0.35, 0.85, 1]
 #define COLOR_STANDDOWN [0.40, 1.00, 0.40, 1]
 #define COLOR_LOCKED [0.55, 0.55, 0.55, 1]
 

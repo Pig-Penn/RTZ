@@ -45,6 +45,13 @@
 #define WEDGE_TEXTURE "\a3\ui_f\data\gui\rsc\RscDisplayEGSpectator\UnitIcon_ca.paa"
 #define WEDGE_ALPHA 0.60
 #define COLOR_INCAPACITATED [0.5, 0.0, 0.5, WEDGE_ALPHA]
+// Surrendered (rtz_captive) chevron — white-flag grey. Deliberately NOT the
+// civilian purple rtz_captive tints its own toggle button with: that value is
+// COLOR_INCAPACITATED here, and the two states must not read alike — a
+// surrendered man is standing and capturable, a downed one is neither. Kept off
+// pure white too, which is what a chevron flashes while its unit is firing
+// (BLINK_DURATION).
+#define COLOR_SURRENDERED [0.80, 0.80, 0.80, WEDGE_ALPHA]
 
 // Housekeeping: bound the long-lived rate-limit maps (fnc_spotCheck).
 #define BLINK_THROTTLE_CAP 128
