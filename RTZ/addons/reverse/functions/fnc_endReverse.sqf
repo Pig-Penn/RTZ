@@ -55,7 +55,7 @@ if (!isNull _driver) then {
     // Cancel the doStop that took him off the navigation stack. Only meaningful
     // for a live AI still able to take orders; a player who has since occupied
     // the seat gives his own.
-    if (alive _driver && {!isPlayer _driver}) then {
+    if (alive _driver && { !isPlayer _driver }) then {
         _driver doFollow (leader _driver);
     };
 };

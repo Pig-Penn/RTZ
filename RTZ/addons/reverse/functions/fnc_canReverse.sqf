@@ -31,13 +31,13 @@
 params ["_vehicle"];
 
 _vehicle isKindOf "LandVehicle"
-&& {!(_vehicle isKindOf "StaticWeapon")}
-&& {alive _vehicle}
-&& {canMove _vehicle}
+&& { !(_vehicle isKindOf "StaticWeapon") }
+&& { alive _vehicle }
+&& { canMove _vehicle }
 && {
     // A player at the wheel — including a curator remote-controlling the unit,
     // which isPlayer also reports — drives himself; nothing scripted may take
     // the vehicle out from under him.
     private _driver = driver _vehicle;
-    !isNull _driver && {alive _driver} && {!isPlayer _driver}
+    !isNull _driver && { alive _driver } && { !isPlayer _driver }
 }

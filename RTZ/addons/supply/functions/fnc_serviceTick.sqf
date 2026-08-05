@@ -54,8 +54,12 @@ private _dropped = false;
             _vehicle setDamage [((damage _vehicle) - (_startDamage * _step)) max 0, false];
         };
 
+        // FUNC(applyFuel), not a bare setFuel: the argument is local and this
+        // whole job runs on the server, so a vehicle owned by a headless client
+        // or a player never saw the write. `fuel` reads correctly from anywhere,
+        // so the delta is still computed here — only the write is routed.
         if (_canRefuel && {_startFuel < 1}) then {
-            _vehicle setFuel (((fuel _vehicle) + ((1 - _startFuel) * _step)) min 1);
+            [_vehicle, ((fuel _vehicle) + ((1 - _startFuel) * _step)) min 1] call FUNC(applyFuel);
         };
     };
 } forEach _work;

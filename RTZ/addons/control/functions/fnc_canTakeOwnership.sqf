@@ -33,10 +33,10 @@
 
 params ["_objects", "_hoveredEntity"];
 
-if (isNull getAssignedCuratorLogic player) exitWith {false};
+if (isNull getAssignedCuratorLogic player) exitWith { false };
 
 private _grps = [_objects + [_hoveredEntity]] call EFUNC(common,collectSquads);
-if (_grps isEqualTo []) exitWith {false};
+if (_grps isEqualTo []) exitWith { false };
 
 _grps findIf {
     private _grp = _x;

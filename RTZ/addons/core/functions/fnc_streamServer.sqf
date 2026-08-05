@@ -257,7 +257,13 @@ GVAR(watchers) = createHashMap;
             // Shared across every watcher this tick — see the memo note above.
             // [plain, detailed]; isEqualTo rather than a bare select so a
             // malformed flag can never throw on the index (it returns false).
-            private _streamMemo = _memo getOrDefault [_stream, [createHashMap, createHashMap], true];
+            // getOrDefaultCall, NOT getOrDefault: SQF evaluates a getOrDefault
+            // default EAGERLY, so the plain form built and immediately discarded
+            // two hashmaps on every hit — per stream, per watcher, per tick, for
+            // the whole mission. Only the ...Call form defers the allocation to
+            // the miss. Same mistake FUNC(spotCheck) documents having fixed for
+            // its own per-tick fallbacks.
+            private _streamMemo = _memo getOrDefaultCall [_stream, {[createHashMap, createHashMap]}, true];
             private _entryMemo  = _streamMemo select (parseNumber (_detailed isEqualTo true));
 
             private _entries = [];

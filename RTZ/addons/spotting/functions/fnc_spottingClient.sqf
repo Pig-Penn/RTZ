@@ -115,7 +115,7 @@ GVAR(blinkUntil) = createHashMap;
 // Zeus map overlay: normally attached by FUNC(initCuratorDisplay) via the XEH
 // DisplayLoad event each time the curator display is created. If Zeus is somehow
 // already open when this client half starts (late settings init), attach now.
-private _curatorDisplay = findDisplay 312;
+private _curatorDisplay = findDisplay IDD_RSCDISPLAYCURATOR;
 if (!isNull _curatorDisplay) then {
     [_curatorDisplay] call FUNC(initCuratorDisplay);
 };

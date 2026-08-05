@@ -30,6 +30,7 @@ if (!alive _unit) exitWith {};
 if (_skill == SKILL_NONE) then {
     _skill = GVAR(defaultSkills) getOrDefault [toLowerANSI typeOf _unit, SKILL_NONE];
 };
+
 if (_skill == SKILL_NONE) exitWith {};
 
 // Overall skill: sets every sub-skill to this value at once

@@ -2,11 +2,15 @@
 
 // The bulk of an order runs on ONE machine wherever the serviced vehicles are
 // local. setDamage is documented arg global / eff global, so it works from here
-// against a vehicle owned anywhere; setFuel is relied on for the same (it is one
-// of the classic global-effect commands) but that was not re-verified against the
-// wiki when this was written — if refuelling is ever seen to miss on a
-// headless-client-owned vehicle, this is the line to suspect, and the fix is the
-// QGVAR(rearm) pattern below.
+// against a vehicle owned anywhere.
+//
+// setFuel is NOT in that category, and the note that used to sit here — "relied on
+// for the same, but not re-verified against the wiki" — was wrong to trust. Its
+// ARGUMENT is local, exactly like setVehicleAmmo below, so every refuel this
+// server issued against a headless-client- or player-owned vehicle was a silent
+// no-op while FUNC(endService) still reported the vehicle serviced. It now routes
+// through FUNC(applyFuel), which writes directly when the server owns the vehicle
+// and targets QGVAR(refuel) at its owner when it does not.
 //
 // The server is picked because it owns the AI supply vehicles anyway, and because
 // holding the target claims on a single machine is what makes them mean anything.
@@ -21,16 +25,28 @@ if (isServer) then {
     }] call CBA_fnc_addEventHandler;
 };
 
-// setVehicleAmmo is the exception: its ARGUMENT is local, so the server calling
-// it on a vehicle owned by a headless client or a player is a silent no-op —
-// which is exactly what used to happen. Registered on every machine and targeted
-// at the vehicle by FUNC(endService). One event per vehicle per completed order,
-// not per tick, because ammo is a single write at the end rather than a ramp.
+// setVehicleAmmo is one of two exceptions: its ARGUMENT is local, so the server
+// calling it on a vehicle owned by a headless client or a player is a silent
+// no-op — which is exactly what used to happen. Registered on every machine and
+// targeted at the vehicle by FUNC(endService). One event per vehicle per completed
+// order, not per tick, because ammo is a single write at the end rather than a ramp.
 [QGVAR(rearm), {
     params ["_vehicle"];
     if (isNull _vehicle || {!alive _vehicle}) exitWith {};
 
     _vehicle setVehicleAmmo 1;
+}] call CBA_fnc_addEventHandler;
+
+// setFuel is the other, and it was missed for exactly as long as this component
+// has existed. Same treatment, registered on every machine and targeted at the
+// vehicle — but sent only for a vehicle the SERVER does not own (FUNC(applyFuel)
+// writes directly otherwise), so the ordinary AI case still costs nothing even
+// though refuelling, unlike rearming, is a per-tick ramp rather than one write.
+[QGVAR(refuel), {
+    params ["_vehicle", "_fuel"];
+    if (isNull _vehicle || {!alive _vehicle}) exitWith {};
+
+    _vehicle setFuel _fuel;
 }] call CBA_fnc_addEventHandler;
 
 // Completion report, aimed at whoever gave the order. The stringtable KEY comes

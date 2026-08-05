@@ -48,13 +48,13 @@ if (count _gatedRows == 0) exitWith {};
     _x params ["_ctrlGroup", "", "_statement"];
 
     private _scope = _gatedRows get (str _statement);
-    if (isNil "_scope") then {continue};
+    if (isNil "_scope") then { continue };
 
     // A second install on the same row would chain our hook to itself and
     // recurse on confirm. Fresh windows build fresh controls so this cannot
     // happen today, but the failure mode is bad enough to guard.
     private _chained = _ctrlGroup getVariable QGVAR(chained);
-    if (!isNil "_chained") then {continue};
+    if (!isNil "_chained") then { continue };
 
     _ctrlGroup setVariable [QGVAR(scope), _scope];
     // Chained rather than replaced: ZEN's code-editor row installs a handler of
@@ -62,14 +62,14 @@ if (count _gatedRows == 0) exitWith {};
     _ctrlGroup setVariable [QGVAR(chained), _ctrlGroup getVariable [ZEN_VAR_ON_CONFIRM, {}]];
     _ctrlGroup setVariable [ZEN_VAR_ON_CONFIRM, FUNC(onConfirm)];
 
-    if ([_scope] call FUNC(canEdit)) then {continue};
+    if ([_scope] call FUNC(canEdit)) then { continue };
 
     {
         // controlsGroupCtrl yields controlNull for IDCs this row's control type
         // does not have — skipped rather than commanded, as commands on a null
         // control log an error per call
         private _ctrl = _ctrlGroup controlsGroupCtrl _x;
-        if (isNull _ctrl) then {continue};
+        if (isNull _ctrl) then { continue };
 
         _ctrl ctrlEnable false;
         _ctrl ctrlSetFade FADE_LOCKED;

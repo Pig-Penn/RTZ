@@ -27,7 +27,7 @@
 
 params ["_unit"];
 
-if (!local _unit || {isPlayer _unit}) exitWith {};
+if (!local _unit || { isPlayer _unit }) exitWith {};
 
 private _skill = GVAR(defaultSkills) getOrDefault [toLowerANSI typeOf _unit, SKILL_NONE];
 if (_skill == SKILL_NONE) exitWith {};

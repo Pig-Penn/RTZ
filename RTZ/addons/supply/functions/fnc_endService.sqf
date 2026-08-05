@@ -22,6 +22,9 @@
  *    routed to the vehicle's own machine instead. Ammo is applied here rather
  *    than per tick because nothing can read a partial ammo ratio back, so there
  *    is no deficit to interpolate — it is one write at the end, not a ramp.
+ *    setFuel is local in the same way and was missed for as long as this
+ *    component existed; both the snap below and FUNC(serviceTick)'s ramp now go
+ *    through FUNC(applyFuel).
  *
  *  — THE REPORT. The order was the only one in the mod that told the curator
  *    nothing; FUNC(orderResupply) now toasts on despatch and this closes the loop
@@ -85,8 +88,9 @@ private _serviced = 0;
         _vehicle setDamage [0, false];
     };
 
+    // Routed for locality, same as the rearm below — see FUNC(applyFuel).
     if (_canRefuel && {_startFuel < 1} && {fuel _vehicle >= FUEL_THRESHOLD}) then {
-        _vehicle setFuel 1;
+        [_vehicle, 1] call FUNC(applyFuel);
     };
 
     if (_canRearm) then {

@@ -2,7 +2,7 @@
 <Project name="RTZ">
     <Package name="Repair">
         <Key ID="STR_RTZ_Repair_ActionRepair">
-            <English>Repair Vehicle</English>
+            <English>Repair</English>
         </Key>
         <Key ID="STR_RTZ_Repair_DisplayName">
             <English>Repair</English>

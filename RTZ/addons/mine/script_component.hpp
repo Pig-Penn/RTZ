@@ -30,7 +30,7 @@
 #define PUT_DELAY 1.5
 
 // Detected mine cache refresh interval (seconds)
-#define REFRESH_INTERVAL 3
+#define REFRESH_INTERVAL 10
 
 // Mine marker drawing, icon is raised above the ground for 3D visibility
 #define ICON_FALLBACK "\a3\ui_f\data\igui\cfg\simpleTasks\types\danger_ca.paa"

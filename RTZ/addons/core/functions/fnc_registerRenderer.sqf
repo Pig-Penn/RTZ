@@ -37,7 +37,15 @@ params ["_id", "_fnc", "_mode", ["_priority", 50]];
 
 if (!hasInterface) exitWith {};
 
-private _list = [GVAR(worldRenderers), GVAR(uiRenderers)] select (_mode == RENDER_UI);
+// COPIED, not aliased. Arrays are assigned by reference, so a bare read handed
+// this function a live handle on the global the frame loop is iterating, and the
+// pushBack/set below then mutated that array in place. FUNC(frameLoop) captures
+// the list once per frame and walks it with forEach, so a renderer that registers
+// another renderer — a display starting a second one on first draw — would be
+// mutating the very array its own pass is iterating. Building a new array and
+// publishing it at the end means the in-flight pass finishes against a stable
+// snapshot and the next frame picks up the change.
+private _list = +([GVAR(worldRenderers), GVAR(uiRenderers)] select (_mode == RENDER_UI));
 
 // Replace any existing entry for this id, then re-sort. Both halves matter: the
 // find keeps a re-run of a display's start path from stacking a second copy of

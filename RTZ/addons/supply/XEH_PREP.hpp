@@ -1,3 +1,4 @@
+PREP(applyFuel);
 PREP(canResupply);
 PREP(drawSupply);
 PREP(endService);

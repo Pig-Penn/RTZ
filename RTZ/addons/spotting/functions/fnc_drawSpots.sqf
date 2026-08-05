@@ -41,7 +41,7 @@ params ["_ctx"];
 private _groups   = GVAR(spotGroups);
 private _chevrons = GVAR(spotChevrons);
 // Empty-store test first: cheapest check and the common case on a quiet mission.
-if (count _groups == 0 && {count _chevrons == 0}) exitWith {};
+if (count _groups == 0 && { count _chevrons == 0 }) exitWith {};
 
 private _camPos   = _ctx select CTX_CAMPOS;
 private _mousePos = _ctx select CTX_MOUSE;
@@ -75,6 +75,7 @@ private _hasRC     = count _rcDisplay > 0;
 // Distance fade × stored base alpha; flash white while the unit is firing.
 private _fnc_drawColor = {
     params ["_dist", "_colorArray", "_blinkKey"];
+
     private _alpha = ((_viewDist - _dist) / _viewDist) * (_colorArray#3);   // callers skip _dist >= _viewDist
     if (_anyBlink && {_now <= (_blinkUntil getOrDefault [_blinkKey, 0])})
         then { [1, 1, 1, _alpha] }
@@ -91,6 +92,7 @@ private _groupHoverByLeader = createHashMap;
 {
     // _x = markerName (HashMap key); _y = stored display data.
     _y params ["_unit", "_texture", "_colorArray", "_echelonTex", "_sideIdx", "_ldrId"];
+
     if (!alive _unit) then { continue };   // alive objNull is false — covers deleted units too
     // Anchor on the vehicle so a mounted leader is handled (vehicle = unit on foot).
     private _anchor = vehicle _unit;
@@ -157,6 +159,7 @@ if (!_chevronsEnabled) exitWith {};
 private _chevronNames = GVAR(chevronNames);
 {
     _y params ["_unit", "_texture", "_colorArray", "_ldrId", "_name"];
+
     if (!alive _unit) then { continue };
     private _anchor = vehicle _unit;
     if (isNull _anchor) then { continue };   // see the group pass above

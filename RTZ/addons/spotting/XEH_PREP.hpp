@@ -13,5 +13,6 @@ PREP(spotCallout);
 PREP(spotCheck);
 PREP(spottingClient);
 PREP(spottingSystem);
+PREP(startSystems);
 PREP(toggleChevrons);
 PREP(unitMarker);

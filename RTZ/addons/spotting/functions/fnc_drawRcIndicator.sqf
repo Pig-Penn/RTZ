@@ -45,6 +45,7 @@ private _shift = RC_COLOR_SHIFT_MAX * ((sin (time * RC_COLOR_SHIFT_FREQ) + 1) / 
 {
     // _x = unitNetId (HashMap key); _y = stored display data.
     _y params ["_unit", "_colorArray"];
+
     if (!alive _unit) then { continue };   // alive objNull is false — covers deleted units too
     private _anchor = vehicle _unit;
     private _dist   = _camPos distance _anchor;

@@ -28,8 +28,8 @@ params ["_objects", "_groups", "_hoveredEntity"];
 
 // Short-circuits on the tree-selected groups, which cost nothing to test, so a
 // right-click on a group node never pays for the object expansion at all.
-if (_groups findIf {units _x findIf {!isPlayer _x} != -1} != -1) exitWith {true};
+if (_groups findIf { units _x findIf {!isPlayer _x } != -1 } != -1) exitWith { true };
 
 ([_objects + [_hoveredEntity]] call EFUNC(common,collectSquads)) findIf {
-    units _x findIf {!isPlayer _x} != -1
+    units _x findIf { !isPlayer _x } != -1
 } != -1
