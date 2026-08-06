@@ -3,9 +3,14 @@
 # rtz_control's reset, rtz_hud's danger labels and rtz_spotting all read LAMBS
 # state — so the default preset carries all three.
 [default]
-mission = "test.VR"
+mission = "test.Altis"
 workshop = [
     "450814997",  # CBA_A3
     "1779063631", # Zeus Enhanced (ZEN)
     "2434257231", # LAMBS_Danger.fsm (DEV)
+]
+dlc = [
+    "Reaction Forces",
+    "Western Sahara",
+    "Expeditionary Forces", # not a recognized HEMTT dlc value as of 1.20.1
 ]

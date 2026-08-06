@@ -16,6 +16,8 @@ All other Arma 3 mods that are developed and structured correctly can be utilize
 
 Real-Time Zeus (RTZ) will be used in servers with several curators, large numbers of units, and long operations lasting several hours. While it will not happen often, some players may connect and disconnect while the mission is in progress.
 
+The units a curator controls will be units that are local to that curator in almost all cases.
+
 ## Environment & Verification
 
 - A Stop hook (`.claude/settings.json`) runs `hemtt check` automatically at the end of every session and blocks with the error output if it fails. Fix any reported errors before finishing.

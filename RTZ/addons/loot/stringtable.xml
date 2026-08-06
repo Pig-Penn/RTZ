@@ -2,7 +2,7 @@
 <Project name="RTZ">
     <Package name="Loot">
         <Key ID="STR_RTZ_Loot_ActionLoot">
-            <English>Loot Nearby</English>
+            <English>Loot</English>
         </Key>
         <Key ID="STR_RTZ_Loot_DisplayName">
             <English>Looting</English>

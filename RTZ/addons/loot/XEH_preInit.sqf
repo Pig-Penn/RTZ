@@ -13,11 +13,15 @@ PREP_RECOMPILE_END;
 // a field a handful of mods declare as a STRING, where getNumber quietly returns 0
 // and the weapon falls out of every slot test.
 //
-// A kind absent from this table fills no slot and is never looted: handguns,
-// binoculars, vehicle armament, and anything modded whose cursor resolves to none of
+// A kind absent from this table fills no slot and is never looted: binoculars,
+// rangefinders, vehicle armament, and anything modded whose cursor resolves to none of
 // the above. BIS_fnc_itemType falls back to "rifle" for an unrecognized primary and
 // "launcher" for an unrecognized launcher, so modded weapons still land on a real
 // entry rather than dropping out.
+//
+// Handguns sit at a single tier because there is nothing useful to rank them BY - the
+// planner only ever fills an empty sidearm slot, never trades one pistol for another,
+// so no two handgun scores are ever compared against each other.
 GVAR(ranks) = createHashMapFromArray [
     ["assaultrifle",    [SLOT_PRIMARY, 1]],
     ["rifle",           [SLOT_PRIMARY, 1]],
@@ -27,7 +31,8 @@ GVAR(ranks) = createHashMapFromArray [
     ["sniperrifle",     [SLOT_PRIMARY, 2]],
     ["launcher",        [SLOT_LAUNCHER, 1]],
     ["rocketlauncher",  [SLOT_LAUNCHER, 1]],
-    ["missilelauncher", [SLOT_LAUNCHER, 2]]
+    ["missilelauncher", [SLOT_LAUNCHER, 2]],
+    ["handgun",         [SLOT_HANDGUN, 1]]
 ];
 
 // Filled lazily rather than by an up-front config sweep: a modset carries tens of

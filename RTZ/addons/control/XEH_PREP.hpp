@@ -1,10 +1,12 @@
 PREP(canReset);
 PREP(canTakeOwnership);
 PREP(collectDismountVehicles);
+PREP(collectReloadSquads);
 PREP(disableDynamicSimulationApply);
 PREP(dismountActionModifier);
 PREP(dismountApply);
 PREP(dismountToggle);
+PREP(needsReload);
 PREP(reloadSquad);
 PREP(reloadSquadApply);
 PREP(reset);

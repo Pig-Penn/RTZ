@@ -143,13 +143,20 @@ GVAR(watchers) = createHashMap;
     // a full targetsQuery when the dialog is open). Four curators on a shared
     // selection meant four times that per unit per tick.
     //
-    // Keyed on the entry's ENTITY — element 0, an object in every slice shape —
-    // and split into a plain and a detailed map per stream, so a curator with
-    // the selection dialog open never receives the cheaper answer built for one
-    // without. Objects are used as keys rather than the entry array because the
-    // entity alone determines the result: for the hull slice the vehicle is
-    // `vehicle _unit`, and two curators whose hull entries name different crewmen
-    // of the same vehicle genuinely want separate answers, which this gives them.
+    // Keyed on the entry's ENTITY, and split into a plain and a detailed map per
+    // stream, so a curator with the selection dialog open never receives the
+    // cheaper answer built for one without. The entity alone determines the
+    // result: for the hull slice the vehicle is `vehicle _unit`, and two curators
+    // whose hull entries name different crewmen of the same vehicle genuinely
+    // want separate answers, which this gives them.
+    //
+    // The key is the entity's netId, NOT the object: an Object is not a hashable
+    // type, and using one threw "Type Object, expected Number,Bool,Array,String,
+    // ..." on EVERY entry of EVERY due stream — the memo never held a thing and
+    // the log filled at the stream rate. Each slice therefore carries its own
+    // netId as its last element (element 3), so the hot 0.3 s unit and vehicle
+    // feeds reuse the netId they were already sent and only the 2 s overlay
+    // slices pay a `netId` call.
     //
     // Everything downstream is untouched: each watcher still runs its own send
     // diff and gets its own targeted event. Only the COMPUTATION is shared,
@@ -207,7 +214,7 @@ GVAR(watchers) = createHashMap;
                         _srcUnits = [];
                         {
                             private _u = objectFromNetId _x;
-                            if (!isNull _u && {alive _u}) then { _srcUnits pushBack [_u, _x, _detailed] };
+                            if (!isNull _u && {alive _u}) then { _srcUnits pushBack [_u, _x, _detailed, _x] };
                         } forEach (_units select [0, SEL_MAX_UNITS]);
                     };
                     _srcUnits
@@ -219,7 +226,7 @@ GVAR(watchers) = createHashMap;
                             private _v = objectFromNetId _x;
                             if (!isNull _v && {alive _v}
                                 && {_anySide || {VEH_SIDE_OK(_v,_cSide)}}) then {
-                                _srcVehs pushBack [_v, _x, _detailed];
+                                _srcVehs pushBack [_v, _x, _detailed, _x];
                             };
                         } forEach (_vehs select [0, SEL_MAX_VEHICLES]);
                     };
@@ -238,7 +245,7 @@ GVAR(watchers) = createHashMap;
                             private _veh = vehicle _x;
                             if (_veh in _seen) then { continue };
                             _seen pushBack _veh;
-                            _srcHulls pushBack [_x, _veh, _detailed];
+                            _srcHulls pushBack [_x, _veh, _detailed, netId _x];
                         } forEach _hulls;
                     };
                     _srcHulls
@@ -251,9 +258,11 @@ GVAR(watchers) = createHashMap;
             // would leave the last non-empty snapshot on screen indefinitely. The
             // diff then suppresses every repeat, so the idle cost is one compare.
 
-            // Slice entries are built with the "dialog open" flag already appended,
-            // so the gatherer's argument list is flat and no array is allocated
-            // per entity per tick just to carry it.
+            // Slice entries are built with the "dialog open" flag and the memo key
+            // already appended, so the gatherer's argument list is flat and no
+            // array is allocated per entity per tick just to carry it. Every
+            // gatherer reads its arguments positionally, so the trailing key is
+            // invisible to them.
             // Shared across every watcher this tick — see the memo note above.
             // [plain, detailed]; isEqualTo rather than a bare select so a
             // malformed flag can never throw on the index (it returns false).
@@ -273,7 +282,7 @@ GVAR(watchers) = createHashMap;
                 // the key (docs/Knowledge Base/Gotchas.md §3).
                 private _sliceEntry = _x;
                 private _entry = _entryMemo getOrDefaultCall [
-                    _sliceEntry select 0, {_sliceEntry call _gather}, true
+                    _sliceEntry select 3, {_sliceEntry call _gather}, true
                 ];
                 if (_entry isNotEqualTo []) then { _entries pushBack _entry };
             } forEach _list;

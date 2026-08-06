@@ -19,6 +19,12 @@
         <Key ID="STR_RTZ_Economy_Income">
             <English>Income</English>
         </Key>
+        <Key ID="STR_RTZ_Economy_IncomeInterval">
+            <English>Income Interval</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_IncomeInterval_Description">
+            <English>How often income is paid out, in seconds. Lower values give smoother, more frequent payouts.</English>
+        </Key>
         <Key ID="STR_RTZ_Economy_Income_Description">
             <English>Points gained per minute.</English>
         </Key>

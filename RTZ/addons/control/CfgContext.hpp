@@ -1,4 +1,23 @@
 class zen_context_menu_actions {
+    // A one-shot ORDER, not a state toggle, so it sits at the menu root with the
+    // other orders (attack, assemble, loot, deploy countermeasures) rather than
+    // in the RTZ_Control submenu of toggles it used to share with dismount and
+    // disable-simulation. Priority 25 keeps it in that root band — directly
+    // under rtz_supply's resupply (26) — without renumbering anything.
+    //
+    // Hidden unless the click would change something: FUNC(collectReloadSquads)
+    // drops the squads whose every weapon is already holding the best magazine
+    // its owner carries. Condition and statement resolve the same set through
+    // the same function — see FUNC(collectDismountVehicles) for why the two must
+    // not be allowed to disagree.
+    class GVAR(reload) {
+        displayName = CSTRING(ActionReload);
+        icon = ICON_RELOAD;
+        statement = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(reloadSquad));
+        condition = QUOTE(GVAR(enableReloadSquad) && {([_objects + [_hoveredEntity]] call FUNC(collectReloadSquads)) isNotEqualTo []});
+        priority = 0;
+    };
+
     // Only appears while the selection actually holds a non-local group, so
     // it stays invisible in normal play and surfaces exactly when a squad's
     // simulation needs pulling back (typically after a curator rejoined).
@@ -32,14 +51,6 @@ class zen_context_menu_actions {
             condition = QUOTE(GVAR(enableDismount) && {([_objects + [_hoveredEntity]] call FUNC(collectDismountVehicles)) isNotEqualTo []});
             modifierFunction = QUOTE([ARR_2(_this select 0,_objects + [_hoveredEntity])] call FUNC(dismountActionModifier));
             priority = 4;
-        };
-
-        class GVAR(reload) {
-            displayName = CSTRING(ActionReload);
-            icon = ICON_RELOAD;
-            statement = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(reloadSquad));
-            condition = QUOTE(GVAR(enableReloadSquad) && {([_objects + [_hoveredEntity]] call EFUNC(common,collectSquads)) isNotEqualTo []});
-            priority = 3;
         };
 
         // Third state, checked first by the modifier/toggle: a group still

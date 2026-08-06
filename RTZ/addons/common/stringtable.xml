@@ -10,6 +10,9 @@
         <Key ID="STR_RTZ_Common_DisplayName">
             <English>Common</English>
         </Key>
+        <Key ID="STR_RTZ_Common_ErrandOwnershipLost">
+            <English>Order cancelled - the unit is no longer controlled by this machine.</English>
+        </Key>
         <Key ID="STR_RTZ_Common_PreviewHint">
             <English>LMB place  |  ESC cancel</English>
         </Key>

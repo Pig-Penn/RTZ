@@ -68,7 +68,7 @@ if (!isNil QGVAR(spotGroups) && {!(_display getVariable [QGVAR(spotDrawAttached)
 };
 
 // ── Overlay a spotted enemy officer's editing-area zone as a hollow ring ──────
-// GVAR(officerZones) is a tiny subset of GVAR(spotChevrons) — normally empty
+// GVAR(officerZones) is a tiny subset of the spot stores — normally empty
 // (most missions never enable rtz_officer's zoning, and even then most spotted
 // units aren't officers with an active area) — so this is effectively free.
 // One drawEllipse per entry, no fill ("" texture = outline only), radius comes

@@ -15,7 +15,14 @@
 
 #include "\x\rtz\addons\main\script_macros.hpp"
 
-#define ICON_DELETE "\a3\3DEN\Data\Displays\Display3DEN\PanelLeft\entityList_delete_ca.paa"
+// Trashcan drawn to match the rest of the context menu — a solid white
+// silhouette with rounded corners and a margin, like the vanilla simpleTasks
+// glyphs. The 3DEN entity-list icon it replaces was hard-cornered and bled to
+// the edge of its canvas, so it read heavier than every action beside it.
+// No slot cut-outs: the menu draws icons at roughly 18px, where slots average
+// out to grey and leave the can looking washed out next to solid neighbours
+// like ICON_LOCKED. The lid gap and the taper carry the shape at that size.
+#define ICON_DELETE "\x\rtz\addons\delete\ui\trash_ca.paa"
 
 // Seconds the group-cleanup pass waits before counting a group's members.
 // The deletions are issued on the server and reach a remote owner a network

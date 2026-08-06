@@ -22,15 +22,15 @@
  * "better" rifle the unit cannot feed is a downgrade, and taking it would leave him
  * standing in a field holding an empty gun.
  *
- * A class that fills neither slot - a handgun, a binocular, a vehicle weapon, a
- * modded class whose cursor resolves to nothing recognizable - scores slot -1 and is
- * skipped by the planner rather than special-cased at each call site.
+ * A class that fills no slot at all - a binocular, a vehicle weapon, a modded class
+ * whose cursor resolves to nothing recognizable - scores slot -1 and is skipped by the
+ * planner rather than special-cased at each call site.
  *
  * Arguments:
  * 0: Class <STRING>
  *
  * Return Value:
- * 0: Slot <NUMBER> - SLOT_PRIMARY, SLOT_LAUNCHER, or -1 for ineligible
+ * 0: Slot <NUMBER> - SLOT_PRIMARY, SLOT_LAUNCHER, SLOT_HANDGUN, or -1 for ineligible
  * 1: Kind <STRING> - the FUNC(itemCategory) kind, for the role check
  * 2: Score <NUMBER> - higher is better, comparable only within a slot
  * 3: Magazines <ARRAY of STRING> - every magazine the weapon accepts
@@ -58,13 +58,13 @@ private _entry = [-1, _kind, 0, []];
 if (_category isEqualTo "weapon") then {
     private _magazines = compatibleMagazines _class;
 
-    // Carried even for a weapon that fills no slot. A handgun is never looted, but
-    // the planner still has to ask whether a crate holds anything that feeds the one
-    // the unit is already carrying before it decides the walk is worth making
+    // Carried even for a weapon that fills no slot. A binocular is never looted, but
+    // the planner still has to ask whether a crate holds anything that feeds what the
+    // unit is already carrying before it decides the walk is worth making
     _entry set [3, _magazines];
 
-    // A kind absent from the rank table fills no slot: handguns, binoculars, vehicle
-    // armament, and anything modded whose cursor resolves to none of the above
+    // A kind absent from the rank table fills no slot: binoculars, rangefinders,
+    // vehicle armament, and anything modded whose cursor resolves to none of the above
     private _rank = GVAR(ranks) get _kind;
 
     if (!isNil "_rank") then {

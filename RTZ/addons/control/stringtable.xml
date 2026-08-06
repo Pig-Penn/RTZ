@@ -68,7 +68,7 @@
             <English>Reload Squad</English>
         </Key>
         <Key ID="STR_RTZ_Control_ReloadSquad_Description">
-            <English>Add a context menu action ordering selected units to reload their current weapon.</English>
+            <English>Add a context menu action ordering selected units to reload their current weapon. The action only appears while a selected squad is carrying a magazine better than the one in the weapon.</English>
         </Key>
         <Key ID="STR_RTZ_Control_Reset">
             <English>Reset AI</English>

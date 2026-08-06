@@ -1,8 +1,9 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * RENDER_WORLD renderer for the spotting picture: group icons (pass 1) and
- * individual chevrons (pass 2) above spotted enemies in the Zeus cursor view.
+ * RENDER_WORLD renderer for the spotting picture: group icons (pass 1, each on a
+ * stem down to its leader as the basegame's own Zeus icons are) and individual
+ * chevrons (pass 2) above spotted enemies in the Zeus cursor view.
  * Positions are sampled live from the unit each frame so icons track smoothly
  * between the server's spot cycles; texture, colour, echelon amplifier, side
  * index and display name are all pre-resolved server-side.
@@ -145,6 +146,20 @@ private _groupHoverByLeader = createHashMap;
     };
 
     private _col = [_dist, _colorArray, _x] call _fnc_drawColor;
+    // Native Zeus stem. The icon floats _zMod above the leader, so on its own it
+    // reads as hanging over whatever terrain happens to be under it — from a
+    // shallow camera angle that can be a hillside a hundred metres behind the
+    // group. The line back down to the body says which unit the icon is for.
+    //
+    // Black rather than the side colour, as the basegame draws it: a red stem
+    // over dry Altis terrain is nearly invisible, and black reads against both
+    // sky and ground. Alpha is lifted straight off _col so the stem fades with
+    // the icon in step — including the white muzzle-flash blink, which changes
+    // only the RGB.
+    //
+    // Drawn BEFORE the icon so the frame covers the point where the line meets
+    // it; the path renderer's air stalk lands on its handle icon the same way.
+    drawLine3D [_iconPos, _aim, [0, 0, 0, _col select 3]];
     drawIcon3D [_texture, _col, _iconPos, _iconW, _iconW, 0, "", 0, 0.03, "RobotoCondensed", "center", false, 0, -0.035];
     if (_echelonTex != "") then {
         drawIcon3D [_echelonTex, _col, _ampPos, _iconW, _iconW, 0, "", 0, 0.03, "RobotoCondensed", "center", false, 0, -0.035];

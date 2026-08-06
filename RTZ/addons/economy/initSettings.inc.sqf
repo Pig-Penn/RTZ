@@ -25,6 +25,14 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 ] call CBA_fnc_addSetting;
 
 [
+    QGVAR(incomeInterval), "SLIDER",
+    [LSTRING(IncomeInterval), LSTRING(IncomeInterval_Description)],
+    _category,
+    [5, 300, 60, 0],
+    true
+] call CBA_fnc_addSetting;
+
+[
     QGVAR(deleteRefund), "SLIDER",
     [LSTRING(DeleteRefund), LSTRING(DeleteRefund_Description)],
     _category,

@@ -431,13 +431,42 @@ private _currentKeys = createHashMap;
             || { !isNull objectParent _leader }
             || { !(_leader isKindOf "CAManBase") };
         private _echelonTex = [_leader, _menCount] call FUNC(echelonTex);   // size amplifier
-        // netId _leader is part of the signature, not just of the spot KEY: the key
-        // carries the ORIGINAL leader's netId, while the anchor sent to the client can
-        // be a fallback member (see above) that changes as members die. Without it the
-        // change-gated send in FUNC(emitSpot) never fires for that swap, and the client
-        // keeps drawing on a stale object — whose !alive test then hides the icon of a
-        // group that is still very much spotted.
-        private _grpBaseSig = str [netId _leader, _leaderTex, _mrkrColor, _echelonTex];
+        private _anchorId   = netId _leader;
+
+        // The anchor is the man the group icon is drawn over — FUNC(drawSpots) hangs
+        // it directly above him and stems it back down to his body — so his own
+        // chevron is a second marker on the same soldier. Drop it.
+        //
+        // Gated on _drawGroup because that is the flag deciding whether the group icon
+        // is drawn at all: a lone infantryman, or a squad worn down to one survivor,
+        // gets no group icon, and his chevron is then the ONLY thing marking him.
+        //
+        // His officer zone moves onto the group payload rather than dying with the
+        // chevron. The [plantedCenter, radius] pair has only ever ridden the WEDGE
+        // payload, so a silently dropped chevron would take an enemy officer's
+        // editing-area ring off the Zeus map — and an officer leading his own squad is
+        // the ordinary case, not an edge one. Read only when a chevron was actually
+        // dropped: an anchor the spotters have not individually identified never had a
+        // chevron, so never had a ring to keep.
+        private _anchorZone = [];
+        if (_drawGroup) then {
+            private _anchorIdx = _chevrons findIf { (_x select 1) isEqualTo _anchorId };
+            if (_anchorIdx > -1) then {
+                _chevrons deleteAt _anchorIdx;
+                _anchorZone = _officerZones getOrDefault [_anchorId, []];
+            };
+        };
+
+        // The anchor's netId is part of the signature, not just of the spot KEY: the
+        // key carries the ORIGINAL leader's netId, while the anchor sent to the client
+        // can be a fallback member (see above) that changes as members die. Without it
+        // the change-gated send in FUNC(emitSpot) never fires for that swap, and the
+        // client keeps drawing on a stale object — whose !alive test then hides the
+        // icon of a group that is still very much spotted. _anchorZone rides the
+        // signature for the same reason the wedge signature carries its own: planting,
+        // re-planting or clearing the area while the anchor stays spotted has to
+        // re-send, or the client's ring never updates.
+        private _grpBaseSig = str [_anchorId, _leaderTex, _mrkrColor, _echelonTex, _anchorZone];
 
         // Chevron colour and display name — once per member, shared by every curator.
         private _chevronData = _chevrons apply {
@@ -487,7 +516,7 @@ private _currentKeys = createHashMap;
             _currentKeys set [_leaderKey, true];
             [
                 _leaderKey,
-                [MKR_PREFIX + _leaderKey, _leader, _leaderTex, _mrkrColor, true, _echelonTex, _sideIdx, _leaderNetId, ""],
+                [MKR_PREFIX + _leaderKey, _leader, _leaderTex, _mrkrColor, true, _echelonTex, _sideIdx, _leaderNetId, "", _anchorZone],
                 _grpBaseSig,
                 _player, _activeSpots, _drawGroup, _curForce
             ] call FUNC(emitSpot);

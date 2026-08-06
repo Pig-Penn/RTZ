@@ -85,11 +85,14 @@ if (!hasInterface) exitWith {};
         // AllVehicles-not-man: without the kind check, selected props / ammo
         // crates pass the "not a man" filter (they always did for a virtual Zeus,
         // whom the side filter exempts) and get gathered, carded and tagged as if
-        // they were vehicles.
+        // they were vehicles. Empty hulls are excluded too — Zeus auto-selects a
+        // vehicle the instant it's placed, and an uncrewed vehicle has no side,
+        // no crew stat, nothing the tag says that the model doesn't already show.
         _vehs = (_objs select {
             alive _x
             && {_x isKindOf "AllVehicles"}
             && {!(_x isKindOf "CAManBase")}
+            && {count crew _x > 0}
             && {_anySide || {VEH_SIDE_OK(_x,_curSide)}}
         }) apply {netId _x};
         _vehOverflow = 0 max ((count _vehs) - SEL_MAX_VEHICLES);

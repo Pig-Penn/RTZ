@@ -13,9 +13,9 @@
  *
  * Steps come in two shapes:
  *
- *   ACTION steps (weapon, launcher, item, rearm) hand the work to the engine so the
- *   pickup animates, then wait on the RESULT - is the weapon actually in the slot -
- *   rather than on a fixed delay. A quick pickup chains on the next frame; a stuck
+ *   ACTION steps (weapon, launcher, handgun, item, rearm) hand the work to the engine
+ *   so the pickup animates, then wait on the RESULT - is the weapon actually in the
+ *   slot - rather than on a fixed delay. A quick pickup chains on the next frame; a stuck
  *   one falls through after STEP_TIMEOUT and FUNC(forceTake) applies the transfer
  *   directly instead. That fallback is deliberate belt-and-braces: whether an AI can
  *   be made to take a weapon off a BODY with an action, rather than out of the weapon
@@ -81,6 +81,12 @@ switch (_kind) do {
         _immediate = false;
         _unit action ["TakeWeapon", _target, _class];
         _verify = {secondaryWeapon (_this select 0) isEqualTo (_this select 1)};
+    };
+
+    case "handgun": {
+        _immediate = false;
+        _unit action ["TakeWeapon", _target, _class];
+        _verify = {handgunWeapon (_this select 0) isEqualTo (_this select 1)};
     };
 
     case "item": {

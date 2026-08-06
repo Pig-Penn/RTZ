@@ -61,7 +61,12 @@ switch (_mode) do {
         // Only the add path may create the per-curator registry — the read
         // paths below must not, or every "remove"/"clear" against a curator
         // that has no RTZ areas would leave an empty map behind for good
-        private _areas = GVAR(areasByCurator) getOrDefault [_curatorId, createHashMap, true];
+        // getOrDefaultCall, not getOrDefault: SQF evaluates a getOrDefault default
+        // EAGERLY, so the plain form allocated a hashmap on every hit and threw it
+        // away. Cold path — a curator planting an area — so the cost is nothing;
+        // it is spelled the same as the hot-path fixes in EFUNC(core,streamServer)
+        // and FUNC(spotCheck) so the pattern reads one way everywhere.
+        private _areas = GVAR(areasByCurator) getOrDefaultCall [_curatorId, {createHashMap}, true];
 
         _curator removeCuratorEditingArea _areaId;
         _curator addCuratorEditingArea [_areaId, _pos, _radius];
@@ -81,7 +86,10 @@ switch (_mode) do {
 
         _curator removeCuratorEditingArea _areaId;
 
-        private _areas = GVAR(areasByCurator) getOrDefault [_curatorId, createHashMap];
+        // Deliberately WITHOUT the insert flag — a remove against a curator that
+        // has no RTZ areas must not create a registry for it. getOrDefaultCall for
+        // the same reason as the add path above.
+        private _areas = GVAR(areasByCurator) getOrDefaultCall [_curatorId, {createHashMap}];
 
         private _officerId = _areas deleteAt _areaId;
         if (!isNil "_officerId" && {_officerId isNotEqualTo ""}) then {

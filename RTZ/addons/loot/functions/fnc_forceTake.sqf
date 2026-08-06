@@ -54,7 +54,8 @@ private _isBody = _target isKindOf "CAManBase";
 
 switch (_kind) do {
     case "weapon";
-    case "launcher": {
+    case "launcher";
+    case "handgun": {
         if (_isBody) then {
             _target removeWeaponGlobal _class;
         } else {

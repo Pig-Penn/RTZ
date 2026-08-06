@@ -28,11 +28,15 @@
 // each frame. Set by QGVAR(spotDetected); cleared by QGVAR(spotLost).
 //   GVAR(spotGroups):   markerName → [unit, texture, colorArray, echelonTex, sideIdx, leaderNetId]
 //   GVAR(spotChevrons): markerName → [unit, texture, colorArray, leaderNetId, displayName]
-//   GVAR(officerZones): markerName → [unit, plantedCenter, radius] — subset of
-//     spotChevrons entries whose unit is an enemy officer carrying an active
-//     editing-area zone (center + radius come from rtz_officer's
-//     RTZ_officerZoneMap, piggybacked on the wedge payload — see
-//     QGVAR(spotDetected) below). Drawn as a hollow ring on the Zeus map by
+//   GVAR(officerZones): markerName → [unit, plantedCenter, radius] — the subset of
+//     entries in EITHER store above whose unit is an enemy officer carrying an
+//     active editing-area zone. Chevrons for the most part; a GROUP entry when the
+//     officer is the man his group's icon is drawn over, since the server drops
+//     that man's chevron (it would be a second marker on the same soldier) and
+//     moves his zone onto the group payload rather than letting the ring die with
+//     it — see FUNC(spotCheck). Center + radius come from rtz_officer's
+//     RTZ_officerZoneMap, piggybacked on whichever payload carries the officer —
+//     see QGVAR(spotDetected) below. Drawn as a hollow ring on the Zeus map by
 //     FUNC(initCuratorDisplay), at the PLANTED center — rtz_officer areas never
 //     move once placed, so the ring marks the editable ground, not the officer.
 GVAR(spotGroups)   = createHashMap;
@@ -70,16 +74,21 @@ GVAR(blinkUntil) = createHashMap;
         GVAR(spotGroups) set [_markerName, [_unit, _texture, _colorArray, _echelonTex, _sideIdx, _ldrId]];
     } else {
         GVAR(spotChevrons) set [_markerName, [_unit, _texture, _colorArray, _ldrId, _name]];
-        // Officer zone ring: only wedge (individually-identified) entries ever
-        // carry a non-empty [plantedCenter, radius] zone (see the server's
-        // _chevronData build). The zone dropping back to [] (area removed while
-        // still spotted) clears it the same tick, since the sig embeds the zone
-        // and forces a resend.
-        if (_zone isNotEqualTo []) then {
-            GVAR(officerZones) set [_markerName, [_unit, _zone select 0, _zone select 1]];
-        } else {
-            GVAR(officerZones) deleteAt _markerName;
-        };
+    };
+
+    // Officer zone ring, handled the same for BOTH marker kinds. It used to sit in
+    // the wedge branch alone, on the reasoning that only individually-identified
+    // entries carry a zone — still true, but the server now suppresses the chevron
+    // of the man the group icon is drawn over (see FUNC(spotCheck)) and moves his
+    // zone onto the GROUP payload, so an officer leading his own squad reaches this
+    // handler through the branch above. Entries without one send [] and take the
+    // deleteAt, which is a no-op on the overwhelming majority that never had a ring.
+    // The zone dropping back to [] (area removed while still spotted) clears it the
+    // same tick, since both signatures embed the zone and force a resend.
+    if (_zone isNotEqualTo []) then {
+        GVAR(officerZones) set [_markerName, [_unit, _zone select 0, _zone select 1]];
+    } else {
+        GVAR(officerZones) deleteAt _markerName;
     };
 }] call CBA_fnc_addEventHandler;
 

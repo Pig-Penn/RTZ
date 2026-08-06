@@ -287,6 +287,25 @@ of the block also works, and is why [fnc_getCost.sqf:37](addons/economy/function
 `{_this call FUNC(categorize)}` is correct by accident — `categorize` opens with `params ["_class"]`,
 which reads index 0.
 
+### An Object is not a valid HashMap key — use its `netId`
+
+HashMap keys must be one of *Number, Bool, Array, String, Namespace, NaN, Code, Side, Config
+entry*. An `Object` is none of them, and every `set` / `get` / `getOrDefault*` with one throws:
+
+```
+Error Type Object, expected Number,Bool,Array,String,Namespace,Not a Number,code,Side,Config entry
+```
+
+It fails per **call**, so a per-tick memo keyed on units logs once per entity per stream per
+watcher per tick — thousands of lines, and the cache it was meant to be never holds anything,
+so the expensive work it guards runs every time anyway. Key on `netId _unit` instead, which is
+what the rest of the codebase does ([fnc_spotCheck.sqf](addons/spotting/functions/fnc_spotCheck.sqf),
+[fnc_streamServer.sqf](addons/core/functions/fnc_streamServer.sqf)). Where the entity already
+travels with its netId (the selection slices do), carry that string along rather than re-deriving it.
+
+Arrays *are* valid keys, but only if everything inside them is hashable — `[_unit, "x"]` throws
+for the same reason.
+
 ### `==` on strings is case-**in**sensitive; `isEqualTo` is case-sensitive
 
 ```sqf
@@ -418,12 +437,84 @@ need to run on the machine that owns the unit. Issued from a curator's client ag
 AI-owned-elsewhere unit, they do nothing at all, with no error. Route them with
 `CBA_fnc_targetEvent` / `remoteExec` to the owner.
 
+### Argument-local vs argument-global is decided per command, not per family
+
+Commands that look like siblings do not share a locality rule, and the failure is **silent** —
+no error, no log line, and any "done" toast you raise afterwards still fires. `rtz_supply`
+repaired and rearmed vehicles correctly for as long as the component existed while never
+refuelling the ones a headless client or a player owned, because `setDamage` and `setFuel` sit
+on opposite sides of this line:
+
+| Command | Arguments | Notes |
+|---|---|---|
+| `setDamage` | **Global** | Works from anywhere. ACE3 calls it bare in `fnc_doFullRepair` |
+| `setFuel` | **Local** | Routed by [supply/fnc_applyFuel.sqf](addons/supply/functions/fnc_applyFuel.sqf) |
+| `setVehicleAmmo` | **Local** | Routed by `QGVAR(rearm)` in [supply/XEH_postInit.sqf](addons/supply/XEH_postInit.sqf) |
+| `setHit` / `setHitPointDamage` | **Local** | Unlike `setDamage` — the trap that makes this table necessary |
+| `disableAI` / `enableAI` | **Local** | Also stored per machine and does **not** travel with locality (see below) |
+| `setVelocity`, `setDriveOnPath` | **Local** | |
+| `allowFleeing` | **Local** (group) | [officer/fnc_applyAuraEffects.sqf](addons/officer/functions/fnc_applyAuraEffects.sqf) guards on `local _group` |
+
+**The Biki is the authority, and a browser reads it fine — but tooling cannot.**
+`community.bistudio.com` returns HTTP 403 to automated fetches: WebFetch, its own MediaWiki
+API, `Special:Export` and `?action=raw` alike, with or without a browser User-Agent. So the
+MP box is one click away for a human and unavailable to any scripted check. Web *search*
+returns Biki links but its summaries paraphrase, and one such summary asserted `setDamage` was
+local — which is wrong, and acting on it would have cost a pointless refactor of a working
+repair path.
+
+Read the answer out of a mature mod's source instead, via `raw.githubusercontent.com`
+(`acemod/ACE3`, `CBATeam/CBA_A3`). A command called with **no** locality guard in code that
+demonstrably works in MP is arg-global; one wrapped in a `local` check or an event route is
+arg-local. That is evidence rather than proof, so record which of the two you have.
+
 ### The server is *not* always where the AI is local
 
 AI offloaded to a headless client, or AI in a player-led group, is local to that other machine.
 Code that assumes "AI ⇒ server" breaks on exactly the setups that matter.
 [fnc_grantCurators.sqf:10-14](addons/common/functions/fnc_grantCurators.sqf#L10-L14) documents
 this case and forwards to the server with `CBA_fnc_serverEvent`.
+
+### Locality is not established once — a long-running order must re-test it every tick
+
+"Must run where the unit is local" in a function header describes the moment the order was
+**issued**. It says nothing about the seconds or minutes that follow, and ownership moves during
+them: `rtz_control`'s deliberate transfer, a headless client rebalancing, a JIP handover.
+
+An AI order does not survive its unit changing machine. So an order issued once and then merely
+*waited on* stops being obeyed the instant ownership moves, and the wait runs to its full
+timeout — after which whatever message the timeout carries reports the wrong cause. This is what
+[common/fnc_approach.sqf](addons/common/functions/fnc_approach.sqf) did to every errand built on
+it (`assemble`, `mine`, `loot`, `repair`) until `!local _lead` was added to its watch condition.
+
+Every long-running order in RTZ now tests ownership on its own tick:
+
+```sqf
+private _finished = !alive _unit
+    || {!local _unit}          // ← ownership moved; let go cleanly
+    || { /* ... */ };
+```
+
+See [path/fnc_followTick.sqf:78](addons/path/functions/fnc_followTick.sqf#L78) and
+[reverse/fnc_reverseTick.sqf](addons/reverse/functions/fnc_reverseTick.sqf), which deliberately
+hoists its `local` test **out** of the throttled block so a handover is noticed on the frame it
+happens rather than up to `CHECK_INTERVAL` later.
+
+Two consequences that are easy to miss:
+
+- **Teardown runs on the wrong machine.** Noticing `!local` and *then* running the restores is
+  half a fix — every restore command above is itself argument-local, so it silently no-ops on
+  the machine that just lost the object. [reverse/fnc_endReverse.sqf](addons/reverse/functions/fnc_endReverse.sqf)
+  applies whichever half is local and targets the owner for the rest.
+- **Do not let a split pair ping-pong.** If teardown re-routes, and the receiver re-runs the same
+  routing function, then an object whose two halves live on different machines (a player in the
+  seat of an AI-owned hull) bounces the event between the two owners forever. Pass an explicit
+  "apply only, do not re-route" flag on the wire — `endReverse`'s `_reroute` parameter.
+
+Machine-local *state* has the mirror-image problem: `disableAI` does not travel, so a unit that
+changes hands arrives with its AI enabled. `rtz_captive` re-applies from a `CAManBase` `"Local"`
+event handler for exactly this reason — see
+[captive/fnc_surrenderApply.sqf](addons/captive/functions/fnc_surrenderApply.sqf).
 
 ### `remoteExec`'d code does not capture local variables
 
@@ -659,4 +750,10 @@ when someone looks.
 | Icons draw in first person, or behind the Zeus map | own `Draw3D` handler instead of an `EFUNC(hud,registerRenderer)` renderer (see CLAUDE.md) |
 | A per-frame `waitUntilAndExecute` never stops | no timeout passed — it polls for the rest of the mission (§1) |
 | *Type Array, expected String* inside a hashmap default block, or a cached value built from a stringified array | `_this` in `getOrDefaultCall` is `[key, hashMap]`, not the key (§3) |
+| *Type Object, expected Number,Bool,Array,String,…* on a hashmap read/write, repeating at the tick rate | an Object used as a HashMap key — key on `netId` (§3) |
 | *Generic error in expression* on `distance`, only for freshly Zeus-placed objects | `unitAimPositionVisual` **and** `modelToWorldVisual` both return `[]` for those frames (§3) |
+| One field of a multi-part write never applies; the rest do, and the "done" toast still fires | that command is argument-**local** while its siblings are global — check the table (§4) |
+| An order works, then quietly stops part-way through and only ends at its timeout | ownership moved mid-order and nothing re-tested `local` (§4) |
+| A unit is released everywhere except the machine that actually holds it | teardown ran on the machine that *lost* the object — route it to the owner (§4) |
+| An event bounces between two machines forever | teardown re-routes on both ends; pass an "apply only" flag (§4) |
+| A unit arrives on a new owner with its AI back on | `disableAI` is machine-local and does not travel — re-apply from a `"Local"` handler (§4) |

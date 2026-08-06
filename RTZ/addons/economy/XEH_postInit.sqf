@@ -6,7 +6,10 @@ if (!isServer && {!hasInterface}) exitWith {};
 
 ["CBA_settingsInitialized", {
     // Curator modules can be created mid-mission (e.g. ZEN's Add Zeus module),
-    // so the income tick doubles as lazy detection of new modules
+    // so the income tick doubles as lazy detection of new modules. The PFH
+    // fires every TICK_INTERVAL regardless, and the income payout itself
+    // self-gates on the live GVAR(incomeInterval) via a next-run time carried
+    // in the PFH args, so the payout cadence can be retuned mid-mission.
     [{
         // Curators are set up even with the economy disabled, so that disabled
         // reliably means free rather than whatever the mission's Zeus modules
@@ -25,10 +28,17 @@ if (!isServer && {!hasInterface}) exitWith {};
         };
 
         if (isServer && {GVAR(enable)} && {GVAR(income) > 0}) then {
-            private _points = GVAR(income) * TICK_INTERVAL / 60;
-            {[_x, _points] call FUNC(addPoints)} forEach allCurators;
+            (_this select 0) params ["_nextIncomeRun"];
+
+            if (CBA_missionTime >= _nextIncomeRun) then {
+                private _interval = GVAR(incomeInterval);
+                (_this select 0) set [0, CBA_missionTime + _interval];
+
+                private _points = GVAR(income) * _interval / 60;
+                {[_x, _points] call FUNC(addPoints)} forEach allCurators;
+            };
         };
-    }, TICK_INTERVAL] call CBA_fnc_addPerFrameHandler;
+    }, TICK_INTERVAL, [0]] call CBA_fnc_addPerFrameHandler;
 }] call CBA_fnc_addEventHandler;
 
 if (!hasInterface) exitWith {};

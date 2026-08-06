@@ -13,27 +13,34 @@
  *
  * The rules, in the order the steps are emitted:
  *
- *   primary    empty slot takes the best the unit's ROLE is issued, falling back to
- *              anything rather than leaving him unarmed; an occupied slot only ever
- *              swaps WITHIN its own category, so a rifleman upgrades rifle to rifle
- *              and walks straight past a dropped sniper rifle. A role issued no
- *              primary at all - pilots, vehicle crew - is left alone rather than
- *              handed the first rifle going
- *   launcher   role-gated outright - a rifleman never picks one up - but once the
- *              role carries one, upgrades ACROSS categories, because rocket to
- *              missile is exactly the improvement the rank exists to express
+ *   primary    best on offer that beats what he holds, across ALL categories - a
+ *              rifleman standing over a machine gun takes the machine gun
+ *   launcher   the same, for anyone. Rocket to missile is the improvement the rank
+ *              exists to express; empty to rocket is the one the curator asked for
+ *   handgun    empty slot only. There is nothing useful to rank sidearms by and the
+ *              step is not worth spending on a lateral trade - this is here so a
+ *              disarmed man in a field is not left with nothing at all
  *   backpack   empty slot only, biggest capacity available
  *   vest       corpse only, by chest armor
  *   headgear   corpse only, by head armor. The number, not the old binary "is it in
  *              the armored list" test, which compared against a variable that does
  *              not exist
- *   items      role-gated: everyone tops up a first aid kit and night vision, medics
- *              take a medikit, engineers a toolkit, EOD a mine detector
+ *   items      everyone tops up a first aid kit and night vision; medikit, toolkit and
+ *              mine detector are held back for medics, engineers and EOD because the
+ *              ENGINE gates their use on the same config fields. A rifleman carrying a
+ *              medikit cannot revive with it, so fetching one is a wasted walk
  *   rearm      last, always, whenever anything above was taken or the target holds
  *              magazines the unit's own weapons can use
  *
  * Filling an EMPTY slot is always allowed; upgrading an occupied one is what
  * GVAR(upgradeGear) gates. A unit is never left worse off by turning that setting off.
+ *
+ * There is deliberately no ROLE gate on any of the weapon slots. This used to lock
+ * every take against the unit's config loadout, on the reasoning that a sweep should
+ * not quietly rewrite a squad's composition - which meant a rifleman walked past a live
+ * AT tube because his config never issued him one. Slot, score and ammunition are the
+ * whole of the test now, and composition drift is the curator's business: he chose to
+ * order the sweep.
  *
  * Every weapon is gated on ammunition: it is only taken if the unit already carries a
  * compatible magazine or the same target holds one. An upgrade the unit cannot feed
@@ -68,7 +75,7 @@ private _offered = if (_isBody) then {magazines _target} else {magazineCargo _ta
 private _items = if (_isBody) then {items _target} else {itemCargo _target};
 private _bags = if (_isBody) then {[backpack _target] - [""]} else {backpackCargo _target};
 
-([_unit] call FUNC(unitRole)) params ["_roleKinds", "_roleLauncher", "_medic", "_engineer", "_eod"];
+([_unit] call FUNC(unitRole)) params ["_medic", "_engineer", "_eod"];
 
 private _upgrade = GVAR(upgradeGear);
 private _carried = magazines _unit;
@@ -109,57 +116,49 @@ private _fnc_bestWeapon = {
 };
 
 if (_weapons isNotEqualTo []) then {
+    // Primary and launcher follow the SAME rule now, so it is written once: fill an
+    // empty slot with the best thing that fits it, and trade an occupied one up only
+    // where GVAR(upgradeGear) allows. What used to make these two cases different -
+    // the primary locked inside its own category, the launcher gated on the role
+    // carrying one at all - was the role restriction, and that is gone
+    private _fnc_fillSlot = {
+        params ["_slot", "_current"];
+
+        if (_current isNotEqualTo "" && {!_upgrade}) exitWith {""};
+
+        private _beat = if (_current isEqualTo "") then {
+            -1
+        } else {
+            ([_current] call FUNC(weaponScore)) select 2
+        };
+
+        [_slot, [], _beat] call _fnc_bestWeapon
+    };
+
     // --- primary ---
-    private _current = primaryWeapon _unit;
+    private _best = [SLOT_PRIMARY, primaryWeapon _unit] call _fnc_fillSlot;
 
-    // An empty list means the role carries no primary AT ALL - a pilot, a crewman, a
-    // civilian - and that is a reason to leave the slot alone, not a licence to fill
-    // it with anything going. They are issued a sidearm and are not short of a weapon
-    if (_current isEqualTo "") then {
-        if (_roleKinds isNotEqualTo []) then {
-            // Role first, then anything. A disarmed rifleman standing over a machine
-            // gun picks the machine gun up rather than walking home empty-handed for
-            // the sake of a tidy roster
-            private _best = [SLOT_PRIMARY, _roleKinds, -1] call _fnc_bestWeapon;
-
-            if (_best isEqualTo "") then {
-                _best = [SLOT_PRIMARY, [], -1] call _fnc_bestWeapon;
-            };
-
-            if (_best isNotEqualTo "") then {
-                _plan pushBack ["weapon", _best];
-            };
-        };
-    } else {
-        if (_upgrade) then {
-            ([_current] call FUNC(weaponScore)) params ["", "_currentKind", "_currentScore"];
-
-            private _best = [SLOT_PRIMARY, [_currentKind], _currentScore] call _fnc_bestWeapon;
-
-            if (_best isNotEqualTo "") then {
-                _plan pushBack ["weapon", _best];
-            };
-        };
+    if (_best isNotEqualTo "") then {
+        _plan pushBack ["weapon", _best];
     };
 
     // --- launcher ---
-    // Gated on the role carrying one at all, in BOTH directions: a rifleman never
-    // takes one, and a launcher-carrying role upgrades freely across categories
-    if (_roleLauncher) then {
-        private _current = secondaryWeapon _unit;
+    _best = [SLOT_LAUNCHER, secondaryWeapon _unit] call _fnc_fillSlot;
 
-        if (_current isEqualTo "" || {_upgrade}) then {
-            private _score = if (_current isEqualTo "") then {
-                -1
-            } else {
-                ([_current] call FUNC(weaponScore)) select 2
-            };
+    if (_best isNotEqualTo "") then {
+        _plan pushBack ["launcher", _best];
+    };
 
-            private _best = [SLOT_LAUNCHER, [], _score] call _fnc_bestWeapon;
+    // --- handgun ---
+    // Gap-fill only, and NOT routed through the helper above: every handgun sits at
+    // the same rank, so a sidearm "upgrade" is a coin toss between two equivalent
+    // pistols costing a full step and the walk that goes with it. An empty holster on
+    // a man who has lost everything else is the case worth spending on
+    if (handgunWeapon _unit isEqualTo "") then {
+        _best = [SLOT_HANDGUN, [], -1] call _fnc_bestWeapon;
 
-            if (_best isNotEqualTo "") then {
-                _plan pushBack ["launcher", _best];
-            };
+        if (_best isNotEqualTo "") then {
+            _plan pushBack ["handgun", _best];
         };
     };
 };

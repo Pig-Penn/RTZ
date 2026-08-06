@@ -41,7 +41,7 @@
             <English>Hold Fire x%1</English>
         </Key>
         <Key ID="STR_RTZ_Orders_MsgInCombat">
-            <English>In Combat</English>
+            <English>Engaged</English>
         </Key>
         <Key ID="STR_RTZ_Orders_MsgNoCrew">
             <English>Vehicle has no crew to access its cargo</English>

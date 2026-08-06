@@ -101,13 +101,14 @@ call FUNC(monitorAreas);
 
 if (!hasInterface) exitWith {};
 
-// Server → curator feedback for aura toggles: only the server owns the
-// aura registry, so only it knows whether a request actually applied.
+// No aura-feedback receiver here any more. Aura verdicts are sent by
+// FUNC(applyAura) through EFUNC(common,notifyCurator), which is the one
+// receiver the whole mod shares (registered in rtz_common's postInit) —
+// this component's own copy was the one that had drifted, unwrapping
+// `_this select 0` where the other three passed `_this` straight through.
 // (The GVAR(auraZones) map-ring mirror and its QGVAR(auraZone) handler
-// are NOT here — they must be up before CBA's JIP replay, see XEH_preInit.)
-// Aura verdicts go through EFUNC(common,notifyCurator) now. This was
-// the copy that had drifted: it unwrapped `_this select 0` where the
-// other three passed `_this` straight through.
+// are NOT here either — they must be up before CBA's JIP replay, so they
+// live in XEH_preInit.)
 
 // Normally attached by FUNC(initCuratorDisplay) via the XEH DisplayLoad
 // event each time the curator display is created. If Zeus is somehow already

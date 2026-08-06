@@ -22,6 +22,7 @@
 // reads the cursor instead, so the slot is derived without ever touching that field.
 #define SLOT_PRIMARY 0
 #define SLOT_LAUNCHER 1
+#define SLOT_HANDGUN 2
 
 // Where a claimant is sent to stand: APPROACH_DISTANCE meters out from the target,
 // the first on his own side and each further co-claimant an EVEN SHARE of the circle
