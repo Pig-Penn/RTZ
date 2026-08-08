@@ -1,16 +1,16 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Tears down one reverse maneuver, undoing everything FUNC(reverseTo) forced on
+ * Tears down one straight-line drive, undoing everything FUNC(slideTo) forced on
  * the vehicle and its driver.
  *
  * The single exit path. Every way a maneuver can end — arrival, timeout, stuck,
  * wrecked, immobilised, driver lost, ownership moved, superseded by a new order
- * — routes through here, which is the point: a reverse leaves two pieces of
- * sticky state behind it (a driver with MOVE/PATH disabled, a vehicle with its
- * parking brake released) and both outlive the maneuver if any single exit
- * forgets them. Concentrating teardown in one function is what makes that
- * impossible rather than merely unlikely.
+ * — routes through here, which is the point: a slide leaves two pieces of sticky
+ * state behind it (a driver with MOVE/PATH disabled, a vehicle with its parking
+ * brake released) and both outlive the maneuver if any single exit forgets them.
+ * Concentrating teardown in one function is what makes that impossible rather
+ * than merely unlikely.
  *
  * The driver released is the one recorded when the maneuver STARTED, never
  * `driver _vehicle` re-read now. Those are different units whenever the driver
@@ -23,7 +23,7 @@
  * EVERY command below takes a LOCAL argument — setVelocity, disableBrakes,
  * enableAI and doFollow alike — so teardown only means anything on the machine
  * that owns the piece being torn down. One exit reaches here with that no longer
- * true: FUNC(reverseTick) ends a maneuver precisely BECAUSE `!local _vehicle`, and
+ * true: FUNC(slideTick) ends a maneuver precisely BECAUSE `!local _vehicle`, and
  * running the restores there would have been four silent no-ops. The brake is the
  * one that bites — it was released by the old owner and, unreleased, leaves the
  * hulk free-rolling for the rest of the mission, which is the exact failure the
@@ -46,7 +46,7 @@
  * None
  *
  * Example:
- * [_record] call rtz_reverse_fnc_endReverse
+ * [_record] call rtz_slide_fnc_endSlide
  *
  * Public: No
  */

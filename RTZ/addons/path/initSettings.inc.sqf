@@ -40,6 +40,52 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     false // Client
 ] call CBA_fnc_addSetting;
 
+// Client-side and purely cosmetic — it tints the screen of the curator who
+// opened the session and nothing else.
+[
+    QGVAR(planningTint), "CHECKBOX",
+    [LSTRING(PlanningTint), LSTRING(PlanningTint_Description)],
+    _category,
+    true,
+    false // Client
+] call CBA_fnc_addSetting;
+
+// Global, and read in three places that must all agree: where the unit is local
+// (it selects the executor, and disableAI only means anything there), on the
+// curator's client while drawing (so holding Alt visibly does nothing when
+// marked stretches are off), and at commit (it selects how finely the path is
+// resampled — a path reduced for the AI's navigation and then walked literally
+// has already lost its corners).
+//
+// Scripted by default. It is Wargame's executor and the only one that walks a
+// drawn line as drawn; the AI positions exist for missions that would rather
+// never have a unit lose its own navigation, and for comparing the two.
+[
+    QGVAR(infantryExecutor), "LIST",
+    [LSTRING(InfantryExecutor), LSTRING(InfantryExecutor_Description)],
+    _category,
+    [
+        [EXEC_AI, EXEC_SPANS, EXEC_SCRIPTED],
+        [LSTRING(InfantryExecutor_AI), LSTRING(InfantryExecutor_Spans), LSTRING(InfantryExecutor_Scripted)],
+        2
+    ],
+    true // Global
+] call CBA_fnc_addSetting;
+
+// Global for the same three reasons. On by default: setDriveOnPath does nothing
+// at all for Air or Ship, so the alternative is a chain of move orders that
+// gives the AI a destination and no line — and a carefully traced valley run
+// comes back as a straight leg over the ridge, at whatever height and speed the
+// AI preferred. Off keeps real physics, collision and autorotation, at the price
+// of a flight plan followed approximately.
+[
+    QGVAR(scriptedFlight), "CHECKBOX",
+    [LSTRING(ScriptedFlight), LSTRING(ScriptedFlight_Description)],
+    _category,
+    true,
+    true // Global
+] call CBA_fnc_addSetting;
+
 // Both of the following are read where the UNIT is local, not on the ordering
 // curator's client, so every machine has to agree on them or the same path
 // behaves differently depending on who happens to own the unit.

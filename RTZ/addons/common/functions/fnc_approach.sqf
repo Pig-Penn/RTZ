@@ -71,7 +71,7 @@ _lead setVariable [QGVAR(approachOrder), _order];
         // below was issued on this machine and does not survive a handover, so
         // every tick past it is spent waiting for an arrival that can no longer
         // happen. Without this the errand burned its whole timeout and then blamed
-        // the walk. Same test rtz_path's followTick and rtz_reverse's reverseTick
+        // the walk. Same test rtz_path's followTick and rtz_slide's slideTick
         // each make for their own long-running orders.
         || {!local _lead}
         || {_lead getVariable [QGVAR(approachOrder), 0] != _order}

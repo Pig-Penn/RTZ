@@ -14,7 +14,7 @@
  * teardown path rather than one per caller). A mission in which nobody ever
  * surrenders therefore never runs a single tick of this component — the previous
  * design started an unconditional 0.5 Hz loop at mission init and ran it to the
- * end of the mission regardless, which is the pattern rtz_reverse and
+ * end of the mission regardless, which is the pattern rtz_slide and
  * rtz_hud already abandoned.
  *
  * The enable setting is checked HERE rather than at init, which is what makes it
@@ -55,7 +55,7 @@ GVAR(surrenderedUnits) pushBackUnique _unit;
 if (GVAR(pfh) < 0) then {
     // LINKFUNC, not bare FUNC: FUNC captures the compiled body at registration, so
     // under DISABLE_COMPILE_CACHE a running watch would keep executing the stale
-    // copy after a recompile. rtz_reverse and rtz_path register their ticks the
+    // copy after a recompile. rtz_slide and rtz_path register their ticks the
     // same way.
     GVAR(pfh) = [LINKFUNC(captureTick), CAPTURE_INTERVAL] call CBA_fnc_addPerFrameHandler;
 };

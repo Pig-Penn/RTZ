@@ -17,6 +17,13 @@
  * merely *likely* to fire cannot be allowed to own the only path that deletes
  * the agent (Gotchas §1).
  *
+ * The point count at request time is recorded alongside the expiry, because the
+ * answer is only meaningful for the head it was asked about. The curator can
+ * keep dragging for the whole of AUTOPATH_TIMEOUT, and a detour spliced onto a
+ * head that has since moved is a leg jumping backwards through everything drawn
+ * in between. FUNC(splicePath) rejects on that count; Wargame guards the same
+ * window by comparing the head position.
+ *
  * Aircraft and boats are not asked. Neither has anything to path around in the
  * sense the ground pathfinder understands, and a boat path blocked by a
  * headland wants the curator to trace around it, not a land path through it.
@@ -36,16 +43,17 @@
 
 params ["_path", "_target"];
 
-_path params ["", "", "", "", "_kind", "_head"];
+_path params ["", "", "_points", "", "_kind", "_head"];
 
 if (_kind == KIND_AIR || {_kind == KIND_BOAT}) exitWith {false};
 
 private _now = CBA_missionTime;
 
-// One search per path at a time. The stamp doubles as the expiry, so a search
-// the engine never answers frees the path by itself.
-if (_now < (_path select PATH_SEARCH)) exitWith {false};
-_path set [PATH_SEARCH, _now + AUTOPATH_TIMEOUT];
+// One search per path at a time. The expiry frees the path by itself if the
+// engine never answers; the count is what FUNC(splicePath) tests the answer's
+// freshness against.
+if (_now < ((_path select PATH_SEARCH) param [0, 0])) exitWith {false};
+_path set [PATH_SEARCH, [_now + AUTOPATH_TIMEOUT, count _points]];
 
 private _agent = calculatePath [
     ["man", "wheeled_APC"] select (_kind == KIND_LAND),
@@ -55,7 +63,7 @@ private _agent = calculatePath [
 ];
 
 if (isNull _agent) exitWith {
-    _path set [PATH_SEARCH, 0];
+    _path set [PATH_SEARCH, []];
     false
 };
 

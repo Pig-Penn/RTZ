@@ -12,13 +12,13 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     true // Global
 ] call CBA_fnc_addSetting;
 
-// At the fixed REVERSE_SPEED the timeout is usually the binding limit, not this
+// At the fixed drive speeds the timeout is usually the binding limit, not this
 // — the cap is here to stop one keystroke dragging a column across the map when
 // a curator raises the timeout, not to be hit on an ordinary reposition.
 [
     QGVAR(maxDistance), "SLIDER",
     [LSTRING(MaxDistance), LSTRING(MaxDistance_Description)],
     _category,
-    [10, 500, 50, 0],
+    [10, 100, 50, 0],
     true // Global
 ] call CBA_fnc_addSetting;

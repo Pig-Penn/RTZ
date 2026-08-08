@@ -7,6 +7,6 @@ class zen_context_menu_actions {
         icon = ICON_ACTION;
         statement = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(orderLoot));
         condition = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(canLoot));
-        priority = 2;
+        priority = 34;
     };
 };

@@ -1,5 +1,5 @@
-PREP(canReverse);
-PREP(endReverse);
-PREP(orderReverse);
-PREP(reverseTick);
-PREP(reverseTo);
+PREP(canSlide);
+PREP(endSlide);
+PREP(orderSlide);
+PREP(slideTick);
+PREP(slideTo);

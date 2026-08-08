@@ -21,11 +21,18 @@
  * 0: Points, ASL <ARRAY>
  * 1: Minimum distance between kept points <NUMBER>
  *
+ * The ORIGINAL index of every kept point comes back alongside it. Anything
+ * carried per index rather than per point — the facing spans, which are stored
+ * as [fromIndex, azimuth] pairs — has to be remapped onto the reduced list, and
+ * the only place that knows which points survived is here. Callers with nothing
+ * to remap ignore the second element.
+ *
  * Return Value:
- * Reduced points, ASL; always ends on the original final point <ARRAY>
+ * 0: Reduced points, ASL; always ends on the original final point <ARRAY>
+ * 1: Index each kept point had in the input, ascending <ARRAY>
  *
  * Example:
- * private _legs = [_points, 20] call rtz_path_fnc_reducePath
+ * ([_points, 20] call rtz_path_fnc_reducePath) params ["_legs", "_indices"]
  *
  * Public: No
  */
@@ -33,10 +40,15 @@
 params ["_points", "_spacing"];
 
 private _count = count _points;
-if (_count < 3) exitWith {+_points};
+if (_count < 3) exitWith {
+    private _indices = [];
+    for "_i" from 0 to (_count - 1) do {_indices pushBack _i};
+    [+_points, _indices]
+};
 
 private _first = _points select 0;
 private _kept = [_first];
+private _indices = [0];
 
 private _lastKept = _first;
 // Heading that arrived at the last kept point. Seeded from the first leg so the
@@ -57,11 +69,13 @@ for "_i" from 1 to (_last - 1) do {
 
     if (_lastKept distance _p >= _spacing || {_turn >= COMMIT_ANGLE}) then {
         _kept pushBack _p;
+        _indices pushBack _i;
         _lastKept = _p;
         _lastDir = _dir;
     };
 };
 
 _kept pushBack (_points select -1);
+_indices pushBack _last;
 
-_kept
+[_kept, _indices]

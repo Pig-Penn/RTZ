@@ -10,6 +10,6 @@ class zen_context_menu_actions {
         icon = ICON_SMOKE;
         statement = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(orderDeploySmoke));
         condition = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(canDeploySmoke));
-        priority = 1;
+        priority = 69;
     };
 };

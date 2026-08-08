@@ -194,6 +194,19 @@ private _pointBest = POINT_HIT_R2;
     if (_last % _stride != 0) then {
         drawLine3D [_prev, (ASLToAGL (_points select _last)) vectorAdd _lift, _drawColor, LINE_WIDTH];
     };
+
+    // A circuit is committed as a patrol and cycles instead of stopping
+    // (FUNC(commitPaths)) — so show it closing while it is still being drawn,
+    // rather than letting the curator find out from the units. The same test
+    // both ways, asked here per path per frame: two counts and one distance2D.
+    if ([_points] call FUNC(isPatrol)) then {
+        private _origin = (ASLToAGL getPosASL _hull) vectorAdd _lift;
+        drawLine3D [(ASLToAGL (_points select _last)) vectorAdd _lift, _origin, _drawColor, LINE_WIDTH];
+        drawIcon3D [
+            "", _drawColor, _origin vectorAdd [0, 0, 1.2],
+            0, 0, 0, LLSTRING(LabelPatrol), 1, TEXT_SIZE, PATH_FONT, "center", false, 0, 0
+        ];
+    };
 } forEach _paths;
 
 // Marker on the point that a click would cut back to

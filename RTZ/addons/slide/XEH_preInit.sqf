@@ -6,13 +6,13 @@ PREP_RECOMPILE_START;
 #include "XEH_PREP.hpp"
 PREP_RECOMPILE_END;
 
-// Reverse maneuvers currently running on this machine, one record per vehicle
+// Straight-line drives currently running on this machine, one record per vehicle
 // (layout in script_component.hpp). Declared outside the recompile block so a
 // live recompile swaps the functions without stranding maneuvers already in
 // flight — their drivers would never be released.
 //
 // The per-frame handler that drives them is created with the first maneuver and
-// destroyed with the last (FUNC(reverseTo), FUNC(reverseTick)); -1 is the
+// destroyed with the last (FUNC(slideTo), FUNC(slideTick)); -1 is the
 // "no handler exists" sentinel, matching CBA's own handle convention.
 GVAR(active) = [];
 GVAR(pfh) = -1;

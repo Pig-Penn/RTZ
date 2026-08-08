@@ -15,6 +15,15 @@
  * relax its climb and incline gates for it: roads legitimately run up gradients
  * that would be rejected as a wall if traced across open ground.
  *
+ * The answer is a point ON the road, not the road SEGMENT's origin. A segment is
+ * ten to twenty-five metres long, so every sample taken inside one resolves to
+ * the same position — which the caller's spacing gate then refuses until the
+ * forward bias has walked the probe onto the next segment entirely. The path
+ * comes out as a row of dots one segment apart with straight lines between them,
+ * which on a curve is a line that leaves the road. Projecting the probe onto the
+ * segment costs one dot product and gives back the continuous line the gesture
+ * was drawing.
+ *
  * Arguments:
  * 0: Candidate position, ASL <ARRAY>
  * 1: Current path head, ASL <ARRAY>
@@ -37,9 +46,40 @@ private _distance = _head distance _target;
 // teleport the path sideways onto whatever else is nearby
 if (_distance > ROAD_SNAP_MAX) exitWith {[_target, false]};
 
-private _probe = ASLToAGL (_head vectorAdd ((_head vectorFromTo _target) vectorMultiply (_distance * ROAD_SNAP_BIAS)));
+private _biased = _head vectorAdd ((_head vectorFromTo _target) vectorMultiply (_distance * ROAD_SNAP_BIAS));
 
-private _road = [_probe, ROAD_SNAP_RADIUS] call BIS_fnc_nearestRoad;
+private _road = [ASLToAGL _biased, ROAD_SNAP_RADIUS] call BIS_fnc_nearestRoad;
 if (isNull _road) exitWith {[_target, false]};
 
-[(getPosASL _road) vectorAdd [0, 0, ROAD_LIFT], true]
+// The segment's own endpoints. Everything else about a road — its width, its
+// texture, whether it is a bridge — is in here too, and none of it is wanted;
+// these two are, because they are the LINE the point has to land on.
+(getRoadInfo _road) params ["", "", "", "", "", "", "_begin", "_end"];
+
+// Where along the segment the probe falls, clamped to its ends so a probe past
+// the last piece of road lands on the end of it rather than out on the
+// extension of its centreline. Measured in the ground plane: road segments have
+// height, and including it would pull the point along the gradient rather than
+// along the road.
+private _run = [0, 0, 0];
+private _lengthSq = 0;
+
+if (!isNil "_begin" && {!isNil "_end"}) then {
+    _run = _end vectorDiff _begin;
+    _lengthSq = ((_run select 0) ^ 2) + ((_run select 1) ^ 2);
+};
+
+// A segment with no ground-plane geometry to project onto is what an object
+// that is not really a road piece answers, and what everything answered before
+// getRoadInfo carried endpoints. Falling back to the origin is the old
+// behaviour: steppy, but never wrong.
+if (_lengthSq <= 0) exitWith {
+    [(getPosASL _road) vectorAdd [0, 0, ROAD_LIFT], true]
+};
+
+private _from = _biased vectorDiff _begin;
+private _along = ((((_from select 0) * (_run select 0)) + ((_from select 1) * (_run select 1))) / _lengthSq) max 0 min 1;
+
+// Roads sit fractionally below their own surface, so the point is lifted clear
+// or the caller's line test hits the road it was just placed on.
+[(_begin vectorAdd (_run vectorMultiply _along)) vectorAdd [0, 0, ROAD_LIFT], true]

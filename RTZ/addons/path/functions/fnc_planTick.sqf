@@ -7,7 +7,7 @@
  *
  * Runs at frame rate because tracing a path is a per-frame sample of the cursor.
  * Everything here that is NOT that sample is throttled to PRUNE_INTERVAL on the
- * clock carried in the handler's own argument array, the same way rtz_reverse
+ * clock carried in the handler's own argument array, the same way rtz_slide
  * staggers its per-maneuver checks.
  *
  * Three responsibilities:
@@ -17,6 +17,10 @@
  *    failure. Reading the cursor through ZEN's helper rather than screenToWorld
  *    directly is what makes tracing work on the Zeus MAP as well as in the 3D
  *    view, since that helper answers with the map position while the map is up.
+ *
+ *    Or AIM it, when the drag was started with Shift held on an infantry handle
+ *    (FUNC(handleInput)): the same drag then sets which way that stretch of path
+ *    is walked facing instead of where it goes.
  *
  *  - Notice the curator display going away. Zeus can close without any of this
  *    mode's handlers firing (its own keybind, the curator dying, remote control
@@ -61,16 +65,37 @@ if (!isNull _grabbed) then {
     if (_index != -1) then {
         private _path = _paths select _index;
 
-        // An aircraft path needs three numbers from a two-number cursor, so it
-        // has a resolver of its own (FUNC(airTarget)) and needs to know how far
-        // the mouse moved since the last frame to read a vertical drag.
-        private _target = if ((_path select PATH_KIND) == KIND_AIR) then {
-            [_path, _args select 1] call FUNC(airTarget)
-        } else {
-            [nil, 1] call zen_common_fnc_getPosFromScreen
-        };
+        if (GVAR(rotating)) then {
+            // Rotating, not tracing: the cursor aims the handle instead of
+            // extending the path. Nothing else changes — the path keeps its
+            // points and its head, and both renderers already draw PATH_DIR as
+            // the handle's angle, so the feedback costs nothing extra.
+            //
+            // Measured from the HEAD rather than from the subject, because the
+            // head is where the handle is drawn and where the facing set here
+            // will be walked from.
+            private _cursor = [nil, 1] call zen_common_fnc_getPosFromScreen;
+            private _head = _path select PATH_HEAD;
 
-        [_path, _target] call FUNC(appendPoint);
+            // A cursor sitting on the handle has no direction to give, and
+            // getDir on two coincident points answers 0 — which would snap the
+            // handle to north every frame the cursor passed over it.
+            if (_head distance2D _cursor > 1) then {
+                _path set [PATH_DIR, _head getDir _cursor];
+            };
+        } else {
+            // An aircraft path needs three numbers from a two-number cursor, so
+            // it has a resolver of its own (FUNC(airTarget)) and needs to know
+            // how far the mouse moved since the last frame to read a vertical
+            // drag.
+            private _target = if ((_path select PATH_KIND) == KIND_AIR) then {
+                [_path, _args select 1] call FUNC(airTarget)
+            } else {
+                [nil, 1] call zen_common_fnc_getPosFromScreen
+            };
+
+            [_path, _target] call FUNC(appendPoint);
+        };
     };
 };
 
@@ -106,6 +131,18 @@ for "_i" from (count _paths) - 1 to 0 step -1 do {
     // controls, and the order would land on someone who cannot act on it.
     private _driver = if (_hull isKindOf "CAManBase") then {_hull} else {driver _hull};
     if (_driver isNotEqualTo _unit) then {
+        // The grab, the hover and the cut pick all hold the UNIT, and every
+        // lookup in the mode is a findIf on PATH_UNIT. Re-pointing the record
+        // without re-pointing them leaves the curator dragging a handle whose
+        // findIf can no longer match anything: the trace in FUNC(planTick)
+        // silently stops extending that path, and it cannot be released or
+        // re-grabbed until the mouse comes up.
+        if (GVAR(grabbed) isEqualTo _unit) then {GVAR(grabbed) = _driver};
+        if (GVAR(hovered) isEqualTo _unit) then {GVAR(hovered) = _driver};
+        if (GVAR(hoveredPoint) param [0, objNull] isEqualTo _unit) then {
+            GVAR(hoveredPoint) set [0, _driver];
+        };
+
         _path set [PATH_UNIT, _driver];
     };
 };

@@ -13,7 +13,7 @@ class zen_context_menu_actions {
     class RTZ_Overlays {
         displayName = CSTRING(SubmenuOverlays);
         icon = ICON_SUBMENU_OVERLAYS;
-        priority = 6;
+        priority = 31;
     };
 
     // Submenu for squad/behaviour control actions (behaviour info, disable
@@ -21,6 +21,6 @@ class zen_context_menu_actions {
     class RTZ_Control {
         displayName = CSTRING(SubmenuControl);
         icon = ICON_SUBMENU_CONTROL;
-        priority = 7;
+        priority = 32;
     };
 };

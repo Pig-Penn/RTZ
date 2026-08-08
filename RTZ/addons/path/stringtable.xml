@@ -22,6 +22,45 @@
         <Key ID="STR_RTZ_Path_FreezeWhilePlanning_Description">
             <English>Stop the selected units in place for as long as a path is being drawn for them, so they do not walk out from under it. Released when planning ends. Note that a unit already being held still by something else — a LAMBS garrison, for example — is released along with the rest.</English>
         </Key>
+        <Key ID="STR_RTZ_Path_HintAltitude">
+            <English>Aircraft: hold Alt while dragging to set altitude, Shift for coarse steps.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_HintCut">
+            <English>Hold Ctrl and click a point on a path to cut it back to there.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_HintReset">
+            <English>Delete clears the path under the cursor. Escape cancels without ordering anything.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_HintRoad">
+            <English>Vehicles: hold Shift while dragging to pull the path onto the nearest road.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_HintRotate">
+            <English>Infantry: hold Shift as you grab an arrow to turn it instead of drawing.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_HintTactical">
+            <English>Infantry: hold Alt while drawing to advance facing the way the arrow points.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_HintTrace">
+            <English>Drag the arrow in front of a unit to trace the path it should take.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_InfantryExecutor">
+            <English>How Infantry Walk a Path</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_InfantryExecutor_AI">
+            <English>Own navigation</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_InfantryExecutor_Description">
+            <English>Whether a man is carried along his drawn path by animation, or navigates it himself. Carrying him is the only way a drawn line gets walked as drawn — his own navigation rounds the corners, re-forms with his group, and arrives somewhere near the line rather than on it — but while he is being carried his AI movement is off, so he cannot take cover or path around an obstacle he was walked into. He will still break off to engage what shoots at him or walks into his arc, and he will still open doors in front of him.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_InfantryExecutor_Scripted">
+            <English>Carried for the whole path</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_InfantryExecutor_Spans">
+            <English>Own navigation, carried in marked stretches</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_LabelPatrol">
+            <English>Patrol Loop</English>
+        </Key>
         <Key ID="STR_RTZ_Path_MaxVehicleSpeed">
             <English>Maximum Path Speed</English>
         </Key>
@@ -39,6 +78,18 @@
         </Key>
         <Key ID="STR_RTZ_Path_MsgPlanning">
             <English>Planning paths</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_PlanningTint">
+            <English>Tint the Screen While Planning</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_PlanningTint_Description">
+            <English>Desaturate the view for as long as a path planning session is open, so the mode is unmistakable. Affects only your own screen and nothing about how paths are drawn or executed.</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_ScriptedFlight">
+            <English>Fly and Sail Paths Exactly</English>
+        </Key>
+        <Key ID="STR_RTZ_Path_ScriptedFlight_Description">
+            <English>Move aircraft and boats along their drawn path directly, setting attitude and speed each tick, so a traced flight plan is flown as traced. The engine cannot drive aircraft or boats along a path at all, so the alternative is a chain of move orders that gives the AI a destination but no line — a traced valley run comes out as a straight leg over the ridge, at whatever height and speed the AI prefers. Turn this off to keep real physics, collision and autorotation, at the price of a flight plan followed approximately. Helicopters still land themselves when a path is drawn onto the ground.</English>
         </Key>
         <Key ID="STR_RTZ_Path_Timeout">
             <English>Path Timeout</English>

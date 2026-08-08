@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
-    <Package name="Reverse">
-        <Key ID="STR_RTZ_Reverse_DisplayName">
-            <English>Reversing</English>
+    <Package name="Slide">
+        <Key ID="STR_RTZ_Slide_DisplayName">
+            <English>Vehicle Driving</English>
         </Key>
-        <Key ID="STR_RTZ_Reverse_MaxDistance">
-            <English>Maximum Reverse Distance</English>
+        <Key ID="STR_RTZ_Slide_DriveToCursor">
+            <English>Drive to Cursor</English>
         </Key>
-        <Key ID="STR_RTZ_Reverse_MaxDistance_Description">
-            <English>Furthest a vehicle may be ordered to reverse in one order, in meters. Orders pointing further back are shortened to this distance rather than refused.</English>
+        <Key ID="STR_RTZ_Slide_DriveToCursor_Description">
+            <English>Selected AI-driven land vehicles drive in a straight line, forward or backward, until the cursor position is abeam of them. Each vehicle picks its own direction from where the cursor falls relative to it; a vehicle the cursor is beside rather than ahead of or behind does not move. Selecting a crew member orders the vehicle he is riding in.</English>
         </Key>
-        <Key ID="STR_RTZ_Reverse_MsgNotBehind">
-            <English>Cursor is not behind the vehicle</English>
+        <Key ID="STR_RTZ_Slide_MaxDistance">
+            <English>Maximum Drive Distance</English>
         </Key>
-        <Key ID="STR_RTZ_Reverse_MsgReversing">
-            <English>Reversing</English>
+        <Key ID="STR_RTZ_Slide_MaxDistance_Description">
+            <English>Furthest a vehicle may be ordered to drive in one order, in meters. Orders pointing further away are shortened to this distance rather than refused.</English>
         </Key>
-        <Key ID="STR_RTZ_Reverse_ReverseToCursor">
-            <English>Reverse to Cursor</English>
+        <Key ID="STR_RTZ_Slide_MsgAbeam">
+            <English>Cursor is not ahead of or behind the vehicle</English>
         </Key>
-        <Key ID="STR_RTZ_Reverse_ReverseToCursor_Description">
-            <English>Selected AI-driven land vehicles back up in a straight line until the cursor position is abeam of them. The cursor must be behind a vehicle for it to move; selecting a crew member orders the vehicle he is riding in.</English>
+        <Key ID="STR_RTZ_Slide_MsgDriving">
+            <English>Driving</English>
         </Key>
-        <Key ID="STR_RTZ_Reverse_Timeout">
-            <English>Reverse Timeout</English>
+        <Key ID="STR_RTZ_Slide_Timeout">
+            <English>Drive Timeout</English>
         </Key>
-        <Key ID="STR_RTZ_Reverse_Timeout_Description">
-            <English>Time in seconds a vehicle may spend reversing before the order expires.</English>
+        <Key ID="STR_RTZ_Slide_Timeout_Description">
+            <English>Time in seconds a vehicle may spend driving before the order expires.</English>
         </Key>
     </Package>
 </Project>

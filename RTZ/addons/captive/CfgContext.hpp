@@ -4,9 +4,7 @@ class zen_context_menu_actions {
     class RTZ_Control {
         // A state toggle over an existing selection rather than a new order,
         // so it belongs with the other control toggles instead of at the menu
-        // root. Fractional priority to sit between rtz_control's dismount lock
-        // (4) and its disable-simulation toggle (2) without renumbering the
-        // whole submenu — ZEN sorts these numerically.
+        // root.
         //
         // Label and icon tint track the first eligible unit's current state via
         // FUNC(surrenderActionModifier); clicking it flips every eligible unit
@@ -26,7 +24,7 @@ class zen_context_menu_actions {
             statement = QUOTE([_objects + [_hoveredEntity]] call FUNC(surrenderToggle));
             condition = QUOTE(GVAR(enabled) && {[_objects + [_hoveredEntity]] call FUNC(canSurrender)});
             modifierFunction = QUOTE([ARR_2(_this select 0,_objects + [_hoveredEntity])] call FUNC(surrenderActionModifier));
-            priority = 2.5;
+            priority = 3;
         };
     };
 };

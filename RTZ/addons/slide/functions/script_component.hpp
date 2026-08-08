@@ -1,1 +1,1 @@
-#include "\x\rtz\addons\reverse\script_component.hpp"
+#include "\x\rtz\addons\slide\script_component.hpp"

@@ -7,7 +7,7 @@
  *
  * Returns whether it consumed the press, so a key that this handler declines to
  * act on still reaches whatever would normally receive it (rtz_orders and
- * rtz_reverse do the same).
+ * rtz_slide do the same).
  *
  * Arguments:
  * None

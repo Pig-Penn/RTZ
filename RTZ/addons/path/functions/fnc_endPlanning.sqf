@@ -2,12 +2,12 @@
 /*
  * Author: Maxim
  * Closes the path planning session and returns every resource it took: the
- * tick, the curator-display handlers, and the soft hold on any unit that was
- * frozen for the duration.
+ * tick, the curator-display handlers, the screen tint, the modifier hint, and
+ * the soft hold on any unit that was frozen for the duration.
  *
  * Safe to call when no session is open, and safe to call from inside the tick —
  * removing a per-frame handler from within its own body is legal in CBA and is
- * how rtz_reverse's engine takes itself down.
+ * how rtz_slide's engine takes itself down.
  *
  * Every exit path paths through here rather than tearing down in place, which
  * is what makes "Zeus closed under us" and "the curator pressed Escape" the same
@@ -43,6 +43,24 @@ GVAR(grabbed) = objNull;
 GVAR(hovered) = objNull;
 GVAR(hoveredPoint) = [];
 GVAR(mods) = [false, false, false];
+GVAR(rotating) = false;
+GVAR(altDrag) = 0;
+
+// Torn down here rather than left to its own timer, and unconditionally rather
+// than behind the setting that created it: an admin who switches the tint off
+// mid-session must not leave the world grey for the rest of the mission. -1 is
+// the "nothing to destroy" sentinel, so this is also safe on the exit paths that
+// never created one.
+if (GVAR(ppEffect) != -1) then {
+    ppEffectDestroy GVAR(ppEffect);
+    GVAR(ppEffect) = -1;
+};
+
+// The modifier hint outlives the session it describes otherwise. Bumping the
+// generation also disarms its own expiry, so the timer still in flight finds
+// itself superseded and leaves whatever is on screen next alone.
+GVAR(hintGeneration) = GVAR(hintGeneration) + 1;
+hintSilent "";
 
 if (GVAR(planPfh) != -1) then {
     [GVAR(planPfh)] call CBA_fnc_removePerFrameHandler;

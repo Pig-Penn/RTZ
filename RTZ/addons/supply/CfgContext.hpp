@@ -10,7 +10,7 @@ class zen_context_menu_actions {
         // Relabels to Repair/Refuel/Rearm (with the matching icon) when every
         // selected supply vehicle offers only that one service.
         modifierFunction = QUOTE([ARR_2(_this select 0,_objects)] call FUNC(resupplyActionModifier));
-        priority = 26;
+        priority = 36;
     };
 
     // NO supply-lines entry in the shared RTZ_Overlays submenu, unlike rtz_hud's

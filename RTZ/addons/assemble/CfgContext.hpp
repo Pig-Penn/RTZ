@@ -15,7 +15,7 @@ class zen_context_menu_actions {
         statement = QUOTE([_objects] call FUNC(orderAssemble));
         condition = QUOTE([_objects] call FUNC(canAssemble));
         modifierFunction = QUOTE((_this select 0) set [ARR_2(ACTION_INDEX_ICON,GVAR(icon))]);
-        priority = 30;
+        priority = 45;
     };
 
     class GVAR(disassemble) {
@@ -24,6 +24,6 @@ class zen_context_menu_actions {
         statement = QUOTE([_objects] call FUNC(orderDisassemble));
         condition = QUOTE([_objects] call FUNC(canDisassemble));
         modifierFunction = QUOTE((_this select 0) set [ARR_2(ACTION_INDEX_ICON,GVAR(icon))]);
-        priority = 30;
+        priority = 44;
     };
 };

@@ -17,6 +17,11 @@
  * the mouse events refresh it as well — which repairs the one stale case, a
  * modifier released while the display did not have focus.
  *
+ * One modifier is read differently: the Shift that turns a drag into a ROTATION
+ * is latched at mouse-down rather than read live, because it decides which
+ * gesture is under way rather than modifying one already in progress. See the
+ * handler for what reading it live would do.
+ *
  * There is deliberately no "ignore the frame we started on" guard of the kind
  * EFUNC(common,placementPreview) needs. That guard exists because a picker is
  * opened by clicking a context-menu entry, and the same click would otherwise
@@ -63,12 +68,32 @@ _handlers pushBack ["MouseButtonDown", _display displayAddEventHandler ["MouseBu
 
     GVAR(grabbed) = _hovered;
 
+    // A new drag starts from the altitude the handle already has, never from
+    // whatever the previous one had banked and not spent (FUNC(airTarget))
+    GVAR(altDrag) = 0;
+
     // Taking hold of a handle ends any formation trailing it was doing. From
     // here the path is the curator's, and FUNC(formationTrail) will not touch
     // it again.
     private _index = GVAR(paths) findIf {(_x select PATH_UNIT) isEqualTo _hovered};
     if (_index != -1) then {
-        (GVAR(paths) select _index) set [PATH_LEADER, objNull];
+        private _path = GVAR(paths) select _index;
+        _path set [PATH_LEADER, objNull];
+
+        // Shift on the way IN turns the drag into a rotation: the cursor sets
+        // which way the subject faces rather than where it goes, which is the
+        // direction a tactical stretch of path is then walked facing.
+        //
+        // Armed here and only here, so the gesture is decided by what was held
+        // when the handle was taken. A modifier read live would let a Shift
+        // pressed mid-trace silently stop the path growing, and a Shift released
+        // mid-rotation turn the rotation into a trace from wherever the cursor
+        // had wandered to.
+        //
+        // Infantry only, exactly as Wargame gates it — and that gate is also
+        // what keeps Shift free to mean road magnetisation on a land path and
+        // coarse altitude on an air one.
+        GVAR(rotating) = _shift && {(_path select PATH_KIND) == KIND_INFANTRY};
     };
 
     true
@@ -82,6 +107,8 @@ _handlers pushBack ["MouseButtonUp", _display displayAddEventHandler ["MouseButt
     if (isNull GVAR(grabbed)) exitWith {false};
 
     GVAR(grabbed) = objNull;
+    GVAR(rotating) = false;
+    GVAR(altDrag) = 0;
     true
 }]];
 

@@ -69,6 +69,17 @@ for "_i" from ((_count - _steps) max 0) to (_count - 2) do {
         // Keep 0.._i, drop the detour after it
         _points resize (_i + 1);
         _path set [PATH_HEAD, _points select _i];
+
+        // A facing span that started inside the detour has nothing left to apply
+        // to. Backwards and breaking at the first survivor: the list is ascending
+        // and short, so this touches only what it removes — and the test is at
+        // the TOP of the body, where a `break` costs nothing (Gotchas §2).
+        private _spans = _path select PATH_FACING;
+        for "_s" from (count _spans) - 1 to 0 step -1 do {
+            if ((_spans select _s select 0) <= _i) then {break};
+            _spans deleteAt _s;
+        };
+
         _cut = true;
         break;
     };

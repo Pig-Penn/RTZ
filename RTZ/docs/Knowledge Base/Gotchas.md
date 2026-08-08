@@ -496,7 +496,7 @@ private _finished = !alive _unit
 ```
 
 See [path/fnc_followTick.sqf:78](addons/path/functions/fnc_followTick.sqf#L78) and
-[reverse/fnc_reverseTick.sqf](addons/reverse/functions/fnc_reverseTick.sqf), which deliberately
+[slide/fnc_slideTick.sqf](addons/slide/functions/fnc_slideTick.sqf), which deliberately
 hoists its `local` test **out** of the throttled block so a handover is noticed on the frame it
 happens rather than up to `CHECK_INTERVAL` later.
 
@@ -504,12 +504,12 @@ Two consequences that are easy to miss:
 
 - **Teardown runs on the wrong machine.** Noticing `!local` and *then* running the restores is
   half a fix — every restore command above is itself argument-local, so it silently no-ops on
-  the machine that just lost the object. [reverse/fnc_endReverse.sqf](addons/reverse/functions/fnc_endReverse.sqf)
+  the machine that just lost the object. [slide/fnc_endSlide.sqf](addons/slide/functions/fnc_endSlide.sqf)
   applies whichever half is local and targets the owner for the rest.
 - **Do not let a split pair ping-pong.** If teardown re-routes, and the receiver re-runs the same
   routing function, then an object whose two halves live on different machines (a player in the
   seat of an AI-owned hull) bounces the event between the two owners forever. Pass an explicit
-  "apply only, do not re-route" flag on the wire — `endReverse`'s `_reroute` parameter.
+  "apply only, do not re-route" flag on the wire — `endSlide`'s `_reroute` parameter.
 
 Machine-local *state* has the mirror-image problem: `disableAI` does not travel, so a unit that
 changes hands arrives with its AI enabled. `rtz_captive` re-applies from a `CAManBase` `"Local"`

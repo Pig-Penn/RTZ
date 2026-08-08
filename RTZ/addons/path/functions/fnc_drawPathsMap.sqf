@@ -143,6 +143,17 @@ private _pointBest = _pick2;
     if (_last % _stride != 0) then {
         _map drawLine [_prev, ASLToAGL (_points select _last), _drawColor, MAP_LINE_WIDTH];
     };
+
+    // Same closing segment and same label as the 3D renderer, from the same
+    // test — a circuit has to read as one whichever view it is drawn in
+    if ([_points] call FUNC(isPatrol)) then {
+        private _origin = ASLToAGL getPosASL _hull;
+        _map drawLine [ASLToAGL (_points select _last), _origin, _drawColor, MAP_LINE_WIDTH];
+        _map drawIcon [
+            "", _drawColor, _origin,
+            0, 0, 0, LLSTRING(LabelPatrol), 1, TEXT_SIZE, PATH_FONT, "right"
+        ];
+    };
 } forEach _paths;
 
 if (_hoveredPoint isNotEqualTo []) then {

@@ -104,6 +104,13 @@ if (!_snapped) then {
 // seeded true for a snapped point because those skipped the gates entirely.
 if (!_accepted) exitWith {false};
 
+// The curator got past the obstruction by hand, so whatever the engine is still
+// computing is about a head that no longer exists. Retiring the search here does
+// two things: it frees the path to ask again at the NEXT obstruction rather than
+// waiting out AUTOPATH_TIMEOUT, and it is the earliest point at which the answer
+// becomes stale. Wargame cancels in the same place, for the first reason.
+_path set [PATH_SEARCH, []];
+
 // May drop points off the tail and move PATH_HEAD backwards with them, so the
 // heading below is read AFTER it rather than from the head captured above.
 // _points is a reference to the same array it resizes, so the pushBack that
@@ -111,13 +118,52 @@ if (!_accepted) exitWith {false};
 [_path, _target, _profile] call FUNC(smoothTail);
 
 _points pushBack _target;
-_path set [PATH_DIR, (_path select PATH_HEAD) getDir _target];
+
+// Alt marks this stretch of path as a TACTICAL move: the subject walks it facing
+// a fixed direction instead of facing the way it is going. Infantry only — Alt
+// already means fine altitude on an air path, and a vehicle cannot strafe.
+private _tactical = _kind == KIND_INFANTRY
+    && {GVAR(mods) select 2}
+    && {GETGVAR(infantryExecutor,EXEC_SCRIPTED) != EXEC_AI};
+
+// PATH_DIR is the handle's heading, and it is also the direction a tactical
+// stretch is walked facing. Alt simply FREEZES it rather than setting anything:
+// the handle visibly stops turning to follow the line, which is the feedback
+// that the facing is now locked, and it holds whatever the last travel heading
+// or Shift-rotation (FUNC(handleInput)) left it at. One variable doing both jobs
+// is Wargame's trick and it is a good one.
+if (!_tactical) then {
+    _path set [PATH_DIR, (_path select PATH_HEAD) getDir _target];
+};
+
 _path set [PATH_HEAD, _target];
+
+// Record the CHANGE, not the state — one pair when the lock goes on and one when
+// it comes off, however many hundred points are drawn in between. Within a
+// single drag the azimuth cannot drift (rotation is a different gesture and is
+// latched at mouse-down), so comparing the two directly is comparing numbers
+// that came from the same assignment rather than two float derivations.
+if (_kind == KIND_INFANTRY) then {
+    private _spans = _path select PATH_FACING;
+    private _want = [FACING_NONE, _path select PATH_DIR] select _tactical;
+
+    private _have = FACING_NONE;
+    if (_spans isNotEqualTo []) then {_have = (_spans select -1) select 1};
+
+    if (_want != _have) then {
+        _spans pushBack [(count _points) - 1, _want];
+    };
+};
 
 // The altitude readout is built HERE, where the altitude changes, so neither
 // renderer ever formats a number per handle per frame
 if (_kind == KIND_AIR) then {
     _path set [PATH_ALT, format ["%1 m", round ((ASLToAGL _target) select 2)]];
+
+    // The head has just moved to the altitude the drag earned, so the
+    // accumulator that carried it there (FUNC(airTarget)) starts again from
+    // here — leaving it standing would apply the same climb a second time.
+    GVAR(altDrag) = 0;
 };
 
 // Everything else in the selection follows this path, a fixed distance behind,

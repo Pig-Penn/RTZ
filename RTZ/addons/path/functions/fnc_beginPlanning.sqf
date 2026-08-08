@@ -49,8 +49,11 @@ private _hulls = [];
 } forEach ([_selection] call EFUNC(common,collectVehicles));
 
 private _paths = [];
-private _palette = GVAR(palette);
-private _paletteSize = count _palette;
+
+// Colours claimed so far this session, threaded through FUNC(colorFor) so an
+// entity can keep the colour it wore in the last session without two of them
+// ending up the same in this one
+private _claimed = [];
 
 {
     // Tested at the TOP of the body: a `break` at the bottom still pays for the
@@ -78,7 +81,7 @@ private _paletteSize = count _palette;
         _unit,
         _hull,
         [],
-        _palette select ((count _paths) mod _paletteSize),
+        [_hull, _claimed] call FUNC(colorFor),
         _kind,
         getPosASL _hull,
         getDir _hull,
@@ -90,8 +93,9 @@ private _paletteSize = count _palette;
         } else {
             ""
         },
-        0,        // PATH_SEARCH — no auto-path search outstanding
-        objNull   // PATH_LEADER — not trailing anything
+        [],       // PATH_SEARCH — no auto-path search outstanding
+        objNull,  // PATH_LEADER — not trailing anything
+        []        // PATH_FACING — no stretch of this path has a fixed facing
     ];
 } forEach _hulls;
 
@@ -109,6 +113,8 @@ GVAR(grabbed) = objNull;
 GVAR(hovered) = objNull;
 GVAR(hoveredPoint) = [];
 GVAR(mods) = [false, false, false];
+GVAR(rotating) = false;
+GVAR(altDrag) = 0;
 
 GVAR(inputEHs) = [_display] call FUNC(handleInput);
 
@@ -145,6 +151,26 @@ if (GETGVAR(freezeWhilePlanning,false)) then {
         [QGVAR(hold), [_unit, true], _unit] call CBA_fnc_targetEvent;
     } forEach _paths;
 };
+
+// Desaturate the world for as long as the session is open, so "am I in the mode"
+// is answered by the screen rather than by trying a key and seeing what happens.
+// Wargame's values, on a layer of RTZ's own — see PP_LAYER for why that matters
+// when both mods are loaded.
+//
+// Client-side, and entirely cosmetic: a curator who does not want it turns it off
+// and everything else about the session is unchanged.
+if (GETGVAR(planningTint,true)) then {
+    GVAR(ppEffect) = ppEffectCreate ["colorCorrections", PP_LAYER];
+    GVAR(ppEffect) ppEffectEnable true;
+    GVAR(ppEffect) ppEffectAdjust [
+        PP_BRIGHTNESS, PP_CONTRAST, PP_OFFSET,
+        [0, 0, 0, 0], [1, 1, 1, 1],
+        PP_LUMA_WEIGHTS
+    ];
+    GVAR(ppEffect) ppEffectCommit 0;
+};
+
+[_paths] call FUNC(planningHint);
 
 [LLSTRING(MsgPlanning), count _paths] call EFUNC(common,showCountMessage);
 

@@ -64,6 +64,12 @@
         <Key ID="STR_RTZ_Control_MsgSimulationEnabled">
             <English>Simulation Enabled</English>
         </Key>
+        <Key ID="STR_RTZ_Control_RcReset">
+            <English>Reset Animation After Remote Control</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_RcReset_Description">
+            <English>Clear the animation and look direction of a unit when you stop remote controlling it, so it no longer holds the pose it was released in. Only applies to units on foot, and never to unconscious or surrendered units. This setting is per-curator: it only affects your own remote controls.</English>
+        </Key>
         <Key ID="STR_RTZ_Control_ReloadSquad">
             <English>Reload Squad</English>
         </Key>

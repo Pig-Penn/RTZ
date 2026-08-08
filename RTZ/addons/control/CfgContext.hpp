@@ -2,8 +2,7 @@ class zen_context_menu_actions {
     // A one-shot ORDER, not a state toggle, so it sits at the menu root with the
     // other orders (attack, assemble, loot, deploy countermeasures) rather than
     // in the RTZ_Control submenu of toggles it used to share with dismount and
-    // disable-simulation. Priority 25 keeps it in that root band — directly
-    // under rtz_supply's resupply (26) — without renumbering anything.
+    // disable-simulation.
     //
     // Hidden unless the click would change something: FUNC(collectReloadSquads)
     // drops the squads whose every weapon is already holding the best magazine
@@ -15,7 +14,7 @@ class zen_context_menu_actions {
         icon = ICON_RELOAD;
         statement = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(reloadSquad));
         condition = QUOTE(GVAR(enableReloadSquad) && {([_objects + [_hoveredEntity]] call FUNC(collectReloadSquads)) isNotEqualTo []});
-        priority = 0;
+        priority = 33;
     };
 
     // Only appears while the selection actually holds a non-local group, so
@@ -29,7 +28,7 @@ class zen_context_menu_actions {
         icon = ICON_OWNERSHIP;
         statement = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(takeOwnership));
         condition = QUOTE(GVAR(enableTakeOwnership) && {[ARR_2(_objects,_hoveredEntity)] call FUNC(canTakeOwnership)});
-        priority = 4;
+        priority = 0;
     };
 
     class RTZ_Control {

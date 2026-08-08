@@ -8,7 +8,7 @@
  * The single definition of "pathable", shared by the places that must agree on
  * it — FUNC(beginPlanning) building the session, FUNC(commitPaths) re-checking
  * before it orders, and (after the network hop) the executor on the owning
- * machine. Same three-call-site role as rtz_reverse's FUNC(canReverse).
+ * machine. Same three-call-site role as rtz_slide's FUNC(canSlide).
  *
  * Takes a HULL: a man on foot, or a vehicle. A crewman is never passed here —
  * FUNC(beginPlanning) resolves a selected crewman to his vehicle first, matching

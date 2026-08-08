@@ -90,10 +90,10 @@ if (!hasInterface) exitWith {};
         // no crew stat, nothing the tag says that the model doesn't already show.
         _vehs = (_objs select {
             alive _x
-            && {_x isKindOf "AllVehicles"}
-            && {!(_x isKindOf "CAManBase")}
-            && {count crew _x > 0}
-            && {_anySide || {VEH_SIDE_OK(_x,_curSide)}}
+            && { _x isKindOf "AllVehicles" }
+            && { !(_x isKindOf "CAManBase") }
+            && { crew _x isNotEqualTo [] }
+            && { _anySide || { VEH_SIDE_OK(_x,_curSide) } }
         }) apply {netId _x};
         _vehOverflow = 0 max ((count _vehs) - SEL_MAX_VEHICLES);
         _vehs = _vehs select [0, SEL_MAX_VEHICLES];

@@ -8,7 +8,7 @@ Real-Time Zeus (RTZ) is an Arma 3 mod written in SQF that adds real-time strateg
 
 ## References
 
-Zeus Enhanced (ZEN), Community Base Addons (CBA), and LAMBS Danger FSM (LAMBS) will always be loaded alongside Real-Time Zeus (RTZ). Thus, you may utilize and reference their systems.
+Alongside other mods, Zeus Enhanced (ZEN), Community Base Addons (CBA), and LAMBS Danger FSM (LAMBS) will always be loaded alongside Real-Time Zeus (RTZ). Thus, you may utilize and reference their systems.
 
 All other Arma 3 mods that are developed and structured correctly can be utilized as references for the development of Real-Time Zeus (RTZ). Advanced Combat Environment 3 (ACE3) is an example of a great reference.
 
@@ -16,7 +16,7 @@ All other Arma 3 mods that are developed and structured correctly can be utilize
 
 Real-Time Zeus (RTZ) will be used in servers with several curators, large numbers of units, and long operations lasting several hours. While it will not happen often, some players may connect and disconnect while the mission is in progress.
 
-The units a curator controls will be units that are local to that curator in almost all cases.
+The units a curator spawns will be units that are local to that curator.
 
 ## Environment & Verification
 

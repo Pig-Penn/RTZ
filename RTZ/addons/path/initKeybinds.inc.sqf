@@ -7,7 +7,7 @@ private _category = ELSTRING(main,DisplayName);
 // The handler guards itself with CHECK_CURATOR_INPUT and returns false whenever
 // it declines to act — Zeus closed, search box focused, nothing pathable
 // selected — so the key passes through instead of being swallowed, matching
-// rtz_orders and rtz_reverse.
+// rtz_orders and rtz_slide.
 //
 // Tab is deliberately unbound by default rather than taken: 0x0F is the Zeus
 // interface's own team-switch/next-unit key in several setups and ZEN binds

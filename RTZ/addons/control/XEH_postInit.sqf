@@ -35,3 +35,13 @@ if (isServer) then {
 // receiver, and every order would land on a machine that was not listening. An
 // idle CBA event handler costs nothing while the feature stays switched off.
 [QGVAR(dismount), LINKFUNC(dismountApply)] call CBA_fnc_addEventHandler;
+
+// Remote-control animation reset. ZEN raises "zen_remoteControlStopped" LOCALLY
+// on the ex-controller's client (zen_remote_control_fnc_start), which is also the
+// machine holding that curator's per-client GVAR(enableRcReset) — so the sender
+// is registered there and the receiver everywhere, since the released unit can be
+// owned by a headless client or the server. Both unconditional, for the same
+// reason as the dismount receiver above: an idle handler costs nothing, and the
+// setting is read live inside FUNC(rcReset) rather than gating registration.
+["zen_remoteControlStopped", LINKFUNC(rcReset)] call CBA_fnc_addEventHandler;
+[QGVAR(rcReset), LINKFUNC(rcResetApply)] call CBA_fnc_addEventHandler;

@@ -8,9 +8,17 @@ workshop = [
     "450814997",  # CBA_A3
     "1779063631", # Zeus Enhanced (ZEN)
     "2434257231", # LAMBS_Danger.fsm (DEV)
+    "1858070328", # LAMBS RPG
+    "1808238502", # LAMBS Suppression
+    "1862208264", # LAMBS Turrets
+    "642912021", # Zeus and Eden Compositions (ZEC)
+    "623475643", # 3DEN Enhanced
+    "1665585720", # Project Injury Reaction (PiR)
+    "2993442344", # Death and Hit Reactions
+    "3002800433", # PiR DHR Compatibility
 ]
 dlc = [
     "Reaction Forces",
     "Western Sahara",
-    "Expeditionary Forces", # not a recognized HEMTT dlc value as of 1.20.1
+    "Expeditionary Forces",
 ]
