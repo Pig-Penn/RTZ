@@ -56,8 +56,19 @@
 // renderer — one definition keeps all three in lockstep. The DISPLAYS enforce
 // them too (rtz_hud's card stack), which is why they are part of the public
 // contract rather than private to the engine.
+//
+// SEL_MAX_HULLS bounds the third slice. It went uncapped for a while on the
+// reasoning that the overlays "report what the curator's own selection is doing"
+// — but the hull slice is the one that crosses the wire as OBJECTS, and a box
+// select over a base sent one entry per prop, per module, per ammo crate, on
+// every selection change, then made the server run every SRC_HULLS gatherer over
+// all of them. The poll now also drops anything that is not an AllVehicles, which
+// costs nothing: expectedDestination, targetKnowledge and the supply record exist
+// only on a man or a vehicle, so every one of those entries was already coming
+// back [] from all three gatherers.
 #define SEL_MAX_UNITS 24
 #define SEL_MAX_VEHICLES 8
+#define SEL_MAX_HULLS 32
 
 // A vehicle's effective side is its CREW's side — but an unmanned vehicle has
 // `grpNull` for a group, and `side grpNull` matches no real side, so a plain
@@ -84,6 +95,18 @@
 //               [watchedEntity, hull, dialogOpen]: a crewman resolves to his
 //               vehicle, which moves and fights as one. What the AI-state
 //               overlays want.
+//
+// These double as the DEMAND vocabulary: a display declares which slices it wants
+// streamed with EFUNC(core,setDemand) — [QGVAR(myDisplay), [SRC_UNITS]] — and the
+// poll reports a slice only while somebody is asking for it. Reusing the same
+// constants is deliberate: "which slice does this stream read" and "which slice
+// does this display want" are the same question asked from the two ends.
+//
+// SRC_HULLS is NOT a valid demand and is ignored if passed. Hull demand is
+// already expressed by an overlay being switched on — EFUNC(core,toggleOverlay)
+// owns GVAR(activeStreams), and the poll gates the hull slice on it — so routing
+// it through the demand registry as well would give one fact two owners and two
+// chances to disagree.
 #define SRC_UNITS 0
 #define SRC_VEHS  1
 #define SRC_HULLS 2

@@ -1,18 +1,18 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Flips both tag systems' runtime visibility from the shared "Draw Tags" ZEN
- * context menu entry (FUNC(tagsContext)).
+ * Flips every live tag system's runtime visibility from the shared "Draw Tags"
+ * ZEN context menu entry (FUNC(tagsContext)).
  *
- * Each system is independently CBA-setting gated, so only one, both, or neither
- * of GVAR(unitTagsVisible) (FUNC(unitTags)) / GVAR(vehicleTagsVisible)
- * (FUNC(vehicleTags)) may exist at runtime — hence the isNil guards.
+ * Every system gets ONE computed target state instead of each flipping its own:
+ * if two ever disagree (a master setting flipped one off mid-mission),
+ * independent toggles would swap them forever. The target state is "hide if ANY
+ * tags are visible", which converges them on the first press and matches the
+ * label FUNC(tagsContext) shows — both read that condition through the one
+ * ANY_TAGS_VISIBLE macro so the button cannot describe something it does not do.
  *
- * Both systems get ONE computed target state instead of each flipping its own:
- * if the two ever disagree (e.g. a master setting flipped one off mid-mission),
- * independent toggles would swap them forever. Target state is "hide if ANY tags
- * are visible", which converges them on the first press and matches the label
- * FUNC(tagsContext) shows.
+ * Systems that were never started (master setting off) are not in
+ * GVAR(tagSystems), so there is nothing to guard against here.
  *
  * Arguments:
  * None
@@ -26,13 +26,14 @@
  * Public: No
  */
 
-private _newVis = !(GETGVAR(unitTagsVisible,false) || {GETGVAR(vehicleTagsVisible,false)});
+private _anyVisible = ANY_TAGS_VISIBLE;
+private _newVis = !_anyVisible;
 
-if (!isNil QGVAR(unitTagsVisible))    then { GVAR(unitTagsVisible)    = _newVis };
-if (!isNil QGVAR(vehicleTagsVisible)) then { GVAR(vehicleTagsVisible) = _newVis };
+{ _y set [TAG_VISIBLE, _newVis] } forEach GVAR(tagSystems);
 
-// Sync the renderers with the new flags: hiding the tags removes them from the
-// frame loop outright rather than leaving a renderer that exits early.
+// Sync the renderers and the stream demands with the new flags: hiding the tags
+// removes them from the frame loop outright rather than leaving a renderer that
+// exits early, and withdraws the slices the server was gathering for them.
 call FUNC(applyTagVisibility);
 
 [[LLSTRING(MsgTagsHidden), LLSTRING(MsgTagsShown)] select _newVis] call zen_common_fnc_showMessage;

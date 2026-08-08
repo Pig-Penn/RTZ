@@ -18,14 +18,16 @@
  *   GVAR(selHulls)    — the whole selection resolved to distinct hulls, as
  *                       objects: a crewman resolves to his vehicle, which moves
  *                       and fights as one. What the AI-state overlays watch.
+ *                       Filtered to AllVehicles and capped at SEL_MAX_HULLS.
  *   GVAR(selOverflow) — eligible units dropped by the cap, for the dialog header
  *
  * Subscription: one QGVAR(watch) event carrying all three slices plus the active
- * stream ids, sent only when the payload actually changes. The infantry slice is
- * consumer-gated through FUNC(setDemand) — reported only while some display has
- * asked for it, so an idle curator streams nothing — and a second demand flag for
- * the expensive per-unit intel rides along, since only a consumer that displays it
- * should make the server gather it (see rtz_hud's gatherUnitInfo).
+ * stream ids, sent only when the payload actually changes. What goes in it is
+ * decided entirely by FUNC(buildReport) — the selection slices are consumer-gated
+ * through FUNC(setDemand), so an idle curator streams nothing, and the flag for
+ * the expensive per-unit intel rides along since only a consumer that displays it
+ * should make the server gather it (see rtz_hud's gatherUnitInfo). Those rules
+ * used to be spelled out here AND in FUNC(reportNow); they are not any more.
  *
  * Loading: called unconditionally from XEH_postInit — it is engine infrastructure
  * and reads no setting to install itself. It used to be deferred behind rtz_hud's
@@ -99,12 +101,27 @@ if (!hasInterface) exitWith {};
         _vehs = _vehs select [0, SEL_MAX_VEHICLES];
 
         // Hull set for the AI-state overlays: the raw selection collapsed to
-        // distinct vehicles. Deliberately NOT side-filtered or capped — these
-        // overlays report what the curator's own selection is doing, and the
-        // server re-resolves whoever steers/aims each hull anyway.
+        // distinct vehicles. Deliberately NOT side-filtered — these overlays
+        // report what the curator's own selection is doing, and the server
+        // re-resolves whoever steers/aims each hull anyway.
+        //
+        // Filtered to AllVehicles (which covers CAManBase) because this slice is
+        // the one that crosses the wire as OBJECTS: without it, a box select over
+        // a base put every prop, module, logic and ammo crate in the payload, on
+        // every selection change, and made the server run every SRC_HULLS
+        // gatherer over all of them. None of those entries could ever draw —
+        // expectedDestination, targetKnowledge and rtz_supply's servicing record
+        // exist only on a man or a vehicle, so all three gatherers were already
+        // returning [] for them.
         {
-            if (!isNull _x) then { _hulls pushBackUnique (vehicle _x) };
+            if (isNull _x) then { continue };
+            if !(_x isKindOf "AllVehicles") then { continue };
+            _hulls pushBackUnique (vehicle _x);
         } forEach _objs;
+        // Capped like the other two slices. No truncation toast: an oversized
+        // selection already fires the unit and/or vehicle hint above, and a third
+        // message about a slice with no dialog of its own is noise.
+        _hulls = _hulls select [0, SEL_MAX_HULLS];
     };
 
     GVAR(selUnits)    = _ids;
@@ -126,38 +143,33 @@ if (!hasInterface) exitWith {};
     _state set [1, _vehOverflow > 0];
 
     // ── Subscription ─────────────────────────────────────────────────────────
-    // Infantry is consumer-gated: reported only while some display has asked for
-    // it through FUNC(setDemand), and the "detailed" flag — which gates the two
-    // expensive server reads — only while a consumer asks for that too. The other
-    // slices are not gated here: a vehicle card is expected the instant a vehicle
-    // is selected, and the overlays are already gated by being switched on at all
-    // (GVAR(activeStreams)).
+    // Every slice is consumer-gated: reported only while some display has asked
+    // for it through FUNC(setDemand), with the "detailed" flag — which gates the
+    // two expensive server reads — riding along on the same registry. The hull
+    // slice is gated on an overlay being switched on instead (GVAR(activeStreams)),
+    // which is the same statement made by the component that owns the switch.
     //
-    // A registry, not two reads of rtz_hud's display globals. That is what this
-    // used to be, and it is why the engine could not be separated from that one
+    // A registry, not reads of rtz_hud's display globals. That is what this used
+    // to be, and it is why the engine could not be separated from that one
     // component; it also had to be spelled GETGVAR rather than a bare read,
     // because a nil from a display that had not initialised yet would abort the
     // rest of this handler — the whole subscription — rather than read false
     // (docs/Knowledge Base/Gotchas.md §2). Demand entries only exist once set, so there is
     // nothing to read defensively.
-    private _wantUnits = false;
-    private _detailed  = false;
-    {
-        _y params ["_u", "_d"];
-        if (_u) then { _wantUnits = true };
-        if (_d) then { _detailed  = true };
-    } forEach GVAR(demands);
-
-    private _streams = GVAR(activeStreams);
-
-    // Empty out the slices no active consumer wants, so the server neither
-    // gathers nor sends them. An entirely empty payload unsubscribes.
-    private _repUnits = [[], _ids] select _wantUnits;
-    private _repHulls = [[], _hulls] select (_streams isNotEqualTo []);
-
-    private _report = [_repUnits, _vehs, _repHulls, _streams, _detailed];
+    //
+    // The payload itself is built by FUNC(buildReport), from the globals written
+    // above, so this loop and FUNC(reportNow) cannot drift apart on what a
+    // subscription means. An entirely empty payload unsubscribes.
+    private _report = [] call FUNC(buildReport);
     if (_report isEqualTo GVAR(reported)) exitWith {};
-    GVAR(reported) = _report;
+
+    // Copied, not aliased. Element 3 is GVAR(activeStreams), which
+    // FUNC(toggleOverlay) mutates IN PLACE — an aliased baseline would silently
+    // follow it and compare equal to the very change it is supposed to detect.
+    // This runs only when the report changed, so the copy is free in steady state.
+    GVAR(reported) = +_report;
+
+    _report params ["_repUnits", "_repVehs", "_repHulls", "_streams"];
 
     [QGVAR(watch), [player] + _report] call CBA_fnc_serverEvent;
 
@@ -181,7 +193,7 @@ if (!hasInterface) exitWith {};
     };
 
     if (_repUnits isEqualTo []) then { [SRC_UNITS] call _fnc_clearSlice };
-    if (_vehs isEqualTo [])     then { [SRC_VEHS]  call _fnc_clearSlice };
+    if (_repVehs  isEqualTo []) then { [SRC_VEHS]  call _fnc_clearSlice };
 
     if (_repHulls isEqualTo []) then {
         [SRC_HULLS] call _fnc_clearSlice;
@@ -196,7 +208,7 @@ if (!hasInterface) exitWith {};
             private _stream = _x;
             private _rec = GVAR(streamData) get _stream;
             if (!isNil "_rec") then {
-                _rec set [0, (_rec select 0) select {(_x select 0) in _hulls}];
+                _rec set [0, (_rec select 0) select {(_x select 0) in _repHulls}];
             };
         } forEach _streams;
     };

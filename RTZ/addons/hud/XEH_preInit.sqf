@@ -41,9 +41,46 @@ if (!hasInterface) exitWith { ADDON = true };
 GVAR(unitData)    = createHashMap;
 GVAR(vehicleData) = createHashMap;
 
-// Dirty flags — set on receipt, cleared by the consumer once it has rebuilt.
-GVAR(unitTagsDirty)    = true;
-GVAR(vehicleTagsDirty) = true;
+// ── Tag systems ─────────────────────────────────────────────────────────────
+// One record per LIVE head-tag system (FUNC(startTagSystem)), holding its
+// visibility, its built-entry cache, its dirty flag, its renderer and the slices
+// it demands — see the TAG_* indices in script_component.hpp. A system whose
+// master setting is off is simply absent, which is what replaced the `isNil`
+// guard every consumer of the old per-system globals had to carry.
+GVAR(tagSystems) = createHashMap;
+
+// ONE settings watcher for every tag system, not one per system: registered here
+// rather than at system start so it exists exactly once regardless of how many
+// systems the settings leave switched on, and so a change arriving before any
+// system starts finds an empty registry and does nothing.
+//
+// Two jobs. A setting whose name begins with a system's prefix (rtz_hud_tag… /
+// rtz_hud_vtag…) invalidates that system's cache, so field toggles apply live. A
+// change to a system's MASTER setting also syncs its runtime visibility, so
+// switching it off hides the tags — and withdraws the stream demand behind them —
+// immediately instead of waiting for a mission restart.
+["CBA_SettingChanged", {
+    params ["_name", "_value"];
+    // Lowercased once here: CBA_SettingChanged is not guaranteed to report the
+    // name in the case it was registered with, and every stored prefix/master is
+    // already lowercased by FUNC(startTagSystem).
+    private _lname = toLower _name;
+
+    private _resync = false;
+    {
+        // _x: system id, _y: its record. Nothing below rebinds _x.
+        _y params ["", "", "", "", "", "", "_prefix", "_master"];
+        if ((_lname find _prefix) == 0) then { _y set [TAG_DIRTY, true] };
+        if (_lname == _master) then {
+            _y set [TAG_VISIBLE, _value];
+            _resync = true;
+        };
+    } forEach GVAR(tagSystems);
+
+    // Once, after the loop — not per system: FUNC(applyTagVisibility) syncs every
+    // record anyway, so calling it inside would redo the whole registry per hit.
+    if (_resync) then { call FUNC(applyTagVisibility) };
+}] call CBA_fnc_addEventHandler;
 
 // Engine planningMode → short label (FUNC(drawDestination)). Keys are normalized
 // (uppercase, spaces stripped) because the engine reports e.g. "LEADER PLANNED"
@@ -67,7 +104,9 @@ GVAR(destModeLabels) = createHashMapFromArray [
 GVAR(dialogOpen) = false;
 // Set by FUNC(receiveUnitData) when a new snapshot lands; consumed by the selection
 // dialog's tick, which otherwise rebuilds its whole row model four times a second
-// whether or not anything changed. Same contract as GVAR(unitTagsDirty) above.
+// whether or not anything changed. Same contract as a tag system's TAG_DIRTY, and
+// a separate flag for the same reason the dialog declares its own demand: the
+// dialog can be open with every tag system switched off.
 GVAR(selRowsDirty) = true;
 
 // Display-label tables. Both hold LOCALIZED text: the packets carry stable wire

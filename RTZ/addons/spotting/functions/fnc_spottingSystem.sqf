@@ -70,7 +70,7 @@ if (isServer) then {
 
     [QGVAR(spotResync), {
         params [["_player", objNull]];
-        
+
         if (!isPlayer _player) exitWith { GVAR(spotForceResend) = true };
         GVAR(spotResendPlayers) set [netId _player, true];
     }] call CBA_fnc_addEventHandler;
@@ -105,6 +105,22 @@ GVAR(markerSuffixCache)  = createHashMap;   // "m"/"v" + class → NATO symbol s
 // saturates within seconds and never grows again (fnc_unitMarker).
 GVAR(markerTexCache)     = createHashMap;
 GVAR(chevronLatch)       = createHashMap;   // (spotterSideStr + "_" + memberNetId) → [expiryTime, lastBestSpotter] (fnc_spotCheck)
+
+// The eight radio contact-report phrasings (fnc_spotCallout picks one at random per
+// report). Localized ONCE here rather than rebuilt per callout: they are mission
+// constants, and the server is the only machine that formats a report — the finished
+// string is what travels to each curator's client, so resolving them here does not
+// change which language a player sees compared with the previous per-call build.
+GVAR(calloutPhrases) = [
+    LLSTRING(CalloutPhrase1),
+    LLSTRING(CalloutPhrase2),
+    LLSTRING(CalloutPhrase3),
+    LLSTRING(CalloutPhrase4),
+    LLSTRING(CalloutPhrase5),
+    LLSTRING(CalloutPhrase6),
+    LLSTRING(CalloutPhrase7),
+    LLSTRING(CalloutPhrase8)
+];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SERVER — fire-blink (white flash on the wedge when a spotted unit shoots)

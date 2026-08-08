@@ -45,7 +45,7 @@ private _m = createHashMap;
 { _m set [_x select 0, _x] } forEach _entries;
 
 GVAR(unitData) = _m;
-GVAR(unitTagsDirty) = true;
+[QGVAR(unitTags)] call FUNC(markTagsDirty);
 // The selection dialog reads GVAR(unitData) too, and its row model is far more
 // expensive to build than a tag string — see the gate in FUNC(openSelectionInfo).
 GVAR(selRowsDirty) = true;

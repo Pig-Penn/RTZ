@@ -30,7 +30,14 @@
 // per-spotter knowsAbout loop for that unit is skipped entirely while the
 // latch is live, since it's the expensive part of fnc_spotCheck (fnc_spotCheck).
 #define CHEVRON_LATCH_DURATION 10
-#define CHEVRON_LATCH_CAP 256
+// One live entry per (curator side × individually-confirmed unit), so this counts
+// SIMULTANEOUS confirmed contacts, not contacts over time. Sized well above the
+// plausible live count for the same reason as GROUP_LAST_SEEN_CAP below: the prune
+// walk fires on every tick the map sits over the cap, and a cap set near the real
+// working set means walking the whole map every tick to free almost nothing. At the
+// old 256 a two-side operation of the size this mod targets (see CLAUDE.md, Usage)
+// was over the line permanently.
+#define CHEVRON_LATCH_CAP 1024
 
 // Seconds a group must have been OUT of confirmed contact (below HARD_THRESHOLD
 // for the reporting side) before it can trigger another radio contact report.
@@ -42,6 +49,18 @@
 
 // Spot marker naming + wedge (individual chevron) look.
 #define MKR_PREFIX "rtz_spot_"
+
+// Sentinel stored in an active-spot record's signature slot to mean "this contact is
+// tracked but currently draws no icon" (FUNC(emitSpot)'s _draw = false branch), so the
+// retraction is sent once rather than on every cleanup pass.
+//
+// A real signature is an ARRAY (see FUNC(spotCheck)), so every comparison against it —
+// and against this — must use isEqualTo, never ==/!=: SQF's equality operators reject
+// arrays outright (Type Array, expected Number,String,Object,…) rather than comparing
+// them. isEqualTo's willingness to answer `false` across mismatched types (Gotchas §3)
+// is precisely the semantics wanted here — an off sentinel is never equal to a live
+// signature — so the type difference is load-bearing, not an accident.
+#define SPOT_SIG_OFF "_off_"
 #define WEDGE_TEXTURE "\a3\ui_f\data\gui\rsc\RscDisplayEGSpectator\UnitIcon_ca.paa"
 #define WEDGE_ALPHA 0.60
 #define COLOR_INCAPACITATED [0.5, 0.0, 0.5, WEDGE_ALPHA]
@@ -53,8 +72,12 @@
 // (BLINK_DURATION).
 #define COLOR_SURRENDERED [0.80, 0.80, 0.80, WEDGE_ALPHA]
 
-// Housekeeping: bound the long-lived rate-limit maps (fnc_spotCheck).
-#define BLINK_THROTTLE_CAP 128
+// Housekeeping: bound the long-lived rate-limit maps (fnc_pruneStores).
+// One entry per unit that has fired within BLINK_THROTTLE_WINDOW seconds — again a
+// SIMULTANEOUS count, and a general engagement puts far more than the old 128 men
+// in that window at once, so the map never dropped back under the cap and the prune
+// walked it every tick for nothing. Same sizing argument as CHEVRON_LATCH_CAP.
+#define BLINK_THROTTLE_CAP 512
 #define BLINK_THROTTLE_WINDOW 5
 #define FIRE_BLINK_THROTTLE 0.1
 // GVAR(spotGroupLastSeen) holds one entry per (side, group) in or recently out of

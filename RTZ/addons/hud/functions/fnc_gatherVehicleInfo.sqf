@@ -2,7 +2,7 @@
 /*
  * Author: Maxim
  * SERVER ONLY. Reads one vehicle's state into a compact packet for the vehicle
- * head tags (FUNC(vehicleTags)).
+ * head tags (FUNC(drawVehicleTags)).
  *
  * Vehicle-global fields (speed, fuel, damage, crew) are valid on any machine.
  * Crew AI fields (LAMBS task/tactic) are locality-bound so they are read only

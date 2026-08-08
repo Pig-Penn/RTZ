@@ -68,16 +68,10 @@ if (_contactPos isNotEqualTo []) then {
 
 // One phrase picked at random so repeated contacts don't sound identical.
 // %1 = contact category string, %2 = location qualifier (may be empty).
-private _CONTACT_PHRASES = [
-    LLSTRING(CalloutPhrase1),
-    LLSTRING(CalloutPhrase2),
-    LLSTRING(CalloutPhrase3),
-    LLSTRING(CalloutPhrase4),
-    LLSTRING(CalloutPhrase5),
-    LLSTRING(CalloutPhrase6),
-    LLSTRING(CalloutPhrase7),
-    LLSTRING(CalloutPhrase8)
-];
+// The eight localized strings are resolved ONCE into GVAR(calloutPhrases) by
+// FUNC(spottingSystem), alongside the rest of the server state — they are constants for
+// the life of the mission, and building the array here meant eight `localize` calls and
+// a fresh array on every contact report.
 
 // Build the category string ("infantry", "infantry and armor", etc.).
 // Copy the array — deleteAt must not mutate the caller's local.
@@ -89,7 +83,7 @@ private _catText = if (count _cats == 1) then {
     format [LLSTRING(ContactListJoin), _cats joinString ", ", _last]
 };
 
-private _message = format [selectRandom _CONTACT_PHRASES, _catText, _locText];
+private _message = format [selectRandom GVAR(calloutPhrases), _catText, _locText];
 {
     [QGVAR(spotAlert), [_reporter, _message], _x] call CBA_fnc_targetEvent;
 } forEach _spotterPlayers;

@@ -1,7 +1,7 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Builds one vehicle's cached tag entry for FUNC(vehicleTags) from its server
+ * Builds one vehicle's cached tag entry for FUNC(drawVehicleTags) from its server
  * packet (layout: FUNC(gatherVehicleInfo)). Called lazily during the draw pass,
  * once per vehicle per cache generation — the cache is wiped on every fresh
  * server push or vtag* setting change, so this never runs per frame in the
@@ -22,8 +22,11 @@
  *
  * Return Value:
  * Cache entry <ARRAY>
- *   0 mainText  1 mainRGB  2 statusText  3 statusRGB  4 separator
- *   5 mainSepWidth  6 statusWidth
+ *   0 mainSep (main line + its separator)  1 mainRGB  2 statusText  3 statusRGB
+ *   4 mainSepWidth  5 statusWidth  6 hasContent
+ *
+ * Layout matches FUNC(buildTagEntry)'s leading fields — both are composed by
+ * FUNC(tagEntryTail) and drawn by FUNC(drawTagLine).
  *
  * Example:
  * [_packet] call rtz_hud_fnc_buildVtagEntry
@@ -49,9 +52,10 @@ if (GVAR(vtagShowSpeed) && { _speedKmh > 0 }) then {
     _segs pushBack format [LLSTRING(VtagFieldSpeed), _speedKmh];
 };
 // Static weapons (mortars, HMGs, AT launchers on tripods) have a single gunner
-// slot — a crew count adds nothing a player doesn't already see.
-private _isStatic = (objectFromNetId _vNet) isKindOf "StaticWeapon";
-if (GVAR(vtagShowCrew) && { !_isStatic }) then {
+// slot — a crew count adds nothing a player doesn't already see. The lookup is
+// inside the setting guard: it resolves an object from a netId purely to answer
+// a question nobody asked when the crew field is switched off.
+if (GVAR(vtagShowCrew) && { !((objectFromNetId _vNet) isKindOf "StaticWeapon") }) then {
     // "<aboard>/<positions>"; positions can be unknown (-1: a pre-seat-count
     // server build) — degrade to the bare aboard count.
     _segs pushBack ([
@@ -109,14 +113,16 @@ private _statusCol = switch (true) do {
     default                         { _col };
 };
 
-private _mainText = _segs joinString " · ";
-private _sep = ["", " · "] select (_mainText != "" && { _status != "" });
+// Composed line and its exact on-screen widths for the status split in the draw
+// pass, measured once per cache build (size changes dirty the cache through the
+// vtag* prefix in the settings watcher, so these stay in step with
+// GVAR(vtagSize)). Shared with the unit tags — see FUNC(tagEntryTail), which is
+// also what stopped this path rebuilding the composed line every frame.
+([_segs, _status, GVAR(vtagSize)] call FUNC(tagEntryTail)) params ["_mainSep", "_wMainSep", "_wStatus"];
 
-// Exact on-screen widths for the status split in the draw pass, measured once per
-// cache build (size changes dirty the cache via the vtag* prefix handler in
-// FUNC(vehicleTags), so these stay in step with GVAR(vtagSize)).
-private _vtagSize = GVAR(vtagSize);
-private _wMainSep = [_mainText + _sep, _vtagSize] call FUNC(textWidth);
-private _wStatus  = [_status, _vtagSize] call FUNC(textWidth);
+// Precomputed "anything to draw at all", matching FUNC(buildTagEntry): the draw
+// pass reads this one boolean instead of unpacking the whole entry to work it out
+// per vehicle per frame. _mainSep is empty exactly when the main line is.
+private _hasContent = _mainSep != "" || { _status != "" };
 
-[_mainText, _col select [0, 3], _status, _statusCol select [0, 3], _sep, _wMainSep, _wStatus]
+[_mainSep, _col select [0, 3], _status, _statusCol select [0, 3], _wMainSep, _wStatus, _hasContent]

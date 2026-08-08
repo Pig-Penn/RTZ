@@ -25,10 +25,18 @@
  * group marker); if the contact previously had an icon it is removed, so a
  * squad worn down to a single survivor loses its group marker cleanly.
  *
+ * The signature is an ARRAY built by FUNC(spotCheck) and compared here with
+ * isEqualTo. It must be isEqualTo and cannot be ==/!=: SQF's equality operators
+ * reject arrays outright rather than comparing them, so the obvious spelling is a
+ * runtime error, not a slow path. The stored-off sentinel SPOT_SIG_OFF is a STRING,
+ * which the same comparison handles correctly — isEqualTo answers `false` across
+ * mismatched types instead of throwing (Gotchas §3), and an off sentinel is never
+ * equal to a live signature.
+ *
  * Arguments:
  * 0: Spot key <STRING>
  * 1: spotDetected event payload (payload select 0 = marker name) <ARRAY>
- * 2: Payload signature <STRING>
+ * 2: Payload signature <ARRAY>
  * 3: Destination curator player <OBJECT>
  * 4: Active-spots map, spotKey → [markerName, spotterPlayer, sig] — mutated <HASHMAP>
  * 5: Draw an icon for this contact <BOOL>
@@ -69,7 +77,7 @@ if (_draw) then {
         [QGVAR(spotLost), [_prev select 0], _prev select 1] call CBA_fnc_targetEvent;
     };
 
-    if (_force || { _isNew } || { _newRecipient } || { (_prev select 2) != _sig }) then {
+    if (_force || { _isNew } || { _newRecipient } || { (_prev select 2) isNotEqualTo _sig }) then {
         [QGVAR(spotDetected), _payload, _player] call CBA_fnc_targetEvent;
     };
 
@@ -84,9 +92,9 @@ if (_draw) then {
     // but a listen-server host has the receivers and would render the retraction (and,
     // via the _draw branch above, the spots themselves) as its own. See the
     // curator-resolution block in FUNC(spotCheck).
-    if (!_isNew && { (_prev select 2) != "_off_" } && { isPlayer (_prev select 1) }) then {
+    if (!_isNew && { (_prev select 2) isNotEqualTo SPOT_SIG_OFF } && { isPlayer (_prev select 1) }) then {
         [QGVAR(spotLost), [_prev select 0], _prev select 1] call CBA_fnc_targetEvent;
     };
 
-    _activeSpots set [_key, [_mrkr, _player, "_off_"]];
+    _activeSpots set [_key, [_mrkr, _player, SPOT_SIG_OFF]];
 };

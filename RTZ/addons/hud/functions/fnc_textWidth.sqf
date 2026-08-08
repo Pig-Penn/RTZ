@@ -5,7 +5,8 @@
  * worldToScreen / getMousePosition return) with a hidden RscText fonted and
  * sized to match the tags' drawIcon3D calls, so icon placement and the
  * coloured status-word split land exactly at the real text edges at any
- * resolution or UI scale. Shared by FUNC(unitTags) and FUNC(vehicleTags).
+ * resolution or UI scale. Shared by both head-tag entry builders through
+ * FUNC(tagEntryTail).
  *
  * The measuring control is created once on the main mission display and
  * reused; if it can't be made yet (no display) the call degrades to a rough

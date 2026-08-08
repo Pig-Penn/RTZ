@@ -48,10 +48,10 @@ private _camPos   = _ctx select CTX_CAMPOS;
 private _mousePos = _ctx select CTX_MOUSE;
 private _viewDist = _ctx select CTX_VIEWDIST;
 
-// Blink state, hoisted out of _fnc_drawColor: `time` is read once per frame
-// instead of once per icon, and the map is empty except in the moments right
-// after a spotted unit fires — so the common case skips the per-icon lookup
-// outright.
+// Blink state, hoisted out of the per-icon colour blocks below: `time` is read once per
+// frame instead of once per icon, and the map is empty except in the moments right
+// after a spotted unit fires — so _anyBlink lets the common case skip the per-icon
+// lookup outright.
 private _blinkUntil = GVAR(blinkUntil);
 private _now        = time;
 private _anyBlink   = count _blinkUntil > 0;
@@ -73,22 +73,26 @@ private _AMP_GAPS = AMP_GAPS_WORLD;
 private _rcDisplay = GVAR(rcDisplay);
 private _hasRC     = count _rcDisplay > 0;
 
-// Distance fade × stored base alpha; flash white while the unit is firing.
-private _fnc_drawColor = {
-    params ["_dist", "_colorArray", "_blinkKey"];
-
-    private _alpha = ((_viewDist - _dist) / _viewDist) * (_colorArray#3);   // callers skip _dist >= _viewDist
-    if (_anyBlink && {_now <= (_blinkUntil getOrDefault [_blinkKey, 0])})
-        then { [1, 1, 1, _alpha] }
-        else { [_colorArray#0, _colorArray#1, _colorArray#2, _alpha] }
-};
+// The distance fade × stored base alpha, with a white flash while the unit is firing,
+// is spelled INLINE in both passes below rather than factored into a `_fnc_drawColor`
+// helper. It is four lines duplicated once, and it runs per icon per frame on every
+// curator's machine — a `call` there buys a fresh scope and a `params` destructure per
+// icon per frame for nothing, which is the same cost pass 2 already refuses to pay for
+// its size ramp (see the linearConversion note there). The two copies are kept
+// deliberately identical; change one, change the other.
 
 // ── Pass 1: group icons ─────────────────────────────────────────────────────
 // Also records which group leaders the mouse is currently near, so pass 2 can
 // reveal that group's chevrons past the cutoff. The hover test only feeds pass 2 —
 // with no chevrons stored, skip the per-icon worldToScreen entirely.
-private _chevronsEnabled    = GVAR(chevronsEnabled);
-private _anyChevrons        = _chevronsEnabled && {count _chevrons > 0};
+private _chevronsEnabled = GVAR(chevronsEnabled);
+private _anyChevrons     = _chevronsEnabled && {count _chevrons > 0};
+// Built unconditionally, even though only pass 2 reads it and only under _anyChevrons.
+// Making it conditional would save one small map allocation per frame and leave a
+// possibly-nil private in a renderer — and a nil read aborts the whole enclosing scope
+// (Gotchas §2), which here means silently dropping every remaining icon for the frame.
+// That is a poor trade for one allocation: the costs this component is written to avoid
+// are per-ENTITY-per-frame, not per-frame.
 private _groupHoverByLeader = createHashMap;
 {
     // _x = markerName (HashMap key); _y = stored display data.
@@ -145,7 +149,12 @@ private _groupHoverByLeader = createHashMap;
         };
     };
 
-    private _col = [_dist, _colorArray, _x] call _fnc_drawColor;
+    // Distance fade × stored base alpha (_dist >= _viewDist is skipped above), flashing
+    // white while the unit is firing. Inlined — see the note above pass 1.
+    private _alpha = ((_viewDist - _dist) / _viewDist) * (_colorArray#3);
+    private _col = if (_anyBlink && {_now <= (_blinkUntil getOrDefault [_x, 0])})
+        then { [1, 1, 1, _alpha] }
+        else { [_colorArray#0, _colorArray#1, _colorArray#2, _alpha] };
     // Native Zeus stem. The icon floats _zMod above the leader, so on its own it
     // reads as hanging over whatever terrain happens to be under it — from a
     // shallow camera angle that can be a hillside a hundred metres behind the
@@ -173,7 +182,7 @@ if (!_chevronsEnabled) exitWith {};
 
 private _chevronNames = GVAR(chevronNames);
 {
-    _y params ["_unit", "_texture", "_colorArray", "_ldrId", "_name"];
+    _y params ["_unit", "_texture", "_colorArray", "_ldrId", "_name", "_unitId"];
 
     if (!alive _unit) then { continue };
     private _anchor = vehicle _unit;
@@ -187,7 +196,11 @@ private _chevronNames = GVAR(chevronNames);
     if (_dist > CHEVRON_MAX_DIST && {!(_groupHoverByLeader getOrDefault [_ldrId, false])}) then { continue };
 
     // Suppress chevron when the RC indicator is already showing for this unit.
-    if (_hasRC && {(netId _unit) in _rcDisplay}) then { continue };
+    // The netId is carried in the payload (pre-resolved server-side, where it is already
+    // the unit half of the spot key) rather than re-derived here: `netId` is an engine
+    // call, and this ran once per chevron per frame for every curator whenever anything
+    // at all was under remote control.
+    if (_hasRC && {_unitId in _rcDisplay}) then { continue };
 
     // Native EG-spectator chevron (ACE recipe): head + 1 m, size scaled by
     // distance. Smooth ramp rather than a stepped table — same endpoints, one
@@ -203,7 +216,11 @@ private _chevronNames = GVAR(chevronNames);
 
     private _iconW   = linearConversion [0, WEDGE_MAX_DIST, _dist, CHEVRON_W_NEAR, CHEVRON_W_FAR, true];
 
-    private _col = [_dist, _colorArray, _x] call _fnc_drawColor;
+    // Inlined twin of the group pass's fade/blink block — see the note above pass 1.
+    private _alpha = ((_viewDist - _dist) / _viewDist) * (_colorArray#3);
+    private _col = if (_anyBlink && {_now <= (_blinkUntil getOrDefault [_x, 0])})
+        then { [1, 1, 1, _alpha] }
+        else { [_colorArray#0, _colorArray#1, _colorArray#2, _alpha] };
     drawIcon3D [_texture, _col, _iconPos, _iconW, _iconW, 0, "", 0, 0.03, "RobotoCondensed", "center", false, 0, 0];
 
     if (_chevronNames && {_dist <= HOVER_MAX_DIST}) then {

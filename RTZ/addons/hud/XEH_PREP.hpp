@@ -26,19 +26,47 @@ PREP(drawVehicleTags);
 PREP(drawDestination);
 PREP(drawTarget);
 
-// ── Display start-up + runtime toggles ───────────────────────────────────────
-PREP(unitTags);
-PREP(vehicleTags);
+// ── Head-tag systems ─────────────────────────────────────────────────────────
+// ONE mechanism with two declarations (XEH_postInit), not two implementations —
+// FUNC(unitTags) and FUNC(vehicleTags) were near-identical start functions whose
+// per-system globals every consumer then had to read behind `isNil` guards.
+PREP(startTagSystem);
 PREP(applyTagVisibility);
+PREP(markTagsDirty);
 PREP(toggleTags);
 PREP(tagsContext);
 
 // ── Selection info dialog ────────────────────────────────────────────────────
+// openSelectionInfo creates it and grabs its controls; selectionTick keeps it
+// live; applySelectionRows writes a built model into the listbox;
+// releaseSelectionInfo is the one teardown all five close paths route through.
 PREP(openSelectionInfo);
+PREP(selectionTick);
+PREP(applySelectionRows);
+PREP(releaseSelectionInfo);
+
+// The row model: buildSelectionRows owns the STRUCTURE (bucketing, ordering, the
+// key list) and the four below own what each line says. They were inline closures
+// rebuilt on every call, and this model is rebuilt four times a second for as
+// long as the dialog is open.
 PREP(buildSelectionRows);
+PREP(selectionHeader);
+PREP(selectionRow);
+PREP(selectionTooltip);
+PREP(groupDescriptor);
+PREP(joinRow);
+PREP(unitCount);
 
 // ── Presentation helpers ─────────────────────────────────────────────────────
+// The two entry builders differ in which fields they collect and not at all in
+// what they do with them, so the shared tail and the shared draw live once:
+// tagEntryTail composes and measures the line, drawTagLine renders it with the
+// status word split off in its own colour, tagAnchor resolves what either kind of
+// entity hangs its tag above.
 PREP(buildTagEntry);
 PREP(buildVtagEntry);
+PREP(tagEntryTail);
+PREP(drawTagLine);
+PREP(tagAnchor);
 PREP(loadTagLabels);
 PREP(textWidth);

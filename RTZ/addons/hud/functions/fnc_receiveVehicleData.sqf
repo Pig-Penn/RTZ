@@ -32,4 +32,4 @@ private _m = createHashMap;
 { _m set [_x select 0, _x] } forEach _entries;
 
 GVAR(vehicleData) = _m;
-GVAR(vehicleTagsDirty) = true;
+[QGVAR(vehicleTags)] call FUNC(markTagsDirty);

@@ -11,3 +11,4 @@ This is a *weird*, *unofficial*, and *messy* record of my own personal ramblings
 5. Investigate those weird inconsistencies in how group icons and echelons are drawn.
 6. Add some sort of digging system that modifies the terrain.
 7. See if the sound that plays after a unit has been selected can be disabled. This sound plays when a unit's cost is displayed.
+8. Restrict the arsenal when a unit is outside of an editing area.

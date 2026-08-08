@@ -1,4 +1,4 @@
-// ── Unit head tags (FUNC(unitTags)) — per-client display customization ────
+// ── Unit head tags (FUNC(drawUnitTags)) — per-client display customization ─
 // All client-local (isGlobal 0): each curator styles their own overlay. The
 // master switch takes effect at mission start (postInit gate); flipping it
 // mid-mission still shows/hides tags via the CBA_SettingChanged sync.
@@ -68,7 +68,7 @@ private _catOverlays = [ELSTRING(main,DisplayName), ELSTRING(core,CategoryOverla
     0
 ] call CBA_fnc_addSetting;
 
-// ── Vehicle tags (FUNC(vehicleTags)) — per-client display customization ───
+// ── Vehicle tags (FUNC(drawVehicleTags)) — per-client display customization 
 // All client-local (isGlobal 0), mirroring the Dog Tags block above. The
 // master switch takes effect at mission start (postInit gate); flipping it
 // mid-mission still shows/hides tags via the CBA_SettingChanged sync.

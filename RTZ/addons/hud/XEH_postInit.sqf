@@ -106,18 +106,31 @@ if (!hasInterface) exitWith {};
         [_action, ["RTZ_Control"], 5] call zen_context_menu_fnc_addAction;
     };
 
+    // ── Head-tag systems ────────────────────────────────────────────────────
+    // Two declarations of ONE mechanism (FUNC(startTagSystem)), not two
+    // implementations — see the TAG_* record layout in script_component.hpp. Each
+    // carries the setting prefix that dirties its cache, its own master setting,
+    // its renderer and draw priority, and the selection slice it demands from the
+    // stream engine. Declaring the slice is what stops the server gathering
+    // packets for a system the curator has hidden.
     if (GVAR(enableUnitTags)) then {
-        call FUNC(unitTags);
+        [
+            QGVAR(unitTags), QGVAR(tag), QGVAR(enableUnitTags),
+            LINKFUNC(drawUnitTags), 30, [SRC_UNITS]
+        ] call FUNC(startTagSystem);
     };
 
     if (GVAR(enableVehicleTags)) then {
-        call FUNC(vehicleTags);
+        [
+            QGVAR(vehicleTags), QGVAR(vtag), QGVAR(enableVehicleTags),
+            LINKFUNC(drawVehicleTags), 31, [SRC_VEHS]
+        ] call FUNC(startTagSystem);
     };
 
-    // Single "Draw Tags" context menu button drives whichever of the two tag
-    // systems above are enabled — registered once, after both, so it only exists
-    // when there is something for it to toggle.
-    if (GVAR(enableUnitTags) || GVAR(enableVehicleTags)) then {
+    // Single "Draw Tags" context menu button drives whichever tag systems are
+    // enabled — registered once, after them, so it only exists when there is
+    // something for it to toggle.
+    if (count GVAR(tagSystems) > 0) then {
         call FUNC(tagsContext);
     };
 }] call CBA_fnc_addEventHandler;

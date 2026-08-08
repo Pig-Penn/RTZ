@@ -1,20 +1,17 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Opens the ZEN-styled selection info dialog and keeps it live. After the dialog
- * is created, the listbox and header controls are grabbed back out of it and a
- * per-frame handler refreshes them ~4×/s from the latest selection state
- * (EGVAR(core,selUnits) / GVAR(unitData), maintained by EFUNC(core,selectionPoll)).
+ * Opens the ZEN-styled selection info dialog and starts the handler that keeps it
+ * live. After the dialog is created, the listbox and header controls are grabbed
+ * back out of it and FUNC(selectionTick) refreshes them ~4x/s from the latest
+ * selection state (EGVAR(core,selUnits) / GVAR(unitData), maintained by
+ * EFUNC(core,selectionPoll)).
  *
- * The server only streams infantry data while a consumer is active, and only
- * gathers the expensive leader intel while a DIALOG is open, so this reports the
- * current selection once, immediately, before creating the dialog — the server
- * gathers straight off that event and the rows fill on the first refresh instead
- * of waiting for the poll and gather ticks to line up.
- *
- * The refresh updates rows in place — preserving scroll position — and only does
- * a full rebuild when the set/grouping of selected units actually changes. The
- * handler removes itself once the dialog's display is gone.
+ * The server only streams the infantry slice while a consumer demands it, and
+ * only gathers the expensive leader intel while something asks for the detail, so
+ * this reports the current selection once, immediately, before creating the
+ * dialog — the server gathers straight off that event and the rows fill on the
+ * first refresh instead of waiting for the poll and gather ticks to line up.
  *
  * Arguments:
  * None
@@ -57,21 +54,21 @@ if (GVAR(dialogOpen)) exitWith {};
 // no demand was ever registered, and the next poll tick re-reports without the
 // flag, so there is no stranded subscription to clean up.
 //
-// This is one call because the engine builds the payload. It used to be built
-// here: the slices, the hull gate re-derived from EFUNC(core,selectionPoll) with a
-// comment warning it had to match EXACTLY, a write into that poll's private diff
-// baseline, and the subscribe event — which was spelled QGVAR(watch) in THIS
-// component and so expanded to "rtz_hud_watch", an event with no handler anywhere.
-// The baseline write made that fail loudly rather than harmlessly: the poll then
-// found its own next report identical to the baseline and suppressed the genuine
-// send too, so the intel rows stayed empty until an unrelated selection change
-// made the payload differ again.
+// This is one call because the engine builds the payload (EFUNC(core,buildReport)).
+// It used to be built here: the slices, the hull gate re-derived from
+// EFUNC(core,selectionPoll) with a comment warning it had to match EXACTLY, a
+// write into that poll's private diff baseline, and the subscribe event — which
+// was spelled QGVAR(watch) in THIS component and so expanded to "rtz_hud_watch",
+// an event with no handler anywhere. The baseline write made that fail loudly
+// rather than harmlessly: the poll then found its own next report identical to
+// the baseline and suppressed the genuine send too, so the intel rows stayed
+// empty until an unrelated selection change made the payload differ again.
 [true] call EFUNC(core,reportNow);
 
 ([] call FUNC(buildSelectionRows)) params ["_header", "_rows", "_keys"];
 
 // ZEN LIST label entry format is [text, tooltip, picture, textColor] — the
-// right-side indicator icon is ours alone, applied by _fnc_apply below.
+// right-side indicator icon is ours alone, applied by FUNC(applySelectionRows).
 private _labels = _rows apply { _x params ["_t", "_c", "_tip", "_pic"]; [_t, _tip, _pic, _c] };
 
 // ── ZEN grid geometry (mirrors defineCommonGrids.inc) so we can size the list
@@ -91,18 +88,20 @@ private _visRows = (((count _rows) max 6) min _maxRows) max 3;
 private _created = [
     LLSTRING(EnableSelectionInfo),
     [["LIST", _header, [[], _labels, 0, _visRows, false], true]],
-    { GVAR(dialogOpen) = false; [ARR_2(QGVAR(dialog),false)] call EFUNC(core,setDemand) },
-    { GVAR(dialogOpen) = false; [ARR_2(QGVAR(dialog),false)] call EFUNC(core,setDemand) },
+    { call FUNC(releaseSelectionInfo) },
+    { call FUNC(releaseSelectionInfo) },
     [],
     DIALOG_SAVE_ID
 ] call zen_dialog_fnc_create;
 
 if (!_created) exitWith {};
 GVAR(dialogOpen) = true;
-// The dialog is the ONLY consumer of the expensive per-unit intel (targetsQuery
-// / checkVisibility in FUNC(gatherUnitInfo)), so it demands both the slice and
-// the detail. The engine used to infer this by reading GVAR(dialogOpen) itself.
-[ARR_3(QGVAR(dialog),true,true)] call EFUNC(core,setDemand);
+
+// The dialog is the ONLY consumer of the expensive per-unit intel (targetsQuery /
+// checkVisibility in FUNC(gatherUnitInfo)), so it demands the infantry slice AND
+// the detail on top of it. The engine used to infer this by reading
+// GVAR(dialogOpen) itself.
+[QGVAR(dialog), [SRC_UNITS], true] call EFUNC(core,setDemand);
 
 // Grab the freshly-created dialog's controls. ZEN stashes the display in
 // uiNamespace and the per-row controls groups under "zen_dialog_params".
@@ -110,7 +109,7 @@ private _display = GETUVAR(zen_common_display,displayNull);
 private _controls = _display getVariable ["zen_dialog_params", []] param [0, []];
 private _group = _controls param [0, []] param [0, controlNull];
 
-if (isNull _display || { isNull _group }) exitWith { GVAR(dialogOpen) = false; [ARR_2(QGVAR(dialog),false)] call EFUNC(core,setDemand) };
+if (isNull _display || { isNull _group }) exitWith { call FUNC(releaseSelectionInfo) };
 
 private _listCtrl  = _group controlsGroupCtrl ZEN_IDC_ROW_COMBO;
 private _labelCtrl = _group controlsGroupCtrl ZEN_IDC_ROW_LABEL;
@@ -118,94 +117,13 @@ private _labelCtrl = _group controlsGroupCtrl ZEN_IDC_ROW_LABEL;
 // The dialog keeps ZEN's standard 26-column width — rows are built short enough
 // to fit it (FUNC(buildSelectionRows)), and overflow detail lives in tooltips.
 
-// Applies a built row model to the listbox. Full rebuild only when the structural
-// key list changed; otherwise an in-place update that leaves scrolling untouched
-// and skips rows identical to the last tick (the common case at 4 Hz — most
-// refreshes change one or two rows, not all of them).
-private _fnc_apply = {
-    params ["_listCtrl", "_labelCtrl", "_header", "_rows", "_keys", "_rebuild", ["_lastRows", []]];
-
-    _labelCtrl ctrlSetText _header;
-
-    if (_rebuild) then {
-        lbClear _listCtrl;
-        {
-            _x params ["_t", "_c", "_tip", "_pic", ["_picC", [1, 1, 1, 1]], ["_picR", ""], ["_picRC", [1, 1, 1, 1]]];
-            private _i = _listCtrl lbAdd _t;
-            _listCtrl lbSetColor             [_i, _c];
-            _listCtrl lbSetTooltip           [_i, _tip];
-            _listCtrl lbSetPicture           [_i, _pic];
-            _listCtrl lbSetPictureColor      [_i, _picC];
-            _listCtrl lbSetPictureRight      [_i, _picR];
-            _listCtrl lbSetPictureRightColor [_i, _picRC];
-        } forEach _rows;
-    } else {
-        {
-            // Same keys ⇒ same row count/order as _lastRows: index-compare.
-            if (_x isEqualTo (_lastRows param [_forEachIndex, []])) then { continue };
-            _x params ["_t", "_c", "_tip", "_pic", ["_picC", [1, 1, 1, 1]], ["_picR", ""], ["_picRC", [1, 1, 1, 1]]];
-            _listCtrl lbSetText              [_forEachIndex, _t];
-            _listCtrl lbSetColor             [_forEachIndex, _c];
-            _listCtrl lbSetTooltip           [_forEachIndex, _tip];
-            _listCtrl lbSetPicture           [_forEachIndex, _pic];
-            _listCtrl lbSetPictureColor      [_forEachIndex, _picC];
-            _listCtrl lbSetPictureRight      [_forEachIndex, _picR];
-            _listCtrl lbSetPictureRightColor [_forEachIndex, _picRC];
-        } forEach _rows;
-    };
-};
-
 // First pass adds ZEN-side pictures/colours plus our picture tints.
-[_listCtrl, _labelCtrl, _header, _rows, _keys, true] call _fnc_apply;
+[_listCtrl, _labelCtrl, _header, _rows, true] call FUNC(applySelectionRows);
 
-[{
-    params ["_args", "_handle"];
-    _args params ["_display", "_listCtrl", "_labelCtrl", "_lastKeys", "_lastRows", "_fnc_apply", "_lastSel"];
-
-    // Dialog gone (OK / Cancel / ESC / Zeus closed) — stop and release the lock;
-    // the selection poll notices open=false and re-reports so the server drops
-    // back to the cheap gather.
-    if (isNull _display) exitWith {
-        GVAR(dialogOpen) = false;
-        [QGVAR(dialog), false] call EFUNC(core,setDemand);
-        [_handle] call CBA_fnc_removePerFrameHandler;
-    };
-
-    // Zeus closed underneath the dialog — the selection poll has already
-    // reported [] (it requires the curator display), so close the now-empty
-    // shell too.
-    if (isNull (findDisplay IDD_RSCDISPLAYCURATOR)) exitWith {
-        GVAR(dialogOpen) = false;
-        [QGVAR(dialog), false] call EFUNC(core,setDemand);
-        [_handle] call CBA_fnc_removePerFrameHandler;
-        _display closeDisplay 2;
-    };
-
-    // FUNC(buildSelectionRows) is the expensive half and was being run every tick
-    // regardless — the _rebuild diff below only ever saved the engine-side lbSet*
-    // calls. Building the model runs a hashmap, a bucketing pass, a leader
-    // reorder and two tallies, then roughly eight `format`s, three switch(true)
-    // chains and two joinStrings PER UNIT (up to SEL_MAX_UNITS), plus five more
-    // per group. At 4 Hz that was several hundred `format` calls a second
-    // producing byte-identical strings — exactly the per-tick string building
-    // CLAUDE.md rules out on a multi-hour operation.
-    //
-    // Two things can change the model: a new snapshot (GVAR(selRowsDirty), set by
-    // FUNC(receiveUnitData)) and the curator changing selection. The second is
-    // NOT covered by the first — EGVAR(core,selUnits) updates locally the moment
-    // the selection changes, a poll interval before the matching snapshot lands,
-    // so gating on the flag alone would leave a deselected unit on screen until
-    // the server caught up. Comparing the id list is at most 24 string compares,
-    // against the several hundred formats it guards.
-    private _sel = EGVAR(core,selUnits);
-    if (GVAR(selRowsDirty) || {_sel isNotEqualTo _lastSel}) then {
-        GVAR(selRowsDirty) = false;
-        _args set [6, +_sel];
-
-        ([] call FUNC(buildSelectionRows)) params ["_header", "_rows", "_keys"];
-        private _rebuild = _keys isNotEqualTo _lastKeys;
-        [_listCtrl, _labelCtrl, _header, _rows, _keys, _rebuild, _lastRows] call _fnc_apply;
-        if (_rebuild) then { _args set [3, _keys] };
-        _args set [4, _rows];
-    };
-}, 0.25, [_display, _listCtrl, _labelCtrl, _keys, _rows, _fnc_apply, []]] call CBA_fnc_addPerFrameHandler;
+// _lastSel starts [] rather than the current selection so the first tick always
+// builds once more — the report fired above may well have landed by then, and
+// that is the refresh that fills the intel rows.
+[
+    LINKFUNC(selectionTick), 0.25,
+    [_display, _listCtrl, _labelCtrl, _keys, _rows, []]
+] call CBA_fnc_addPerFrameHandler;

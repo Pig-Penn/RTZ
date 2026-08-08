@@ -2,9 +2,28 @@
 /*
  * Author: Maxim
  * RENDER_WORLD renderer for the vehicle head tags. Called once per frame by
- * EFUNC(core,frameLoop) with the shared frame context — the Zeus test, the camera basis
- * and the mouse position are already resolved, so this pass does no camera query
- * of its own.
+ * EFUNC(core,frameLoop) with the shared frame context — the Zeus test, the camera
+ * basis and the mouse position are already resolved, so this pass does no camera
+ * query of its own.
+ *
+ * The tag is one discrete text line (e.g. "Hunter HMG · 45 km/h · CREW 3/4 ·
+ * FUEL 62 · LOW FUEL") — the vehicle counterpart of the infantry head tags
+ * (FUNC(drawUnitTags)). Fed by EGVAR(core,selVehicles) from
+ * EFUNC(core,selectionPoll) and GVAR(vehicleData) from the STREAM_VEH feed.
+ *
+ * The line is assembled by FUNC(buildVtagEntry) from the fields enabled in CBA
+ * settings (name, speed, crew/seats, fuel, hull, fly height, ammo, commander,
+ * LAMBS task, tactic) and drawn in a static colour. Only the trailing status word
+ * carries its own: the warning flags (LOW FUEL amber, DAMAGED red) always show
+ * regardless of the status field setting, split off at a measured text boundary
+ * by FUNC(drawTagLine). Tags fade out approaching GVAR(vtagMaxDistance) from the
+ * camera.
+ *
+ * Per-frame cost: the text, colours and widths are cached per vehicle (TAG_CACHE)
+ * and rebuilt only after a fresh server push or a vtag* setting change, so the
+ * steady state is two hashmap lookups and one or two drawIcon3D per vehicle.
+ * Unlike the unit tags there is no de-confliction pass — vehicles are far enough
+ * apart on screen for their tags not to pile up, and the pass is not free.
  *
  * Arguments:
  * 0: Frame context, see the CTX_* indices in script_component.hpp <ARRAY>
@@ -23,16 +42,22 @@ params ["_ctx"];
 private _ids = EGVAR(core,selVehicles);
 if (_ids isEqualTo []) exitWith {};
 
-if (GVAR(vehicleTagsDirty)) then {
-    GVAR(vehicleTagsCache) = createHashMap;
-    GVAR(vehicleTagsDirty) = false;
+// This renderer is only registered while its system is in the registry
+// (FUNC(applyTagVisibility)), so the record is always there — but a nil read
+// would abort the whole pass, so it is not worth assuming.
+private _sys = GVAR(tagSystems) get QGVAR(vehicleTags);
+if (isNil "_sys") exitWith {};
+
+if (_sys select TAG_DIRTY) then {
+    _sys set [TAG_CACHE, createHashMap];
+    _sys set [TAG_DIRTY, false];
 };
 
 private _camPos   = _ctx select CTX_CAMPOS;
 private _camRight = _ctx select CTX_CAMRIGHT;
 private _camUp    = _ctx select CTX_CAMUP;
 
-private _cache   = GVAR(vehicleTagsCache);
+private _cache   = _sys select TAG_CACHE;
 private _data    = GVAR(vehicleData);
 private _maxDist = GVAR(vtagMaxDistance);
 private _fadeIn  = _maxDist * 0.85;
@@ -51,8 +76,10 @@ private _curSide = side player;
         _entry = [_pkt] call FUNC(buildVtagEntry);
         _cache set [_x, _entry];
     };
-    _entry params ["_mainText", "_rgbMain", "_statusText", "_rgbStatus", "_sep", ["_wMainSep", 0], ["_wStatus", 0]];
-    if (_mainText == "" && {_statusText == ""}) then { continue };  // every field toggled off
+    // Single precomputed boolean, tested BEFORE unpacking the entry — every field
+    // toggled off used to cost a full `params` over the whole entry per vehicle
+    // per frame just to discover there was nothing to draw.
+    if !(_entry select 6) then { continue };
 
     private _veh = objectFromNetId _x;
     if (isNull _veh || {!alive _veh}) then { continue };
@@ -60,20 +87,11 @@ private _curSide = side player;
     // effective side) — same filter the selection poll applies.
     if (!_anySide && {!(VEH_SIDE_OK(_veh,_curSide))}) then { continue };
 
-    // unitAimPositionVisual resolves through the crew's aim point and returns []
-    // for vehicles that have none to offer — empty hulls, and any vehicle in the
-    // frames between Zeus creating it and its crew being moved in. Fall back to the
-    // model's bounding-box top centre.
-    private _base = unitAimPositionVisual _veh;
-    if (count _base < 3) then {
-        private _top = ((boundingBoxReal _veh) param [1, []]) param [2, 0];
-        _base = _veh modelToWorldVisual [0, 0, _top];
-    };
-    // The fallback is NOT guaranteed either: an object whose model has not resolved
-    // on this machine yet — the frames right after Zeus creates it — gives [] from
-    // BOTH commands. An [] here reaches `distance` as a generic error and kills the
-    // whole render pass, so drop the tag and pick it up next frame.
-    if (count _base < 3) then { continue };
+    // [] while the model has not resolved on this machine — see FUNC(tagAnchor),
+    // which also owns the empty-hull aim-position fallback.
+    private _base = [_veh] call FUNC(tagAnchor);
+    if (_base isEqualTo []) then { continue };
+
     private _dist = _camPos distance _base;
     if (_dist > _maxDist) then { continue };
     // Screen-space vertical lift (see FUNC(drawUnitTags)): along camera-up and
@@ -81,35 +99,27 @@ private _curSide = side player;
     private _pos = _base vectorAdd (_camUp vectorMultiply (_zOff * (1 max (_dist / 30))));
     private _alpha = linearConversion [_fadeIn, _maxDist, _dist, 0.85, 0, true];
 
-    if (_statusText == "") then {
-        drawIcon3D ["", _rgbMain + [_alpha], _pos, 0, 0, 0, _mainText, 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
-        continue;
-    };
+    _entry params ["_mainSep", "_rgbMain", "_statusText", "_rgbStatus", "_wMainSep", "_wStatus"];
 
     // Screen-space scale (UI units per metre of camera-right at this vehicle's
     // depth) — needed to split the status word into its own coloured draw. Exact
-    // for any FOV, no fov-formula guesswork.
+    // for any FOV, no fov-formula guesswork. Only measured when there IS a status
+    // word: without one, FUNC(drawTagLine) draws a single centred line and never
+    // looks at the scale, so the two worldToScreen calls would be wasted.
     private _perMetre = 0;
-    private _scr = worldToScreen _pos;
-    private _oneRight = worldToScreen (_pos vectorAdd _camRight);
-    if (_scr isNotEqualTo [] && {_oneRight isNotEqualTo []}) then {
-        _perMetre = (_oneRight select 0) - (_scr select 0);
+    if (_statusText != "") then {
+        private _scr = worldToScreen _pos;
+        private _oneRight = worldToScreen (_pos vectorAdd _camRight);
+        if (_scr isNotEqualTo [] && {_oneRight isNotEqualTo []}) then {
+            _perMetre = (_oneRight select 0) - (_scr select 0);
+        };
     };
 
-    if (_perMetre <= 1e-6) then {
-        drawIcon3D ["", _rgbMain + [_alpha], _pos, 0, 0, 0, _mainText + _sep + _statusText, 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
-    } else {
-        // Split point = centre + halfWidth(fullText) - width(statusText), from the
-        // widths measured at cache-build time (FUNC(textWidth)) — keeps the
-        // combined line centred on the vehicle while letting the status word carry
-        // its own colour. Both halves meet exactly at that point (same as the unit
-        // tags): the " · " separator already carries the spacing, so pushing them
-        // further apart double-spaces the line.
-        private _boundaryUI  = ((_wMainSep + _wStatus) / 2) - _wStatus;
-        private _boundaryPos = _pos vectorAdd (_camRight vectorMultiply (_boundaryUI / _perMetre));
-        // textAlign names the SIDE of the anchor the text sits on (not typographic
-        // alignment): "left" ends at the anchor, "right" starts there.
-        drawIcon3D ["", _rgbMain   + [_alpha], _boundaryPos, 0, 0, 0, _mainText + _sep, 2, _size, "RobotoCondensedBold", "left",  false, 0, 0];
-        drawIcon3D ["", _rgbStatus + [_alpha], _boundaryPos, 0, 0, 0, _statusText,      2, _size, "RobotoCondensedBold", "right", false, 0, 0];
-    };
+    // Shared with the unit tags so both families measure and place the coloured
+    // status split identically; a degenerate _perMetre falls back to one centred
+    // draw of the whole line.
+    [
+        _pos, _perMetre, _camRight, _mainSep, _statusText,
+        _rgbMain + [_alpha], _rgbStatus + [_alpha], _size, _wMainSep, _wStatus
+    ] call FUNC(drawTagLine);
 } forEach _ids;

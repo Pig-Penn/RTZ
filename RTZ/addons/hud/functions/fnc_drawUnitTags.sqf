@@ -6,6 +6,29 @@
  * basis and the mouse position are already resolved, so this pass does no camera
  * query of its own.
  *
+ * The tag is one discrete text line (e.g. "Rifleman · HP 62 · FLEEING") fed by
+ * the same live server packets the selection info dialog uses
+ * (EGVAR(core,selUnits) / GVAR(unitData), maintained by EFUNC(core,selectionPoll)
+ * and the STREAM_UNIT feed). It is assembled by FUNC(buildTagEntry) from the
+ * fields enabled in CBA settings (role, health, morale, suppression, magazine
+ * rounds, status, LAMBS tactic, current AI command) and drawn in a static colour
+ * so urgency never recolours the whole line — only the trailing status word (DOWN
+ * / FLEEING) carries its own, split off at a measured text boundary by
+ * FUNC(drawTagLine). DOWN / FLEEING shows regardless of the status field setting.
+ * Mounted units are skipped: the vehicle tag covers their vehicle.
+ *
+ * Two optional icons ride the same screen-space placement trick, each
+ * hover-expandable to its full detail (GVAR(tagShow{Flag,Threat}Icon)):
+ *   — a flag icon at the right end when the unit carries status flags
+ *     (HIDDEN, BUSY, PATH OFF, …);
+ *   — a threat icon between the text and the flag icon — the unit's LAMBS danger
+ *     cause if any, else its current attack target (danger always wins, the same
+ *     rule the dialog uses) — hovering reveals the full detail.
+ *
+ * Per-frame cost: the text, colours, widths and icon offsets are all cached per
+ * unit (TAG_CACHE) and rebuilt only after a fresh server push or a tag* setting
+ * change, so the steady state is two hashmap lookups and the draws below.
+ *
  * Three passes per frame: (1) resolve each selected unit to a render record
  * (screen pos, per-metre scales, cache entry); (2) de-conflict vertically so
  * bunched tags stack instead of piling; (3) draw. The layout pass needs every
@@ -28,9 +51,15 @@ params ["_ctx"];
 private _ids = EGVAR(core,selUnits);
 if (_ids isEqualTo []) exitWith {};
 
-if (GVAR(unitTagsDirty)) then {
-    GVAR(unitTagsCache) = createHashMap;
-    GVAR(unitTagsDirty) = false;
+// This renderer is only registered while its system is in the registry
+// (FUNC(applyTagVisibility)), so the record is always there — but a nil read
+// would abort the whole pass, so it is not worth assuming.
+private _sys = GVAR(tagSystems) get QGVAR(unitTags);
+if (isNil "_sys") exitWith {};
+
+if (_sys select TAG_DIRTY) then {
+    _sys set [TAG_CACHE, createHashMap];
+    _sys set [TAG_DIRTY, false];
 };
 
 private _camPos   = _ctx select CTX_CAMPOS;
@@ -38,7 +67,7 @@ private _camRight = _ctx select CTX_CAMRIGHT;
 private _camUp    = _ctx select CTX_CAMUP;
 private _mouse    = _ctx select CTX_MOUSE;
 
-private _cache    = GVAR(unitTagsCache);
+private _cache    = _sys select TAG_CACHE;
 private _data     = GVAR(unitData);
 private _maxDist  = GVAR(tagMaxDistance);
 private _fadeIn   = _maxDist * 0.85;
@@ -63,18 +92,16 @@ private _records = [];
         _entry = [_pkt] call FUNC(buildTagEntry);
         _cache set [_x, _entry];
     };
-    if !(_entry select 14) then { continue };                       // every field/icon toggled off
+    if !(_entry select 13) then { continue };                       // every field/icon toggled off
 
     private _unit = objectFromNetId _x;
     // objectParent re-check: the unit can mount between server pushes.
     if (isNull _unit || {!alive _unit} || {!isNull objectParent _unit}) then { continue };
 
-    private _head = _unit modelToWorldVisual ([_unit] call EFUNC(common,headOffset));
-    // modelToWorldVisual yields [] while the model has not resolved on this machine
-    // (the frames right after Zeus creates the unit), and `distance` throws a
-    // Generic error on []. That error ABORTS THE WHOLE forEach, so one unresolved
-    // unit dropped every tag after it in the store — not just its own.
-    if (count _head < 3) then { continue };
+    // [] while the model has not resolved on this machine — see FUNC(tagAnchor)
+    // for why that has to be tested rather than fed to `distance`.
+    private _head = [_unit] call FUNC(tagAnchor);
+    if (_head isEqualTo []) then { continue };
     private _dist = _camPos distance _head;
     if (_dist > _maxDist) then { continue };
     // Screen-space vertical lift: offset along camera-up, NOT world +Z (which
@@ -102,6 +129,15 @@ if (_records isEqualTo []) exitWith {};
 // overlaps — horizontal extent from the measured widths, one line-height of
 // vertical clearance. Records only their final screen Y; the resulting shift is
 // stored per record and applied in the draw pass.
+//
+// MAX semantics, not stepping. This used to move a tag down one line-height per
+// collision and then re-scan every placed tag, needing a pass per line of
+// displacement — so a bunched squad (which is the normal case, and the only case
+// this pass exists for) ran up to O(n) passes over an O(n) list for each of n
+// tags, EVERY FRAME. Taking the maximum clears the tag past every tag it overlaps
+// in one sweep instead. A move can still expose an overlap with a tag placed
+// lower again, hence the repeat — but it converges in one or two, so the loop is
+// bounded outright rather than trusted to settle.
 private _lineH = _size * 1.5;   // clears the text + icon band between stacked tags
 private _order = [];
 { _order pushBack [(_x select 0) select 1, _forEachIndex] } forEach _records;
@@ -112,17 +148,22 @@ private _placed = [];                                              // [xCentre, 
     private _rec = _records select (_x select 1);
     private _scr = _rec select 0;
     private _xC  = _scr select 0;
-    private _hw  = (_rec select 4) select 13;   // composed half-width (text + present icons)
+    private _hw  = (_rec select 4) select 12;   // composed half-width (text + present icons)
     private _finalY = _scr select 1;
     private _pass = 0;
     private _bumped = true;
-    while {_bumped && {_pass <= count _placed}} do {
+    while {_bumped && {_pass < DECONFLICT_MAX_PASSES}} do {
         _bumped = false;
         {
+            // ALIAS-FREE: the outer forEach's _x is already read into _rec above,
+            // so rebinding it here is safe (docs/Knowledge Base/Gotchas.md §2).
             _x params ["_pXc", "_pHw", "_pY"];
             if ((abs (_xC - _pXc) < (_hw + _pHw)) && {abs (_finalY - _pY) < _lineH}) then {
-                _finalY = _pY + _lineH;
-                _bumped = true;
+                private _clear = _pY + _lineH;
+                if (_clear > _finalY) then {
+                    _finalY = _clear;
+                    _bumped = true;
+                };
             };
         } forEach _placed;
         _pass = _pass + 1;
@@ -141,10 +182,9 @@ private _showFlags = GVAR(tagShowFlagIcon);
 {
     _x params ["_scr", "_perMetre", "_pos", "_alpha", "_entry", "_yShift"];
     _entry params [
-        "_mainText", "_rgbMain", "_statusText", "_rgbStatus", "_sep", "_flagsText",
+        "_mainSep", "_rgbMain", "_statusText", "_rgbStatus", "_flagsText",
         "_threatIcon", "_rgbThreat", "_threatHover",
-        "_wMainSep", "_wStatus", "_threatCenterUI", "_flagCenterUI",
-        "", "", "_mainSep"
+        "_wMainSep", "_wStatus", "_threatCenterUI", "_flagCenterUI"
     ];
 
     // The distance fade is the only per-frame part of the colour, so build each
@@ -165,19 +205,12 @@ private _showFlags = GVAR(tagShowFlagIcon);
     private _scrX = _scr select 0;
     private _scrY = (_scr select 1) + _yShift;
 
-    // Main line — split so the status word carries its own colour while the
-    // combined line stays centred on the unit. Boundary = centre + halfFull -
-    // statusWidth (measured), converted from UI-x to world via _perMetre.
-    // drawIcon3D textAlign names the SIDE of the anchor the text sits on (not
-    // typographic alignment): "left" ends at the anchor, "right" starts there.
-    if (_statusText == "") then {
-        drawIcon3D ["", _colMain, _dpos, 0, 0, 0, _mainSep, 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
-    } else {
-        private _boundaryUI  = ((_wMainSep + _wStatus) / 2) - _wStatus;
-        private _boundaryPos = _dpos vectorAdd (_camRight vectorMultiply (_boundaryUI / _perMetre));
-        drawIcon3D ["", _colMain,              _boundaryPos, 0, 0, 0, _mainSep,    2, _size, "RobotoCondensedBold", "left",  false, 0, 0];
-        drawIcon3D ["", _rgbStatus + [_alpha], _boundaryPos, 0, 0, 0, _statusText, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
-    };
+    // Main line, with the status word split off into its own colour — shared with
+    // the vehicle tags so both families measure and place it identically.
+    [
+        _dpos, _perMetre, _camRight, _mainSep, _statusText,
+        _colMain, _rgbStatus + [_alpha], _size, _wMainSep, _wStatus
+    ] call FUNC(drawTagLine);
 
     // Icons ride the flush centre offsets measured at cache-build time (UI-x from
     // the unit centre), converted to world via _perMetre so each sits snug against

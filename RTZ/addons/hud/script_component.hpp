@@ -40,6 +40,62 @@
 #define STREAM_DEST 'dest'
 #define STREAM_TGT  'tgt'
 
+// ─────────────────────────────────────────────────────────────────────────────
+// TAG SYSTEMS
+// ─────────────────────────────────────────────────────────────────────────────
+// The unit head tags and the vehicle head tags are ONE mechanism with two
+// declarations (FUNC(startTagSystem)), not two parallel implementations. They
+// were the latter: a pair of near-identical start functions, a pair of
+// CBA_SettingChanged watchers, a pair of visible/cache/dirty global triples, and
+// every consumer of those globals carrying `isNil` guards because either system
+// may be switched off in settings. GVAR(tagSystems) holds one record per live
+// system and the guards go with them — a system that was never started simply is
+// not in the map.
+//
+// Record layout, keyed by system id (which is also its renderer id and its
+// EFUNC(core,setDemand) consumer id — one name, so they cannot drift):
+#define TAG_VISIBLE  0   // runtime show/hide, flipped by the shared context action
+#define TAG_CACHE    1   // netId -> built entry, wiped whenever TAG_DIRTY is set
+#define TAG_DIRTY    2   // set on a fresh packet or a settings change
+#define TAG_RENDERER 3   // LINKFUNC of the RENDER_WORLD renderer
+#define TAG_PRIORITY 4   // draw order within the frame loop
+#define TAG_SLICES   5   // SRC_* slices this system demands from the stream engine
+#define TAG_PREFIX   6   // lowercased setting-name prefix that dirties its cache
+#define TAG_MASTER   7   // lowercased master enable setting
+
+// "Is any tag system currently showing?" — a macro rather than a helper because
+// FUNC(toggleTags) and FUNC(tagsContext)'s modifierFunction must agree on it
+// exactly: the first hides everything when it is true, and the second labels the
+// action "Hide" on the same condition. Two copies of that rule would eventually
+// disagree and the button would lie about what it does.
+#define ANY_TAGS_VISIBLE (((values GVAR(tagSystems)) findIf {_x select TAG_VISIBLE}) != -1)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SELECTION DIALOG
+// ─────────────────────────────────────────────────────────────────────────────
+// Spaced middot separator between the segments of a row / header line. Joining
+// with it while dropping empty segments is FUNC(joinRow) — a function rather than
+// a macro because the preprocessor splits macro arguments on commas regardless of
+// square brackets, so JOIN(...) on an array literal would silently tear it apart.
+#define ROW_SEP "   ·   "
+
+// ── Named packet fields ──────────────────────────────────────────────────────
+// The dialog's row builder reads the whole packet in order with `params`; these
+// name the handful of fields the BUCKETING and SUMMARY paths reach for out of
+// order (grouping keys, tallies, side tint), so those stay readable and survive a
+// layout change. Indices are the writer's — FUNC(gatherUnitInfo)'s array order.
+// Shared here rather than redefined per file now that the dialog is split across
+// FUNC(buildSelectionRows) / FUNC(selectionHeader) / FUNC(groupDescriptor).
+#define PKT_ISLDR   1
+#define PKT_GRPID   2
+#define PKT_SIDE    4
+#define PKT_MORALE  9
+#define PKT_FLAGS   11
+#define PKT_DOWNED  12
+#define PKT_TACTIC  14
+#define PKT_ISLOCAL 22
+#define PKT_GRPNET  24
+
 // Bright per-side UI palette, indexed by SIDE_NUM — the selection dialog's
 // group-separator tint.
 #define SIDE_TINTS [[0.36, 0.61, 1.00, 1], [1.00, 0.42, 0.42, 1], [0.44, 0.85, 0.34, 1], [0.78, 0.49, 0.92, 1]]
@@ -53,7 +109,7 @@
 #define COL_GOLD   [1.00, 0.84, 0.40, 1.0]
 
 // BIS simpletask icon family shared by the selection dialog rows
-// (FUNC(buildSelectionRows)) and the unit head tags (FUNC(unitTags)) —
+// (FUNC(buildSelectionRows)) and the unit head tags (FUNC(drawUnitTags)) —
 // direct texture paths; CfgMarkers lookups can silently return "". FLAG_ICON
 // is the flag-inventory marker texture (unit tags only).
 #define ICON_ATTACK  "\a3\ui_f\data\igui\cfg\simpletasks\types\attack_ca.paa"
@@ -69,7 +125,7 @@
 
 // ── Unit tag icon geometry ───────────────────────────────────────────────────
 // One tuned set, split across two files: FUNC(buildTagEntry) measures the icon
-// placement offsets at cache-build time and FUNC(unitTags) does the drawing, so
+// placement offsets at cache-build time and FUNC(drawUnitTags) does the drawing, so
 // they must agree or icons land off their measured slots. All are multiples of
 // the tag's text size so icons scale WITH it (the original draw pass used a fixed
 // 0.7 regardless of Tag Size, leaving large tags with postage-stamp icons).
@@ -82,6 +138,13 @@
 // TEXT_GAP / GAP if icons overlap or drift at your UI scale.
 // ICON_HOVER_RADIUS is the Zeus-cursor pick distance (UI coordinates) for an
 // icon's hover-expand.
+//
+// DECONFLICT_MAX_PASSES bounds FUNC(drawUnitTags)' tag-stacking sweep. Each pass
+// drops a tag clear of EVERY tag it currently overlaps at once, so one pass
+// resolves the ordinary case and a second mops up an overlap the first move
+// exposed; the bound is there because this runs per tag per frame and a settling
+// loop is not something to leave open-ended at that rate.
+#define DECONFLICT_MAX_PASSES 2
 #define ICON_DRAW          23
 #define ICON_FOOT          1.1
 #define ICON_TEXT_GAP      0.9

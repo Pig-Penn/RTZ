@@ -27,7 +27,12 @@
 // filtering per entry per frame. Sizes/positions are computed client-side
 // each frame. Set by QGVAR(spotDetected); cleared by QGVAR(spotLost).
 //   GVAR(spotGroups):   markerName → [unit, texture, colorArray, echelonTex, sideIdx, leaderNetId]
-//   GVAR(spotChevrons): markerName → [unit, texture, colorArray, leaderNetId, displayName]
+//   GVAR(spotChevrons): markerName → [unit, texture, colorArray, leaderNetId, displayName, unitNetId]
+//     unitNetId is the spotted man's own netId, carried so FUNC(drawSpots) can test the
+//     remote-control store by key without a `netId` engine call per chevron per frame.
+//     It is pre-resolved server-side (FUNC(spotCheck) already holds it as the spot key's
+//     unit half) and cannot drift from the object it names, so unlike the other payload
+//     fields it needs no place in the change signature.
 //   GVAR(officerZones): markerName → [unit, plantedCenter, radius] — the subset of
 //     entries in EITHER store above whose unit is an enemy officer carrying an
 //     active editing-area zone. Chevrons for the most part; a GROUP entry when the
@@ -68,12 +73,12 @@ GVAR(blinkUntil) = createHashMap;
 // Store/update icon data for a spotted enemy. Texture, colour, echelon amplifier,
 // side index, group-leader netId and display name are all pre-resolved on the server.
 [QGVAR(spotDetected), {
-    params ["_markerName", "_unit", "_texture", "_colorArray", "_isGroupMarker", "_echelonTex", "_sideIdx", "_ldrId", "_name", ["_zone", []]];
+    params ["_markerName", "_unit", "_texture", "_colorArray", "_isGroupMarker", "_echelonTex", "_sideIdx", "_ldrId", "_name", ["_zone", []], ["_unitId", ""]];
 
     if (_isGroupMarker) then {
         GVAR(spotGroups) set [_markerName, [_unit, _texture, _colorArray, _echelonTex, _sideIdx, _ldrId]];
     } else {
-        GVAR(spotChevrons) set [_markerName, [_unit, _texture, _colorArray, _ldrId, _name]];
+        GVAR(spotChevrons) set [_markerName, [_unit, _texture, _colorArray, _ldrId, _name, _unitId]];
     };
 
     // Officer zone ring, handled the same for BOTH marker kinds. It used to sit in

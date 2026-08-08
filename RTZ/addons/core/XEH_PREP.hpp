@@ -15,6 +15,12 @@ PREP(streamServer);
 PREP(registerStream);
 PREP(setDemand);
 
+// The ONE place the subscription payload's rules live — which slices a consumer
+// has demanded, and the hull gate. Both senders (the poll's tick and reportNow)
+// go through it, because the two hand-written copies it replaced were required to
+// agree and eventually would not have.
+PREP(buildReport);
+
 // "The server's picture of me is stale, send it again now." The ONE supported way
 // to force a re-subscription — consumers never build the payload or touch the
 // poll's diff baseline themselves.

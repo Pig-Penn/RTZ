@@ -1,16 +1,15 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Single "Draw Tags" ZEN context menu entry driving both the infantry head
- * tags (FUNC(unitTags)) and the vehicle tags (FUNC(vehicleTags)) — the
- * two systems used to register their own separate buttons; this condenses
- * them into one. The press goes to FUNC(toggleTags), which computes one
- * target state for whichever systems are present; the label/tint here mirror
- * whatever any active system currently reports.
+ * Single "Draw Tags" ZEN context menu entry driving every live tag system
+ * (FUNC(startTagSystem)) — the infantry head tags and the vehicle tags used to
+ * register their own separate buttons; this condenses them into one. The press
+ * goes to FUNC(toggleTags), which computes one target state for whichever
+ * systems are present; the label/tint here mirror what those systems report.
  *
- * Loading: called from XEH_postInit after CBA_settingsInitialized, once at
- * least one of FUNC(unitTags) / FUNC(vehicleTags) has run for this session.
- * Client-only, registers one ZEN context menu action — no scheduled ops.
+ * Loading: called from XEH_postInit after CBA_settingsInitialized, once at least
+ * one tag system has been declared for this session. Client-only, registers one
+ * ZEN context menu action — no scheduled ops.
  *
  * Arguments:
  * None
@@ -37,10 +36,10 @@ private _action = [
     {},
     {
         params ["_action"];
-        // "Hide" is offered while ANY active tag system is visible — matches
-        // FUNC(toggleTags), which hides everything first.
-        private _visible = GETGVAR(unitTagsVisible,false) || {GETGVAR(vehicleTagsVisible,false)};
-        if (_visible) then {
+        // "Hide" is offered while ANY live tag system is visible. Read through
+        // the same ANY_TAGS_VISIBLE macro FUNC(toggleTags) acts on, so the label
+        // and the press can never describe different things.
+        if (ANY_TAGS_VISIBLE) then {
             _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionHideTags)]; // Off
             _action set [ACTION_INDEX_ICONCOLOR, [1, 1, 1, 1]]; // White
         } else {

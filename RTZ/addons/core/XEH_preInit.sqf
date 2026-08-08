@@ -45,13 +45,14 @@ GVAR(selHulls)    = [];
 GVAR(selOverflow) = 0;
 GVAR(reported)    = [];
 
-// Consumer demand, keyed by consumer id → [wantsUnits, wantsDetailed]
-// (FUNC(setDemand)). The infantry slice is expensive to gather and pointless to
-// stream when nothing is looking at it, so FUNC(selectionPoll) reports it only
-// while some display asks. This used to be a hardcoded read of two of rtz_hud's
-// own display flags, which is a thing the shared engine should not know; a
-// registry also makes the OR correct for free, where two independent booleans
-// would let the tags going dark switch the dialog's feed off under it.
+// Consumer demand, keyed by consumer id → [slices, wantsDetailed]
+// (FUNC(setDemand)), where slices is a list of SRC_* constants. The selection
+// slices are expensive to gather and pointless to stream when nothing is looking
+// at them, so FUNC(buildReport) reports each one only while some display asks.
+// This used to be a hardcoded read of two of rtz_hud's own display flags, which
+// is a thing the shared engine should not know; a registry also makes the OR
+// correct for free, where independent booleans would let the tags going dark
+// switch the dialog's feed off under it.
 GVAR(demands) = createHashMap;
 
 // Overlay streams this curator has switched on.

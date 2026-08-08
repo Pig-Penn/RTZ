@@ -1,18 +1,28 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Sync the tag renderers' registration with their visibility flags. The flags
- * (GVAR(unitTagsVisible) / GVAR(vehicleTagsVisible)) stay the single source of
- * truth; this is what makes them take effect.
+ * Sync every tag system's renderer registration and stream demand with its
+ * TAG_VISIBLE flag. The flags stay the single source of truth; this is what makes
+ * them take effect.
  *
- * Registration, not an early exit, is how a hidden tag system is switched off:
- * an unregistered renderer is never called, and with every renderer gone
- * EFUNC(core,frameLoop) skips building the camera basis entirely. A system that merely
- * returned early still cost a call per frame forever.
+ * Registration, not an early exit, is how a hidden tag system is switched off: an
+ * unregistered renderer is never called, and with every renderer gone
+ * EFUNC(core,frameLoop) skips building the camera basis entirely. A system that
+ * merely returned early still cost a call per frame forever.
  *
- * Each system is independently CBA-setting gated, so only one, both or neither
- * may exist at runtime — hence the isNil guards. A system that was never started
- * has no flag, and is left unregistered.
+ * The demand is set from the SAME loop as the registration, which is the point of
+ * this function existing rather than each caller doing both. A renderer that is
+ * registered while its demand is withdrawn draws from a store the server has
+ * stopped filling; a demand left standing while the renderer is gone keeps the
+ * server gathering and pushing packets nobody draws. The engine used to work the
+ * infantry half out for itself by reading GVAR(unitTagsVisible) by name — the
+ * display knowledge that kept it welded to this component — and needed a
+ * defensive GETGVAR to do it, because that flag did not exist until the tag
+ * system started (docs/Knowledge Base/Gotchas.md §2). Declaring it from the
+ * consumer side removed both problems.
+ *
+ * Systems that were never started (master setting off) are simply not in
+ * GVAR(tagSystems), so there is nothing to guard against here.
  *
  * Arguments:
  * None
@@ -28,31 +38,27 @@
 
 if (!hasInterface) exitWith {};
 
-if (!isNil QGVAR(unitTagsVisible)) then {
-    private _visible = GVAR(unitTagsVisible);
+{
+    // ALIAS THE KEY: every call below runs code that loops internally, and _x is
+    // read after them (docs/Knowledge Base/Gotchas.md §2).
+    private _id = _x;
+    _y params ["_visible", "", "", "_renderer", "_priority", "_slices"];
 
     if (_visible) then {
-        [QGVAR(unitTags), LINKFUNC(drawUnitTags), RENDER_WORLD, 30] call EFUNC(core,registerRenderer);
+        [_id, _renderer, RENDER_WORLD, _priority] call EFUNC(core,registerRenderer);
     } else {
-        [QGVAR(unitTags), RENDER_WORLD] call EFUNC(core,unregisterRenderer);
+        [_id, RENDER_WORLD] call EFUNC(core,unregisterRenderer);
+        // Drop the built entries with the renderer. Withdrawing the demand below
+        // stops the feed, so anything left here would be re-drawn on the next
+        // show against however stale the data had become — and on a multi-hour
+        // operation a hidden system would otherwise sit on a cache entry per
+        // entity the curator ever selected.
+        _y set [TAG_CACHE, createHashMap];
+        _y set [TAG_DIRTY, true];
     };
 
-    // Tell the engine whether anyone still wants the infantry slice streamed. The
-    // engine used to read GVAR(unitTagsVisible) by name to work this out, which is
-    // exactly the display knowledge that kept it welded to this component; it also
-    // needed a defensive GETGVAR there, because this flag does not exist until the
-    // tag system starts and a nil would have aborted the whole subscription
-    // (docs/Knowledge Base/Gotchas.md §2). Declaring it from the consumer side removes both
-    // problems — and this is the one place every visibility change funnels
-    // through, so the demand cannot drift out of step with the renderer.
-    // No `detailed`: the tags show no field that needs the expensive intel.
-    [QGVAR(unitTags), _visible] call EFUNC(core,setDemand);
-};
-
-if (!isNil QGVAR(vehicleTagsVisible)) then {
-    if (GVAR(vehicleTagsVisible)) then {
-        [QGVAR(vehicleTags), LINKFUNC(drawVehicleTags), RENDER_WORLD, 31] call EFUNC(core,registerRenderer);
-    } else {
-        [QGVAR(vehicleTags), RENDER_WORLD] call EFUNC(core,unregisterRenderer);
-    };
-};
+    // Withdrawing is an empty slice list — the entry is dropped rather than kept
+    // as a row of falses. No `detailed`: no tag shows a field that needs the
+    // expensive per-unit intel, which only the selection dialog does.
+    [_id, [[], _slices] select _visible] call EFUNC(core,setDemand);
+} forEach GVAR(tagSystems);

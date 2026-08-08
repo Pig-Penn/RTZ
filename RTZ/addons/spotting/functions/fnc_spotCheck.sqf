@@ -12,7 +12,8 @@
  *  - Manned curators are resolved FIRST; with none, the tick skips straight to
  *    icon cleanup. Otherwise all units + vehicles are classified into per-side
  *    buckets once per tick (spotter reps only for sides that actually have a
- *    curator); curators on the same side share one detection pass.
+ *    curator); curators on the same side share one detection pass. That whole
+ *    once-per-tick pass lives in FUNC(collectSides).
  *  - The knowledge matrix is INVERTED via the `targets` command: one engine call
  *    per spotter group returns every enemy that group already has on its target
  *    list (the same group-level store knowsAbout reads), so the per-member
@@ -41,6 +42,12 @@
  *    trades a short (10s) lag in noticing a spotted unit go fully unknown again
  *    for not re-running the expensive check on every already-confirmed contact
  *    every tick.
+ *  - Payload signatures are ARRAYS compared with isEqualTo, not `str` of the same.
+ *    They exist purely to answer "did this payload change?", and building a string
+ *    to answer it meant one throwaway allocation per group AND per chevron on every
+ *    tick — the per-entity-per-tick `str` CLAUDE.md rules out — to express a
+ *    comparison the array does natively. Note that ==/!= REJECT arrays outright in
+ *    SQF, so every signature comparison must be isEqualTo (see SPOT_SIG_OFF).
  *
  * Tunables (GROUP_CALLOUT_COOLDOWN, SOFT/HARD_THRESHOLD, MKR_PREFIX,
  * WEDGE_TEXTURE, WEDGE_ALPHA) are #defined in script_component.hpp.
@@ -66,9 +73,9 @@ GVAR(wedgeByUnit) = createHashMap;
 
 // Consume the GLOBAL force-resend flag (set at mission start, and by any bare
 // QGVAR(spotResync)). The per-player pending requests in GVAR(spotResendPlayers)
-// are NOT consumed here — each entry is retired individually below, at the moment
-// its player resolves to a targetable curator, so a request that arrived before the
-// mission assigned that curator's module survives until it can be honoured.
+// are NOT consumed here — FUNC(collectSides) retires each one individually, at the
+// moment its player resolves to a targetable curator, so a request that arrived before
+// the mission assigned that curator's module survives until it can be honoured.
 private _forceResend = GVAR(spotForceResend);
 GVAR(spotForceResend) = false;
 
@@ -76,10 +83,21 @@ GVAR(spotForceResend) = false;
 // the module is removed. Use !isNull to detect genuinely deleted curators.
 private _curators = allCurators select { !isNull _x };
 
-// Diagnostic toggle, read once per tick. The per-curator resolution logging it
-// gates lives AFTER the classification pass (which it also forces to run), so
-// the logged spotter-group count is real — see the debug block below.
+// Diagnostic toggle, read once per tick. FUNC(collectSides) both logs under it and
+// forces its classification pass to run when it is set, so the logged spotter-group
+// count is real even with no curator resolved.
 private _dbg = GETMVAR(RTZ_debug,false);
+
+// One shared empty map / empty array for every "missing" fallback in this pass. SQF
+// evaluates getVariable / getOrDefault arguments EAGERLY, so spelling `createHashMap` or
+// `[]` inline allocated and immediately discarded one per call — on the array cases below
+// that is once per member and once per chevron, every tick, which is exactly the kind of
+// per-entity-per-tick allocation the rest of this component is written to avoid.
+// Safe to share because every use only ever READS the result (a getOrDefault, a count, a
+// values, an isNotEqualTo, or a verbatim ride along a network payload), so no caller can
+// write into either sentinel. Treat both as strictly read-only.
+private _emptyMap = createHashMap;
+private _emptyArr = [];
 
 // Officer editing-area zones (officerNetId → [plantedCenter, radius]),
 // published by rtz_officer (see fnc_applyArea) — a plain cross-addon global,
@@ -91,176 +109,23 @@ private _dbg = GETMVAR(RTZ_debug,false);
 // move once placed (see EFUNC(officer,monitorAreas)) — so the ring the client
 // draws from it marks the ground the enemy Zeus can actually edit, not
 // wherever the officer has since wandered.
-// One shared empty map for every "missing" fallback in this pass. SQF evaluates
-// getVariable / getOrDefault arguments EAGERLY, so spelling createHashMap inline
-// allocated and immediately discarded a map on every single call — the same
-// mistake XEH_preInit documents having already fixed once for GVAR(rcDisplay).
-// Safe to share because every use below only ever READS the result (a plain
-// getOrDefault, a count, a values), so no caller can write into the sentinel.
-private _emptyMap = createHashMap;
-
+//
+// The [center, radius] pairs read out of this map ride into the payload signatures
+// below BY REFERENCE, so this pass depends on rtz_officer never mutating one in place.
+// It does not: EFUNC(officer,applyArea) always `set`s a freshly built array and
+// `deleteAt`s to clear it, so a re-plant produces a NEW array and the isEqualTo
+// comparison in FUNC(emitSpot) sees the change. Were that ever to become an in-place
+// write, every signature holding the pair would silently track the mutation, compare
+// equal to itself, and the client's ring would never update — the one non-obvious
+// invariant the array signatures rest on.
 private _officerZones = GETMVAR(RTZ_officerZoneMap,_emptyMap);
 
-// ── Group manned curators by side ─────────────────────────────────────────
-// Resolved BEFORE the unit/vehicle classification so a tick with no manned
-// curator — vacant Zeus slots, a headless-only setup — skips the
-// O(allUnits + vehicles) bucketing entirely and falls straight through to the
-// icon cleanup at the bottom (the detection loop iterates _bySide, so with it
-// empty the pass is already a no-op).
-// Only PLAYER-manned curators can be spotters — a live player object is required
-// as the CBA_fnc_targetEvent destination. Headless curators are skipped entirely,
-// and so are curator modules still bound to a departed player: a playable Zeus slot
-// whose AI is not disabled leaves the unit object behind, so getAssignedCuratorUnit
-// keeps returning a non-null, server-local, NON-player body. `owner` of that body is
-// 2, so an isNull-only guard would route every one of that curator's spots to the
-// server — a silent no-op on a dedicated server (whose keys then never age out of
-// _activeSpots), but on a listen server the host has the receivers registered and
-// would render a departed curator's entire contact picture as its own. isPlayer is
-// the same test FUNC(remoteControlIndicator) already uses, and
-// `isPlayer objNull` is false, so it subsumes the null check.
-// Same-side curators share the same spotter pool and see the same hostiles, so
-// the entire knowsAbout matrix is computed once per side and emitted to each.
-// Tuple: [curator, player, curatorNetId (key part), forceResend (this
-// destination's own force flag)]. The player's netId is resolved here for the
-// pending-resync lookup but is NOT carried: it used to ride along so every
-// signature could be suffixed with it, which FUNC(emitSpot) now detects directly
-// as a recipient change instead.
-private _bySide = createHashMap;   // sideStr → [side, curatorTuples[]]
-{
-    private _player = getAssignedCuratorUnit _x;
-    if (!isPlayer _player) then { continue };
-    private _curatorSide = side _player;
-    private _playerId    = netId _player;
-
-    // Retire this player's pending resync request HERE — the first tick on which
-    // they resolve to a targetable curator — and fold it into a per-destination
-    // force flag. Doing it at the point of resolution (rather than consuming a
-    // global flag unconditionally at the top of the pass) is what makes a request
-    // that arrived before the curator module was assigned still get honoured.
-    private _pending = _playerId in GVAR(spotResendPlayers);
-    if (_pending) then { GVAR(spotResendPlayers) deleteAt _playerId };
-
-    ((_bySide getOrDefault [str _curatorSide, [_curatorSide, []], true]) select 1)
-        pushBack [_x, _player, netId _x, _forceResend || _pending];
-} forEach _curators;
-
-// ── Classify every unit and vehicle ONCE per tick ────────────────────────
-// _sideEntities:    sideStr → [side, entities[]] — spottable hostile candidates
-//                   (alive, non-player; locality NOT filtered: knowsAbout only
-//                   requires the SPOTTER to be local, and targets may sit on a
-//                   client, e.g. under curator remote control).
-// _sideSpotterReps: sideStr → HashMap(group netId → representative unit),
-//                   collected ONLY for sides that actually have a manned curator
-//                   (_bySide keys) — no other side's knowledge is ever queried,
-//                   so building its rep map would be pure waste.
-//                   Target knowledge is stored per GROUP, so one member answers
-//                   knowsAbout for the whole group; crewed vehicles are covered by
-//                   their effective commander (a vehicle's knowledge IS its crew
-//                   group's), and empty vehicles — which know nothing — drop out.
-//                   `local` keeps the knowsAbout source server-local and excludes
-//                   AI in player-led groups (local to that player's client), same
-//                   as the old per-unit filter. Spotter units are drawn from ALL
-//                   server-local AI (not just curatorEditableObjects) so that
-//                   dynamically-spawned units from a late-joining curator are
-//                   never missed due to editable-object list lag.
-// Men and vehicles are looped separately — allUnits is alive-only and all
-// CAManBase, so the men's loop needs no alive/kind checks and no merged array
-// is allocated. Buckets are fetched with get + isNil (not getOrDefault) so the
-// default array/hashmap isn't allocated per entity on the hit path. Units with
-// simulation disabled are skipped entirely — neither spottable (they present
-// no meaningful target) nor usable as a spotter rep.
-// The whole pass is gated on a curator having resolved this tick — with _bySide
-// empty nothing downstream would ever read its output. RTZ_debug forces it so
-// the per-curator resolution log below can report a real spotter-group count.
-private _sideEntities    = createHashMap;
-private _sideSpotterReps = createHashMap;
-if (count _bySide > 0 || _dbg) then {
-    {
-        if (isPlayer _x) then { continue };
-        if (!simulationEnabled _x) then { continue };
-        private _eSide  = side _x;
-        private _sk     = str _eSide;
-        private _bucket = _sideEntities get _sk;
-        if (isNil "_bucket") then {
-            _bucket = [_eSide, []];
-            _sideEntities set [_sk, _bucket];
-        };
-        (_bucket select 1) pushBack _x;
-
-        if (_sk in _bySide && { local _x } && { !isNull group _x }) then {
-            private _reps = _sideSpotterReps get _sk;
-            if (isNil "_reps") then {
-                _reps = createHashMap;
-                _sideSpotterReps set [_sk, _reps];
-            };
-            _reps set [netId group _x, _x];
-        };
-    } forEach allUnits;
-
-    {
-        if (!alive _x || { isPlayer _x }) then { continue };
-        if (!simulationEnabled _x) then { continue };
-        if !(_x isKindOf "LandVehicle"
-            || { _x isKindOf "Air" }
-            || { _x isKindOf "Ship" }) then { continue };
-        private _eSide  = side _x;
-        private _sk     = str _eSide;
-
-        // Spottable only when the hull's group has a man leader. The grouping pass
-        // further down keys on `leader group` and discards anything answering objNull,
-        // so a hull without one never produced an icon anyway — it was merely walked
-        // once per curator side first. `vehicles` is every vehicle on the map, which on
-        // a populated terrain means hundreds of alive ambient cars, so testing it here
-        // keeps them out of _allHostile and out of the per-side grouping walk entirely.
-        if (!isNull (leader group _x)) then {
-            private _bucket = _sideEntities get _sk;
-            if (isNil "_bucket") then {
-                _bucket = [_eSide, []];
-                _sideEntities set [_sk, _bucket];
-            };
-            (_bucket select 1) pushBack _x;
-        };
-
-        // Spotter rep regardless of the above: UAV crew are absent from allUnits (see
-        // allUnitsUAV), so a UAV's knowledge is only reachable via its hull's
-        // effective commander here.
-        if (_sk in _bySide && { local _x }) then {
-            private _rep = effectiveCommander _x;
-            if (!isNull _rep && { !isPlayer _rep } && { !isNull group _rep }) then {
-                private _reps = _sideSpotterReps get _sk;
-                if (isNil "_reps") then {
-                    _reps = createHashMap;
-                    _sideSpotterReps set [_sk, _reps];
-                };
-                _reps set [netId group _rep, _rep];
-            };
-        };
-    } forEach vehicles;
-
-    // Diagnostic: each curator's resolution is logged the first time it changes —
-    // THE check for "does the server resolve joined/JIP clients' curators to a
-    // targetable player?". A curator that logs owner=-1, or never logs at all,
-    // is being silently skipped; the logged player object is the raw
-    // getAssignedCuratorUnit result, so a curator held by a departed player shows
-    // a non-null body next to owner=-1. Runs after the classification (which
-    // _dbg forces on even with no curator resolved) so spotterGroups is the real
-    // rep count for the curator's side — an unresolved curator reads side
-    // sideUnknown, whose bucket is always empty, matching its true picture.
-    if (_dbg) then {
-        {
-            private _player = getAssignedCuratorUnit _x;
-            private _curatorSide = if (!isPlayer _player) then { sideUnknown } else { side _player };
-            private _repCount = count (_sideSpotterReps getOrDefault [str _curatorSide, _emptyMap]);
-            private _sig = format ["%1|%2|%3", _player, _curatorSide, _repCount];
-
-            if (_sig != (GVAR(spotDebugLast) getOrDefault [netId _x, ""])) then {
-                GVAR(spotDebugLast) set [netId _x, _sig];
-                diag_log text format ["[RTZ] server curator %1: player=%2 owner=%3 side=%4 spotterGroups=%5",
-                    netId _x, _player, (if (!isPlayer _player) then {-1} else {owner _player}), _curatorSide, _repCount];
-            };
-        } forEach _curators;
-    };
-};
+// ── The tick's side picture ───────────────────────────────────────────────
+// Manned curators grouped by side, hostile candidates bucketed by side, and one
+// representative spotter per local AI group on each side that has a curator. All three
+// maps are keyed on the SIDE OBJECT — see FUNC(collectSides) for why that matters.
+([_curators, _forceResend, _dbg] call FUNC(collectSides))
+    params ["_bySide", "_sideEntities", "_sideSpotterReps"];
 
 // HashMap used as a set for O(1) "is this spot still active?" checks.
 // Declared before the detection pass so the cleanup always runs, even when
@@ -268,12 +133,17 @@ if (count _bySide > 0 || _dbg) then {
 private _currentKeys = createHashMap;
 
 // ── Spot detection: one pass per curator side ─────────────────────────────
+// _x = the side (HashMap key); _y = that side's curator tuples.
 {
-    _y params ["_spotterSide", "_curatorsData"];
+    private _spotterSide    = _x;
+    private _curatorsData   = _y;
+    // The one place a side is stringified, and it happens once per CURATOR SIDE rather
+    // than once per entity: the latch and callout keys below are composite strings, and
+    // there are at most a handful of sides in play.
     private _spotterSideStr = str _spotterSide;
 
     // One representative per local AI group on this side — the spotter set.
-    private _spotterReps = values (_sideSpotterReps getOrDefault [_x, _emptyMap]);
+    private _spotterReps = values (_sideSpotterReps getOrDefault [_spotterSide, _emptyMap]);
     if (_spotterReps isEqualTo []) then { continue };
 
     // ── Invert the knowledge matrix ───────────────────────────────────
@@ -313,9 +183,7 @@ private _currentKeys = createHashMap;
     // pre-bucketed sides whose relation to us is hostile.
     private _allHostile = [];
     {
-        _y params ["_entSide", "_entities"];
-        
-        if ((_spotterSide getFriend _entSide) < 0.5) then { _allHostile append _entities };
+        if ((_spotterSide getFriend _x) < 0.5) then { _allHostile append _y };
     } forEach _sideEntities;
     if (_allHostile isEqualTo []) then { continue };
 
@@ -342,7 +210,7 @@ private _currentKeys = createHashMap;
     {
         _x params ["_leader", "_members", "_leaderNetId"];
 
-        // The group leader is not necessarily a SPOTTABLE entity: _allHostile
+        // The group leader is not necessarily a SPOTTABLE entity: the hostile union
         // excludes players and simulation-disabled units, but grouping above keys
         // on `leader group`, so an AI squad led by a player reports the PLAYER as
         // its leader. Anchoring the group icon on him would track a player's exact
@@ -396,7 +264,7 @@ private _currentKeys = createHashMap;
                 {
                     private _k = _x knowsAbout _member;
                     if (_k > _uKnows) then { _uKnows = _k; _uBest = _x; };
-                } forEach (_knownBy getOrDefault [_memberId, []]);
+                } forEach (_knownBy getOrDefault [_memberId, _emptyArr]);
                 if (_uKnows >= HARD_THRESHOLD) then {
                     GVAR(chevronLatch) set [_latchKey, [CBA_missionTime + CHEVRON_LATCH_DURATION, _uBest]];
                 };
@@ -448,12 +316,12 @@ private _currentKeys = createHashMap;
         // the ordinary case, not an edge one. Read only when a chevron was actually
         // dropped: an anchor the spotters have not individually identified never had a
         // chevron, so never had a ring to keep.
-        private _anchorZone = [];
+        private _anchorZone = _emptyArr;
         if (_drawGroup) then {
             private _anchorIdx = _chevrons findIf { (_x select 1) isEqualTo _anchorId };
             if (_anchorIdx > -1) then {
                 _chevrons deleteAt _anchorIdx;
-                _anchorZone = _officerZones getOrDefault [_anchorId, []];
+                _anchorZone = _officerZones getOrDefault [_anchorId, _emptyArr];
             };
         };
 
@@ -466,12 +334,14 @@ private _currentKeys = createHashMap;
         // signature for the same reason the wedge signature carries its own: planting,
         // re-planting or clearing the area while the anchor stays spotted has to
         // re-send, or the client's ring never updates.
-        private _grpBaseSig = str [_anchorId, _leaderTex, _mrkrColor, _echelonTex, _anchorZone];
+        // An ARRAY, not `str` of one — see the note in the header, and SPOT_SIG_OFF for
+        // why that forces isEqualTo on every comparison.
+        private _grpBaseSig = [_anchorId, _leaderTex, _mrkrColor, _echelonTex, _anchorZone];
 
         // Chevron colour and display name — once per member, shared by every curator.
         private _chevronData = _chevrons apply {
             _x params ["_member", "_memberId"];
-            
+
             ([_member] call EFUNC(common,classInfo)) params ["_memberName", "_isLeaderName"];
             // NCOs — any unit whose class display name contains "leader" (Squad
             // Leader, Team Leader, …) — get the brighter "own-group" palette
@@ -504,8 +374,8 @@ private _currentKeys = createHashMap;
             // and is folded into the signature, so planting, re-planting or
             // clearing the area while the officer stays spotted re-sends the
             // wedge and the client updates/clears its ring the same tick.
-            private _zone = _officerZones getOrDefault [_memberId, []];
-            [_member, _memberId, _wedgeColor, _memberName, _zone, str [_wedgeColor, _leaderNetId, _zone]]
+            private _zone = _officerZones getOrDefault [_memberId, _emptyArr];
+            [_member, _memberId, _wedgeColor, _memberName, _zone, [_wedgeColor, _leaderNetId, _zone]]
         };
 
         // Emit to each curator on this side with their own spot key and target player.
@@ -516,7 +386,7 @@ private _currentKeys = createHashMap;
             _currentKeys set [_leaderKey, true];
             [
                 _leaderKey,
-                [MKR_PREFIX + _leaderKey, _leader, _leaderTex, _mrkrColor, true, _echelonTex, _sideIdx, _leaderNetId, "", _anchorZone],
+                [MKR_PREFIX + _leaderKey, _leader, _leaderTex, _mrkrColor, true, _echelonTex, _sideIdx, _leaderNetId, "", _anchorZone, _anchorId],
                 _grpBaseSig,
                 _player, _activeSpots, _drawGroup, _curForce
             ] call FUNC(emitSpot);
@@ -530,7 +400,7 @@ private _currentKeys = createHashMap;
                 _currentKeys set [_wedgeKey, true];
                 [
                     _wedgeKey,
-                    [_wedgeMrkr, _member, WEDGE_TEXTURE, _wedgeColor, false, "", _sideIdx, _leaderNetId, _memberName, _zone],
+                    [_wedgeMrkr, _member, WEDGE_TEXTURE, _wedgeColor, false, "", _sideIdx, _leaderNetId, _memberName, _zone, _memberId],
                     _wedgeBaseSig,
                     _player, _activeSpots, true, _curForce
                 ] call FUNC(emitSpot);
@@ -614,44 +484,16 @@ private _toRemove = [];
     // a targeted network message per stale-off entry per cleanup pass. The player
     // may have disconnected since the spot was emitted — isPlayer, not isNull, since
     // a departed player's body can persist as server-local AI (owner 2), which would
-    // route the retraction to the server/host instead. See the curator-resolution
-    // block above for the full reasoning.
-    if (_spotSig != "_off_" && { isPlayer _spotterPlayer }) then {
+    // route the retraction to the server/host instead. See FUNC(collectSides) for the
+    // full reasoning.
+    // isNotEqualTo, not !=: a live signature is an ARRAY and SQF's equality operators
+    // throw on those rather than comparing them (see SPOT_SIG_OFF).
+    if (_spotSig isNotEqualTo SPOT_SIG_OFF && { isPlayer _spotterPlayer }) then {
         [QGVAR(spotLost), [_mrkrName], _spotterPlayer] call CBA_fnc_targetEvent;
     };
     _activeSpots deleteAt _x;
 } forEach _toRemove;
 
 // ── Housekeeping: keep the long-lived rate-limit maps bounded ──────────
-// Entries for dead/deleted units would otherwise accumulate for the whole
-// mission. Collect-then-delete — never deleteAt inside a HashMap forEach.
-if (count GVAR(blinkThrottle) > BLINK_THROTTLE_CAP) then {
-    private _cutoff = CBA_missionTime - BLINK_THROTTLE_WINDOW;   // window is generous vs. FIRE_BLINK_THROTTLE (0.1s) so live entries are never evicted early
-    private _old = [];
-    { if (_y < _cutoff) then { _old pushBack _x } } forEach GVAR(blinkThrottle);
-    { GVAR(blinkThrottle) deleteAt _x } forEach _old;
-};
-if (count GVAR(spotGroupLastSeen) > GROUP_LAST_SEEN_CAP) then {
-    // A stamp this old means the group is already out of contact long enough to
-    // re-announce, so dropping it is indistinguishable from keeping it.
-    private _cutoff = CBA_missionTime - GROUP_CALLOUT_COOLDOWN;
-    private _old = [];
-    { if (_y < _cutoff) then { _old pushBack _x } } forEach GVAR(spotGroupLastSeen);
-    { GVAR(spotGroupLastSeen) deleteAt _x } forEach _old;
-};
-// Pending resync requests are retired when their player resolves to a curator, so
-// an entry only survives while that player is connected but not (yet) a Zeus —
-// exactly the case the pending channel exists for. What it must not do is outlive
-// the player: someone who requests a resync and then disconnects without ever being
-// made curator would otherwise leave a permanent entry. Normally empty, and bounded
-// by slot count even when not, so this is a no-op on the hot path.
-if (count GVAR(spotResendPlayers) > 0) then {
-    private _stale = [];
-    { if (!isPlayer (objectFromNetId _x)) then { _stale pushBack _x } } forEach GVAR(spotResendPlayers);
-    { GVAR(spotResendPlayers) deleteAt _x } forEach _stale;
-};
-if (count GVAR(chevronLatch) > CHEVRON_LATCH_CAP) then {
-    private _old = [];
-    { if ((_y select 0) < CBA_missionTime) then { _old pushBack _x } } forEach GVAR(chevronLatch);   // already-expired latches are dead weight
-    { GVAR(chevronLatch) deleteAt _x } forEach _old;
-};
+// Entries for dead/deleted units would otherwise accumulate for the whole mission.
+call FUNC(pruneStores);
