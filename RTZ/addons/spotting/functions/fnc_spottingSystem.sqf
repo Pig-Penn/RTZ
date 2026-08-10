@@ -95,7 +95,6 @@ if (!isServer) exitWith {};
 // watching the shooter.
 GVAR(wedgeByUnit)        = createHashMap;
 GVAR(blinkThrottle)      = createHashMap;   // netId → last blink-send time (rate limiter)
-GVAR(spotGroupLastSeen)  = createHashMap;   // (sideStr + "_" + leaderNetId) → last time that side had the group confirmed (callout gate)
 GVAR(spotDebugLast)      = createHashMap;   // curatorNetId → last-logged resolution sig (diagnostic, on-change only)
 GVAR(markerSuffixCache)  = createHashMap;   // "m"/"v" + class → NATO symbol suffix, mission-lifetime (fnc_unitMarker)
 // (sidePrefix + suffix) → finished NATO texture path, mission-lifetime. The
@@ -104,7 +103,28 @@ GVAR(markerSuffixCache)  = createHashMap;   // "m"/"v" + class → NATO symbol s
 // every detection pass. There are only ~3 prefixes × ~13 suffixes, so this
 // saturates within seconds and never grows again (fnc_unitMarker).
 GVAR(markerTexCache)     = createHashMap;
-GVAR(chevronLatch)       = createHashMap;   // (spotterSideStr + "_" + memberNetId) → [expiryTime, lastBestSpotter] (fnc_spotCheck)
+
+// The two per-(curator side, entity) stores, both NESTED: side OBJECT → HashMap.
+//   GVAR(chevronLatch)      — memberNetId → [expiryTime, lastBestSpotter, leaderNetId]
+//   GVAR(spotGroupLastSeen) — leaderNetId → last time that side had the group confirmed
+//
+// They were flat maps keyed on (str side + "_" + netId). Building that key ran once per
+// MEMBER of every hostile group on every detection pass — and with curators typically on
+// OPPOSING sides (see docs/Knowledge Base/Performance Audit Questions.md) the whole
+// per-side loop repeats two to four times, so it was several hundred string
+// concatenations per tick for the mission's whole length. That is the per-entity-per-tick
+// allocation CLAUDE.md rules out, and the same one FUNC(collectSides) was rewritten to
+// remove; Side is a legal HashMap key (Gotchas §3) and always was.
+//
+// Nesting rather than keying on [side, netId]: FUNC(spotCheck) resolves the inner map
+// ONCE per curator side, outside the group loop, so the member loop does a bare get/set
+// with no key construction at all. The latch also carries its member's leaderNetId, which
+// is what lets that pass skip hostile groups nobody has any knowledge of — see the
+// contact gate there.
+//
+// FUNC(pruneStores) walks BOTH levels; its caps are per inner map, i.e. per side.
+GVAR(chevronLatch)       = createHashMap;
+GVAR(spotGroupLastSeen)  = createHashMap;
 
 // The eight radio contact-report phrasings (fnc_spotCallout picks one at random per
 // report). Localized ONCE here rather than rebuilt per callout: they are mission
@@ -131,7 +151,16 @@ GVAR(calloutPhrases) = [
 // wedge-spotted (locality not filtered on hostiles) but their shots won't reach this
 // handler, so the white blink is silently skipped for RC'd units only.
 // Cheap early-out for the common case: a shot nobody is watching does one lookup.
+//
+// Gated on GVAR(enableFireBlink), read live so it can be switched off mid-mission. The
+// test is the FIRST thing in the body, above the `netId` — that is an engine call paid on
+// every infantry shot ANYWHERE on the map, by every unit in the mission, whether or not
+// anything is spotted, so it is the one line worth putting a variable read in front of.
+// A class event handler cannot be removed once added, which is why this is a gate here
+// rather than a conditional registration; the matching gate on the producing side (the
+// GVAR(wedgeByUnit) population in FUNC(spotCheck)) is what actually saves the work.
 ["CAManBase", "FiredMan", {
+    if !(GETGVAR(enableFireBlink,true)) exitWith {};
     params ["_unit"];
 
     private _id = netId _unit;

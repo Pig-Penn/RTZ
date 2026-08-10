@@ -17,10 +17,14 @@
  * Group displays both carry a row labelled "Skill", and they write to different
  * scopes (the selected units vs every unit of the selected groups).
  *
- * The one row that cannot be hooked per window is the vehicle Damage button —
- * it opens a zen_dialog display rather than an attribute display, so it is
- * gated at its condition and simply does not appear out of zone. The Health
- * slider still reports overall damage.
+ * The Object display's two buttons cannot be hooked per window — neither has a
+ * value to refuse at confirm; they act the moment they are clicked. Both are
+ * gated at their condition instead and simply do not appear out of zone:
+ *
+ *   Damage  — opens a zen_dialog display rather than an attribute display.
+ *             The Health slider still reports overall damage.
+ *   Arsenal — the arsenal restriction's own entry point on this display, gated
+ *             against GVAR(arsenal) rather than GVAR(enabled).
  *
  * Arguments:
  * None
@@ -89,14 +93,44 @@ if (isNil "_objectData") exitWith {};
 // gating there covers a zone lost while the window was open. The original
 // condition is stashed in a variable rather than inlined into the wrapper so
 // the wrapper can stay a plain code literal — no compile of ZEN's own source.
+// ZEN evaluates a button condition as `_entity call _condition`, so the entity
+// arrives as _this. The isNil guards make a second run of this function a
+// no-op; chaining a wrapper to itself would recurse on every evaluation.
+//
+// Names are matched rather than statements because ZEN localizes them at
+// registration, and localize of the same key is the stabler identity here than
+// str of a code block.
 private _damageLabel = localize "STR_A3_NormalDamage1";
+private _arsenalLabel = localize "STR_A3_Arsenal";
 
 {
-    if ((_x select 0) isEqualTo _damageLabel && {isNil {GVAR(damageCondition)}}) then {
-        GVAR(damageCondition) = _x select 3;
+    // Bound rather than used as _x through the switch: the wrappers below are
+    // written into this same array, and a named handle keeps that obvious
+    private _button = _x;
 
-        _x set [3, {
-            (_this call GVAR(damageCondition)) && {[SCOPE_VEHICLES] call FUNC(canEdit)}
-        }];
+    switch (_button select 0) do {
+        case _damageLabel: {
+            if (isNil {GVAR(damageCondition)}) then {
+                GVAR(damageCondition) = _button select 3;
+
+                _button set [3, {
+                    (_this call GVAR(damageCondition)) && {[SCOPE_VEHICLES] call FUNC(canEdit)}
+                }];
+            };
+        };
+
+        // The arsenal is the servicing restriction's widest hole — a refused
+        // rearm is a whole fresh loadout away — but it is its own permission,
+        // so it answers to its own setting rather than to GVAR(enabled)
+        case _arsenalLabel: {
+            if (isNil {GVAR(arsenalCondition)}) then {
+                GVAR(arsenalCondition) = _button select 3;
+
+                _button set [3, {
+                    (_this call GVAR(arsenalCondition))
+                    && {!GVAR(arsenal) || {[_this] call FUNC(canEditEntity)}}
+                }];
+            };
+        };
     };
 } forEach (_objectData select 3);

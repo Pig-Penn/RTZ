@@ -55,9 +55,13 @@ if (_tSide isEqualTo side group _kUnit) exitWith { [] };
 private _kn = _kUnit targetKnowledge _target;
 private _estPos = ASLToAGL (_kn select 6);
 // Degenerate knowledge position while actively suppressing — fall back to the
-// true position (same fix as LAMBS).
+// true position (same fix as LAMBS). ASLToAGL, matching the line above: this is
+// the SAME variable, and the renderer feeds it straight to drawLine3D /
+// drawIcon3D, which take AGL. A getPosATL here put the fallback in a different
+// space from the primary path — identical over land, out by the water depth over
+// sea, and decided by a branch the reader cannot see from the draw site.
 if (_estPos distanceSqr [0, 0, 0] < 1) then {
-    _estPos = getPosATL _target;
+    _estPos = ASLToAGL getPosASL _target;
 };
 if (_veh distance _estPos > KNOWLEDGE_MAX_DIST) exitWith { [] };
 

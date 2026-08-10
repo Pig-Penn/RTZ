@@ -88,8 +88,16 @@ private _claimed = [];
         _label,
         // Seeded from where the aircraft already is, so the readout is right
         // before anything has been drawn. Kept current by FUNC(appendPoint).
+        //
+        // ASLToAGL, in the SAME form FUNC(appendPoint) uses — this label has two
+        // producers and they have to agree. ATL measures from the terrain, which
+        // under water is the seabed, so over sea this seed read the aircraft's
+        // altitude plus the water depth and then jumped down by that depth the
+        // moment the curator dragged the first point. It also disagreed with the
+        // stalk FUNC(drawPaths) drops beneath the handle, which ends at AGL zero
+        // — the water surface.
         if (_kind == KIND_AIR) then {
-            format ["%1 m", round (getPosATL _hull select 2)]
+            format ["%1 m", round ((ASLToAGL getPosASL _hull) select 2)]
         } else {
             ""
         },

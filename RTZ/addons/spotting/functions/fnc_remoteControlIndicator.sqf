@@ -17,12 +17,28 @@
  * controlled unit with the global (publicVariable) flag. That value is the
  * controlling player and is synced to every machine, including the server.
  *
- * Architecture: the server polls on a CBA per-frame handler (unscheduled -
+ * Architecture: the server scans on a CBA per-frame handler (unscheduled -
  * immune to script-scheduler starvation, unlike a spawned sleep loop) and
  * pushes viewer-diffed QGVAR(rcDetected)/QGVAR(rcLost) target events keyed by
  * the unit's netId. Clients keep one hashmap, GVAR(rcDisplay): netId ->
  * [unit, color]; the spotting system suppresses its chevron for a unit by
  * testing `netId _unit in GVAR(rcDisplay)`.
+ *
+ * That scan is EVENT-DRIVEN, with the timer as a safety net. It walks allUnits with a
+ * getVariable each, and taking remote control happens a handful of times in a
+ * multi-hour operation - so running it every few seconds meant hundreds of reads per
+ * tick, for the whole mission, to answer "no" (see docs/Knowledge Base/Performance
+ * Audit Questions.md). Zeus remote control goes through selectPlayer, so CBA's
+ * "unit" player event handler fires on the controller's own machine at BOTH takeover
+ * and release; that client pokes the server, which marks itself dirty and runs the
+ * very same scan on the next tick.
+ *
+ * The poke carries no payload and grants no authority: the server still re-reads
+ * RC_OWNER_VAR itself and still drives the same diff. A poke that never arrives - an
+ * unforeseen control path, a client that missed the event - costs latency and nothing
+ * else, because the fallback timer (GVAR(rcCheckInterval), now a slow safety net rather
+ * than the detection mechanism) runs the identical scan. That is deliberate: the
+ * previous behaviour is the floor, not something the event replaces.
  *
  * Called by XEH_postInit after CBA_settingsInitialized. Self-guards locality;
  * registers handlers and returns (no scheduled loop).
@@ -54,6 +70,19 @@
 if (isServer) then {
     GVAR(rcForceResend) = false;
     [QGVAR(rcResync), { GVAR(rcForceResend) = true }] call CBA_fnc_addEventHandler;
+
+    // "Somebody's player unit just changed - look again now." Set by QGVAR(rcChanged),
+    // fired by any client whose CBA "unit" player event handler fires (below). Starts
+    // true so the first tick scans immediately rather than waiting out the fallback
+    // interval, which matters on a JIP into a mission where a takeover is already live.
+    //
+    // A flag rather than a payload: the client reports only THAT something changed. The
+    // unit it would name is the one it now controls, which is not necessarily the one
+    // that stopped being controlled, and RC_OWNER_VAR is global anyway - so the server
+    // re-deriving both from its own read is simpler AND authoritative, where trusting a
+    // client's account would be neither.
+    GVAR(rcDirty) = true;
+    [QGVAR(rcChanged), { GVAR(rcDirty) = true }] call CBA_fnc_addEventHandler;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -100,6 +129,18 @@ if (hasInterface) then {
         GVAR(rcDisplay) deleteAt (_this select 0);
     }] call CBA_fnc_addEventHandler;
 
+    // Taking or releasing remote control goes through selectPlayer, so THIS is the
+    // moment the server needs to look again. `remoteControlled` / `isRemoteControlling`
+    // are locality-bound and only legal here, where the unit is local — but nothing is
+    // read from them: the handler reports the bare fact of a change and lets the server
+    // re-derive the picture from the global owner variable it already trusts. That keeps
+    // the client out of the authority path entirely, and means the event only has to be
+    // RIGHT ABOUT SOMETHING HAVING HAPPENED, not about what.
+    //
+    // It fires on respawn and team switch too. Those are equally rare and cost one
+    // otherwise-idle scan, which is the same trade as being an event short.
+    ["unit", { [QGVAR(rcChanged), []] call CBA_fnc_serverEvent }] call CBA_fnc_addPlayerEventHandler;
+
     // Handlers are registered — ask the server to force-resend every active
     // indicator on its next scan. Covers JIP/rejoin where the viewer-diffed send
     // fired before this machine could listen (the viewer is then recorded in
@@ -114,11 +155,13 @@ if (!isServer) exitWith {};
 // SERVER — detection loop (unscheduled CBA per-frame handler)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// RC_CHECK_TICK (base tick of the scan loop; the live GVAR(rcCheckInterval)
-// setting is the effective cadence) and RC_OWNER_VAR (set globally by
-// BI/ACE/ZEN → readable on the server) are #defined in script_component.hpp.
-// GVAR(rcForceResend) and its QGVAR(rcResync) listener are set up at the top of
-// this file, above the client fork — see the note there.
+// RC_CHECK_TICK (base tick of the loop, i.e. how often the two cheap gate tests
+// below run) and RC_OWNER_VAR (set globally by BI/ACE/ZEN → readable on the
+// server) are #defined in script_component.hpp. GVAR(rcCheckInterval) is the
+// FALLBACK cadence — a client's QGVAR(rcChanged) poke is what normally triggers
+// the scan; see the architecture note in the header.
+// GVAR(rcForceResend) / GVAR(rcDirty) and their listeners are set up at the top
+// of this file, above the client fork — see the notes there.
 
 [{
     // Active indicators: unitNetId → [viewerPlayers, colorArray]. viewerPlayers
@@ -128,18 +171,38 @@ if (!isServer) exitWith {};
     // the cleanup pass; role changes in the per-unit diff). The colour is
     // resolved once per takeover and cached. State lives in the PFH args
     // hashmap, mutated in place across ticks. Ticks at RC_CHECK_TICK and
-    // self-gates on the live GVAR(rcCheckInterval) setting (RC changes are
-    // infrequent — default 3 s), retunable mid-mission.
+    // self-gates on the dirty flag or the live GVAR(rcCheckInterval) fallback,
+    // retunable mid-mission.
     (_this select 0) params ["_activeRC", "_nextRun"];
-    if (CBA_missionTime < _nextRun) exitWith {};
-    (_this select 0) set [1, CBA_missionTime + ((GETGVAR(rcCheckInterval,3)) max RC_CHECK_TICK)];
+    // Dirty flag FIRST: a client reporting a player-unit change (see the QGVAR(rcChanged)
+    // listener above) is what normally drives this, and the timer is the safety net
+    // behind it. Consumed here, before the scan, so an event arriving mid-scan is not
+    // swallowed — the worst case is one redundant pass.
+    private _dirty = GVAR(rcDirty);
+    if (!_dirty && {CBA_missionTime < _nextRun}) exitWith {};
+    GVAR(rcDirty) = false;
+    (_this select 0) set [1, CBA_missionTime + ((GETGVAR(rcCheckInterval,30)) max RC_CHECK_TICK)];
+
+    private _perf = GETMVAR(RTZ_perf,false);
+    private _t0   = 0;
+    if (_perf) then { _t0 = diag_tickTime };
 
     // Every unit presently under remote control. allUnits is global (all
     // machines) and contains only the living, so death self-cleans next tick;
     // the owner variable is global too, so this is authoritative on the server.
     // The owner is always set on a man (effectiveCommander), so a crewed-vehicle
     // takeover is covered via that man's vehicle anchor client-side.
+    //
+    // This select is the whole reason the loop is event-driven: it is a getVariable per
+    // LIVING UNIT, and at the scale this mod targets that is several hundred reads for an
+    // answer that is almost always the empty array.
     private _rcUnits = allUnits select { !isNull (_x getVariable [RC_OWNER_VAR, objNull]) };
+
+    if (_perf) then {
+        ["rcScan", (diag_tickTime - _t0) * 1000,
+            format ["units=%1 rc=%2 trigger=%3", count allUnits, count _rcUnits, ["timer", "event"] select _dirty]
+        ] call EFUNC(core,perfSample);
+    };
 
     // Consume the pending resync flag BEFORE the early exit — with nothing
     // active there is nothing to resend, and a new takeover reaches every

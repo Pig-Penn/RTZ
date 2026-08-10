@@ -37,6 +37,11 @@
  * Renderers run in ascending priority order, so a later-registered display
  * cannot jump the draw order of an earlier one.
  *
+ * Being the one place every display passes through, this is also where the
+ * per-display profiling lives: under the RTZ_perf gate (FUNC(perfSample)) the world
+ * pass times each renderer under its registered id. See the branch at the bottom for
+ * why it is a duplicated loop and not a conditional inside one.
+ *
  * Loading: called unconditionally from XEH_postInit on every interface machine —
  * it reads no settings to install itself and is free while nothing is
  * registered. Registers one Draw3D MEH, no scheduled ops.
@@ -116,7 +121,38 @@ if (!hasInterface) exitWith {};
     // CTX_VIEWDIST` ran off the end, so every renderer threw on its first
     // `distance` and aborted, drawing nothing. Matches each renderer's documented
     // "Arguments: 0: Frame context".
-    {
-        [_ctx] call (_x select 1);
-    } forEach _world;
+    //
+    // Two copies of the same loop, chosen by ONE missionNamespace read per frame —
+    // the RTZ_perf gate (FUNC(perfSample)). Timing each renderer separately is what
+    // turns "the mod costs frames" into a per-display bill: tags, supply lines, spot
+    // icons and the RC indicator each report under the id they registered with, so a
+    // display that is always switched on can be weighed against one that is not.
+    //
+    // Written as a branch rather than a timed loop with the clock reads inside an
+    // `if`, and the accumulation INLINED rather than sent through FUNC(perfSample),
+    // for the same reason FUNC(drawSpots) inlines its colour block: a `call` here is
+    // a fresh scope and a `params` destructure PER RENDERER PER FRAME on every
+    // curator's machine. The off path below must stay byte-for-byte what it was.
+    if (GETMVAR(RTZ_perf,false)) then {
+        private _acc = GVAR(perfAcc);
+        {
+            private _t0 = diag_tickTime;
+            [_ctx] call (_x select 1);
+            private _ms = (diag_tickTime - _t0) * 1000;
+
+            private _id    = _x select 0;
+            private _entry = _acc get _id;
+            if (isNil "_entry") then {
+                _entry = [0, 0, 0, ""];
+                _acc set [_id, _entry];
+            };
+            _entry set [PERF_N,   (_entry select PERF_N) + 1];
+            _entry set [PERF_SUM, (_entry select PERF_SUM) + _ms];
+            if (_ms > (_entry select PERF_MAX)) then { _entry set [PERF_MAX, _ms] };
+        } forEach _world;
+    } else {
+        {
+            [_ctx] call (_x select 1);
+        } forEach _world;
+    };
 }] call CBA_fnc_addBISEventHandler;

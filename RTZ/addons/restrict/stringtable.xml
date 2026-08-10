@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Restrict">
+        <Key ID="STR_RTZ_Restrict_Arsenal">
+            <English>Restrict Arsenal</English>
+        </Key>
+        <Key ID="STR_RTZ_Restrict_Arsenal_Description">
+            <English>The arsenal can only be opened on a unit that is inside one of the curator's editing zones. Covers the Arsenal button in a unit's attributes, the context menu's Loadout entry, and the Arsenal module. Copying, pasting and resetting a loadout are not affected. Has no effect until the curator has at least one editing zone.</English>
+        </Key>
         <Key ID="STR_RTZ_Restrict_DisplayName">
             <English>Restrict</English>
         </Key>

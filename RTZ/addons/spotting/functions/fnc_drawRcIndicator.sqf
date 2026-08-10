@@ -48,7 +48,17 @@ private _shift = RC_COLOR_SHIFT_MAX * ((sin (time * RC_COLOR_SHIFT_FREQ) + 1) / 
 
     if (!alive _unit) then { continue };   // alive objNull is false — covers deleted units too
     private _anchor = vehicle _unit;
-    private _dist   = _camPos distance _anchor;
+    // `distance` throws a Generic error on a null object, and a runtime error ABORTS THE
+    // WHOLE forEach — so one bad entry drops every icon after it in the store, not just
+    // its own. `alive` does not cover this: it is false for objNull, but a LIVE unit can
+    // still resolve to a null vehicle for a frame. FUNC(drawSpots) guards the identical
+    // line in both of its passes; this one was missing it.
+    if (isNull _anchor) then { continue };
+    private _dist = _camPos distance _anchor;
+    // Past view distance the fade below is 0 — there was never anything to see, so
+    // skip rather than build a ramp, a colour array and an invisible draw. Both
+    // FUNC(drawSpots) passes cull on the same test; this one only clamped.
+    if (_dist >= _viewDist) then { continue };
 
     // On foot: chevron recipe, head + 1 m (identical to spotting chevrons).
     // Mounted: head + 1 m sits inside the hull, so anchor to the vehicle's
@@ -67,8 +77,9 @@ private _shift = RC_COLOR_SHIFT_MAX * ((sin (time * RC_COLOR_SHIFT_FREQ) + 1) / 
     // box whereas the thin wedge does not), as a smooth ramp.
     private _iconW = linearConversion [RC_ICON_NEAR, RC_ICON_FAR, _dist, RC_ICON_MAX_WIDTH, RC_ICON_MIN_WIDTH, true];
 
-    // Distance fade; RGB shifted toward white on each cycle.
-    private _alpha = ((_viewDist - _dist) / _viewDist) max 0;
+    // Distance fade; RGB shifted toward white on each cycle. No `max 0` — the
+    // cull above already guarantees _dist < _viewDist.
+    private _alpha = (_viewDist - _dist) / _viewDist;
     private _col   = [
         ((_colorArray#0) + _shift * (1 - _colorArray#0)) min 1,
         ((_colorArray#1) + _shift * (1 - _colorArray#1)) min 1,

@@ -5,6 +5,13 @@ PREP(frameLoop);
 PREP(registerRenderer);
 PREP(unregisterRenderer);
 
+// ── Profiling ────────────────────────────────────────────────────────────────
+// The RTZ_perf gate. One accumulator and one report loop for every measured path
+// in the mod, server-side and client-side alike — on a listen server the two are
+// additive and have to be read together. Free while the flag is off.
+PREP(perfSample);
+PREP(perfReport);
+
 // ── Stream engine ────────────────────────────────────────────────────────────
 // ONE client selection poll, ONE server watcher registry and poll loop, ONE
 // snapshot receiver — shared by every curator data feed, in this component or

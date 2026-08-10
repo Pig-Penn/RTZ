@@ -30,13 +30,16 @@
 // per-spotter knowsAbout loop for that unit is skipped entirely while the
 // latch is live, since it's the expensive part of fnc_spotCheck (fnc_spotCheck).
 #define CHEVRON_LATCH_DURATION 10
-// One live entry per (curator side × individually-confirmed unit), so this counts
-// SIMULTANEOUS confirmed contacts, not contacts over time. Sized well above the
-// plausible live count for the same reason as GROUP_LAST_SEEN_CAP below: the prune
-// walk fires on every tick the map sits over the cap, and a cap set near the real
-// working set means walking the whole map every tick to free almost nothing. At the
-// old 256 a two-side operation of the size this mod targets (see CLAUDE.md, Usage)
-// was over the line permanently.
+// One live entry per individually-confirmed unit, applied PER CURATOR SIDE — the store
+// is nested (side → HashMap) and FUNC(pruneStores) gates each side's inner map on this
+// separately. So it counts SIMULTANEOUS confirmed contacts for one side, not contacts
+// over time and not summed across sides; with curators typically on opposing sides
+// (docs/Knowledge Base/Performance Audit Questions.md) that is the number that actually
+// bounds the walk. Sized well above the plausible live count for the same reason as
+// GROUP_LAST_SEEN_CAP below: the prune walk fires on every tick a map sits over the cap,
+// and a cap set near the real working set means walking the whole map every tick to free
+// almost nothing. At the old 256 a two-side operation of the size this mod targets (see
+// CLAUDE.md, Usage) was over the line permanently.
 #define CHEVRON_LATCH_CAP 1024
 
 // Seconds a group must have been OUT of confirmed contact (below HARD_THRESHOLD
@@ -80,9 +83,10 @@
 #define BLINK_THROTTLE_CAP 512
 #define BLINK_THROTTLE_WINDOW 5
 #define FIRE_BLINK_THROTTLE 0.1
-// GVAR(spotGroupLastSeen) holds one entry per (side, group) in or recently out of
-// confirmed contact — sized to SIMULTANEOUS contacts, not to callouts, since it is
-// stamped on every tick a group stays confirmed. Set well above the plausible live
+// GVAR(spotGroupLastSeen) holds one entry per group in or recently out of confirmed
+// contact, in a per-side inner map — so like CHEVRON_LATCH_CAP above this cap is applied
+// PER SIDE by FUNC(pruneStores). Sized to SIMULTANEOUS contacts, not to callouts, since
+// it is stamped on every tick a group stays confirmed. Set well above the plausible live
 // count so the prune walk isn't entered every tick to free nothing.
 #define GROUP_LAST_SEEN_CAP 512
 
@@ -121,6 +125,24 @@
 // Draw distances/sizes for the cursor-view picture.
 #define WEDGE_MAX_DIST 2500
 #define CHEVRON_MAX_DIST 500
+
+// Broad-phase culling (FUNC(drawSpots)). The spot stores have NO cap anywhere — not in
+// FUNC(spotCheck), not in FUNC(emitSpot), not in the client store — so the renderer's
+// cost is bounded by how much of the mission is spotted, on every frame, on a machine
+// that (this being a listen server) is also running the detection pass. Chevrons are
+// switched on in every session, which makes this the largest client cost in the mod.
+//
+// CULL_INTERVAL is how often the candidate set is re-derived. Only the DECISION is
+// throttled: which icons are candidates and what their anchors are. Positions and
+// distances still resample every frame from the live object, so icons track smoothly and
+// the distance fade never steps.
+#define CULL_INTERVAL 0.2
+// Margin added to the chevron cutoff when picking candidates, so a chevron the camera is
+// approaching is already in the list when it crosses. Sized for Zeus camera travel within
+// one CULL_INTERVAL — that camera is fast and has a speed modifier, so this is deliberately
+// generous; even so it cuts the always-drawn candidate set from a WEDGE_MAX_DIST sphere to
+// a CHEVRON_MAX_DIST + this one.
+#define CULL_SLACK 250
 // Chevron icon width ramp: CHEVRON_W_NEAR at the camera, tapering to
 // CHEVRON_W_FAR at WEDGE_MAX_DIST.
 #define CHEVRON_W_NEAR 4
@@ -145,9 +167,11 @@
 // Officer editing-area zone ring overlay (fnc_initCuratorDisplay).
 #define COLOR_ZONE_RING [0.25, 0.55, 1, 0.85]
 
-// Remote-control indicator. RC_CHECK_TICK is the base tick (s) of the server
-// scan PFH (fnc_remoteControlIndicator); the effective cadence is the
-// GVAR(rcCheckInterval) CBA setting, read live and floored to this value.
+// Remote-control indicator. RC_CHECK_TICK is the base tick (s) of the server scan
+// PFH (fnc_remoteControlIndicator) — how often its two cheap gate tests run, and
+// therefore how fast a client's "someone's player unit changed" poke turns into a
+// rescan. Detection is event-driven; GVAR(rcCheckInterval) is the FALLBACK cadence
+// for what no event reported, read live and floored to this value.
 #define RC_CHECK_TICK 1
 #define RC_OWNER_VAR "bis_fnc_moduleRemoteControl_owner"
 

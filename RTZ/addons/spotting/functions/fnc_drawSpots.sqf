@@ -21,9 +21,31 @@
  * position and the mouse position once for every display — this pass does no
  * camera query of its own, and is skipped entirely while the Zeus map is up.
  *
- * Distance/size tunables (WEDGE_MAX_DIST, CHEVRON_MAX_DIST, CHEVRON_W_NEAR/FAR,
- * HOVER_MAX_DIST, HOVER_HIT_R2, GROUP_HOVER_R2, AMP_GAPS_WORLD, GROUP_ZMOD_*) are
- * #defined in script_component.hpp.
+ * TWO PHASES, because the stores are unbounded. GVAR(spotChevrons) holds one entry per
+ * individually-identified enemy man with no cap anywhere in the chain, and this used to
+ * walk every entry EVERY FRAME, paying `alive` + `vehicle` + `isNull` + `distance` before
+ * it could decide an icon was out of range and skip it. At a few hundred spotted enemies
+ * that is thousands of engine calls a frame to draw the few dozen chevrons actually
+ * within CHEVRON_MAX_DIST — and on the listen server this mod runs on, that machine is
+ * also running the detection pass.
+ *
+ *   BROAD  — every CULL_INTERVAL seconds. Walks the stores, runs the alive/null-anchor
+ *            tests once, resolves each anchor once, and sorts the survivors into three
+ *            compact stores (see below).
+ *   NARROW — every frame. Iterates only those, and RE-READS the camera distance from the
+ *            live anchor. Distance is deliberately NOT cached by the broad phase: the
+ *            fade alpha and the group icon's height offset are both functions of it, and
+ *            a cached one would make them step 5 times a second as the camera moves.
+ *
+ * What is throttled is only which icons are CANDIDATES. A chevron can therefore appear or
+ * disappear up to CULL_INTERVAL late when the camera crosses a cutoff or a unit dies —
+ * invisible against the 1-10 s server detection interval that already gates it, and a new
+ * contact does not wait at all, because FUNC(spottingClient) invalidates the phase on
+ * spotDetected/spotLost.
+ *
+ * Distance/size tunables (WEDGE_MAX_DIST, CHEVRON_MAX_DIST, CULL_INTERVAL, CULL_SLACK,
+ * CHEVRON_W_NEAR/FAR, HOVER_MAX_DIST, HOVER_HIT_R2, GROUP_HOVER_R2, AMP_GAPS_WORLD,
+ * GROUP_ZMOD_*) are #defined in script_component.hpp.
  *
  * Arguments:
  * 0: Frame context, see the CTX_* indices in script_component.hpp <ARRAY>
@@ -39,22 +61,121 @@
 
 params ["_ctx"];
 
-private _groups   = GVAR(spotGroups);
-private _chevrons = GVAR(spotChevrons);
 // Empty-store test first: cheapest check and the common case on a quiet mission.
-if (count _groups == 0 && { count _chevrons == 0 }) exitWith {};
+if (count GVAR(spotGroups) == 0 && { count GVAR(spotChevrons) == 0 }) exitWith {};
 
 private _camPos   = _ctx select CTX_CAMPOS;
 private _mousePos = _ctx select CTX_MOUSE;
 private _viewDist = _ctx select CTX_VIEWDIST;
+// The frame loop's clock, for the broad-phase throttle only. Kept distinct from the
+// blink's `_now` below, which is `time`: GVAR(blinkUntil) is stamped from `time` by the
+// QGVAR(blink) receiver, and CTX_NOW is CBA_missionTime — the two run at different rates
+// under time acceleration and comparing across them would leave chevrons stuck white.
+private _clock = _ctx select CTX_NOW;
+
+// ── Broad phase ─────────────────────────────────────────────────────────────
+// Re-derives the candidate sets on its own throttle. GVAR(cullAt) is set to -1 by the
+// spotDetected / spotLost receivers (FUNC(spottingClient)) so a contact appearing or
+// vanishing is picked up on the very next frame rather than waiting out the interval.
+//
+// Chevron candidates are split in two, and that split is the whole reason this pays:
+//   GVAR(spotChevronsVisible) — inside CHEVRON_MAX_DIST + CULL_SLACK. Drawn every frame.
+//   GVAR(spotChevronsPeek)    — leaderNetId → entries beyond that but inside
+//                               WEDGE_MAX_DIST, i.e. the ones pass 2's group-hover peek
+//                               reveals. Read ONLY on the frames a group icon is
+//                               actually hovered.
+// A single list cut at CHEVRON_MAX_DIST would silently kill the peek; one cut at
+// WEDGE_MAX_DIST would give back most of the saving. Bucketing by leader also makes the
+// peek itself cheaper than it was — it used to be a test applied while rescanning every
+// chevron in the store, and is now one hashmap read per hovered group.
+//
+// Each stored entry carries its RESOLVED ANCHOR appended, so the narrow phase needs no
+// `vehicle` call, and a chevron entry carries its HEAD OFFSET too, so it needs no
+// EFUNC(common,headOffset) call either — both are fixed for the life of the unit (the
+// offset is memoized on typeOf). It does not carry a distance — see the header.
+if (_clock >= GVAR(cullAt)) then {
+    GVAR(cullAt) = _clock + CULL_INTERVAL;
+
+    private _visGroups   = [];
+    private _visChevrons = [];
+    private _peek        = createHashMap;
+    private _chevCull    = CHEVRON_MAX_DIST + CULL_SLACK;
+
+    {
+        // _x = markerName (HashMap key); _y = stored display data.
+        if (!alive (_y select 0)) then { continue };   // alive objNull is false — covers deleted units too
+        // Anchor on the vehicle so a mounted leader is handled (vehicle = unit on foot).
+        // `distance` throws a Generic error on a null object, and a runtime error ABORTS
+        // THE WHOLE forEach — so a single bad entry costs every icon after it, not just
+        // its own. `alive` does not cover this: it is false for objNull, but a live unit
+        // can still resolve to a null vehicle.
+        private _anchor = vehicle (_y select 0);
+        if (isNull _anchor) then { continue };
+        // Group icons have no cutoff of their own — past view distance the fade alpha is
+        // 0, so there was never anything to see. Culled with slack for the same reason
+        // the chevrons are: the camera may be approaching.
+        if (_camPos distance _anchor >= _viewDist + CULL_SLACK) then { continue };
+
+        _visGroups pushBack [_x, _y, _anchor];
+    } forEach GVAR(spotGroups);
+
+    {
+        if (!alive (_y select 0)) then { continue };
+        private _anchor = vehicle (_y select 0);
+        if (isNull _anchor) then { continue };
+        private _dist = _camPos distance _anchor;
+        if (_dist > WEDGE_MAX_DIST || {_dist >= _viewDist}) then { continue };
+
+        // Head offset resolved HERE, alongside the anchor, and for the same reason:
+        // it is keyed on the unit's CLASS (EFUNC(common,headOffset) memoizes on
+        // typeOf), so it cannot change for the life of the unit — but the narrow
+        // phase was paying a `call` for it per chevron per FRAME. That is a fresh
+        // scope, a `params` destructure and a hashmap lookup per entity per frame,
+        // the precise cost this file refuses to pay for its colour block and its
+        // size ramp. Once per candidate per CULL_INTERVAL instead.
+        private _entry = [_x, _y, _anchor, [_y select 0] call EFUNC(common,headOffset)];
+        if (_dist <= _chevCull) then {
+            _visChevrons pushBack _entry;
+        } else {
+            // _y select 3 is the pre-resolved leader netId — the same key pass 2's
+            // hover test looks the group up by.
+            // get + isNil, not getOrDefault with an inline []: SQF evaluates that default
+            // EAGERLY, and this branch runs once per distant chevron on every broad
+            // phase — the per-entity allocation the rest of this component avoids.
+            private _key    = _y select 3;
+            private _bucket = _peek get _key;
+            if (isNil "_bucket") then {
+                _bucket = [];
+                _peek set [_key, _bucket];
+            };
+            _bucket pushBack _entry;
+        };
+    } forEach GVAR(spotChevrons);
+
+    GVAR(spotGroupsVisible)   = _visGroups;
+    GVAR(spotChevronsVisible) = _visChevrons;
+    GVAR(spotChevronsPeek)    = _peek;
+};
+
+private _groups   = GVAR(spotGroupsVisible);
+private _chevrons = GVAR(spotChevronsVisible);
+if (_groups isEqualTo [] && { _chevrons isEqualTo [] } && { count GVAR(spotChevronsPeek) == 0 }) exitWith {};
 
 // Blink state, hoisted out of the per-icon colour blocks below: `time` is read once per
-// frame instead of once per icon, and the map is empty except in the moments right
-// after a spotted unit fires — so _anyBlink lets the common case skip the per-icon
-// lookup outright.
+// frame instead of once per icon, and _anyBlink lets the common case skip the per-icon
+// map lookup outright.
+//
+// Gated on GVAR(blinkAnyUntil) — the high-water mark of every stamp in the map — and
+// NOT on `count _blinkUntil > 0`, which is what this was and which does not work.
+// FUNC(spottingClient) only removes an entry on spotLost, never when it expires, so a
+// count test goes true on the first shot of the mission and never comes back down
+// while that man stays spotted: the hoist below then costs a getOrDefault per icon
+// per frame forever, which is exactly what it exists to avoid. Every blink runs the
+// same BLINK_DURATION, so the newest stamp is the maximum and this test is exact,
+// true only inside the real ~0.15 s windows.
 private _blinkUntil = GVAR(blinkUntil);
 private _now        = time;
-private _anyBlink   = count _blinkUntil > 0;
+private _anyBlink   = _now <= GVAR(blinkAnyUntil);
 
 // Echelon amplifier vertical gap above the group icon, indexed by the payload's
 // side index (0 = BLUFOR rectangle, 1 = OPFOR diamond — peaks highest so needs
@@ -83,11 +204,14 @@ private _hasRC     = count _rcDisplay > 0;
 
 // ── Pass 1: group icons ─────────────────────────────────────────────────────
 // Also records which group leaders the mouse is currently near, so pass 2 can
-// reveal that group's chevrons past the cutoff. The hover test only feeds pass 2 —
-// with no chevrons stored, skip the per-icon worldToScreen entirely.
+// reveal that group's chevrons past the cutoff.
 private _chevronsEnabled = GVAR(chevronsEnabled);
-private _anyChevrons     = _chevronsEnabled && {count _chevrons > 0};
-// Built unconditionally, even though only pass 2 reads it and only under _anyChevrons.
+// The hover test exists ONLY to unlock the peek bucket, so it is gated on that bucket
+// having something in it — on the ordinary frame, where every spotted man is either
+// inside the cutoff or not spotted at all, no worldToScreen runs at all.
+private _peekByLeader = GVAR(spotChevronsPeek);
+private _anyPeek      = _chevronsEnabled && {count _peekByLeader > 0};
+// Built unconditionally, even though only pass 2 reads it and only under _anyPeek.
 // Making it conditional would save one small map allocation per frame and leave a
 // possibly-nil private in a renderer — and a nil read aborts the whole enclosing scope
 // (Gotchas §2), which here means silently dropping every remaining icon for the frame.
@@ -95,21 +219,18 @@ private _anyChevrons     = _chevronsEnabled && {count _chevrons > 0};
 // are per-ENTITY-per-frame, not per-frame.
 private _groupHoverByLeader = createHashMap;
 {
-    // _x = markerName (HashMap key); _y = stored display data.
-    _y params ["_unit", "_texture", "_colorArray", "_echelonTex", "_sideIdx", "_ldrId"];
+    // Broad-phase entry: [markerName, stored display data, resolved anchor]. The
+    // alive / null-anchor tests were paid there.
+    _x params ["_mrkr", "_data", "_anchor"];
+    _data params ["", "_texture", "_colorArray", "_echelonTex", "_sideIdx", "_ldrId"];
 
-    if (!alive _unit) then { continue };   // alive objNull is false — covers deleted units too
-    // Anchor on the vehicle so a mounted leader is handled (vehicle = unit on foot).
-    private _anchor = vehicle _unit;
-    // `distance` throws a Generic error on a null object, and a runtime error
-    // ABORTS THE WHOLE forEach — so a single bad entry costs every icon after it
-    // in the store, not just its own. `alive` does not cover this: it is false for
-    // objNull, but a live unit can still resolve to a null vehicle.
-    if (isNull _anchor) then { continue };
-    private _dist   = _camPos distance _anchor;
+    // Re-read every frame, never cached by the broad phase: _zMod and the fade alpha
+    // are both functions of it and would otherwise step at CULL_INTERVAL.
+    private _dist = _camPos distance _anchor;
     // Past view distance the fade alpha is 0 — there was never anything to see, so
     // skip the icon (and its hover worldToScreen) rather than issue invisible
-    // draws. Group icons, unlike chevrons, have no cutoff of their own.
+    // draws. Group icons, unlike chevrons, have no cutoff of their own; the broad
+    // phase culls at _viewDist + CULL_SLACK, so this is the exact test.
     if (_dist >= _viewDist) then { continue };
 
     // Native Zeus group-icon recipe: world-space height offset grows with camera
@@ -138,7 +259,8 @@ private _groupHoverByLeader = createHashMap;
     private _ampPos = _iconPos vectorAdd [0, 0, _dist * (_AMP_GAPS select _sideIdx)];
     private _iconW  = GROUP_ICON_WIDTH;
 
-    if (_anyChevrons) then {
+    // Only worth asking for a group that HAS chevrons waiting past the cutoff.
+    if (_anyPeek && {_ldrId in _peekByLeader}) then {
         private _scr = worldToScreen _iconPos;
         if (_scr isNotEqualTo []) then {
             private _dx = (_scr#0) - (_mousePos#0);
@@ -152,7 +274,7 @@ private _groupHoverByLeader = createHashMap;
     // Distance fade × stored base alpha (_dist >= _viewDist is skipped above), flashing
     // white while the unit is firing. Inlined — see the note above pass 1.
     private _alpha = ((_viewDist - _dist) / _viewDist) * (_colorArray#3);
-    private _col = if (_anyBlink && {_now <= (_blinkUntil getOrDefault [_x, 0])})
+    private _col = if (_anyBlink && {_now <= (_blinkUntil getOrDefault [_mrkr, 0])})
         then { [1, 1, 1, _alpha] }
         else { [_colorArray#0, _colorArray#1, _colorArray#2, _alpha] };
     // Native Zeus stem. The icon floats _zMod above the leader, so on its own it
@@ -181,15 +303,35 @@ private _groupHoverByLeader = createHashMap;
 if (!_chevronsEnabled) exitWith {};
 
 private _chevronNames = GVAR(chevronNames);
+
+// The frame's draw list: everything inside the cutoff, plus the peek buckets of whichever
+// groups pass 1 found under the cursor. Appending to the near list itself would mutate a
+// store the broad phase still owns and grow it without bound, so the hovered case copies
+// first — `select [0]`, a SHALLOW copy, not `+`, which would deep-copy every entry's
+// payload array for nothing. It runs only on frames where a group icon is actually
+// hovered, and even then it replaces a rescan of the ENTIRE chevron store, which is what
+// this test used to cost every frame.
+private _drawList = _chevrons;
+if (count _groupHoverByLeader > 0) then {
+    _drawList = _chevrons select [0];
+    // Plain `get`, no default: pass 1 only records a hover for a leader it first
+    // confirmed is a key of _peekByLeader, so the bucket is always there.
+    { _drawList append (_peekByLeader get _x) } forEach keys _groupHoverByLeader;
+};
+
 {
-    _y params ["_unit", "_texture", "_colorArray", "_ldrId", "_name", "_unitId"];
+    // Broad-phase entry: [markerName, stored display data, resolved anchor, head
+    // offset]. The alive / null-anchor / cutoff tests were paid there, and so was
+    // the head-offset resolve — what survives here is a candidate, and the only
+    // per-frame question left is where it is now.
+    _x params ["_mrkr", "_data", "_anchor", "_headOff"];
+    _data params ["_unit", "_texture", "_colorArray", "_ldrId", "_name", "_unitId"];
 
-    if (!alive _unit) then { continue };
-    private _anchor = vehicle _unit;
-    if (isNull _anchor) then { continue };   // see the group pass above
-    private _dist   = _camPos distance _anchor;
+    private _dist = _camPos distance _anchor;
+    // Re-tested every frame even though the broad phase already culled: CULL_SLACK exists
+    // so a chevron the camera is APPROACHING is already a candidate, not so it draws
+    // early. These two tests are the real edges, unchanged from before the split.
     if (_dist > WEDGE_MAX_DIST || {_dist >= _viewDist}) then { continue };
-
     // Past the normal cutoff, only show this chevron if its group's icon is
     // currently hovered — lets the curator "peek" at squad composition from afar.
     // Leader netId is pre-resolved server-side, so no group traversal per frame.
@@ -205,7 +347,9 @@ private _chevronNames = GVAR(chevronNames);
     // Native EG-spectator chevron (ACE recipe): head + 1 m, size scaled by
     // distance. Smooth ramp rather than a stepped table — same endpoints, one
     // engine call, and no per-chevron `call {}` scope per frame.
-    private _iconPos = (_unit modelToWorldVisual ([_unit] call EFUNC(common,headOffset))) vectorAdd [0, 0, 1];
+    // _headOff came from the broad phase; modelToWorldVisual stays here, because
+    // THAT genuinely changes every frame.
+    private _iconPos = (_unit modelToWorldVisual _headOff) vectorAdd [0, 0, 1];
     // modelToWorldVisual returns [] while the model has not resolved on this
     // machine — the handful of frames after Zeus places a unit — and
     // [] vectorAdd [...] stays []. drawIcon3D would then silently draw nothing
@@ -218,7 +362,7 @@ private _chevronNames = GVAR(chevronNames);
 
     // Inlined twin of the group pass's fade/blink block — see the note above pass 1.
     private _alpha = ((_viewDist - _dist) / _viewDist) * (_colorArray#3);
-    private _col = if (_anyBlink && {_now <= (_blinkUntil getOrDefault [_x, 0])})
+    private _col = if (_anyBlink && {_now <= (_blinkUntil getOrDefault [_mrkr, 0])})
         then { [1, 1, 1, _alpha] }
         else { [_colorArray#0, _colorArray#1, _colorArray#2, _alpha] };
     drawIcon3D [_texture, _col, _iconPos, _iconW, _iconW, 0, "", 0, 0.03, "RobotoCondensed", "center", false, 0, 0];
@@ -234,4 +378,4 @@ private _chevronNames = GVAR(chevronNames);
             };
         };
     };
-} forEach _chevrons;
+} forEach _drawList;

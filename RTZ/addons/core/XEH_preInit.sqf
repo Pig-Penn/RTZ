@@ -8,6 +8,17 @@ PREP_RECOMPILE_END;
 #include "initSettings.inc.sqf"
 
 // ─────────────────────────────────────────────────────────────────────────────
+// EVERY MACHINE — profiling accumulator
+// ─────────────────────────────────────────────────────────────────────────────
+// sample id → [n, sumMs, maxMs, counterString] (the PERF_* indices in
+// script_component.hpp). Above the hasInterface fork because the producers are on
+// BOTH sides: the server samples the detection pass and the RC scan, clients sample
+// each renderer. Created unconditionally and left empty while RTZ_perf is off — a
+// nil read would abort whichever pass touched it first, and every producer is on a
+// hot path where that means silently dropping the rest of the tick.
+GVAR(perfAcc) = createHashMap;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SERVER — stream engine state
 // ─────────────────────────────────────────────────────────────────────────────
 // Must exist before FUNC(registerStream) is called from any component's postInit.

@@ -76,7 +76,13 @@ for "_i" from (count GVAR(surrenderedUnits)) - 1 to 0 step -1 do {
     };
 
     private _unitSide = side group _unit;
-    private _hostileSides = _hostileBySide getOrDefaultCall [str _unitSide, {
+    // Keyed on the SIDE OBJECT, not `str side`. Side is a legal HashMap key (Gotchas §3
+    // lists it alongside Number/Bool/Array/String/Namespace/NaN/Code/Config entry), and
+    // the string form was one throwaway allocation per prisoner per tick — the
+    // per-entity-per-tick `str` CLAUDE.md rules out on a mission running for hours.
+    // EFUNC(spotting,collectSides) was rewritten for exactly this and its header carries
+    // the full reasoning; this was the last copy of the old shape.
+    private _hostileSides = _hostileBySide getOrDefaultCall [_unitSide, {
         MAN_SIDES select {_x getFriend _unitSide < HOSTILE_THRESHOLD}
     }, true];
 

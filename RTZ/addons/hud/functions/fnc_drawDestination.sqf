@@ -4,8 +4,10 @@
  * CLIENT. Destination-stream renderer: draws a line + move icon from each
  * watched unit to its AI pathing destination, labelled with distance and
  * pathing mode while the cursor is near the icon (modelled on the LAMBS debug
- * renderer). Called once per frame per active stream by EFUNC(core,streamClient),
- * which supplies the shared frame context.
+ * renderer). Registered as a RENDER_WORLD renderer on EFUNC(core,frameLoop) by
+ * EFUNC(core,toggleOverlay) when the overlay is switched on, so it receives the
+ * shared frame context and is skipped while the Zeus map covers the 3D view.
+ * EFUNC(core,streamClient) only RECEIVES the snapshots this reads.
  *
  * A fresh snapshot is baked once, on the first frame after it lands: the
  * pathing-mode label is localised and, if the engine flagged a forced replan,
@@ -60,8 +62,13 @@ private _growWithSpeed = GVAR(destGrowWithSpeed);
 
     // Anchor on the vehicle so mounted crews draw from the hull, and read the
     // position live each frame — only the destination is snapshotted.
+    //
+    // ASLToAGL, NOT getPosATLVisual: drawLine3D takes AGL, whose Z is measured
+    // from the WATER SURFACE over sea, while ATL measures from the terrain —
+    // the seabed under water. A boat, or a helicopter crossing open water, had
+    // its line detach upward by the full water depth.
     private _veh     = vehicle _unit;
-    private _from    = (getPosATLVisual _veh) vectorAdd [0, 0, 0.5];
+    private _from    = (ASLToAGL getPosASLVisual _veh) vectorAdd [0, 0, 0.5];
     private _camDist = _camPos distance _from;
     if (_camDist > MAX_DRAW_DIST && {_camPos distance _dest > MAX_DRAW_DIST}) then { continue };
 

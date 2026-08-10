@@ -26,3 +26,11 @@ call FUNC(frameLoop);
 call FUNC(streamClient);
 call FUNC(streamServer);
 call FUNC(selectionPoll);
+
+// The RTZ_perf report loop, on the same terms: one PFH that costs a single
+// getVariable per PERF_REPORT_INTERVAL while the flag is off, and the producers
+// feeding it each gate on the flag themselves. Unconditional and NOT hasInterface-
+// gated — the server produces half the samples (the detection pass, the RC scan),
+// and on a listen server, which is the deployment this mod is run on, both halves
+// belong in the one log.
+call FUNC(perfReport);

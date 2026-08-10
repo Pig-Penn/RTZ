@@ -51,3 +51,21 @@
 // Fade applied to a locked row's input controls — dim enough to read as
 // disabled while the value stays legible (sliders double as unit info)
 #define FADE_LOCKED 0.4
+
+// Does a position fall inside any of the curator's editing areas? `areas`
+// entries are [id, centre, radius] as curatorEditingArea returns them.
+//
+// A macro rather than a function because FUNC(canEdit) evaluates it once per
+// selected entity inside a findIf. `pos` must already be a variable: the walk
+// binds _x to an area, so an expression mentioning _x would resolve against the
+// wrong thing.
+#define AREA_CONTAINS(pos,areas) \
+    ((areas findIf {pos distance2D (_x select 1) <= (_x select 2)}) != -1)
+
+// The verdict, offered in both directions so neither caller has to negate an
+// isEqualTo. `editableInside` is curatorEditingAreaType compared against an
+// explicit false — a mission may flip the areas from "where the curator MAY
+// edit" to "where they may NOT", and anything that is not a boolean falls back
+// to the usual whitelist reading rather than blocking outright.
+#define IN_EDITABLE_AREA(pos,areas,editableInside)     (AREA_CONTAINS(pos,areas) isEqualTo editableInside)
+#define OUT_OF_EDITABLE_AREA(pos,areas,editableInside) (AREA_CONTAINS(pos,areas) isNotEqualTo editableInside)

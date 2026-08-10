@@ -99,6 +99,12 @@
         <Key ID="STR_RTZ_Spotting_DisplayName">
             <English>Spotting</English>
         </Key>
+        <Key ID="STR_RTZ_Spotting_EnableFireBlink">
+            <English>Muzzle Flash Blink</English>
+        </Key>
+        <Key ID="STR_RTZ_Spotting_EnableFireBlink_Description">
+            <English>Flash a spotted unit's icon white for a moment each time it fires, showing which of the enemies you can see is currently shooting. Costs one network message per shooter per watching curator; turn it off on very large operations.</English>
+        </Key>
         <Key ID="STR_RTZ_Spotting_EnableRC">
             <English>Remote Control Indicator</English>
         </Key>
@@ -131,10 +137,10 @@
             <English>Chevrons shown</English>
         </Key>
         <Key ID="STR_RTZ_Spotting_RCCheckInterval">
-            <English>Remote Control Scan Interval</English>
+            <English>Remote Control Fallback Scan</English>
         </Key>
         <Key ID="STR_RTZ_Spotting_RCCheckInterval_Description">
-            <English>Seconds between server scans for remote-controlled units. Lower shows/hides the indicator faster, higher reduces server load. Read live — can be retuned mid-mission.</English>
+            <English>Seconds between fallback server scans for remote-controlled units. Taking and releasing control is normally detected within a frame or two, so this only catches what no client reported — chiefly a curator disconnecting while still controlling. Lower it only if an indicator is ever seen to stick. Read live — can be retuned mid-mission.</English>
         </Key>
     </Package>
 </Project>

@@ -17,6 +17,12 @@
  * means the map sits permanently above it and the walk runs every tick to free nothing —
  * a slow prune that never prunes, which costs more than the growth it was added to stop.
  *
+ * Two of the four maps are NESTED (side → HashMap): the cap-gate-then-walk applies to
+ * each side's INNER map, and an inner map that empties is dropped so a side that has
+ * stopped having a curator does not leave a crumb for the rest of the mission. The outer
+ * walk is over the handful of sides that have ever had one, so it needs no gate of its
+ * own. See FUNC(spottingSystem) for why those two moved off composite string keys.
+ *
  * Collect-then-delete throughout — never deleteAt inside a HashMap forEach.
  *
  * Split out of FUNC(spotCheck) because it runs once per tick rather than per contact, so
@@ -34,6 +40,12 @@
  * Public: No
  */
 
+// Shared collect list for the two nested stores' emptied sides, reused rather than
+// allocated twice — this runs on every detection tick and the second use `resize 0`s it
+// after the first. Both walks are collect-then-delete for the usual reason: deleting
+// from a HashMap inside its own forEach is undefined.
+private _emptySides = [];
+
 // Fire-blink rate limiter: netId → last blink-send time. The eviction window is generous
 // against FIRE_BLINK_THROTTLE (0.1 s), so an entry still throttling a live shooter is
 // never dropped early.
@@ -44,15 +56,33 @@ if (count GVAR(blinkThrottle) > BLINK_THROTTLE_CAP) then {
     { GVAR(blinkThrottle) deleteAt _x } forEach _old;
 };
 
-// Callout gate: (sideStr + "_" + leaderNetId) → last time that side had the group
-// confirmed. A stamp older than the cooldown means the group is already out of contact
+// Callout gate: side → HashMap(leaderNetId → last time that side had the group
+// confirmed). A stamp older than the cooldown means the group is already out of contact
 // long enough to re-announce, so dropping the entry is indistinguishable from keeping it.
-if (count GVAR(spotGroupLastSeen) > GROUP_LAST_SEEN_CAP) then {
-    private _cutoff = CBA_missionTime - GROUP_CALLOUT_COOLDOWN;
-    private _old = [];
-    { if (_y < _cutoff) then { _old pushBack _x } } forEach GVAR(spotGroupLastSeen);
-    { GVAR(spotGroupLastSeen) deleteAt _x } forEach _old;
-};
+//
+// NESTED, so the cap-gate-then-walk applies to each SIDE's inner map (see the sizing
+// notes in script_component.hpp — they were always written against a per-side working
+// set, so they carry over unchanged). The outer walk is over the handful of sides that
+// have ever had a curator, which is why it is not itself gated.
+//
+// An emptied inner map is dropped rather than left behind: sides come and go with
+// curator assignment over a multi-hour operation, and an empty map is the same
+// mission-long crumb the caps exist to stop.
+// _side / _inner are captured BEFORE the inner walk: that walk is a HashMap forEach of
+// its own and rebinds _x and _y out from under this one.
+{
+    private _side  = _x;
+    private _inner = _y;
+    if (count _inner > GROUP_LAST_SEEN_CAP) then {
+        private _cutoff = CBA_missionTime - GROUP_CALLOUT_COOLDOWN;
+        private _old = [];
+        { if (_y < _cutoff) then { _old pushBack _x } } forEach _inner;
+        { _inner deleteAt _x } forEach _old;
+        if (count _inner == 0) then { _emptySides pushBack _side };
+    };
+} forEach GVAR(spotGroupLastSeen);
+{ GVAR(spotGroupLastSeen) deleteAt _x } forEach _emptySides;
+_emptySides resize 0;
 
 // Pending resync requests are retired when their player resolves to a curator
 // (FUNC(collectSides)), so an entry only survives while that player is connected but not
@@ -67,11 +97,19 @@ if (count GVAR(spotResendPlayers) > 0) then {
     { GVAR(spotResendPlayers) deleteAt _x } forEach _stale;
 };
 
-// Sticky chevron latches: (spotterSideStr + "_" + memberNetId) → [expiryTime, spotter].
-// An already-expired latch is dead weight — the next pass would fall through to the full
-// knowsAbout scan for that member regardless.
-if (count GVAR(chevronLatch) > CHEVRON_LATCH_CAP) then {
-    private _old = [];
-    { if ((_y select 0) < CBA_missionTime) then { _old pushBack _x } } forEach GVAR(chevronLatch);
-    { GVAR(chevronLatch) deleteAt _x } forEach _old;
-};
+// Sticky chevron latches: side → HashMap(memberNetId → [expiryTime, spotter,
+// leaderNetId]). An already-expired latch is dead weight — the next pass would fall
+// through to the full knowsAbout scan for that member regardless, and FUNC(spotCheck)'s
+// contact gate already ignores it.
+// Same nested treatment as the callout gate above; see the note there.
+{
+    private _side  = _x;
+    private _inner = _y;
+    if (count _inner > CHEVRON_LATCH_CAP) then {
+        private _old = [];
+        { if ((_y select 0) < CBA_missionTime) then { _old pushBack _x } } forEach _inner;
+        { _inner deleteAt _x } forEach _old;
+        if (count _inner == 0) then { _emptySides pushBack _side };
+    };
+} forEach GVAR(chevronLatch);
+{ GVAR(chevronLatch) deleteAt _x } forEach _emptySides;

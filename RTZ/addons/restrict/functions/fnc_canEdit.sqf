@@ -75,11 +75,8 @@ private _targets = switch (_scope) do {
     default {[]};
 };
 
-// true when the areas are the region the curator MAY edit in (the usual
-// whitelist setup), false when they are the region they may NOT edit in.
-// Compared against an explicit false rather than used raw: anything other than
-// a boolean would come back unequal for every entity below and block servicing
-// outright, so an unexpected value falls back to the whitelist reading.
+// Fetched once for the whole target list rather than per entity — see
+// IN_EDITABLE_AREA in script_component.hpp for what it means
 private _editableInside = curatorEditingAreaType _curator isNotEqualTo false;
 
 // Dead and deleted entities cannot be serviced anyway, so they never block the
@@ -88,14 +85,10 @@ private _allowed = _targets findIf {
     !isNull _x
     && {alive _x}
     && {
+        // Bound before the area walk, which rebinds _x to an area
         private _pos = getPosWorld _x;
 
-        // _x here is an area — [id, centre, radius] — not the entity above
-        private _isInside = _areas findIf {
-            _pos distance2D (_x select 1) <= (_x select 2)
-        } != -1;
-
-        _isInside isNotEqualTo _editableInside
+        OUT_OF_EDITABLE_AREA(_pos,_areas,_editableInside)
     }
 } == -1;
 

@@ -64,7 +64,42 @@ if (!hasInterface) exitWith {};
     private _vehOverflow  = 0;
 
     if (!isNull (getAssignedCuratorLogic player) && {!isNull (findDisplay IDD_RSCDISPLAYCURATOR)}) then {
+        // A Zeus selection arrives as two DISJOINT lists: entities picked
+        // individually land in `curatorSelected select 0`, while a group picked by
+        // its group icon lands in `select 1` with NONE of its units in `select 0`.
+        // ACE3 gates its Zeus "Units" and "Groups" submenus on those two indices
+        // independently, and ZEN tests both lists with equivalent predicates —
+        // neither would make sense if one were a superset of the other.
+        //
+        // Expanded ONCE here so all three slices below see the same selection.
+        // Only the unit slice used to do this, for itself, which left the hull
+        // slice — and therefore every AI-state overlay — blind to a group-icon
+        // selection while the head tags worked from the same poll. Nothing on
+        // screen explained the difference.
+        //
+        // Copied before appending: never mutate the array a command handed back.
+        // The copy is skipped entirely when no group is selected, which is the
+        // ordinary case — a box select over a base can run to hundreds of entries
+        // and this is a 4 Hz loop for the whole operation.
+        //
+        // Dead members are dropped at the expansion rather than in each slice:
+        // `units` keeps returning a body until it is deleted, the unit slice
+        // filters `alive` anyway, and the hull slice deliberately does not, so
+        // without this a wiped squad would hold live hull slots against the cap.
         private _objs = SELECTED_OBJECTS;
+        private _grps = SELECTED_GROUPS;
+        if (_grps isNotEqualTo []) then {
+            _objs = +_objs;
+            {
+                // ALIAS: the inner loop rebinds _x to a unit. Safe either way — _x
+                // is created in the called scope (docs/Knowledge Base/Gotchas.md §2)
+                // — but a group and its members are the pair worth naming apart.
+                private _grp = _x;
+                if (_grp isEqualType grpNull) then {
+                    { if (alive _x) then { _objs pushBack _x } } forEach (units _grp);
+                };
+            } forEach _grps;
+        };
 
         // A virtual Zeus (VirtualMan_F) has no real side — it is the game master,
         // not a PvP officer, so the own-side filter must not apply.
@@ -73,11 +108,12 @@ if (!hasInterface) exitWith {};
 
         private _units = [];
         { if (_x isKindOf "CAManBase") then { _units pushBack _x } } forEach _objs;
-        { if (_x isEqualType grpNull) then { _units append (units _x) } } forEach SELECTED_GROUPS;
+        // A man selected individually AND as part of a selected group is in the
+        // list twice; the same dedupe ZEN's getSelectedUnits ends with.
         _units = _units arrayIntersect _units;
 
-        // alive covers null too, and every entry is already a CAManBase (the
-        // pushBack filter and the group expansion both guarantee it).
+        // alive covers null too, and every entry is already a CAManBase — the
+        // pushBack filter above guarantees it.
         _ids = (_units select {alive _x && {_anySide || {side _x == _curSide}}}) apply {netId _x};
         // Cap AFTER counting the true size — the difference is what silently falls
         // off the tags/dialog/gather, surfaced via GVAR(selOverflow).
@@ -100,10 +136,11 @@ if (!hasInterface) exitWith {};
         _vehOverflow = 0 max ((count _vehs) - SEL_MAX_VEHICLES);
         _vehs = _vehs select [0, SEL_MAX_VEHICLES];
 
-        // Hull set for the AI-state overlays: the raw selection collapsed to
-        // distinct vehicles. Deliberately NOT side-filtered — these overlays
-        // report what the curator's own selection is doing, and the server
-        // re-resolves whoever steers/aims each hull anyway.
+        // Hull set for the AI-state overlays: the whole selection — group-icon
+        // picks included, via the expansion at the top — collapsed to distinct
+        // vehicles. Deliberately NOT side-filtered: these overlays report what the
+        // curator's own selection is doing, and the server re-resolves whoever
+        // steers/aims each hull anyway.
         //
         // Filtered to AllVehicles (which covers CAManBase) because this slice is
         // the one that crosses the wire as OBJECTS: without it, a box select over
@@ -113,15 +150,29 @@ if (!hasInterface) exitWith {};
         // expectedDestination, targetKnowledge and rtz_supply's servicing record
         // exist only on a man or a vehicle, so all three gatherers were already
         // returning [] for them.
+        //
+        // Capped like the other two slices, but by STOPPING at the cap rather than
+        // truncating afterwards. `pushBackUnique` is a linear scan of the array so far,
+        // so walking the whole selection was O(n²) with a `vehicle` engine call per
+        // entity — four times a second, for the whole operation — and the box select
+        // over a base that the AllVehicles filter above exists for is exactly the case
+        // that makes n large. The result is unchanged: truncating afterwards yielded
+        // "the first SEL_MAX_HULLS distinct hulls in _objs order", which is precisely
+        // what breaking at that count produces.
+        //
+        // `break` at the TOP of the body, per CLAUDE.md: an `exitWith` here would exit
+        // only the current ITERATION and silently behave as a `continue` (see
+        // docs/Knowledge Base/Gotchas.md §2).
+        //
+        // No truncation toast: an oversized selection already fires the unit and/or
+        // vehicle hint above, and a third message about a slice with no dialog of its
+        // own is noise.
         {
+            if (count _hulls >= SEL_MAX_HULLS) then { break };
             if (isNull _x) then { continue };
             if !(_x isKindOf "AllVehicles") then { continue };
             _hulls pushBackUnique (vehicle _x);
         } forEach _objs;
-        // Capped like the other two slices. No truncation toast: an oversized
-        // selection already fires the unit and/or vehicle hint above, and a third
-        // message about a slice with no dialog of its own is noise.
-        _hulls = _hulls select [0, SEL_MAX_HULLS];
     };
 
     GVAR(selUnits)    = _ids;

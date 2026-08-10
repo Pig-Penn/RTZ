@@ -4,8 +4,11 @@
  * CLIENT. Target-stream renderer: draws a side-coloured line from each watched
  * unit to where it BELIEVES its target is, capped with an impact icon and
  * labelled with the target's name and knowledge freshness while the cursor is
- * near it (modelled on the LAMBS debug renderer). Called once per frame per
- * active stream by EFUNC(core,streamClient), which supplies the shared frame context.
+ * near it (modelled on the LAMBS debug renderer). Registered as a RENDER_WORLD
+ * renderer on EFUNC(core,frameLoop) by EFUNC(core,toggleOverlay) when the overlay
+ * is switched on, so it receives the shared frame context and is skipped while
+ * the Zeus map covers the 3D view. EFUNC(core,streamClient) only RECEIVES the
+ * snapshots this reads.
  *
  * A fresh snapshot is baked once, on the first frame after it lands: the
  * target's side colour, its display name and the age of the sighting AT SEND
@@ -69,7 +72,14 @@ private _elapsed = _now - _rxTime;
 
     // Anchor on the vehicle so mounted crews draw from the hull, and read the
     // position live each frame — only the target end is snapshotted.
-    private _from    = (getPosATLVisual (vehicle _unit)) vectorAdd [0, 0, 0.5];
+    //
+    // ASLToAGL, NOT getPosATLVisual. drawLine3D takes AGL — Z from the WATER
+    // SURFACE over sea — while ATL measures from the terrain, i.e. the seabed.
+    // This end was the only one getting it wrong: _estPos is already AGL
+    // (FUNC(gatherTarget) converts targetKnowledge's ASL position), so over
+    // water the two ends of this one line were in DIFFERENT spaces and the line
+    // skewed as well as lifted.
+    private _from    = (ASLToAGL getPosASLVisual (vehicle _unit)) vectorAdd [0, 0, 0.5];
     private _camDist = _camPos distance _from;
     if (_camDist > MAX_DRAW_DIST && {_camPos distance _estPos > MAX_DRAW_DIST}) then { continue };
 

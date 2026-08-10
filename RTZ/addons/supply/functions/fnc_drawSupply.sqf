@@ -25,7 +25,7 @@
  * Baked entry: [unit, targets, elapsedAtSend, duration].
  *
  * Arguments:
- * 0: Frame context, see the CTX_* indices in main's script_macros.hpp <ARRAY>
+ * 0: Frame context, see the CTX_* indices in core's script_macros_core.hpp <ARRAY>
  *
  * Return Value:
  * None
@@ -68,8 +68,14 @@ private _sinceRx = _now - _rxTime;
 
     // Anchor on the vehicle so a selected crewman draws from the hull, and read
     // the position live each frame — only the target list is snapshotted.
+    //
+    // ASLToAGL, NOT getPosATLVisual: drawLine3D and drawIcon3D take AGL, whose Z
+    // is measured from the WATER SURFACE over sea, while ATL measures from the
+    // terrain — which under water is the seabed. A supply boat, an amphibious
+    // hull or anything servicing over water drew its whole fan lifted by the
+    // water depth. Same idiom rtz_mine, rtz_path and rtz_common already use.
     private _veh     = vehicle _unit;
-    private _from    = (getPosATLVisual _veh) vectorAdd [0, 0, 0.5];
+    private _from    = (ASLToAGL getPosASLVisual _veh) vectorAdd [0, 0, 0.5];
     private _camDist = _camPos distance _from;
     if (_camDist > MAX_DRAW_DIST) then { continue };
 
@@ -84,7 +90,9 @@ private _sinceRx = _now - _rxTime;
         // leaving it pointing at the wreck until the next snapshot
         if (isNull _x || {!alive _x}) then { continue };
 
-        private _to = (getPosATLVisual _x) vectorAdd [0, 0, 0.5];
+        // AGL, for the same reason as _from above — and both ends of one line
+        // must be in the same space or it skews as well as lifts.
+        private _to = (ASLToAGL getPosASLVisual _x) vectorAdd [0, 0, 0.5];
 
         // The line IS the progress bar: bright from the supply vehicle out to the
         // progress point, dim the rest of the way. One order services every target

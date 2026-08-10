@@ -45,6 +45,16 @@
 
 params ["_curators", "_forceResend", "_dbg"];
 
+// Profiling gate (EFUNC(core,perfSample)), read once. This function is the O(allUnits +
+// vehicles) half of the detection tick and FUNC(spotCheck)'s per-side loop is the
+// O(sides x hostiles) half — timing them apart is what distinguishes a cost that tracks
+// MISSION SIZE from one that tracks how many curators are opposed and how much is in
+// contact. Both early exits below report too, or a tick that skipped the classification
+// would silently read as a fast one.
+private _perf = GETMVAR(RTZ_perf,false);
+private _t0   = 0;
+if (_perf) then { _t0 = diag_tickTime };
+
 // ── Group manned curators by side ────────────────────────────────────────────
 // Resolved BEFORE the unit/vehicle classification so a tick with no manned curator —
 // vacant Zeus slots, a headless-only setup — skips the O(allUnits + vehicles)
@@ -108,7 +118,12 @@ private _bySide = createHashMap;
 private _sideEntities    = createHashMap;
 private _sideSpotterReps = createHashMap;
 
-if (count _bySide == 0 && {!_dbg}) exitWith { [_bySide, _sideEntities, _sideSpotterReps] };
+if (count _bySide == 0 && {!_dbg}) exitWith {
+    if (_perf) then {
+        ["collectSides", (diag_tickTime - _t0) * 1000, "skipped (no curator)"] call EFUNC(core,perfSample);
+    };
+    [_bySide, _sideEntities, _sideSpotterReps]
+};
 
 {
     if (isPlayer _x) then { continue };
@@ -192,6 +207,18 @@ if (_dbg) then {
                 netId _x, _player, (if (!isPlayer _player) then {-1} else {owner _player}), _curatorSide, _repCount];
         };
     } forEach _curators;
+};
+
+if (_perf) then {
+    // units + vehicles are the two lists actually walked, and reps is what came out of
+    // them — the trio that says whether this line moves with mission size. sides is the
+    // curator-side count, which multiplies everything in FUNC(spotCheck) but almost
+    // nothing here.
+    private _reps = 0;
+    { _reps = _reps + count _y } forEach _sideSpotterReps;
+    ["collectSides", (diag_tickTime - _t0) * 1000,
+        format ["units=%1 vehs=%2 sides=%3 reps=%4", count allUnits, count vehicles, count _bySide, _reps]
+    ] call EFUNC(core,perfSample);
 };
 
 [_bySide, _sideEntities, _sideSpotterReps]

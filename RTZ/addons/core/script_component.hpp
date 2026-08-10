@@ -42,3 +42,18 @@
 // (FUNC(registerStream)); this one is shared so the running state reads
 // identically across all of them.
 #define COLOR_OVERLAY_ON [0.50, 0.50, 0.50, 1]
+
+// ── Profiling (FUNC(perfSample) / FUNC(perfReport)) ──────────────────────────
+// How often the accumulated timings are flushed to the RPT, in seconds. Long
+// enough that a report line summarises a real sample (dozens of detection ticks,
+// hundreds of frames) rather than one lucky frame, short enough to watch a number
+// move while changing something in the debug console.
+#define PERF_REPORT_INTERVAL 10
+
+// Indices into a GVAR(perfAcc) entry. Written by FUNC(perfSample) and, for the
+// per-frame renderer timings, INLINE by FUNC(frameLoop) — which is why the shape
+// is named here rather than being private to the sampler.
+#define PERF_N     0
+#define PERF_SUM   1
+#define PERF_MAX   2
+#define PERF_EXTRA 3

@@ -18,7 +18,7 @@
  * (FUNC(drawMap)).
  *
  * Arguments:
- * 0: Frame context, see the CTX_* indices in main's script_macros.hpp <ARRAY>
+ * 0: Frame context, see the CTX_* indices in core's script_macros_core.hpp <ARRAY>
  *
  * Return Value:
  * None

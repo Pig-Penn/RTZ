@@ -34,6 +34,17 @@
  *    suffixes) are cached for the whole mission; chevron colours/names are
  *    pre-resolved server-side and shipped in the payload so the client Draw3D
  *    does no config or group traversal per frame.
+ *  - Hostile groups NO spotter has any knowledge of are skipped before their members
+ *    are ever walked. `targets` above already answers "which entities does any spotter
+ *    group know about", so the leader key of each is collected into _activeGroupKeys as
+ *    that pass runs — plus the leader of every live chevron latch on this side — and the
+ *    grouping walk below only builds a bucket for a group in that set. A group outside
+ *    it scores _groupKnows = 0, fails the SOFT_THRESHOLD test and produces nothing, so
+ *    the skip is behaviour-identical BY CONSTRUCTION; what it saves is the whole
+ *    per-member loop (alive + netId + latch lookup, per man) for every enemy group
+ *    currently out of contact, which on a 200-500 AI mission is most of them. The
+ *    cheap part — one `leader group` + `netId` per hostile — still runs, because that
+ *    is what answers which group a hostile is in.
  *  - Once a member's knowsAbout crosses HARD_THRESHOLD (its chevron is shown),
  *    that result is latched per (spotter side, unit) for CHEVRON_LATCH_DURATION
  *    seconds: the per-spotter knowsAbout loop — the O(spotterReps) part of this
@@ -42,6 +53,12 @@
  *    trades a short (10s) lag in noticing a spotted unit go fully unknown again
  *    for not re-running the expensive check on every already-confirmed contact
  *    every tick.
+ *  - The latch and callout-gate stores are NESTED, side object → HashMap(netId → …),
+ *    resolved once per curator side. They used to be flat maps under a
+ *    (str side + "_" + netId) key built per member per tick — see the store comments in
+ *    FUNC(spottingSystem) for why that had to go, and note that with curators typically
+ *    on OPPOSING sides the entire per-side loop below runs two to four times, so every
+ *    per-entity cost inside it carries that multiplier.
  *  - Payload signatures are ARRAYS compared with isEqualTo, not `str` of the same.
  *    They exist purely to answer "did this payload change?", and building a string
  *    to answer it meant one throwaway allocation per group AND per chevron on every
@@ -67,9 +84,27 @@
 
 params ["_activeSpots"];
 
+// Profiling gate (EFUNC(core,perfSample)), read ONCE per pass. This is the largest
+// server-side cost in the mod and the first thing anyone tuning it needs a number for;
+// the counters gathered under this flag also separate "scales with unit count" from
+// "scales with curator sides x hostiles", which is the question the shape of a drop
+// turns on. Everything it guards is skipped outright when off.
+private _perf = GETMVAR(RTZ_perf,false);
+private _t0   = 0;
+private _perfHostile  = 0;
+private _perfGroups   = 0;
+private _perfChevrons = 0;
+if (_perf) then { _t0 = diag_tickTime };
+
 // Rebuild the fire-blink lookup from scratch each tick; the wedge block below
-// repopulates it for units that are still wedge-spotted.
+// repopulates it for units that are still wedge-spotted — unless the blink is switched
+// off, in which case the map stays empty for the tick and the FiredMan handler in
+// FUNC(spottingSystem) finds nothing to send. The createHashMap itself is
+// unconditional: it is one allocation per TICK, and leaving a stale map behind when the
+// setting is flipped off mid-mission would keep flashing icons for units that have since
+// stopped being spotted.
 GVAR(wedgeByUnit) = createHashMap;
+private _blink = GETGVAR(enableFireBlink,true);
 
 // Consume the GLOBAL force-resend flag (set at mission start, and by any bare
 // QGVAR(spotResync)). The per-player pending requests in GVAR(spotResendPlayers)
@@ -135,16 +170,33 @@ private _currentKeys = createHashMap;
 // ── Spot detection: one pass per curator side ─────────────────────────────
 // _x = the side (HashMap key); _y = that side's curator tuples.
 {
-    private _spotterSide    = _x;
-    private _curatorsData   = _y;
-    // The one place a side is stringified, and it happens once per CURATOR SIDE rather
-    // than once per entity: the latch and callout keys below are composite strings, and
-    // there are at most a handful of sides in play.
-    private _spotterSideStr = str _spotterSide;
+    private _spotterSide  = _x;
+    private _curatorsData = _y;
 
     // One representative per local AI group on this side — the spotter set.
     private _spotterReps = values (_sideSpotterReps getOrDefault [_spotterSide, _emptyMap]);
     if (_spotterReps isEqualTo []) then { continue };
+
+    // This side's two inner stores, resolved ONCE here rather than by building a
+    // composite key per member below (see FUNC(spottingSystem)'s store comments). Both
+    // are created on first touch and live for the mission — FUNC(pruneStores) bounds
+    // them per side.
+    // get + isNil, not getOrDefault with a createHashMap default: SQF evaluates that
+    // default EAGERLY, so it would allocate and discard a fresh map on every hit. Same
+    // reasoning as the bucket lookups in FUNC(collectSides).
+    // AFTER the spotter test, not before: a side with no living AI to see with can never
+    // write to either store, and creating them anyway would leave an empty map that the
+    // prune's cap gate — a `count > CAP` test — can by definition never collect.
+    private _latchMap = GVAR(chevronLatch) get _spotterSide;
+    if (isNil "_latchMap") then {
+        _latchMap = createHashMap;
+        GVAR(chevronLatch) set [_spotterSide, _latchMap];
+    };
+    private _lastSeenMap = GVAR(spotGroupLastSeen) get _spotterSide;
+    if (isNil "_lastSeenMap") then {
+        _lastSeenMap = createHashMap;
+        GVAR(spotGroupLastSeen) set [_spotterSide, _lastSeenMap];
+    };
 
     // ── Invert the knowledge matrix ───────────────────────────────────
     // `targets [true]` returns every enemy this rep's GROUP has on its target
@@ -163,21 +215,53 @@ private _currentKeys = createHashMap;
     // AND one of its occupants), and a duplicate rep only re-runs the knowsAbout
     // test below for a group that has already answered. The lists hold just the
     // groups that know the entry, so the uniqueness scan is over a handful.
-    private _knownBy = createHashMap;
+    // _activeGroupKeys rides along: the leader netId of every entity any spotter knows
+    // about. It is the "is this group in contact at all?" gate for the grouping walk
+    // below, and it is built HERE because this loop already holds the target OBJECTS —
+    // deriving it later from _knownBy's keys would mean an objectFromNetId per entry.
+    // Recorded for the hull and crew cross-credits too, not just the target itself: they
+    // are what put a mounted man (or a UAV's absent crew) into _knownBy, and a group
+    // reachable only by that route must not be gated out.
+    private _knownBy         = createHashMap;
+    private _activeGroupKeys = createHashMap;
     {
         private _rep = _x;
         {
-            (_knownBy getOrDefault [netId _x, [], true]) pushBackUnique _rep;
-            if (_x isKindOf "CAManBase") then {
-                private _hull = objectParent _x;
+            private _tgt = _x;
+            (_knownBy getOrDefault [netId _tgt, [], true]) pushBackUnique _rep;
+            private _tgtLdr = leader group _tgt;
+            if (!isNull _tgtLdr) then { _activeGroupKeys set [netId _tgtLdr, true] };
+
+            if (_tgt isKindOf "CAManBase") then {
+                private _hull = objectParent _tgt;
                 if (!isNull _hull) then {
                     (_knownBy getOrDefault [netId _hull, [], true]) pushBackUnique _rep;
+                    private _hullLdr = leader group _hull;
+                    if (!isNull _hullLdr) then { _activeGroupKeys set [netId _hullLdr, true] };
                 };
             } else {
-                { (_knownBy getOrDefault [netId _x, [], true]) pushBackUnique _rep } forEach crew _x;
+                {
+                    (_knownBy getOrDefault [netId _x, [], true]) pushBackUnique _rep;
+                    private _crewLdr = leader group _x;
+                    if (!isNull _crewLdr) then { _activeGroupKeys set [netId _crewLdr, true] };
+                } forEach crew _tgt;
             };
         } forEach (_rep targets [true]);
     } forEach _spotterReps;
+
+    // Union in the group of every LIVE chevron latch on this side. Belt and braces: the
+    // latch fires at HARD_THRESHOLD and lasts CHEVRON_LATCH_DURATION (10 s), while
+    // `targets [true]` returns anything with knowsAbout > 0 at all, so a latched member
+    // falling out of every target list inside that window is close to impossible — but
+    // if it did, its group would be gated out and its chevron would vanish early, which
+    // is a visible regression rather than the invisible one the gate is allowed. The
+    // walk is over THIS SIDE's confirmed contacts (the inner map), not over every side's.
+    // A stale leaderNetId — the leader died and the group re-formed inside the window —
+    // simply matches no bucket below, and the group is rebuilt from _knownBy on the next
+    // pass exactly as it is today.
+    {
+        if ((_y select 0) > CBA_missionTime) then { _activeGroupKeys set [_y select 2, true] };
+    } forEach _latchMap;
 
     // All alive, non-player entities hostile to this side: union of the
     // pre-bucketed sides whose relation to us is hostile.
@@ -190,11 +274,21 @@ private _currentKeys = createHashMap;
     // Group hostile units by their group leader.
     // Skip units whose group has no man leader (empty vehicles, ungrouped objects) —
     // leader group returns objNull for those, which would collapse them all to key "".
+    //
+    // Groups nobody knows anything about are dropped here rather than a hundred lines
+    // later. Every one of them used to be bucketed and then have EVERY member walked
+    // (alive, netId, latch lookup) only to score _groupKnows = 0, fail the
+    // SOFT_THRESHOLD test below and produce nothing — the largest piece of pure waste
+    // on the server, repeated once per curator side, on a mission where most of the
+    // enemy force is out of contact at any moment. `_activeGroupKeys` holds exactly the
+    // groups that can score above zero, so the output is identical by construction.
+    // The `leader group` + `netId` per hostile stays: it IS the question being asked.
     private _grpMap = createHashMap;
     {
         private _ldr = leader group _x;
         if (isNull _ldr) then { continue };
-        private _gk    = netId _ldr;
+        private _gk = netId _ldr;
+        if !(_gk in _activeGroupKeys) then { continue };
         private _tuple = _grpMap get _gk;
         if (isNil "_tuple") then {
             _tuple = [_ldr, [], _gk];
@@ -202,6 +296,11 @@ private _currentKeys = createHashMap;
         };
         (_tuple select 1) pushBack _x;
     } forEach _allHostile;
+
+    if (_perf) then {
+        _perfHostile = _perfHostile + count _allHostile;
+        _perfGroups  = _perfGroups + count _grpMap;
+    };
 
     // Side-level new contact accumulation: one callout per tick fires to all
     // curators on this side when any of them newly spots a group.
@@ -251,8 +350,10 @@ private _currentKeys = createHashMap;
             // sideChat — the report would be consumed by the cooldown and never
             // heard. A dead latch falls through to the full knowsAbout scan,
             // which only ever draws from the live _spotterReps.
-            private _latchKey = _spotterSideStr + "_" + _memberId;
-            private _latch    = GVAR(chevronLatch) get _latchKey;
+            // Bare get/set on this side's inner map — no key to build. The stored
+            // leaderNetId is what the contact gate above reads; it is this group's key,
+            // which is in hand here and nowhere cheaper.
+            private _latch  = _latchMap get _memberId;
             private _uKnows = 0;
             private _uBest  = objNull;
             if (!isNil "_latch" && { (_latch select 0) > CBA_missionTime } && { alive (_latch select 1) }) then {
@@ -266,7 +367,7 @@ private _currentKeys = createHashMap;
                     if (_k > _uKnows) then { _uKnows = _k; _uBest = _x; };
                 } forEach (_knownBy getOrDefault [_memberId, _emptyArr]);
                 if (_uKnows >= HARD_THRESHOLD) then {
-                    GVAR(chevronLatch) set [_latchKey, [CBA_missionTime + CHEVRON_LATCH_DURATION, _uBest]];
+                    _latchMap set [_memberId, [CBA_missionTime + CHEVRON_LATCH_DURATION, _uBest, _leaderNetId]];
                 };
             };
             if (_uKnows > _groupKnows) then { _groupKnows = _uKnows; _grpReporter = _uBest; };
@@ -405,11 +506,19 @@ private _currentKeys = createHashMap;
                     _player, _activeSpots, true, _curForce
                 ] call FUNC(emitSpot);
 
-                // Register this wedge so the FiredMan handler can flash it white.
-                (GVAR(wedgeByUnit) getOrDefault [_memberId, [], true]) pushBack [_wedgeMrkr, _player];
+                // Register this wedge so the FiredMan handler can flash it white. Skipped
+                // wholesale when the blink is switched off (GVAR(enableFireBlink)) — this
+                // is the producing side of that setting and where the cost actually is:
+                // one entry per chevron per watching curator, rebuilt every pass, plus a
+                // targeted network event per shot for each of them.
+                if (_blink) then {
+                    (GVAR(wedgeByUnit) getOrDefault [_memberId, [], true]) pushBack [_wedgeMrkr, _player];
+                };
             } forEach _chevronData;
 
         } forEach _curatorsData;
+
+        if (_perf) then { _perfChevrons = _perfChevrons + count _chevronData };
 
         // Radio callout fires when this group is positively identified — best
         // knowsAbout >= HARD, the engine's own "freshly spotted / confirmed" value.
@@ -428,9 +537,8 @@ private _currentKeys = createHashMap;
         // The gap — not new-spot detection — dedupes, so a contact that ramps up
         // gradually (1.0 → 1.5 over several ticks) is still announced when it crosses.
         if (_groupKnows >= HARD_THRESHOLD) then {
-            private _sideGroupKey = _spotterSideStr + "_" + _leaderNetId;
-            private _lastSeen     = GVAR(spotGroupLastSeen) getOrDefault [_sideGroupKey, -1e10];
-            GVAR(spotGroupLastSeen) set [_sideGroupKey, CBA_missionTime];
+            private _lastSeen = _lastSeenMap getOrDefault [_leaderNetId, -1e10];
+            _lastSeenMap set [_leaderNetId, CBA_missionTime];
             if (CBA_missionTime - _lastSeen >= GROUP_CALLOUT_COOLDOWN) then {
                 (_sideNewReport select 1) pushBackUnique ([_leader] call FUNC(contactCategory));
                 // Claim the author slot while it is still unfilled OR holds a unit
@@ -497,3 +605,21 @@ private _toRemove = [];
 // ── Housekeeping: keep the long-lived rate-limit maps bounded ──────────
 // Entries for dead/deleted units would otherwise accumulate for the whole mission.
 call FUNC(pruneStores);
+
+// ── Profiling ──────────────────────────────────────────────────────────
+// Counters, not just a time: this pass scales with CURATOR SIDES x HOSTILES, and the
+// timing alone cannot tell a mission that grew from one where the curators split onto
+// opposing sides. `grps` is what SURVIVED the contact gate — read against `hostile`, it
+// says how much of the enemy force is in contact, which is the number that decides
+// whether the gate is earning anything. The format runs once per pass and only under
+// the flag.
+//
+// This figure is the WHOLE pass, FUNC(collectSides) included. That function reports
+// separately, so subtract its line to get the detection loop alone — and the two
+// scale with different things (collectSides with unit count, this with sides x
+// hostiles), which is exactly why they are timed apart.
+if (_perf) then {
+    ["spotCheck", (diag_tickTime - _t0) * 1000,
+        format ["sides=%1 hostile=%2 grps=%3 chev=%4", count _bySide, _perfHostile, _perfGroups, _perfChevrons]
+    ] call EFUNC(core,perfSample);
+};
