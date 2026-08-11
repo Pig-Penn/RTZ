@@ -25,6 +25,8 @@
  *
  * Arguments:
  * 0: The captured unit <OBJECT>
+ * 1: Re-route to the unit's owner if it is not local here <BOOL> (default: true;
+ *    the re-routed copy passes false so a handover cannot ping-pong)
  *
  * Return Value:
  * None
@@ -35,9 +37,33 @@
  * Public: No
  */
 
-params ["_unit"];
+params ["_unit", ["_reroute", true]];
 
 if (isNull _unit || {!alive _unit}) exitWith {};
+
+// Every command below takes a LOCAL argument, so arriving on the wrong machine
+// is not a partial failure — it is four silent no-ops that leave an armed
+// prisoner and no error to say so. FUNC(captureUnit) addresses this at the
+// unit's owner, but ownership can move between the send and the arrival: the
+// group join it performs is one cause, and an HC rebalancing, rtz_control's
+// transfer or a JIP handover are others it has no say in at all.
+//
+// Unlike its sibling this has no safety net to fall back on. The CAManBase
+// "Local" handler in XEH_postInit re-applies FUNC(surrenderApply) on every
+// ownership change — which restores the freeze, the captive flag and even the
+// bound pose, since that function reads QGVAR(captured) to pick between the two
+// poses — but it never re-runs the DISARM. So this is the one state flip in the
+// component that has to get itself to the right machine.
+//
+// One hop only. The receiver of a re-route runs this same function with
+// _reroute false and simply gives up if it is not local there either, which is
+// the ping-pong guard EFUNC(slide,endSlide) documents needing for the same
+// reason. Giving up is no worse than today's behaviour; bouncing forever is.
+if (!local _unit) exitWith {
+    if (_reroute) then {
+        [QGVAR(captureApply), [_unit, false], _unit] call CBA_fnc_targetEvent;
+    };
+};
 
 removeAllWeapons _unit;
 

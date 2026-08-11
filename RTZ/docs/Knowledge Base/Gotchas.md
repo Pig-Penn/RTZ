@@ -321,7 +321,7 @@ surfaced as an error silently becomes a `false` branch.
 ### `select` out of range: sometimes `nil`, sometimes a hard error
 
 - index **equal to** `count _arr` → returns `nil`, no error
-- index **beyond** that, or **negative** → throws `Error Zero Divisor`
+- index **beyond** that → throws `Error Zero Divisor`
 
 So off-by-one reads fail quietly and land as `nil` somewhere far from the cause. Use `param` /
 `params` with defaults for anything that might be short:
@@ -330,6 +330,28 @@ So off-by-one reads fail quietly and land as `nil` somewhere far from the cause.
 params [["_radius", 50, [0]], ["_limit", 0, [0]]];
 private _mode = _args param [2, "default"];
 ```
+
+**A NEGATIVE index is not out of range — it counts from the end**, Python-style, for both
+`select` and `set`. Arma 3 **v2.12** added it (FT-T166810); before that it did throw
+`Error Zero Divisor`, and this entry claimed so long after it stopped being true.
+
+```sqf
+_arr select -1    // last element
+_arr select -2    // second from last
+```
+
+Safe here without a guard: `REQUIRED_VERSION` is **2.18**
+([main/script_mod.hpp](addons/main/script_mod.hpp)), and CBA — which RTZ requires at ≥ 3.16.0 —
+itself requires **2.20**, so the floor is well past 2.12 twice over. RTZ relies on it in nine
+places ([reducePath.sqf:78](addons/path/functions/fnc_reducePath.sqf#L78),
+[isPatrol.sqf:41](addons/path/functions/fnc_isPatrol.sqf#L41),
+[followTick.sqf:145](addons/path/functions/fnc_followTick.sqf#L145) among them), and ACE3, CBA
+and LAMBS use it throughout their own source.
+
+The reason this correction is worth its space: the old wording invited a "fix" that would have
+broken all nine working call sites at once, which is a worse outcome than the bug it warned about.
+Version-dependent claims need the version written next to them — see also the `break` entry in §2,
+which is only true from v2.02.
 
 ### `params` destructures `_this` — passing one array gives the callee its first element
 

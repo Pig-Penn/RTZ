@@ -25,7 +25,15 @@
 
 params ["_unit", ["_skill", SKILL_NONE]];
 
-if (!alive _unit) exitWith {};
+// `local` as well as `alive`, and re-tested HERE rather than trusted from the
+// caller. FUNC(initMan) does check locality — but it then defers this call by a
+// frame with CBA_fnc_execNextFrame, and a frame is a window in which the unit
+// can change hands (Gotchas §1: state goes stale across a suspension). setSkill
+// takes a LOCAL argument — ZEN routes every one of its own through a
+// targetEvent aimed at the unit for exactly that reason — so a handover in that
+// window would leave this a silent no-op and the unit permanently on its
+// config default skill, with nothing in the log to say the table was skipped.
+if (!alive _unit || {!local _unit}) exitWith {};
 
 if (_skill == SKILL_NONE) then {
     _skill = GVAR(defaultSkills) getOrDefault [toLowerANSI typeOf _unit, SKILL_NONE];

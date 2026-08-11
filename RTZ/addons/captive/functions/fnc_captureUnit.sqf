@@ -45,14 +45,36 @@ if (_unit getVariable [QGVAR(captured), false]) exitWith {};
 
 SETPVAR(_unit,GVAR(captured),true);
 
-[QGVAR(captureApply), [_unit], _unit] call CBA_fnc_targetEvent;
-
 // Resolved BEFORE the group move, so "who owned him" still means the side that
 // lost him rather than the side that just took him.
 private _owners = [_unit] call EFUNC(common,curatorsOf);
 private _captors = [_capturer] call EFUNC(common,curatorsOf);
 
 [_unit] joinSilent (group _capturer);
+
+// Disarmed AFTER the join, not before it. A unit that joins a group local to
+// another machine BECOMES local to that machine, so a targetEvent addressed
+// here is addressed to whoever owns the prisoner AT THIS INSTANT — and sending
+// it first meant addressing the machine that was about to stop owning him. The
+// inventory commands in FUNC(captureApply) are argument-local, so the copy that
+// arrived after the handover was four silent no-ops and the prisoner kept his
+// rifle, his launcher and his grenades.
+//
+// This is only observable when the prisoner and his captor's group are owned by
+// different machines — the server and a headless client, or a player leading the
+// capturing squad — which is why it survived singleplayer testing, where there
+// is only ever one machine and the ordering cannot matter.
+//
+// Ordering alone is not the whole fix: ownership can move for reasons that have
+// nothing to do with this function (an HC rebalancing, rtz_control's transfer, a
+// JIP handover) in the window between the send and its arrival. FUNC(captureApply)
+// re-tests locality on the far side and re-routes once for that case. Both halves
+// are wanted: this one makes the ordinary split deterministic instead of a race,
+// that one catches everything else.
+//
+// Nothing above depends on the old ownership: QGVAR(captured) is already stamped
+// and public, and both curator lists were resolved before the join.
+[QGVAR(captureApply), [_unit], _unit] call CBA_fnc_targetEvent;
 
 // Zeus ownership only moves when there is somewhere to move it TO. A capturer
 // belonging to no curator at all — mission-placed AI, or one whose curator lost
