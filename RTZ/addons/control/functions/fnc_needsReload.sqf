@@ -19,13 +19,15 @@
  * reports the turret's weapon while his `magazinesAmmoFull` still reports what
  * is in his uniform, so the infantry test below would compare a cannon against
  * rifle magazines and answer nonsense. Turret magazines are compared to their
- * configured round count instead — the same test, and the same cache pattern,
- * as EFUNC(supply,needsAmmo). A driver in an unarmed vehicle therefore answers
- * false, which is correct: nothing there can be reloaded.
+ * configured round count instead — literally the same test as
+ * EFUNC(supply,needsAmmo), and now the same code: both go through
+ * EFUNC(common,magazineCapacity). A driver in an unarmed vehicle therefore
+ * answers false, which is correct: nothing there can be reloaded.
  *
- * Both config reads (magazine capacity, a weapon's compatible magazines) are
- * memoized per class for the mission, because the same handful of classes recur
- * across every unit in every selection.
+ * Both config reads are memoized per class for the mission, because the same
+ * handful of classes recur across every unit in every selection — magazine
+ * capacity in rtz_common's shared cache, a weapon's compatible magazines in
+ * this component's own GVAR(weaponMagazines), which nothing else asks for.
  *
  * Arguments:
  * 0: Unit <OBJECT>
@@ -44,14 +46,10 @@ params ["_unit"];
 private _veh = objectParent _unit;
 
 if (!isNull _veh) exitWith {
-    private _sizes = GVAR(magazineSizes);
-
     (magazinesAllTurrets _veh findIf {
         _x params ["_magazine", "", "_rounds"];
 
-        _rounds < (_sizes getOrDefaultCall [_magazine, {
-            getNumber (configFile >> "CfgMagazines" >> _magazine >> "count")
-        }, true])
+        _rounds < ([_magazine] call EFUNC(common,magazineCapacity))
     }) > -1
 };
 

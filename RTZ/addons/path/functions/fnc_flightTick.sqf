@@ -161,7 +161,15 @@ private _wanted = _cruise;
 private _ahead = (_index + FLIGHT_LOOKAHEAD) min (_count - 1);
 
 if (_ahead > _index) then {
-    private _legDir = (_points select ((_index - 1) max 0)) getDir _target;
+    // Measured from the point BEHIND the leg — or from the hull itself on the
+    // opening leg, where there is no point behind it. `(_index - 1) max 0`
+    // measured leg 0 against ITSELF, and getDir answers a zero delta with 0, so
+    // the turn score for the first leg was really "how far from NORTH does the
+    // path bend?": a route traced south scored a full 180 and started at the
+    // speed floor, one traced north scored nothing and started at cruise. It
+    // corrected itself on leg 1, so it read as a sluggish take-off that only
+    // happened in some directions.
+    private _legDir = (if (_index == 0) then {_current} else {_points select (_index - 1)}) getDir _target;
     private _aheadDir = (_points select (_ahead - 1)) getDir (_points select _ahead);
 
     // Signed difference folded into -180..180, then measured. Without the fold a

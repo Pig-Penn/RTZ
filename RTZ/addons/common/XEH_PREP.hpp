@@ -16,8 +16,11 @@ PREP(errandToken);
 PREP(grantCurators);
 PREP(progressJob);
 
-// Shared UI / presentation helpers.
+// Shared per-class config lookups, each cached mission-long.
 PREP(classInfo);
+PREP(magazineCapacity);
+
+// Shared UI / presentation helpers.
 PREP(headOffset);
 PREP(notifyCurator);
 PREP(placementPreview);

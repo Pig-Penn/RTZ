@@ -79,9 +79,20 @@ private _opened = false;
 
     if (_unit distance (_building modelToWorld _modelPos) > DOOR_REACH) then {continue};
 
-    // Already open, or on its way. The phase is the authoritative answer and it
-    // is one engine read, against a set of `animate` calls that are not.
-    if ((_building animationPhase (_name + "_rot")) > 0.5) then {continue};
+    // Already open, or on its way. The phase is the authoritative answer, against
+    // a set of `animate` calls that are not free.
+    //
+    // All THREE sources are asked, not just the hinge. animationPhase answers 0
+    // for a source the model does not have, so testing "_rot" alone answered 0
+    // forever for the sliding doors that only carry A_move/B_move — which meant
+    // the skip this comment describes never fired for them and a squad filing
+    // through a double door re-animated it every half second each, which is
+    // exactly the door-that-never-settles case the check exists to avoid. The max
+    // is the phase of whichever source this door actually has.
+    private _phase = ((_building animationPhase (_name + "_rot"))
+        max (_building animationPhase (_name + "A_move")))
+        max (_building animationPhase (_name + "B_move"));
+    if (_phase > 0.5) then {continue};
 
     // Three sources because building doors are modelled three ways — a hinged
     // leaf rotates, a double door slides in two halves. Animating a source a

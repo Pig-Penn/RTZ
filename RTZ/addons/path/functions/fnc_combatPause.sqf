@@ -54,9 +54,13 @@ private _target = _record select FOLLOW_TARGET;
 // hands. A launcher or an empty pair of hands is not a reason to stop walking
 // unless the threat is on top of him — Wargame's rule, and very nearly its
 // numbers.
+// -1 (nothing in hand) falls through to ENGAGE_RANGE_NONE alongside the
+// launcher, which is what the rule above says and what this did NOT do while it
+// spelled the lookup out for itself: an unarmed man matched the empty primary
+// slot and was given a rifleman's 90 m. rtz_captive disarms every prisoner it
+// takes, so a pathed prisoner broke off to "engage" things it could not shoot.
 private _current = currentWeapon _unit;
-private _slot = [primaryWeapon _unit, handgunWeapon _unit, secondaryWeapon _unit] findIf {_x == _current};
-private _range = switch (_slot) do {
+private _range = switch (WEAPON_IN_HAND(_unit,_current)) do {
     case 0: {ENGAGE_RANGE_RIFLE};
     case 1: {ENGAGE_RANGE_PISTOL};
     default {ENGAGE_RANGE_NONE};

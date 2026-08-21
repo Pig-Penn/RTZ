@@ -452,6 +452,20 @@
 // never otherwise — the trick LAMBS uses in lambs_main_fnc_doAssault.
 #define REPLAN_TOLERANCE 3
 
+// ── Which weapon is in a man's HANDS ────────────────────────────────────────
+// 0 primary, 1 handgun, 2 launcher, -1 nothing in hand. ONE definition, because
+// FUNC(moveAnimation) (which animation set carries him) and FUNC(combatPause)
+// (how far he has any business breaking off for) are asking the same question
+// and were the same three lines twice — with the empty-hands guard on only one
+// of them.
+//
+// The `_x != ""` term IS that guard. currentWeapon returns "" for a man with
+// nothing in his hands, and an unarmed man's primaryWeapon is "" as well, so a
+// bare `_x == current` matches slot 0 and answers RIFLE for a man holding
+// nothing. It also catches the rifle-on-the-back case, which otherwise matched
+// the empty handgun slot and answered PISTOL.
+#define WEAPON_IN_HAND(unit,current) ([primaryWeapon unit, handgunWeapon unit, secondaryWeapon unit] findIf {_x != "" && {_x == current}})
+
 // ── Scripted infantry move ──────────────────────────────────────────────────
 // A man on a scripted path is a PUPPET: MOVE and ANIM are disabled, he is
 // carried by a directional movement animation, and his hull is turned by hand

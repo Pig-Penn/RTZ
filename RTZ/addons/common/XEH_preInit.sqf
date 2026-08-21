@@ -10,6 +10,13 @@ PREP_RECOMPILE_END;
 // every caller (spotting server loop, RC indicator) is safe on every machine.
 GVAR(classInfoCache) = createHashMap;
 
+// Magazine class → configured round count, read by FUNC(magazineCapacity).
+// Eager for the same reason: its callers span the curator clients that open a
+// context menu (rtz_control, rtz_supply) and the server that runs the gather
+// loop (rtz_hud). Bounded by the number of magazine classes in CfgMagazines,
+// not by unit count, so it needs no prune.
+GVAR(magazineCapacities) = createHashMap;
+
 // Per-class head selection offsets read by FUNC(headOffset). Bounded by the number
 // of man classes in CfgVehicles, not by unit count, so it needs no prune.
 GVAR(headOffsetCache) = createHashMap;

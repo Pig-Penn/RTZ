@@ -69,7 +69,18 @@
 // and its `= false` initializer were still registered further down the file.
 if (isServer) then {
     GVAR(rcForceResend) = false;
-    [QGVAR(rcResync), { GVAR(rcForceResend) = true }] call CBA_fnc_addEventHandler;
+    // Marks the scan DIRTY as well as forcing the re-send. Those are two different
+    // flags and only one of them makes the scan run: the loop below self-gates on
+    // GVAR(rcDirty) or the GVAR(rcCheckInterval) fallback, and a resync set
+    // neither — so the request sat until the 30 s safety net next came round,
+    // unless some other client happened to fire QGVAR(rcChanged) in the meantime.
+    // A resync means "look again now", which is what this flag says. Costs one
+    // redundant pass when the scan was already due, which the loop is written to
+    // tolerate (see the note on consuming the dirty flag before the scan).
+    [QGVAR(rcResync), {
+        GVAR(rcForceResend) = true;
+        GVAR(rcDirty) = true;
+    }] call CBA_fnc_addEventHandler;
 
     // "Somebody's player unit just changed - look again now." Set by QGVAR(rcChanged),
     // fired by any client whose CBA "unit" player event handler fires (below). Starts

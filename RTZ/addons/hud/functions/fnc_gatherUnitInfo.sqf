@@ -91,15 +91,14 @@ if (_isLocal) then {
     // Rounds left in the current primary-weapon magazine and its capacity
     // (-1: no primary / no mag loaded / non-local) — consumed by the unit head
     // tags and the dialog tooltip. Capacity is a per-magazine-class config read,
-    // cached mission-long in GVAR(magCapCache).
+    // cached mission-long by EFUNC(common,magazineCapacity) — the same cache
+    // rtz_control and rtz_supply ask, rather than a fourth private copy.
     private _wpn = primaryWeapon _unit;
     if (_wpn != "") then {
         _ammo = _unit ammo _wpn;
         private _mag = primaryWeaponMagazine _unit param [0, ""];
         if (_mag != "") then {
-            _ammoCap = GVAR(magCapCache) getOrDefaultCall [_mag, {
-                getNumber (configFile >> "CfgMagazines" >> _mag >> "count")
-            }, true];
+            _ammoCap = [_mag] call EFUNC(common,magazineCapacity);
         };
     };
 

@@ -16,11 +16,14 @@ PREP_RECOMPILE_END;
 // ─────────────────────────────────────────────────────────────────────────────
 // SERVER — gather caches
 // ─────────────────────────────────────────────────────────────────────────────
-// Must exist before the first stream tick reads them:
-//   magCapCache  — magazine class → capacity (FUNC(gatherUnitInfo))
+// Must exist before the first stream tick reads it:
 //   seatCntCache — vehicle class → total seat count (FUNC(gatherVehicleInfo))
+//
+// FUNC(gatherUnitInfo)'s magazine-capacity cache is NOT here. rtz_control and
+// rtz_supply ask the identical per-class question, so it moved to
+// EFUNC(common,magazineCapacity) — which is created unconditionally rather than
+// behind this isServer gate, because those two callers run on curator clients.
 if (isServer) then {
-    GVAR(magCapCache)  = createHashMap;
     GVAR(seatCntCache) = createHashMap;
 };
 

@@ -112,8 +112,8 @@ private _posture = switch (_stance) do {
 // directional variant exists there, the search below comes back empty and the
 // leg degrades to an ordinary move.
 private _current = currentWeapon _unit;
-private _slot = [primaryWeapon _unit, handgunWeapon _unit, secondaryWeapon _unit] findIf {_x == _current};
-private _weapon = if (_current isEqualTo "" || {_slot == -1}) then {
+private _slot = WEAPON_IN_HAND(_unit,_current);
+private _weapon = if (_slot == -1) then {
     "Wnon"
 } else {
     ["Wrfl", "Wpst", "Wlnr"] select _slot

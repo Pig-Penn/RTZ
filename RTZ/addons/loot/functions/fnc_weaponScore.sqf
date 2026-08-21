@@ -77,7 +77,7 @@ if (_category isEqualTo "weapon") then {
         private _capacity = 0;
 
         {
-            private _count = getNumber (configFile >> "CfgMagazines" >> _x >> "count");
+            private _count = [_x] call EFUNC(common,magazineCapacity);
             if (_count > _capacity) then {_capacity = _count};
         } forEach _magazines;
 
