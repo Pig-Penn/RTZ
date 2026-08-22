@@ -96,6 +96,9 @@
 #define AIM_RING_RADIUS     40   // m — radius of the drawn target ring
 #define AIM_RING_SEGMENTS   24
 #define AIM_ARROW_LENGTH   400   // m — how far the drawn approach arrow extends
+#define AIM_VALID_INTERVAL 0.2   // s — how often FUNC(drawAim) re-checks whether
+                                 // the order would still be accepted, rather than
+                                 // re-running that walk every frame the ring is up
 
 #define HINT_DURATION        4
 #define HINT_ARROW         300   // m — length of the confirmation hint's approach line

@@ -38,12 +38,11 @@ _handlers pushBack ["MouseButtonDown", _display displayAddEventHandler ["MouseBu
 
     if (_button != 0) exitWith {false};
 
-    // The click that opened this session is still in flight. Arm on it and swallow
-    // it, so the weapon pick cannot double as the target pick.
-    if !(GVAR(aiming) select 5) exitWith {
-        GVAR(aiming) set [5, true];
-        true
-    };
+    // Frame guard, not a one-shot flag — see FUNC(beginAiming) for why. Index 5
+    // holds the frame the session opened on; only a press on a LATER frame can be
+    // a genuine target press, so every press on that starting frame is swallowed
+    // here without touching the stored frame number.
+    if (diag_frameNo <= (GVAR(aiming) select 5)) exitWith {true};
 
     // Intersections OFF: the strike should land on the terrain the cursor is over,
     // not on the roof of whatever building happens to be under it.

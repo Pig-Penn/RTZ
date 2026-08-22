@@ -24,18 +24,37 @@ params ["_ctx"];
 
 if (GVAR(aiming) isEqualTo []) exitWith {};
 
-GVAR(aiming) params ["_objects", "_args", "_aim", "_bearing"];
+GVAR(aiming) params ["_objects", "_args", "_aim", "_bearing", "", "", "_valid", "_validAt"];
 
 // Nothing pressed yet — there is no target to draw a ring around.
 if (_aim isEqualTo []) exitWith {};
 
-_args params ["_vehicle"];
+_args params ["_vehicle", "_weapon", "_turretPath"];
 
 // Tinted invalid the moment the order would be refused, so the curator sees a dead
-// gesture before he releases rather than a message after.
-private _valid = alive _vehicle
-    && {!isNull ([_objects] call FUNC(strikeAircraft))}
-    && {_vehicle ammo (_args select 1) > 0};
+// gesture before he releases rather than a message after. Cached in GVAR(aiming)
+// and refreshed on AIM_VALID_INTERVAL rather than every frame the ring is up —
+// this runs the same FUNC(strikeAircraft) selection walk and FUNC(strikeWeapons)
+// pylon/magazine enumeration FUNC(orderStrike) itself pays for at commit time.
+//
+// Matched on BOTH weapon and turret path through FUNC(strikeWeapons), never a
+// bare `_vehicle ammo _weapon` read: `ammo` takes no turret path, so twin
+// symmetric pylons sharing one weapon classname across two turret paths would
+// borrow each other's counts, and it reports only the loaded magazine rather
+// than the weapon's total. Same defect, same fix FUNC(orderStrike) already
+// documents and applies — mirrored here rather than reimplemented.
+private _now = _ctx select CTX_NOW;
+
+if (_now >= _validAt) then {
+    _valid = alive _vehicle
+        && {!isNull ([_objects] call FUNC(strikeAircraft))}
+        && {([_vehicle] call FUNC(strikeWeapons)) findIf {
+            (_x select 0 isEqualTo _weapon) && {(_x select 1) isEqualTo _turretPath}
+        } != -1};
+
+    GVAR(aiming) set [6, _valid];
+    GVAR(aiming) set [7, _now + AIM_VALID_INTERVAL];
+};
 
 private _color = [COLOR_INVALID, COLOR_STRIKE] select _valid;
 

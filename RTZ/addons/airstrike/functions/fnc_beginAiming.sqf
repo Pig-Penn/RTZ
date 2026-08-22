@@ -37,12 +37,22 @@ if (GVAR(aiming) isNotEqualTo []) then {
     call FUNC(endAiming);
 };
 
-// _armed is the "ignore the frame we started on" guard. This session is opened by
-// CLICKING a context-menu entry, so without it the very click that picked the weapon
-// arrives at MouseButtonDown and latches the aim point instantly. rtz_path needs no
-// such guard because it is opened by a keybind, and CBA keybinds cannot be bound to a
-// mouse button; EFUNC(common,placementPreview) needs exactly this one.
-GVAR(aiming) = [_objects, _args, [], -1, [], false];
+// Index 5 is a FRAME guard, not a one-shot flag: the frame this session opened
+// on, tested in FUNC(handleAimInput) as `diag_frameNo > (GVAR(aiming) select 5)`
+// — the exact recipe EFUNC(common,placementPreview) uses for GVAR(previewStartFrame).
+// This session is opened by CLICKING a context-menu entry, so without a guard the
+// very click that picked the weapon can arrive at this display's MouseButtonDown
+// and latch the aim point instantly. A one-shot "swallow the first press" boolean
+// is NOT equivalent: ZEN dispatches the context-menu action from a control-level
+// MouseButtonDown handler (ZEN/addons/context_menu/functions/fnc_createContextGroup.sqf),
+// and whether the display-level handler installed below also receives that SAME
+// click is engine-ordering-dependent. If it never does, a boolean flipped by "the
+// first press seen" would instead swallow the curator's first genuine press. A
+// frame guard has no such failure mode: it compares frame numbers rather than
+// consuming exactly one event, so it is correct whichever way the ordering falls.
+// rtz_path needs no such guard at all because it is opened by a keybind, and CBA
+// keybinds cannot be bound to a mouse button.
+GVAR(aiming) = [_objects, _args, [], -1, [], diag_frameNo, false, -1];
 
 private _handlers = [_display] call FUNC(handleAimInput);
 GVAR(aiming) set [4, _handlers];
