@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Airstrike">
+        <Key ID="STR_RTZ_Airstrike_ActionAirstrike">
+            <English>Airstrike</English>
+        </Key>
         <Key ID="STR_RTZ_Airstrike_DisplayName">
             <English>Airstrike</English>
         </Key>
@@ -9,6 +12,15 @@
         </Key>
         <Key ID="STR_RTZ_Airstrike_Enabled_Description">
             <English>Allows curators to order a selected plane to fly a scripted attack run against a chosen position. The aircraft is flown on rails for the duration of the run and is returned to AI control afterwards.</English>
+        </Key>
+        <Key ID="STR_RTZ_Airstrike_NoOrdnance">
+            <English>No ordnance remaining</English>
+        </Key>
+        <Key ID="STR_RTZ_Airstrike_StrikeUnavailable">
+            <English>Aircraft can no longer strike</English>
+        </Key>
+        <Key ID="STR_RTZ_Airstrike_WeaponLabel">
+            <English>%1 (%2)</English>
         </Key>
     </Package>
 </Project>
