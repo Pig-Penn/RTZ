@@ -1,4 +1,8 @@
+PREP(beginAiming);
 PREP(canStrike);
+PREP(drawAim);
+PREP(endAiming);
+PREP(handleAimInput);
 PREP(orderStrike);
 PREP(strikeActions);
 PREP(strikeAircraft);

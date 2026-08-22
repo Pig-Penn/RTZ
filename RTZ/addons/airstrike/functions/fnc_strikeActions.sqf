@@ -28,9 +28,9 @@ if (!GVAR(enabled)) exitWith {[]};
 private _vehicle = [_objects] call FUNC(strikeAircraft);
 if (isNull _vehicle) exitWith {[]};
 
-// Bearing -1 means "come in the way you are already pointing". Task 3 replaces this
-// statement with the drag session, which supplies a real bearing.
-private _statement = {[_position, _objects, _args, -1] call FUNC(orderStrike)};
+// Picking a weapon opens the aim session; the session issues the order once the
+// curator has drawn a target and a bearing.
+private _statement = {[_position, _objects, _args] call FUNC(beginAiming)};
 
 ([_vehicle] call FUNC(strikeWeapons)) apply {
     _x params ["_weapon", "_turretPath", "_type", "_ammo"];
