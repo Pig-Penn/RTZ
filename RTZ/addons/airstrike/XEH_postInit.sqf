@@ -9,4 +9,15 @@
 // it unconditionally on every display close costs nothing when no session is open.
 ["zen_curatorDisplayUnloaded", {call FUNC(endAiming)}] call CBA_fnc_addEventHandler;
 
-// CBA event handlers for strike execution are registered here from Task 4.
+// Sent by FUNC(orderStrike) on the curator's client, targeted at the machine that owns
+// the aircraft.
+[QGVAR(execute), LINKFUNC(executeStrike)] call CBA_fnc_addEventHandler;
+
+// Sent by FUNC(endStrike) when a strike ends with its aircraft and driver on different
+// machines. The receiving copy re-runs the same teardown and picks out whatever is
+// local to it; _reroute is false so a split pair cannot bounce the event back and
+// forth between two owners forever.
+[QGVAR(release), {
+    params ["_record", "_reroute"];
+    [_record, _reroute] call FUNC(endStrike);
+}] call CBA_fnc_addEventHandler;
