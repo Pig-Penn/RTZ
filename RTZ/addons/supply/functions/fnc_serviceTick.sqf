@@ -47,6 +47,15 @@ private _dropped = false;
     // Marked rather than deleted so the list is compacted at most once per tick
     // instead of being re-indexed mid-iteration.
     if (!alive _vehicle || {_vehicle distance _supply > _radius}) then {
+        // Release the claim on the way out. FUNC(endService) only releases what is
+        // still in _work, so a target dropped here would otherwise stay locked
+        // against every other supply vehicle until the claim's own expiry — for a
+        // vehicle that just drove into another depot's radius, that is the rest of
+        // this job's duration plus CLAIM_GRACE. Only a claim still held by THIS
+        // vehicle is dropped, same rule as the end pass.
+        if (!isNull _vehicle && {((_vehicle getVariable [QGVAR(claim), []]) param [0, objNull]) isEqualTo _supply}) then {
+            _vehicle setVariable [QGVAR(claim), nil];
+        };
         _x set [0, objNull];
         _dropped = true;
     } else {

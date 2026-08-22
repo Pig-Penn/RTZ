@@ -39,8 +39,10 @@ private _sets = [];
     private _info = GVAR(disassembleMap) getOrDefault [toLowerANSI typeOf _x, []];
 
     // Skip one already being packed, so the context action can't offer an order
-    // FUNC(disassembleWeapon)'s double-order guard would only drop
-    if (_info isNotEqualTo [] && {alive _x} && {!(_x getVariable [QGVAR(packing), false])}) then {
+    // FUNC(disassembleWeapon)'s double-order guard would only drop. The claim is a
+    // CBA_missionTime deadline rather than a flag (see FUNC(disassembleWeapon)), so
+    // one stranded by a re-tasked assistant lapses back into the menu on its own
+    if (_info isNotEqualTo [] && {alive _x} && {CBA_missionTime >= (_x getVariable [QGVAR(packing), 0])}) then {
         _info params ["_weaponBag", "_baseBags"];
 
         if (unitIsUAV _x) then {

@@ -47,11 +47,22 @@ if (!local _weapon) exitWith {
 // local, which on a dedicated server is another machine entirely. Claimed before the
 // drone split so a fast double order can't return two bags.
 //
+// A DEADLINE, not a flag - the same rule FUNC(assembleWeapon)'s QGVAR(assembling)
+// claim follows, for the same reason. The two-bag path below hands the errand to
+// EFUNC(common,approach) with the ASSISTANT as the walking lead, and an unrelated
+// errand ordered onto that man mid-walk (a mine to lay, a vehicle to repair)
+// supersedes this one inside approach - and a superseded order's hooks NEVER fire,
+// neither arrival nor failure. A plain flag was stranded exactly there: the gunner
+// stayed mounted and the weapon stayed "packing" - un-packable, silently, for the
+// rest of the mission. The deadline lapses on its own instead. It starts at
+// PACK_TIMEOUT, which covers every immediate path (drone, single-bag, instant);
+// the walk path extends it once the assistant's walk length is known.
+//
 // Every path that goes on to pack deletes the weapon, taking the claim with it. The
 // two that bail out below instead release it by hand, so a weapon this order can't
-// pack doesn't stay un-packable for the rest of the mission
-if (_weapon getVariable [QGVAR(packing), false]) exitWith {};
-SETPVAR(_weapon,GVAR(packing),true);
+// pack doesn't sit out even the short deadline
+if (CBA_missionTime < (_weapon getVariable [QGVAR(packing), 0])) exitWith {};
+SETPVAR(_weapon,GVAR(packing),CBA_missionTime + PACK_TIMEOUT);
 
 // A drone folds instantly back into its bag, no dismount animation. Lightweight,
 // separate path (mirror of the assemble UAV split)
@@ -135,11 +146,19 @@ if (GVAR(instant)) exitWith {
 
 // Walk the assistant to the weapon, then pack. Pack on arrival, or in place on the
 // assistant's death or the timeout, so a Zeus order always completes
+private _walkTimeout = WALK_TIMEOUT_BASE + (_assistant distance2D _weapon) * WALK_TIMEOUT_PER_METER;
+
+// Extend the claim deadline over the walk plus the pack window, mirroring
+// FUNC(assembleWeapon). If the assistant is re-tasked mid-walk the errand's hooks
+// never fire (see the claim comment above), and this lapse is what un-strands the
+// weapon afterwards
+SETPVAR(_weapon,GVAR(packing),CBA_missionTime + _walkTimeout + PACK_TIMEOUT);
+
 [
     [_assistant],
     getPosATL _weapon,
     ARRIVE_DISTANCE,
-    WALK_TIMEOUT_BASE + (_assistant distance2D _weapon) * WALK_TIMEOUT_PER_METER,
+    _walkTimeout,
     LINKFUNC(packWeapon),
     LINKFUNC(packWeapon),
     [_weapon, _gunner, _weaponBag, _baseBag, _assistant, _curator],
