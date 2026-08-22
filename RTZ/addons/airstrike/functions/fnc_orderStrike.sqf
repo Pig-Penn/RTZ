@@ -34,7 +34,16 @@ if (_current isNotEqualTo _vehicle) exitWith {
     [LSTRING(StrikeUnavailable)] call zen_common_fnc_showMessage;
 };
 
-if (_vehicle ammo _weapon <= 0) exitWith {
+// Re-run through FUNC(strikeWeapons) rather than a bare `ammo _weapon` read: `ammo`
+// takes no turret path, so twin symmetric pylons sharing one weapon classname across
+// two turret paths would borrow each other's counts, and it reports only the loaded
+// magazine rather than the weapon's total. Matching on BOTH weapon and turret path
+// also catches the pylon having disappeared entirely, not merely run dry.
+private _stillArmed = ([_vehicle] call FUNC(strikeWeapons)) findIf {
+    (_x select 0 isEqualTo _weapon) && {(_x select 1) isEqualTo _turretPath}
+} != -1;
+
+if (!_stillArmed) exitWith {
     [LSTRING(NoOrdnance)] call zen_common_fnc_showMessage;
 };
 

@@ -37,12 +37,14 @@ private _statement = {[_position, _objects, _args, -1] call FUNC(orderStrike)};
 
     private _config = configFile >> "CfgWeapons" >> _weapon;
 
-    [
+    private _action = [
         _weapon,
         format [LLSTRING(WeaponLabel), getText (_config >> "displayName"), _ammo],
         getText (_config >> "picture"),
         _statement,
         {true},
         [_vehicle, _weapon, _turretPath, _type]
-    ]
+    ] call zen_context_menu_fnc_createAction;
+
+    [_action, [], 0]
 }
