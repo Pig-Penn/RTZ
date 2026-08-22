@@ -64,7 +64,7 @@ private _shift = RC_COLOR_SHIFT_MAX * ((sin (time * RC_COLOR_SHIFT_FREQ) + 1) / 
     // Mounted: head + 1 m sits inside the hull, so anchor to the vehicle's
     // bounding-box roof + 1 m instead.
     private _iconPos = if (isNull objectParent _unit) then {
-        (_unit modelToWorldVisual ([_unit] call EFUNC(common,headOffset))) vectorAdd [0, 0, 1]
+        HEAD_POS(_unit) vectorAdd [0, 0, 1]
     } else {
         _anchor modelToWorldVisual [0, 0, ((boundingBoxReal _anchor) select 1 select 2) + 1]
     };

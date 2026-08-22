@@ -65,6 +65,10 @@ params ["_ctx"];
 if (count GVAR(spotGroups) == 0 && { count GVAR(spotChevrons) == 0 }) exitWith {};
 
 private _camPos   = _ctx select CTX_CAMPOS;
+// Camera-up unit vector in world space — the axis the echelon amplifier's gap above
+// the group icon rides. See the note at _ampPos for why that gap cannot be a world
+// +Z lift.
+private _camUp    = _ctx select CTX_CAMUP;
 private _mousePos = _ctx select CTX_MOUSE;
 private _viewDist = _ctx select CTX_VIEWDIST;
 // The frame loop's clock, for the broad-phase throttle only. Kept distinct from the
@@ -90,9 +94,9 @@ private _clock = _ctx select CTX_NOW;
 // chevron in the store, and is now one hashmap read per hovered group.
 //
 // Each stored entry carries its RESOLVED ANCHOR appended, so the narrow phase needs no
-// `vehicle` call, and a chevron entry carries its HEAD OFFSET too, so it needs no
-// EFUNC(common,headOffset) call either — both are fixed for the life of the unit (the
-// offset is memoized on typeOf). It does not carry a distance — see the header.
+// `vehicle` call — that one IS fixed for the life of the unit. It does not carry a
+// distance, and it does not carry a head position: both change every frame, and the
+// head one is read through the HEAD_POS macro so that costs no call scope.
 if (_clock >= GVAR(cullAt)) then {
     GVAR(cullAt) = _clock + CULL_INTERVAL;
 
@@ -126,14 +130,15 @@ if (_clock >= GVAR(cullAt)) then {
         private _dist = _camPos distance _anchor;
         if (_dist > WEDGE_MAX_DIST || {_dist >= _viewDist}) then { continue };
 
-        // Head offset resolved HERE, alongside the anchor, and for the same reason:
-        // it is keyed on the unit's CLASS (EFUNC(common,headOffset) memoizes on
-        // typeOf), so it cannot change for the life of the unit — but the narrow
-        // phase was paying a `call` for it per chevron per FRAME. That is a fresh
-        // scope, a `params` destructure and a hashmap lookup per entity per frame,
-        // the precise cost this file refuses to pay for its colour block and its
-        // size ramp. Once per candidate per CULL_INTERVAL instead.
-        private _entry = [_x, _y, _anchor, [_y select 0] call EFUNC(common,headOffset)];
+        // The head position is NOT resolved here alongside the anchor, though it used
+        // to be. `selectionPosition` reports the selection in model space "pertaining
+        // to the current animation in render time scope" — the head moves within model
+        // space as the man leans, crouches, goes prone or turns his torso — so a value
+        // sampled once per CULL_INTERVAL is stale for up to that long, and the value it
+        // was sampled through (a per-CLASS memo) was never right for more than one pose
+        // of one man. It is read per frame in the narrow phase now, through HEAD_POS,
+        // which is a macro precisely so that per-frame read costs no call scope.
+        private _entry = [_x, _y, _anchor];
         if (_dist <= _chevCull) then {
             _visChevrons pushBack _entry;
         } else {
@@ -177,10 +182,10 @@ private _blinkUntil = GVAR(blinkUntil);
 private _now        = time;
 private _anyBlink   = _now <= GVAR(blinkAnyUntil);
 
-// Echelon amplifier vertical gap above the group icon, indexed by the payload's
-// side index (0 = BLUFOR rectangle, 1 = OPFOR diamond — peaks highest so needs
-// the most lift, 2 = independent/civilian square). World-space fraction scaled by
-// camera distance (constant screen gap at any zoom).
+// Echelon amplifier gap above the group icon, indexed by the payload's side index
+// (0 = BLUFOR rectangle, 1 = OPFOR diamond — peaks highest so needs the most lift,
+// 2 = independent/civilian square). A fraction scaled by camera distance and applied
+// along CAMERA-UP, giving a constant screen gap at any zoom AND any camera pitch.
 private _AMP_GAPS = AMP_GAPS_WORLD;
 
 // Hoisted once per frame: is anything actually under remote control? Testing only
@@ -252,11 +257,23 @@ private _groupHoverByLeader = createHashMap;
     };
     if (count _aim < 3) then { continue };
     private _iconPos = _aim vectorAdd [0, 0, _zMod];
-    // Size amplifier lifted in world space (drawIcon3D offsetY is clamped); scaled
-    // by _dist (not _zMod, which floors close up) for a constant screen gap. Each
-    // side's frame peaks at a different height, so the gap comes from the per-side
-    // table above via the payload's side index.
-    private _ampPos = _iconPos vectorAdd [0, 0, _dist * (_AMP_GAPS select _sideIdx)];
+    // Size amplifier lifted along CAMERA-UP, not world +Z. drawIcon3D offers no
+    // screen-space offset for the ICON — its offsetX/offsetY move the TEXT, which
+    // here is "" — so the gap has to be a world vector, and the axis it rides is
+    // what matters. A world +Z gap projects to screen as gap * sin(angle between
+    // +Z and the view axis): full looking at the horizon, HALF at 60° down, and
+    // ZERO looking straight down, where the amplifier landed exactly on the group
+    // icon it is meant to sit above. Top-down is the Zeus working angle, so that
+    // collapse was the normal case, not an edge case. Camera-up is perpendicular
+    // to the view axis by construction, so this offset leaves the amplifier at the
+    // icon's depth and the screen gap is exact at every pitch. Same fix and same
+    // reason as EFUNC(hud,drawUnitTags)' tag lift; the frame loop resolves the
+    // camera basis once per frame precisely so renderers can do this.
+    //
+    // Still scaled by _dist (not _zMod, which floors close up) so the gap also
+    // holds through zoom. Each side's frame peaks at a different height, so the
+    // size comes from the per-side table above via the payload's side index.
+    private _ampPos = _iconPos vectorAdd (_camUp vectorMultiply (_dist * (_AMP_GAPS select _sideIdx)));
     private _iconW  = GROUP_ICON_WIDTH;
 
     // Only worth asking for a group that HAS chevrons waiting past the cutoff.
@@ -320,11 +337,10 @@ if (count _groupHoverByLeader > 0) then {
 };
 
 {
-    // Broad-phase entry: [markerName, stored display data, resolved anchor, head
-    // offset]. The alive / null-anchor / cutoff tests were paid there, and so was
-    // the head-offset resolve — what survives here is a candidate, and the only
-    // per-frame question left is where it is now.
-    _x params ["_mrkr", "_data", "_anchor", "_headOff"];
+    // Broad-phase entry: [markerName, stored display data, resolved anchor]. The
+    // alive / null-anchor / cutoff tests were paid there — what survives here is a
+    // candidate, and the only per-frame question left is where it is now.
+    _x params ["_mrkr", "_data", "_anchor"];
     _data params ["_unit", "_texture", "_colorArray", "_ldrId", "_name", "_unitId"];
 
     private _dist = _camPos distance _anchor;
@@ -347,9 +363,11 @@ if (count _groupHoverByLeader > 0) then {
     // Native EG-spectator chevron (ACE recipe): head + 1 m, size scaled by
     // distance. Smooth ramp rather than a stepped table — same endpoints, one
     // engine call, and no per-chevron `call {}` scope per frame.
-    // _headOff came from the broad phase; modelToWorldVisual stays here, because
-    // THAT genuinely changes every frame.
-    private _iconPos = (_unit modelToWorldVisual _headOff) vectorAdd [0, 0, 1];
+    // BOTH halves of HEAD_POS are read here, per frame: modelToWorldVisual because
+    // the man moves, and selectionPosition because the head moves WITHIN him as he
+    // leans, crouches or goes prone. Hoisting the second one to the broad phase is
+    // what used to leave chevrons hanging off to the side of their unit.
+    private _iconPos = HEAD_POS(_unit) vectorAdd [0, 0, 1];
     // modelToWorldVisual returns [] while the model has not resolved on this
     // machine — the handful of frames after Zeus places a unit — and
     // [] vectorAdd [...] stays []. drawIcon3D would then silently draw nothing

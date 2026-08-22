@@ -3,8 +3,14 @@
 // master switch takes effect at mission start (postInit gate); flipping it
 // mid-mission still shows/hides tags via the CBA_SettingChanged sync.
 
-private _catTags     = [ELSTRING(main,DisplayName), LSTRING(CategoryDogTags)];
-private _catVehTags  = [ELSTRING(main,DisplayName), LSTRING(CategoryVehicleTags)];
+// The tag blocks do NOT sit under the mod's own "Real-Time Zeus" entry. Between
+// them they are ~30 of the mod's ~100 settings — a third of one page — so they
+// get their own top-level entry in the CBA category dropdown, "Real-Time Zeus -
+// Dog Tags" (prefixed so it sorts beside the main page rather than off among
+// the other mods), split into an infantry and a vehicle subcategory inside it.
+// Everything else in this file (the Overlays block) stays on the main RTZ page.
+private _catTags     = [LSTRING(CategoryDogTags), LSTRING(CategoryUnitTags)];
+private _catVehTags  = [LSTRING(CategoryDogTags), LSTRING(CategoryVehicleTags)];
 // rtz_core's key, NOT a local copy. CBA groups settings by the LOCALIZED STRING,
 // so this component's overlay switches and the engine's cadence knob shared a
 // category only because two separate stringtable entries happened to hold
@@ -69,7 +75,8 @@ private _catOverlays = [ELSTRING(main,DisplayName), ELSTRING(core,CategoryOverla
 ] call CBA_fnc_addSetting;
 
 // ── Vehicle tags (FUNC(drawVehicleTags)) — per-client display customization 
-// All client-local (isGlobal 0), mirroring the Dog Tags block above. The
+// All client-local (isGlobal 0), mirroring the Unit Tags block above — and its
+// sibling subcategory under the same "Real-Time Zeus - Dog Tags" entry. The
 // master switch takes effect at mission start (postInit gate); flipping it
 // mid-mission still shows/hides tags via the CBA_SettingChanged sync.
 

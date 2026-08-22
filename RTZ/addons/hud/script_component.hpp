@@ -107,6 +107,11 @@
 #define COL_WARN   [1.00, 0.78, 0.30, 1.0]
 #define COL_BAD    [1.00, 0.38, 0.38, 1.0]
 #define COL_GOLD   [1.00, 0.84, 0.40, 1.0]
+// The LAMBS tactic segment carries no "TAC" prefix — it is identified by colour
+// instead, deliberately the same amber as the Draw Destinations context action's
+// tint (COLOR_DEST, below), so a group's tactic and the destination markers it
+// is driving toward read as one system.
+#define COL_TACTIC COLOR_DEST
 
 // BIS simpletask icon family shared by the selection dialog rows
 // (FUNC(buildSelectionRows)) and the unit head tags (FUNC(drawUnitTags)) —

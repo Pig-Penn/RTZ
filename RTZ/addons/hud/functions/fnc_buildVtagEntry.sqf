@@ -8,10 +8,12 @@
  * steady state.
  *
  * Locality-bound fields (LAMBS task/tactic) arrive as "" when the crew is not
- * server-local, so they drop out naturally. statusText is coloured separately
- * from mainText so LOW FUEL / DAMAGED can be amber/red without recolouring the
- * whole line. The measured text widths ride along so the per-frame draw only
- * reads them back — see FUNC(textWidth).
+ * server-local, so they drop out naturally. tacticText and statusText are
+ * coloured separately from mainText: the tactic in COL_TACTIC, which is what
+ * identifies it now that it carries no "TAC " prefix, and the status so LOW FUEL
+ * / DAMAGED can be amber/red without recolouring the whole line. The measured
+ * text widths ride along so the per-frame draw only reads them back — see
+ * FUNC(textWidth).
  *
  * All display text resolves here: LAMBS task/tactic strings and the RTZ FLAG_*
  * wire tokens go through GVAR(tagLabels) (FUNC(loadTagLabels)), and a token whose
@@ -22,8 +24,10 @@
  *
  * Return Value:
  * Cache entry <ARRAY>
- *   0 mainSep (main line + its separator)  1 mainRGB  2 statusText  3 statusRGB
- *   4 mainSepWidth  5 statusWidth  6 hasContent
+ *   0 mainSep (main line + its separator)  1 mainRGB
+ *   2 tacticSep (tactic + its separator)   3 tacticRGB
+ *   4 statusText                           5 statusRGB
+ *   6 mainSepWidth  7 tacticSepWidth  8 statusWidth  9 hasContent
  *
  * Layout matches FUNC(buildTagEntry)'s leading fields — both are composed by
  * FUNC(tagEntryTail) and drawn by FUNC(drawTagLine).
@@ -84,13 +88,13 @@ if (GVAR(vtagShowCommander) && { _ecNet != "" }) then {
         _segs pushBack format [LLSTRING(VtagFieldCommander), name _ec];
     };
 };
+
+// Kept OUT of _segs: drawn as its own chunk in COL_TACTIC, and that colour is
+// what marks it as the tactic — it spends no line width on a "TAC " prefix. A
+// tactic mapped to "" (LAMBS' "None") drops the chunk entirely.
+private _tacText = "";
 if (GVAR(vtagShowTactic) && { _tactic != "" }) then {
-    // Remap FIRST: a tactic mapped to "" (LAMBS' "None") must drop the whole
-    // segment, not render a bare "TAC ".
-    private _tacLabel = _labels getOrDefault [_tactic, _tactic];
-    if (_tacLabel != "") then {
-        _segs pushBack format [LLSTRING(TagFieldTactic), _tacLabel];
-    };
+    _tacText = _labels getOrDefault [_tactic, _tactic];
 };
 
 // Status: warning flags always surface; the LAMBS task only when enabled.
@@ -113,16 +117,23 @@ private _statusCol = switch (true) do {
     default                         { _col };
 };
 
-// Composed line and its exact on-screen widths for the status split in the draw
-// pass, measured once per cache build (size changes dirty the cache through the
-// vtag* prefix in the settings watcher, so these stay in step with
+// Composed line and its exact on-screen widths for the coloured splits in the
+// draw pass, measured once per cache build (size changes dirty the cache through
+// the vtag* prefix in the settings watcher, so these stay in step with
 // GVAR(vtagSize)). Shared with the unit tags — see FUNC(tagEntryTail), which is
 // also what stopped this path rebuilding the composed line every frame.
-([_segs, _status, GVAR(vtagSize)] call FUNC(tagEntryTail)) params ["_mainSep", "_wMainSep", "_wStatus"];
+([_segs, _tacText, _status, GVAR(vtagSize)] call FUNC(tagEntryTail))
+    params ["_mainSep", "_tacticSep", "_wMainSep", "_wTacticSep", "_wStatus"];
 
 // Precomputed "anything to draw at all", matching FUNC(buildTagEntry): the draw
 // pass reads this one boolean instead of unpacking the whole entry to work it out
-// per vehicle per frame. _mainSep is empty exactly when the main line is.
-private _hasContent = _mainSep != "" || { _status != "" };
+// per vehicle per frame. _mainSep / _tacticSep are empty exactly when their own
+// chunk is.
+private _hasContent = _mainSep != "" || { _tacticSep != "" } || { _status != "" };
 
-[_mainSep, _col select [0, 3], _status, _statusCol select [0, 3], _wMainSep, _wStatus, _hasContent]
+[
+    _mainSep, _col select [0, 3],
+    _tacticSep, (COL_TACTIC) select [0, 3],
+    _status, _statusCol select [0, 3],
+    _wMainSep, _wTacticSep, _wStatus, _hasContent
+]

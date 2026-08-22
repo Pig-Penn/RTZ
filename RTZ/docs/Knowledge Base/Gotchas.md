@@ -411,6 +411,137 @@ after the fallback**. What an `[]` position does next decides whether you ever f
 
 Both shipped from the same edit; only the `distance` one announced itself.
 
+### `selectionPosition` is animated, not a per-class constant — never memoize it
+
+It looks like a pure model query, and the name encourages that reading: a selection is a
+named point in the model, so surely for a given class the answer is fixed for the mission.
+It is not. The Biki is explicit that it returns the position **"in model space pertaining to
+the current animation in render time scope"** — the head, hands and weapon points all move
+*within* model space as a man leans, crouches, goes prone or turns his torso.
+
+The proof is in CBA: [`CBA_fnc_modelHeadDir`](https://github.com/CBATeam/CBA_A3/blob/master/addons/common/fnc_modelHeadDir.sqf)
+derives a unit's **live** head facing from nothing but `selectionPosition "pilot"` and
+`selectionPosition "neck"`. If those were static it could only ever return one number.
+
+```sqf
+// BAD - memoized on typeOf. Every man of that class is frozen in whatever pose the
+// first one of that class happened to be in when the cache was first populated.
+GVAR(headOffsetCache) getOrDefaultCall [typeOf _unit, {_unit selectionPosition "Head"}, true]
+
+// GOOD - re-read per frame. ACE3's spectator draws the same EG chevron this way.
+#define HEAD_POS(obj) ((obj) modelToWorldVisual ((obj) selectionPosition "Head"))
+```
+
+The symptom is quiet, because the icon is still *near* the unit: a chevron hanging beside a
+man's shoulder rather than over his head, or a metre above a prone one, drifting as he
+changes stance. Nothing errors, and the icon tracks him around the map perfectly — it is
+only ever wrong by the animation delta, which reads as "the icon is slightly off" rather
+than "the offset is stale".
+
+A per-**frame** engine read is the correct answer here, so the usual "hoist it to the broad
+phase" instinct is the bug. Where that read is per entity per frame, pay for it with a macro
+rather than a function ([script_macros.hpp](addons/main/script_macros.hpp)) — a `call` there
+buys a fresh scope and a `params` destructure per entity per frame.
+
+Memoizing on `typeOf` is still right for genuine *config* reads (`EFUNC(common,classInfo)`,
+`GVAR(magazineCapacities)`); the distinction is config vs. model-state, not "engine call I
+would rather not repeat".
+
+#### …but a *label* does not want an animated anchor at all
+
+Fixing the memo exposed the other half of the lesson. `HEAD_POS` is right for an icon that
+means **"this man"** — a spot chevron, the remote-control portrait — which *should* sink
+with him when he goes prone. It is wrong for a **head tag**, which means "this entity's
+label", because the live head is ~1.65 m up in model space standing and ~0.3 m up prone:
+tags dived about a metre and a third on the first man to hit the dirt and landed on top of
+the basegame Zeus entity icon, which does not move. `GVAR(tagHeight)` could not save it —
+that lift is a flat offset added to a floor that is itself moving.
+
+```sqf
+// Label over an entity: static model extent, one height through every stance.
+#define MODEL_TOP(obj) (((boundingBoxReal (obj)) param [1, []]) param [2, 0])
+_obj modelToWorldVisual [0, 0, MODEL_TOP(_obj)]      // EFUNC(hud,tagAnchor)
+```
+
+`boundingBoxReal` reports the **model's** extent, not the current animation's, so it is the
+per-class constant `selectionPosition` was mistaken for. Note the shape of the mistake: the
+memo was not wrong because caching is wrong, it was wrong because it cached an animated
+value — and swapping in a genuinely static one is a different fix from re-reading the
+animated one per frame. Ask which of the two you actually want *before* reaching for either.
+
+### `ctrlTextWidth` measures a control, not the glyphs — it adds 0.008 UI-x per side
+
+Text that will be drawn with `drawIcon3D` must be measured with **`getTextWidth`**.
+`ctrlTextWidth` answers a different question — *"how wide must a **control** be to hold this
+string"* — and the Biki spells out the difference: the margins are **hardcoded at 0.008 each
+side**, so a `ctrlTextWidth` reading is the glyph run **plus 0.016 UI-x**. `drawIcon3D` draws
+bare glyphs and has no margins at all.
+
+```sqf
+// BAD - a hidden RscText, fonted and sized to match the draw, still overstates by 0.016.
+_ctrl ctrlSetFontHeight _size; _ctrl ctrlSetText _text; ctrlTextWidth _ctrl
+
+// GOOD - the same estimate without a control's margins, and without a control.
+_text getTextWidth ["RobotoCondensedBold", _size]
+```
+
+Nothing errors, and the number is *plausible* — which is what makes it expensive. It goes wrong
+wherever a measured width is used as an **advance**. A tag line drawn as several separately
+coloured `drawIcon3D` chunks (`EFUNC(hud,drawTagLine)`) walks its cursor by these widths, so every
+chunk after the first landed 0.016 past the `" · "` baked into the end of the one before it: the
+gap after each separator was visibly wider than the gap before it, and the line — centred on the
+inflated total — sat 0.008 left of the entity it belonged to.
+
+The nastiest part is that the error scales with **how many strings you measured**, not with the
+line. A tag carrying main + tactic + status overshot by three margins; one carrying only a main
+line, by one. `EFUNC(hud,buildTagEntry)` sizes its icon slots and its de-confliction footprint off
+that same sum, so its icons drifted right by an amount that changed per tag — and no fixed
+`ICON_TEXT_GAP` can be tuned against a moving error. If you ever catch yourself nudging a spacing
+constant to make icons sit right, check what measured them first.
+
+`getTextWidth` takes the font and size directly, so it also works before `findDisplay 46` exists.
+That removes the "no display yet, fall back to a per-character estimate" branch a control-based
+measurement needs — and with it the silently-wrong widths that branch baked into any cache entry
+built too early.
+
+### A screen-space offset added to an AGL position rides the terrain
+
+`drawIcon3D`, `drawLine3D` and `worldToScreen` all take **PositionAGL**, whose Z is measured
+from the terrain *directly under the point*. `modelToWorldVisual`, `unitAimPositionVisual` and
+`modelToWorld` all hand you one. So the obvious way to nudge a drawn thing sideways —
+
+```sqf
+// BAD - _agl is AGL, so this holds HEIGHT ABOVE GROUND constant and walks the
+// anchor up and down the hill instead of sliding it along the screen axis.
+_agl vectorAdd (_camRight vectorMultiply _metres)
+
+// GOOD - offset in true world space, convert back only at the draw itself.
+ASLToAGL ((AGLToASL _agl) vectorAdd (_camRight vectorMultiply _metres))
+```
+
+is only correct on flat ground. `_camRight` (`CTX_CAMRIGHT`) is horizontal, so the whole offset
+lands in XY, and the resulting point's real altitude changes by the *terrain difference* between
+where it started and where it ended up.
+
+The scale is what makes this bite. A UI offset becomes world metres through `_perMetre`, and at
+tag range that multiplier is large: a 0.1 UI-x text chunk on an entity 150 m out is roughly **20 m**
+of world offset. On a hillside that is metres of elevation, so
+[`EFUNC(hud,drawTagLine)`](addons/hud/functions/fnc_drawTagLine.sqf) — which walks a cursor across
+*three* separately-coloured chunks — put each chunk on its own patch of ground and the tag came
+apart into pieces at different heights. Flat terrain hid it completely.
+
+It corrupts the horizontal axis too, and less obviously: an altitude change moves the anchor's
+**depth** from a pitched camera, and `worldToScreen`'s X is depth-divided, so the chunk spacing
+drifts as well as the height. The `_perMetre` probe itself (`worldToScreen (_pos vectorAdd
+_camRight)`) is measured with the same broken step, so the scale it returns is off before anything
+uses it.
+
+Note the shape of the regression: the two-draw version this replaced anchored **both** halves at
+one point, so both sampled the same terrain and moved together — the line stayed coherent while
+being drawn in the wrong place. Splitting one anchor into three is what turned a shared error into
+a visible tear. **Any time you offset a draw position by a camera-basis vector, do the arithmetic
+in ASL.**
+
 ### `findIf` returns `-1`, so test `!= -1`
 
 ```sqf
@@ -777,5 +908,7 @@ when someone looks.
 | One field of a multi-part write never applies; the rest do, and the "done" toast still fires | that command is argument-**local** while its siblings are global — check the table (§4) |
 | An order works, then quietly stops part-way through and only ends at its timeout | ownership moved mid-order and nothing re-tested `local` (§4) |
 | A unit is released everywhere except the machine that actually holds it | teardown ran on the machine that *lost* the object — route it to the owner (§4) |
+| A drawn line or icon breaks apart or drifts vertically on slopes but looks right on flat ground | a camera-basis offset was added to an **AGL** position, so it follows the terrain — offset in ASL, `ASLToAGL` at the draw (§3) |
 | An event bounces between two machines forever | teardown re-routes on both ends; pass an "apply only" flag (§4) |
 | A unit arrives on a new owner with its AI back on | `disableAI` is machine-local and does not travel — re-apply from a `"Local"` handler (§4) |
+| A drawn text line reads lopsided — every separator has a wider gap after it than before it, and the whole line sits slightly left of its entity | widths measured with `ctrlTextWidth`, which adds 0.008 UI-x of control margin per side — measure with `getTextWidth` (§3) |

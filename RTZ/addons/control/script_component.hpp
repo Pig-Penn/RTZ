@@ -33,7 +33,7 @@
 
 #define ICON_OWNERSHIP "\x\zen\addons\context_actions\ui\add_ca.paa"
 #define ICON_RESET "\a3\3DEN\Data\CfgWaypoints\cycle_ca.paa"
-#define ICON_RELOAD "\a3\ui_f\data\IGUI\Cfg\Actions\reammo_ca.paa"
+#define ICON_RELOAD "\a3\ui_f\data\IGUI\Cfg\Actions\reload_ca.paa"
 
 // Toggle icon/tint pair for the "Forbid/Allow Dismount" context action and its
 // modifierFunction — amber padlock while vanilla (will lock crew in), cyan

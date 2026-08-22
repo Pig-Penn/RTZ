@@ -23,7 +23,10 @@
             <English>Hide Targets</English>
         </Key>
         <Key ID="STR_RTZ_HUD_CategoryDogTags">
-            <English>Dog Tags</English>
+            <English>Real-Time Zeus - Dog Tags</English>
+        </Key>
+        <Key ID="STR_RTZ_HUD_CategoryUnitTags">
+            <English>Unit Tags</English>
         </Key>
         <Key ID="STR_RTZ_HUD_CategoryVehicleTags">
             <English>Vehicle Tags</English>
@@ -252,9 +255,6 @@
         </Key>
         <Key ID="STR_RTZ_HUD_TagFieldSuppression">
             <English>SUP %1</English>
-        </Key>
-        <Key ID="STR_RTZ_HUD_TagFieldTactic">
-            <English>TAC %1</English>
         </Key>
         <Key ID="STR_RTZ_HUD_TagHeight">
             <English>Tag Height</English>

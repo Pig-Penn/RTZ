@@ -61,8 +61,8 @@ PREP(unitCount);
 // The two entry builders differ in which fields they collect and not at all in
 // what they do with them, so the shared tail and the shared draw live once:
 // tagEntryTail composes and measures the line, drawTagLine renders it with the
-// status word split off in its own colour, tagAnchor resolves what either kind of
-// entity hangs its tag above.
+// tactic and the status word split off into their own colours, tagAnchor
+// resolves what either kind of entity hangs its tag above.
 PREP(buildTagEntry);
 PREP(buildVtagEntry);
 PREP(tagEntryTail);

@@ -46,7 +46,7 @@
  */
 
 private _pairs = [
-    // ═══ TACTICS — the "TAC …" segment (group-level, leader tag / vehicle) ═══
+    // ═══ TACTICS — the amber segment (group-level, leader tag / vehicle) ═══
     // Reactive combat tactics (LAMBS danger component)
     ["Contact!",            "Contact"],        // leader's immediate reaction to first sighting (fnc_contact)
     ["Attacking",           "Attack"],         // whole group ordered onto ONE enemy unit (fnc_tacticsAttack)
@@ -59,7 +59,7 @@ private _pairs = [
     ["Garrison/Rally",      "Garrison"],       // reactive: group occupies buildings near the enemy
     ["Reinforcing",         "Reinforce"],      // group answering another group's call for help
     // LAMBS' own "no tactic" value — blanked so a calm group's tag carries no
-    // pointless "TAC None" segment.
+    // pointless "None" segment.
     ["None",                ""],               // inert: LAMBS clears the var to nil and RTZ reads default ""
     // Waypoint tactics (raw internal names — rename to taste)
     ["taskPatrol",          "Patrol"],         // dynamic patrol of an area (lambs_wp module/waypoint)

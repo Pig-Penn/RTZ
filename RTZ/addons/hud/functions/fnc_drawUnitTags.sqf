@@ -12,9 +12,11 @@
  * and the STREAM_UNIT feed). It is assembled by FUNC(buildTagEntry) from the
  * fields enabled in CBA settings (role, health, morale, suppression, magazine
  * rounds, status, LAMBS tactic, current AI command) and drawn in a static colour
- * so urgency never recolours the whole line — only the trailing status word (DOWN
- * / FLEEING) carries its own, split off at a measured text boundary by
- * FUNC(drawTagLine). DOWN / FLEEING shows regardless of the status field setting.
+ * so urgency never recolours the whole line — only the LAMBS tactic (amber, the
+ * Draw Destinations tint, which is what names it as the tactic without a "TAC "
+ * prefix) and the trailing status word (DOWN / FLEEING) carry their own, split
+ * off at measured text boundaries by FUNC(drawTagLine). DOWN / FLEEING shows
+ * regardless of the status field setting.
  * Mounted units are skipped: the vehicle tag covers their vehicle.
  *
  * Two optional icons ride the same screen-space placement trick, each
@@ -76,7 +78,7 @@ private _iconDraw = _size * ICON_DRAW;   // icons scale with the tag size
 private _zOff     = GVAR(tagHeight);
 
 // ── Pass 1: resolve each selected unit to a render record ────────────────────
-// [_scr, _perMetreRight, _pos, _alpha, _entry, _yShift]. Only survivors reach
+// [_scr, _perMetreRight, _posASL, _alpha, _entry, _yShift]. Only survivors reach
 // the layout and draw passes. _perMetreRight is UI-x per metre of camera-right
 // at this unit's depth — exact for any FOV, no formula guesswork — used to
 // convert measured UI offsets back to world metres. (The camera-up equivalent is
@@ -92,7 +94,7 @@ private _records = [];
         _entry = [_pkt] call FUNC(buildTagEntry);
         _cache set [_x, _entry];
     };
-    if !(_entry select 13) then { continue };                       // every field/icon toggled off
+    if !(_entry select 16) then { continue };                       // every field/icon toggled off
 
     private _unit = objectFromNetId _x;
     // objectParent re-check: the unit can mount between server pushes.
@@ -109,17 +111,23 @@ private _records = [];
     // icon). Scaled by camera distance so the on-screen gap above the icon stays
     // constant at any pitch/zoom; below ~30 m it holds the literal "metres above
     // head" the Tag Height setting promises.
-    private _pos = _head vectorAdd (_camUp vectorMultiply (_zOff * (1 max (_dist / 30))));
+    // ASL, not the AGL FUNC(tagAnchor) returns. A camera-basis offset added to an
+    // AGL position holds HEIGHT ABOVE GROUND, not altitude, so it rides the terrain
+    // under it instead of following the screen axis — see FUNC(drawTagLine), which
+    // takes its centre in ASL for the same reason. Everything downstream (the
+    // de-confliction nudge, the chunk walk, the icon slots) offsets from this.
+    private _posASL = (AGLToASL _head) vectorAdd (_camUp vectorMultiply (_zOff * (1 max (_dist / 30))));
+    private _pos    = ASLToAGL _posASL;
 
     private _scr = worldToScreen _pos;
     if (_scr isEqualTo []) then { continue };                       // unit off-screen
-    private _oneRight = worldToScreen (_pos vectorAdd _camRight);
+    private _oneRight = worldToScreen (ASLToAGL (_posASL vectorAdd _camRight));
     if (_oneRight isEqualTo []) then { continue };
     private _perMetreRight = (_oneRight select 0) - (_scr select 0);
     if (_perMetreRight <= 1e-6) then { continue };
 
     private _alpha = linearConversion [_fadeIn, _maxDist, _dist, 0.85, 0, true];
-    _records pushBack [_scr, _perMetreRight, _pos, _alpha, _entry, 0];
+    _records pushBack [_scr, _perMetreRight, _posASL, _alpha, _entry, 0];
 } forEach _ids;
 
 if (_records isEqualTo []) exitWith {};
@@ -148,7 +156,7 @@ private _placed = [];                                              // [xCentre, 
     private _rec = _records select (_x select 1);
     private _scr = _rec select 0;
     private _xC  = _scr select 0;
-    private _hw  = (_rec select 4) select 12;   // composed half-width (text + present icons)
+    private _hw  = (_rec select 4) select 15;   // composed half-width (text + present icons)
     private _finalY = _scr select 1;
     private _pass = 0;
     private _bumped = true;
@@ -180,11 +188,11 @@ private _placed = [];                                              // [xCentre, 
 // worldToScreen.
 private _showFlags = GVAR(tagShowFlagIcon);
 {
-    _x params ["_scr", "_perMetre", "_pos", "_alpha", "_entry", "_yShift"];
+    _x params ["_scr", "_perMetre", "_posASL", "_alpha", "_entry", "_yShift"];
     _entry params [
-        "_mainSep", "_rgbMain", "_statusText", "_rgbStatus", "_flagsText",
-        "_threatIcon", "_rgbThreat", "_threatHover",
-        "_wMainSep", "_wStatus", "_threatCenterUI", "_flagCenterUI"
+        "_mainSep", "_rgbMain", "_tacticSep", "_rgbTactic", "_statusText", "_rgbStatus",
+        "_flagsText", "_threatIcon", "_rgbThreat", "_threatHover",
+        "_wMainSep", "_wTacticSep", "_wStatus", "_threatCenterUI", "_flagCenterUI"
     ];
 
     // The distance fade is the only per-frame part of the colour, so build each
@@ -192,24 +200,26 @@ private _showFlags = GVAR(tagShowFlagIcon);
     private _colMain   = _rgbMain + [_alpha];
     private _colThreat = _rgbThreat + [_alpha];
 
-    private _dpos = _pos;
+    private _dposASL = _posASL;
     if (_yShift != 0) then {
-        private _oneUp = worldToScreen (_pos vectorAdd _camUp);
+        private _oneUp = worldToScreen (ASLToAGL (_posASL vectorAdd _camUp));
         if (_oneUp isNotEqualTo []) then {
             private _perMetreUp = (_oneUp select 1) - (_scr select 1);
             if (abs _perMetreUp > 1e-6) then {
-                _dpos = _pos vectorAdd (_camUp vectorMultiply (_yShift / _perMetreUp));
+                _dposASL = _posASL vectorAdd (_camUp vectorMultiply (_yShift / _perMetreUp));
             };
         };
     };
     private _scrX = _scr select 0;
     private _scrY = (_scr select 1) + _yShift;
 
-    // Main line, with the status word split off into its own colour — shared with
-    // the vehicle tags so both families measure and place it identically.
+    // Main line, with the LAMBS tactic and the status word split off into their
+    // own colours — shared with the vehicle tags so both families measure and
+    // place them identically.
     [
-        _dpos, _perMetre, _camRight, _mainSep, _statusText,
-        _colMain, _rgbStatus + [_alpha], _size, _wMainSep, _wStatus
+        _dposASL, _perMetre, _camRight, _mainSep, _tacticSep, _statusText,
+        _colMain, _rgbTactic + [_alpha], _rgbStatus + [_alpha], _size,
+        _wMainSep, _wTacticSep, _wStatus
     ] call FUNC(drawTagLine);
 
     // Icons ride the flush centre offsets measured at cache-build time (UI-x from
@@ -219,7 +229,7 @@ private _showFlags = GVAR(tagShowFlagIcon);
 
     // Threat icon (danger/target) — flush to the right edge of the line.
     if (_threatIcon != "") then {
-        private _iconPos = _dpos vectorAdd (_camRight vectorMultiply (_threatCenterUI / _perMetre));
+        private _iconPos = ASLToAGL (_dposASL vectorAdd (_camRight vectorMultiply (_threatCenterUI / _perMetre)));
         if ([_scrX + _threatCenterUI, _scrY] distance2D _mouse < ICON_HOVER_RADIUS) then {
             drawIcon3D [_threatIcon, _colThreat, _iconPos, _iconDraw, _iconDraw, 0, _threatHover, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
         } else {
@@ -230,7 +240,7 @@ private _showFlags = GVAR(tagShowFlagIcon);
     // Flag-inventory icon — flush past the threat icon when both show, else flush
     // to the text. Hovering expands the full flag list.
     if (_showFlags && {_flagsText != ""}) then {
-        private _iconPos = _dpos vectorAdd (_camRight vectorMultiply (_flagCenterUI / _perMetre));
+        private _iconPos = ASLToAGL (_dposASL vectorAdd (_camRight vectorMultiply (_flagCenterUI / _perMetre)));
         if ([_scrX + _flagCenterUI, _scrY] distance2D _mouse < ICON_HOVER_RADIUS) then {
             drawIcon3D [FLAG_ICON, COL_GOLD, _iconPos, _iconDraw, _iconDraw, 0, _flagsText, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
         } else {

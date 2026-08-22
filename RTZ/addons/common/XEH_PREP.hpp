@@ -21,7 +21,6 @@ PREP(classInfo);
 PREP(magazineCapacity);
 
 // Shared UI / presentation helpers.
-PREP(headOffset);
 PREP(notifyCurator);
 PREP(placementPreview);
 PREP(removeContextActions);

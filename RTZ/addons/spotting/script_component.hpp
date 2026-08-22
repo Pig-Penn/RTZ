@@ -152,9 +152,11 @@
 #define GROUP_HOVER_R2 (0.05 * 0.05)
 #define GROUP_ICON_WIDTH 1.3
 
-// World-space twin of AMP_GAPS_MAP above: same per-side echelon amplifier gap,
-// as a fraction scaled by camera distance (constant screen gap at any zoom).
-#define AMP_GAPS_WORLD [0.002, 0.008, 0.004]
+// 3D twin of AMP_GAPS_MAP above: same per-side echelon amplifier gap, as a fraction
+// scaled by camera distance — but applied along CAMERA-UP, never as a world +Z lift,
+// which projects to nothing from a top-down camera and drops the amplifier onto the
+// icon (FUNC(drawSpots)). Constant screen gap at any zoom and any camera pitch.
+#define AMP_GAPS_WORLD [0.002, 0.010, 0.004]
 
 // Group icon world-space height offset over camera distance — native Zeus
 // group-icon recipe (FUNC(drawSpots)).
@@ -172,7 +174,7 @@
 // therefore how fast a client's "someone's player unit changed" poke turns into a
 // rescan. Detection is event-driven; GVAR(rcCheckInterval) is the FALLBACK cadence
 // for what no event reported, read live and floored to this value.
-#define RC_CHECK_TICK 1
+#define RC_CHECK_TICK 3
 #define RC_OWNER_VAR "bis_fnc_moduleRemoteControl_owner"
 
 // ...and how the result looks (FUNC(drawRcIndicator)): a portrait icon over the

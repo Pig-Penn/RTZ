@@ -7,12 +7,14 @@
  * tag* setting change, so this never runs per frame in the steady state.
  *
  * Locality-bound fields (morale, suppression, ammo, task, tactic, command,
- * threat icon) are only rendered when the packet carries live data. statusText is
- * kept out of the main line and coloured separately so DOWN / FLEEING can be red
- * without recolouring the whole tag. flagsText / threatHover are the
- * hover-expand strings for their respective icons ("" when the icon has nothing
- * to show). The measured text widths ride along so the per-frame draw only reads
- * them back — see FUNC(textWidth).
+ * threat icon) are only rendered when the packet carries live data. tacticText
+ * and statusText are kept out of the main line and coloured separately: the
+ * tactic in COL_TACTIC, which is what identifies it now that it carries no
+ * "TAC " prefix, and the status so DOWN / FLEEING can be red without recolouring
+ * the whole tag. flagsText / threatHover are the hover-expand strings for their
+ * respective icons ("" when the icon has nothing to show). The measured text
+ * widths ride along so the per-frame draw only reads them back — see
+ * FUNC(textWidth).
  *
  * All display text resolves here: LAMBS task/tactic strings and the RTZ FLAG_* /
  * STATUS_* wire tokens go through GVAR(tagLabels) (FUNC(loadTagLabels)), and a
@@ -23,10 +25,13 @@
  *
  * Return Value:
  * Cache entry <ARRAY>
- *   0 mainSep (main line + its separator)  1 mainRGB  2 statusText  3 statusRGB
- *   4 flagsText  5 threatIcon  6 threatRGB  7 threatHover
- *   8 mainSepWidth  9 statusWidth  10 threatCentreUI  11 flagCentreUI
- *   12 layoutHalfWidth  13 hasContent
+ *   0 mainSep (main line + its separator)   1 mainRGB
+ *   2 tacticSep (tactic + its separator)    3 tacticRGB
+ *   4 statusText                            5 statusRGB
+ *   6 flagsText  7 threatIcon  8 threatRGB  9 threatHover
+ *   10 mainSepWidth  11 tacticSepWidth  12 statusWidth
+ *   13 threatCentreUI  14 flagCentreUI
+ *   15 layoutHalfWidth  16 hasContent
  *
  * The bare main line and the separator used to ride along as their own slots.
  * Nothing read them — FUNC(drawUnitTags) is the only consumer and draws the
@@ -58,6 +63,7 @@ _pkt params [
 private _labels = GVAR(tagLabels);
 
 private _segs = [];
+private _tacText = "";
 if (GVAR(tagShowRole)) then { _segs pushBack _role };
 if (GVAR(tagShowHealth) && { _hp < 100 }) then {
     _segs pushBack format [LLSTRING(TagFieldHealth), _hp];
@@ -80,14 +86,12 @@ if (_isLocal) then {
     };
     if (GVAR(tagShowCommand) && { _cmd != "" }) then { _segs pushBack _cmd };
     // Group-wide fact — leader's tag only, so a squad doesn't repeat the same
-    // line on every member.
+    // line on every member. Kept OUT of _segs: it is drawn as its own chunk in
+    // COL_TACTIC, and that colour is what marks it as the tactic — it spends no
+    // line width on a "TAC " prefix.
     if (_isLdr && { GVAR(tagShowTactic) } && { _tactic != "" }) then {
-        // Remap FIRST: a tactic mapped to "" (LAMBS' "None") must drop the whole
-        // segment, not render a bare "TAC ".
-        private _tacLabel = _labels getOrDefault [_tactic, _tactic];
-        if (_tacLabel != "") then {
-            _segs pushBack format [LLSTRING(TagFieldTactic), _tacLabel];
-        };
+        // A tactic mapped to "" (LAMBS' "None") drops the chunk entirely.
+        _tacText = _labels getOrDefault [_tactic, _tactic];
     };
 };
 
@@ -111,7 +115,8 @@ private _statusCol = [_col, COL_BAD] select _urgent;
 // everything from here to the end of the line is the same job in both builders
 // (FUNC(tagEntryTail)).
 private _tagSize = GVAR(tagSize);
-([_segs, _status, _tagSize] call FUNC(tagEntryTail)) params ["_mainSep", "_wMainSep", "_wStatus"];
+([_segs, _tacText, _status, _tagSize] call FUNC(tagEntryTail))
+    params ["_mainSep", "_tacticSep", "_wMainSep", "_wTacticSep", "_wStatus"];
 
 // Threat icon (between the text and the flag icon) — LAMBS danger cause beats a
 // live attack target, same rule the dialog uses for its right-side indicator.
@@ -141,7 +146,7 @@ if (GVAR(tagShowThreatIcon) && _isLocal) then {
     };
 };
 
-private _halfFull = (_wMainSep + _wStatus) / 2;   // text half-width (UI-x)
+private _halfFull = (_wMainSep + _wTacticSep + _wStatus) / 2;   // text half-width (UI-x)
 
 // Icon layout (UI-x, from the unit's centre). Each icon butts flush against the
 // text or the previous icon with one small ICON_GAP. Right side only: threat
@@ -170,14 +175,16 @@ private _hwLayout = [_halfFull, _flush + (_iconW / 2) + ([0, _step] select (_nRi
 // this single boolean instead of unpacking the entry to re-derive it every frame
 // for every unit. Must test _hasFlag, NOT _flagsText: with the flag icon setting
 // off, a flagged unit with every text field off has nothing to draw and used to
-// cost an empty drawIcon3D every frame. _mainSep is empty exactly when the main
-// line is (FUNC(tagEntryTail)), so it stands in for it here.
-private _hasContent = _mainSep != "" || { _status != "" } || { _hasFlag }
-    || { _threatIcon != "" };
+// cost an empty drawIcon3D every frame. _mainSep / _tacticSep are empty exactly
+// when their own chunk is (FUNC(tagEntryTail)), so they stand in for them here.
+private _hasContent = _mainSep != "" || { _tacticSep != "" } || { _status != "" }
+    || { _hasFlag } || { _threatIcon != "" };
 
 [
     _mainSep,
     _col select [0, 3],
+    _tacticSep,
+    (COL_TACTIC) select [0, 3],
     _status,
     _statusCol select [0, 3],
     _flagsText,
@@ -185,6 +192,7 @@ private _hasContent = _mainSep != "" || { _status != "" } || { _hasFlag }
     _threatIconCol select [0, 3],
     _threatHover,
     _wMainSep,
+    _wTacticSep,
     _wStatus,
     _threatCenterUI,
     _flagCenterUI,

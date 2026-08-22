@@ -17,10 +17,6 @@ GVAR(classInfoCache) = createHashMap;
 // not by unit count, so it needs no prune.
 GVAR(magazineCapacities) = createHashMap;
 
-// Per-class head selection offsets read by FUNC(headOffset). Bounded by the number
-// of man classes in CfgVehicles, not by unit count, so it needs no prune.
-GVAR(headOffsetCache) = createHashMap;
-
 #include "initSideColors.inc.sqf"
 #include "initSettings.inc.sqf"
 
