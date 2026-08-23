@@ -18,6 +18,13 @@ private _costs = [];
 #include "defaultCosts\syndikat.inc.sqf"
 #include "defaultCosts\tura.inc.sqf"
 
+// Project Anselm, whose two nations each field a Cold War and a 2035 line-up
+#include "defaultCosts\sac.inc.sqf"
+#include "defaultCosts\sac2035.inc.sqf"
+#include "defaultCosts\atiu.inc.sqf"
+#include "defaultCosts\atiu2035.inc.sqf"
+#include "defaultCosts\ubpr.inc.sqf"
+
 // Keys are lowercased so lookups are immune to classname case differences
 // between the hand-typed table and the engine's config names (same convention
 // as rtz_common's defaultSkills table)

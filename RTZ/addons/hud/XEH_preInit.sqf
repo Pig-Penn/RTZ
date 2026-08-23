@@ -44,6 +44,13 @@ if (!hasInterface) exitWith { ADDON = true };
 GVAR(unitData)    = createHashMap;
 GVAR(vehicleData) = createHashMap;
 
+// Entity class → model-space bounding-box top, read by FUNC(tagAnchor) once per
+// tagged entity per frame. CLIENT-side and not behind the isServer gate above,
+// because the only thing that reads it is the draw pass. Bounded by the number of
+// entity classes the mission actually spawns — not by unit count, and not by
+// anything that churns — so like EFUNC(common,magazineCapacity) it needs no prune.
+GVAR(modelTopCache) = createHashMap;
+
 // ── Tag systems ─────────────────────────────────────────────────────────────
 // One record per LIVE head-tag system (FUNC(startTagSystem)), holding its
 // visibility, its built-entry cache, its dirty flag, its renderer and the slices

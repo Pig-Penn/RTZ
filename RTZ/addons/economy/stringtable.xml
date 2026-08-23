@@ -34,5 +34,11 @@
         <Key ID="STR_RTZ_Economy_PlacementToast_Description">
             <English>Show a Zeus feedback message with the point cost of the selected asset when choosing something to place.</English>
         </Key>
+        <Key ID="STR_RTZ_Economy_StartingPoints">
+            <English>Starting Points</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_StartingPoints_Description">
+            <English>Points a curator has on entering the Zeus interface for the first time, shown as the resource bar in the Zeus interface. 100 is a full bar.</English>
+        </Key>
     </Package>
 </Project>

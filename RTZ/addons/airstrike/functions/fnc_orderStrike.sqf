@@ -47,6 +47,20 @@ if (!_stillArmed) exitWith {
     [LSTRING(NoOrdnance)] call zen_common_fnc_showMessage;
 };
 
+// TEMPORARY GATE — remove with Task 4, and nothing else here changes.
+// This function is the last thing that runs on the curator's client; the
+// QGVAR(execute) dispatch below targets the aircraft's owner, and NOTHING registers
+// a handler for it yet (see XEH_postInit). Left alone, the whole gesture ends in a
+// confirmation hint for a strike that will never happen — a silent no-op that reads
+// as success. Refuse honestly instead.
+//
+// Sits BELOW both checks above on purpose: an aircraft that has changed hands or run
+// dry still earns its own specific rejection, and only an otherwise-valid order falls
+// through to this one.
+if (true) exitWith {
+    [LSTRING(NotImplemented)] call zen_common_fnc_showMessage;
+};
+
 // A click with no meaningful drag means "come in the way you are already pointing",
 // which keeps the gesture usable as a plain click.
 if (_bearing < 0) then {_bearing = getDir _vehicle};

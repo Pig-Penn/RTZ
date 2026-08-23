@@ -76,6 +76,14 @@
 // animated read only impersonates it — it freezes every man of a class in whichever
 // pose the first one happened to be in.
 //
+// Being genuinely static-per-class cuts the other way too, and EFUNC(hud,tagAnchor)
+// takes it: it memoizes this result by `typeOf` rather than asking the engine for a
+// model's geometry once per tagged entity per frame. That is safe for exactly the
+// reason the paragraph above is true, and it is NOT safe for HEAD_POS. The two other
+// callers (EFUNC(spotting,drawSpots), EFUNC(spotting,drawRcIndicator)) deliberately
+// do not cache: both are cold fallbacks behind unitAimPositionVisual, and both are
+// inline in a per-entity loop where the `call` would cost more than the read.
+//
 // Evaluates its argument TWICE — pass a plain variable, never a command or an
 // expression with side effects. Yields 0 rather than throwing while the model has not
 // resolved on this machine; the caller's `count < 3` test on the modelToWorldVisual

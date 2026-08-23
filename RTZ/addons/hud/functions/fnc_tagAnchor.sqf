@@ -42,10 +42,50 @@
 
 params ["_obj"];
 
+// Model-space top, MEMOIZED PER CLASS. boundingBoxReal is a model-geometry query,
+// and this function runs once per tagged entity per frame — up to SEL_MAX_UNITS +
+// SEL_MAX_VEHICLES times a frame on every curator's machine, i.e. well over a
+// thousand of them a second at 60 fps. What it returns is the MODEL's extent, which
+// is exactly what the header above argues a tag anchor wants: a per-class constant
+// that no stance, no animation and no torso turn moves. A value that cannot vary
+// per object never needed to be asked per object per frame.
+//
+// This is NOT the mistake the MODEL_TOP macro warns about, and the distinction is
+// the whole reason that warning is phrased the way it is: memoizing the ANIMATED
+// read (selectionPosition, HEAD_POS) fakes a constant that does not exist and
+// freezes every man of a class in one pose. The bounding box already IS the
+// constant, so caching it changes no output on any frame — only how often the
+// engine is asked for it.
+//
+// Cached HERE rather than hoisted into an EFUNC(common,...) helper, which is the
+// same call-cost decision HEAD_POS documents from the other side. The mod's two
+// other bounding-box reads (EFUNC(spotting,drawSpots), EFUNC(spotting,drawRcIndicator))
+// sit INLINE in their renderers' per-entity loops, where routing through a function
+// would buy a fresh scope and a `params` destructure per entity per frame — more
+// than the read it replaced. Both are also cold: each is a fallback behind
+// unitAimPositionVisual, reached only by a hull with no crew aim point. This is the
+// only hot site, and being a function already, it pays no new `call` to cache.
+private _class = typeOf _obj;
+private _top = GVAR(modelTopCache) get _class;
+
+if (isNil "_top") then {
+    _top = MODEL_TOP(_obj);
+
+    // A 0 is deliberately NOT stored. MODEL_TOP yields 0 rather than throwing while
+    // the model has not resolved on this machine (Gotchas §3) — the frames right
+    // after Zeus creates an object — and caching that would pin every entity of the
+    // class to its own feet for the rest of the mission. That is the same
+    // unresolved-model frame the `count < 3` test at the bottom already absorbs,
+    // except cached it would be permanent instead of lasting one frame.
+    if (_top > 0) then {
+        GVAR(modelTopCache) set [_class, _top];
+    };
+};
+
 private _pos = if (_obj isKindOf "CAManBase") then {
     // Top of the model, not the live head — see the header. Stance-independent, so
     // the tag does not dive onto the Zeus icon when the man goes prone.
-    _obj modelToWorldVisual [0, 0, MODEL_TOP(_obj)]
+    _obj modelToWorldVisual [0, 0, _top]
 } else {
     // unitAimPositionVisual resolves through the crew's aim point and returns []
     // for a vehicle that has none to offer — an empty hull, or any vehicle in the
@@ -55,7 +95,7 @@ private _pos = if (_obj isKindOf "CAManBase") then {
     if (count _aim >= 3) then {
         _aim
     } else {
-        _obj modelToWorldVisual [0, 0, MODEL_TOP(_obj)]
+        _obj modelToWorldVisual [0, 0, _top]
     }
 };
 

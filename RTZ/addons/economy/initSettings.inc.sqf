@@ -17,6 +17,14 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 ] call CBA_fnc_addSetting;
 
 [
+    QGVAR(startingPoints), "SLIDER",
+    [LSTRING(StartingPoints), LSTRING(StartingPoints_Description)],
+    _category,
+    [0, 100, 100, 0],
+    true
+] call CBA_fnc_addSetting;
+
+[
     QGVAR(income), "SLIDER",
     [LSTRING(Income), LSTRING(Income_Description)],
     _category,

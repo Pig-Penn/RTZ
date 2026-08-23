@@ -47,13 +47,45 @@
 // what rtz_path and rtz_orders are for; this keybind is the one that does
 // exactly what it drew.
 //
-// Forward is the faster of the two because a driver reversing is the slower of
-// the two. Authored in km/h to read like a speedometer, used in m/s because that
-// is the unit setVelocity takes.
-#define FORWARD_SPEED 20
+// The two directions run at the SAME pace on purpose. A slide is a reposition the
+// curator is watching, not a drive, and one keystroke landing on two vehicles
+// facing opposite ways has to look like one order rather than two. The pair of
+// defines is kept — not collapsed into one — only so the directions can diverge
+// again if that turns out to be wanted; do not re-widen the gap on the strength
+// of an older comment that argued forward should be the faster of the two.
+// Authored in km/h to read like a speedometer, used in m/s because that is the
+// unit setVelocity takes.
+#define FORWARD_SPEED 10
 #define REVERSE_SPEED 10
 #define FORWARD_SPEED_MS (FORWARD_SPEED / 3.6)
 #define REVERSE_SPEED_MS (REVERSE_SPEED / 3.6)
+
+// The push ramps toward the ordered speed instead of snapping to it (m/s^2).
+// Deliberately gentler than a real drivetrain: setVelocity ignores mass, so what
+// reads as natural here is what the eye expects of a heavy vehicle, not what the
+// physics would allow.
+//
+// DECEL is the smaller of the two on purpose. Braking starts v^2/(2a) out from
+// the stopping point, so at 10 km/h a 1.0 taper begins easing about four metres
+// early — far enough to be seen. Raise it and the vehicle brakes entirely inside
+// ARRIVAL_DISTANCE, which is to say never visibly at all.
+#define ACCEL_MS2 2.5
+#define DECEL_MS2 1.0
+
+// Floor on the commanded push (m/s). The braking envelope is asymptotic at the
+// stopping point; without a floor the vehicle creeps the last stretch forever
+// instead of crossing the arrival test.
+#define MIN_PUSH_MS 0.8
+
+// Ceiling on one frame's worth of ramp (seconds). A hitch, a loading pause or a
+// debugger break otherwise hands the next frame a delta measured in seconds and
+// launches the hull.
+#define MAX_TICK_DELTA 0.25
+
+// Multiplier on a maneuver's own estimated travel time, used as the FLOOR on how
+// long it is given (see FUNC(slideTo)). The slack covers the accel and braking
+// ramps, which no straight distance-over-speed estimate accounts for.
+#define TIMEOUT_SLACK 1.5
 
 // Speed below which a vehicle counts as not moving (km/h) and how long
 // it may stay that slow before the maneuver is aborted as stuck (seconds)
@@ -85,6 +117,10 @@
 // under it, and so everything downstream of the order is direction-agnostic.
 // SPEED carries which of the two the order was, in m/s, for the same reason: it
 // is the only thing the engine needs to know about the direction it is going.
+// PUSH_SPEED is the distinction SPEED is not: SPEED is the speed ORDERED and
+// never changes for the life of an order, PUSH_SPEED is the speed being commanded
+// THIS frame, ramped toward SPEED on the way out and down toward zero on the way
+// in. It is the only field FUNC(slideTick) writes on the frame path.
 #define MANEUVER_VEHICLE 0
 #define MANEUVER_DRIVER 1
 #define MANEUVER_AXIS 2
@@ -93,3 +129,4 @@
 #define MANEUVER_END_TIME 5
 #define MANEUVER_MOVED_AT 6
 #define MANEUVER_CHECK_AT 7
+#define MANEUVER_PUSH_SPEED 8

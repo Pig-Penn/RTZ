@@ -74,7 +74,7 @@ private _catOverlays = [ELSTRING(main,DisplayName), ELSTRING(core,CategoryOverla
     0
 ] call CBA_fnc_addSetting;
 
-// ── Vehicle tags (FUNC(drawVehicleTags)) — per-client display customization 
+// ── Vehicle tags (FUNC(drawVehicleTags)) — per-client display customization
 // All client-local (isGlobal 0), mirroring the Unit Tags block above — and its
 // sibling subcategory under the same "Real-Time Zeus - Dog Tags" entry. The
 // master switch takes effect at mission start (postInit gate); flipping it

@@ -17,6 +17,13 @@ PREP_RECOMPILE_END;
 GVAR(active) = [];
 GVAR(pfh) = -1;
 
+// When the handler last ran, for the frame delta its speed ramps integrate over.
+// One clock for the whole pass rather than one per maneuver — every record on a
+// given frame is being advanced across the same interval. Re-seeded whenever the
+// handler is created (FUNC(slideTo)), so the gap between engagements never
+// reaches the ramp.
+GVAR(lastTick) = 0;
+
 #include "initSettings.inc.sqf"
 #include "initKeybinds.inc.sqf"
 

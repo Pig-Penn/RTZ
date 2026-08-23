@@ -16,8 +16,11 @@
  * A 3D icon + hint always draws at the spot. Left click confirms; Escape (or
  * the Zeus display closing) cancels. Exactly one instance runs at a time.
  *
- * Entirely client-local — no remoteExec, no global state — so the caller
- * dispatches its authoritative server work from the confirm callback.
+ * Entirely client-local — no remoteExec, nothing networked — so the caller
+ * dispatches its authoritative server work from the confirm callback. The one
+ * piece of state that reaches outside this file is ZEN's own picker flag, held
+ * for the session's lifetime so ZEN stands its pickers and its context menu
+ * down; see the entry guard below.
  *
  * Arguments:
  * 0: CfgVehicles class to preview, or "" for an icon-only picker <STRING>
@@ -54,13 +57,45 @@ if (!hasInterface || {isNull _display}) exitWith {
     [false, [0, 0, 0], 0, _args] call _onConfirm;
 };
 
-// One picker at a time — a second call fails cleanly rather than fighting the first
-if (GETGVAR(previewActive,false)) exitWith {
+// One picker at a time — a second call fails cleanly rather than fighting the first.
+// ZEN's own position picker counts as one: zen_common_fnc_selectPosition installs
+// click handlers on this same display, and its re-entry guard reads the flag below
+// but only ever sees ZEN's sessions. Nothing on ZEN's side stops a curator reaching
+// an RTZ action while one is open either — zen_context_menu's keybind checks
+// isPlacementActive but not this flag — so the test has to be made from this side.
+// It is also what makes clearing the flag on teardown safe: no ZEN session can be
+// running underneath this one.
+if (GETGVAR(previewActive,false) || {GETMVAR(zen_common_selectPositionActive,false)}) exitWith {
     [false, [0, 0, 0], 0, _args] call _onConfirm;
 };
+// Drop ZEN's placement ghost if the curator left a class selected in the create
+// tree. Both ghosts ride the same cursor, and they fight over
+// lineIntersectsSurfaces: each ignores only its own helper and object, the call
+// takes just two ignore slots, so each snaps onto whatever flat face the other
+// presents and they climb each other. Cleared exactly the way ZEN's own
+// context-menu keybind clears it (zen_context_menu/initKeybinds.inc.sqf) — the
+// selection change routes through zen_placement_fnc_handleTreeSelect, which is
+// what actually deletes the ghost. tvSetCurSel runs that chain synchronously, so
+// the frame number latched below is still this frame.
+//
+// Deliberately ahead of every flag this function sets. isPlacementActive reads
+// the vanilla RscDisplayCurator_sections global and would throw if Zeus ever had
+// the display up without it; ZEN takes that risk too, but ZEN only loses a
+// context menu, whereas a throw here past the flags would strand previewActive
+// and ZEN's picker flag true and kill every picker for the rest of the mission.
+// Ordered this way, the worst case is one picker that fails to open.
+if (call zen_common_fnc_isPlacementActive) then {
+    (call zen_common_fnc_getActiveTree) tvSetCurSel [-1];
+};
+
 GVAR(previewActive) = true;
 GVAR(previewPending) = nil;               // set to [_confirmed] by the input EHs below
 GVAR(previewStartFrame) = diag_frameNo;   // guard: ignore the click that closed the menu
+
+// Stand ZEN's pickers down for the duration, the way ZEN stands its own down. Read
+// by zen_common_fnc_selectPosition for re-entry and by zen_context_menu's
+// right-click handler, which will not open a menu over an active picker.
+zen_common_selectPositionActive = true;
 
 // Hidden helper the ghost rides on so it can be positioned/oriented cleanly
 private _helper = "Logic" createVehicleLocal [0, 0, 0];
@@ -88,16 +123,35 @@ if (_previewClass != "" && {isClass (configFile >> "CfgVehicles" >> _previewClas
 
 // Left click confirms — but skip the very frame we start on, so the click
 // that selected the context-menu entry can't instantly place at the menu spot.
-// Returns true either way so the press is consumed by the picker: letting it
-// fall through reached the Zeus display underneath, which would clear the
-// curator's selection or drop whatever was highlighted in the Zeus tree at the
-// same spot. Other buttons return false so right-click still behaves normally.
+// That opening frame is swallowed either way: letting it fall through reached the
+// Zeus display underneath, which would clear the curator's selection or drop
+// whatever was highlighted in the Zeus tree at the same spot. Other buttons
+// return false so right-click still behaves normally.
 private _mouseEH = _display displayAddEventHandler ["MouseButtonDown", {
     params ["", "_button"];
     if (_button != 0) exitWith {false};
-    if (diag_frameNo > GVAR(previewStartFrame)) then {
-        GVAR(previewPending) = [true];
-    };
+    if (diag_frameNo <= GVAR(previewStartFrame)) exitWith {true};
+
+    // Only a press in the world view is a placement. A display-level handler is
+    // fed presses that land on the curator's panels as well, and getMousePosition
+    // reports a point over a panel just as happily as one over terrain — so
+    // without this, clicking the create tree confirmed the placement at whatever
+    // screenToWorld made of the point underneath the panel, and did it on the very
+    // click that was selecting a class for ZEN's own preview. ZEN guards its picker
+    // the same way (zen_common_fnc_selectPosition), which is what establishes that
+    // the press really does arrive here.
+    //
+    // Tested AFTER the frame guard, never before. The press that opened this picker
+    // is a context-menu press, and whether the menu control is still there to be
+    // found under the cursor by the time this runs is engine-ordering dependent
+    // (addons/airstrike/functions/fnc_beginAiming.sqf works the same problem at
+    // length). A frame-number comparison has no such ambiguity, so it stays what
+    // decides the opening frame.
+    //
+    // False, not true — the press belongs to the control under it.
+    if (!call zen_common_fnc_isCursorOnMouseArea) exitWith {false};
+
+    GVAR(previewPending) = [true];
     true
 }];
 
@@ -208,6 +262,10 @@ GVAR(previewDrawEH) = addMissionEventHandler ["Draw3D", {
         deleteVehicle _helper;
         GVAR(previewActive) = false;
         GVAR(previewPending) = nil;
+        // Cleared outright rather than restored to a remembered value: the entry
+        // guard refuses to start while ZEN's picker is active, so this was false
+        // before this picker set it.
+        zen_common_selectPositionActive = false;
         // GVAR(previewDraw) is deliberately left in place rather than nil'd:
         // its handler is gone, the next picker overwrites it, and the isNull
         // helper guard makes a stale entry inert either way.

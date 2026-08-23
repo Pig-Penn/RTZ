@@ -33,6 +33,12 @@ private _handlers = GVAR(aiming) select 4;
 // sees a closed session rather than a half-torn-down one.
 GVAR(aiming) = [];
 
+// Hand ZEN's pickers back. Cleared outright rather than restored to a remembered
+// value: FUNC(beginAiming) refuses to open while ZEN's picker is active, so this
+// was false before that session set it. Past the early exit above, so a call with
+// no session open cannot clear a flag it does not own.
+zen_common_selectPositionActive = false;
+
 private _display = findDisplay IDD_RSCDISPLAYCURATOR;
 
 if (!isNull _display) then {

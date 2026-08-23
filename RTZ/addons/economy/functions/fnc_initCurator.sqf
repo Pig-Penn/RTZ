@@ -5,9 +5,10 @@
  * event handler everywhere, points and action coefficients on the server.
  *
  * Runs regardless of the enable setting — a disabled economy still has to
- * register its (all zero) cost table and hand out a full bar, otherwise the
- * curator is left on whatever cost and point limits the mission's Zeus module
- * was configured with, which is not what "disabled" should mean.
+ * register its (all zero) cost table and hand out its starting points,
+ * otherwise the curator is left on whatever cost and point limits the
+ * mission's Zeus module was configured with, which is not what "disabled"
+ * should mean.
  *
  * Arguments:
  * 0: Curator module <OBJECT>
@@ -33,7 +34,7 @@ _curator addEventHandler ["CuratorObjectRegistered", LINKFUNC(registerCosts)];
 if (!isServer) exitWith {};
 
 // Points and action coefficients live on the server
-_curator addCuratorPoints (1 - curatorPoints _curator);
+_curator addCuratorPoints ((GVAR(startingPoints) / POINTS_MAX) - curatorPoints _curator);
 _curator setCuratorWaypointCost 0;
 _curator allowCuratorLogicIgnoreAreas true;
 _curator call FUNC(applyCoefs);

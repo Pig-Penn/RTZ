@@ -26,7 +26,7 @@
             <English>Drive Timeout</English>
         </Key>
         <Key ID="STR_RTZ_Slide_Timeout_Description">
-            <English>Time in seconds a vehicle may spend driving before the order expires.</English>
+            <English>Least time in seconds a vehicle may spend driving before the order expires. An order longer than this setting can cover is given the time its own distance needs instead, so raising it only affects short orders.</English>
         </Key>
     </Package>
 </Project>

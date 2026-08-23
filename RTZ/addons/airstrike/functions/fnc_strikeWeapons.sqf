@@ -100,7 +100,17 @@ if (isNil "_classified") then {
 // two turret paths, and it would report only the loaded magazine rather than the
 // weapon's total. toLowerANSI on the runtime magazine name matches the cached
 // list, which was lowercased for the same reason.
-private _magsAllTurrets = magazinesAllTurrets _vehicle;
+//
+// Case-folded ONCE for the whole walk rather than inside the loop below, because
+// that loop is nested: every classified weapon rescans the SAME magazine list, so
+// folding at the comparison ran (weapons x magazines) conversions to answer
+// (magazines) questions — and a loaded jet is double digits of both. This is also
+// on the aim session's frame path: FUNC(drawAim) re-runs the whole function every
+// AIM_VALID_INTERVAL to tint the ring, so it repeats several times a second for as
+// long as a curator holds the drag.
+private _magsAllTurrets = (magazinesAllTurrets _vehicle) apply {
+    [toLowerANSI (_x select 0), _x select 1, _x select 2]
+};
 private _out = [];
 
 {
@@ -111,7 +121,7 @@ private _out = [];
     {
         _x params ["_magazine", "_magTurretPath", "_rounds"];
 
-        if (_magTurretPath isEqualTo _turretPath && {(toLowerANSI _magazine) in _magazines}) then {
+        if (_magTurretPath isEqualTo _turretPath && {_magazine in _magazines}) then {
             _ammo = _ammo + _rounds;
         };
     } forEach _magsAllTurrets;

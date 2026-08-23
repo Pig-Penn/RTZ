@@ -16,6 +16,9 @@
         <Key ID="STR_RTZ_Airstrike_NoOrdnance">
             <English>No ordnance remaining</English>
         </Key>
+        <Key ID="STR_RTZ_Airstrike_NotImplemented">
+            <English>Airstrike execution is not yet implemented</English>
+        </Key>
         <Key ID="STR_RTZ_Airstrike_StrikeUnavailable">
             <English>Aircraft can no longer strike</English>
         </Key>

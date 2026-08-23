@@ -54,6 +54,20 @@ _handlers pushBack ["MouseButtonDown", _display displayAddEventHandler ["MouseBu
 
     if (_button != 0) exitWith {false};
 
+    // Only a press in the world view — or on the map, which this mode also draws to
+    // and which zen_common_fnc_isCursorOnMouseArea admits — can be a grab or a cut.
+    // GVAR(hovered) and GVAR(hoveredPoint) are resolved by projecting handles into
+    // screen space, which says nothing about whether a panel is drawn over the
+    // result, so a handle that happened to land under the create tree was grabbable
+    // straight through it. Guarded here rather than in the renderer because the
+    // renderer's answer is also what the hover highlight is drawn from, and that
+    // should keep tracking. See EFUNC(common,placementPreview).
+    //
+    // The release below is deliberately NOT guarded the same way: a drag begun in
+    // the world has to be able to end with the cursor anywhere, or the handle
+    // stays stuck to it.
+    if (!call zen_common_fnc_isCursorOnMouseArea) exitWith {false};
+
     // Ctrl-click on a path point cuts the path back to it. Tested before the
     // grab, because a point near a handle should cut rather than start a drag
     // that immediately re-draws what was just removed.

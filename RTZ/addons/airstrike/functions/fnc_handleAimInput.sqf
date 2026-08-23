@@ -44,6 +44,21 @@ _handlers pushBack ["MouseButtonDown", _display displayAddEventHandler ["MouseBu
     // here without touching the stored frame number.
     if (diag_frameNo <= (GVAR(aiming) select 5)) exitWith {true};
 
+    // Only a press in the world view aims. This handler is fed presses that land on
+    // the curator's panels too, and getPosFromScreen defaults to getMousePosition,
+    // which reports a point over the create tree as readily as one over terrain — so
+    // without this, clicking a class in the tree latched an aim point from whatever
+    // was projected under the panel and opened the gesture on it. ZEN guards its own
+    // picker the same way (zen_common_fnc_selectPosition).
+    //
+    // After the frame guard, never before: see EFUNC(common,placementPreview) for
+    // why the opening context-menu press must stay decided by frame number alone.
+    //
+    // False, not true — the press belongs to the control under it. The release and
+    // the Escape handler are deliberately NOT guarded this way: a gesture begun in
+    // the world has to be able to finish with the cursor anywhere, or it strands.
+    if (!call zen_common_fnc_isCursorOnMouseArea) exitWith {false};
+
     // Intersections OFF: the strike should land on the terrain the cursor is over,
     // not on the roof of whatever building happens to be under it.
     GVAR(aiming) set [2, [nil, 0] call zen_common_fnc_getPosFromScreen];

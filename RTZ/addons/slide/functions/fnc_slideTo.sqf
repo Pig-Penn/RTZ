@@ -28,9 +28,14 @@
  * Re-ordering a vehicle that is already driving supersedes the old order instead
  * of stacking a second slide on top of it — including a reverse that supersedes
  * a forward, which needs nothing special: the record simply takes the new axis
- * and the new speed. Which of the two supersede paths applies turns on whether
+ * and the new speed, and the ramp is re-seeded from the hull's velocity along
+ * that new axis AT THE MOMENT the record is written, so a re-point down the same
+ * line keeps its momentum while one that turns the order around starts from rest
+ * and builds up again. Which of the two supersede paths applies turns on whether
  * the driver is still the same unit — see below; that distinction is what keeps
- * a swapped-out driver from being stranded with his AI disabled.
+ * a swapped-out driver from being stranded with his AI disabled, and it is also
+ * why the seed is read late: only one of the two paths tears the old maneuver
+ * down first, and that teardown stops the hull before the new record is built.
  *
  * Arguments:
  * 0: Vehicle <OBJECT>
@@ -55,8 +60,39 @@ params ["_vehicle", "_axis", "_destination", "_speed"];
 if (!local _vehicle) exitWith {};
 if !([_vehicle] call FUNC(canSlide)) exitWith {};
 
+// A speedless order has no answer to "how long should this take" — it divides the
+// travel estimate below by zero, and an infinite _endTime is a maneuver the timeout
+// can never end, leaving only stuck detection to notice. Refuse it at the door.
+if (_speed <= 0) exitWith {};
+
 private _driver = driver _vehicle;
-private _endTime = CBA_missionTime + GETGVAR(timeout,10);
+
+// The setting is a MINIMUM patience, not a budget. A flat window silently caps
+// how far a slide can actually get — at 10 km/h the default ten seconds covers
+// under thirty metres, well short of the fifty GVAR(maxDistance) will happily
+// order — and the maneuver would abort mid-drive, short of the endpoint the
+// curator was drawn. So a short nudge still gets the whole configured window,
+// while a long haul gets the time its own length demands.
+private _travel = (_destination distance2D _vehicle) / _speed * TIMEOUT_SLACK;
+private _endTime = CBA_missionTime + (GETGVAR(timeout,10) max _travel);
+
+// Start the ramp from whatever the hull is already doing along the new axis, so
+// a vehicle re-pointed mid-slide carries its speed through instead of dropping
+// to a stop and building up again. Clamped to [0, ordered]: a hull rolling
+// AGAINST the new axis starts from rest rather than from a negative push that
+// would drive it further from the destination before the ramp could arrest it.
+//
+// Read at each use site rather than once here, because the two paths below reach
+// their use at different moments: the rebuild path tears the old maneuver down
+// first, and FUNC(endSlide) zeroes the hull's horizontal velocity on the way out.
+// A seed captured up front would hand that record momentum the vehicle no longer
+// has. The re-point path never calls endSlide, so its read is still live.
+_axis params ["_axisX", "_axisY"];
+
+private _fnc_seedPush = {
+    (velocity _vehicle) params ["_velX", "_velY"];
+    ((_velX * _axisX + _velY * _axisY) max 0) min _speed
+};
 
 private _start = true;
 private _index = GVAR(active) findIf {(_x select MANEUVER_VEHICLE) isEqualTo _vehicle};
@@ -76,6 +112,7 @@ if (_index != -1) then {
         _record set [MANEUVER_END_TIME, _endTime];
         _record set [MANEUVER_MOVED_AT, CBA_missionTime];
         _record set [MANEUVER_CHECK_AT, CBA_missionTime + CHECK_INTERVAL];
+        _record set [MANEUVER_PUSH_SPEED, call _fnc_seedPush];
 
         _start = false;
     } else {
@@ -102,10 +139,15 @@ if (_start) then {
 
     GVAR(active) pushBack [
         _vehicle, _driver, _axis, _destination, _speed,
-        _endTime, CBA_missionTime, CBA_missionTime + CHECK_INTERVAL
+        _endTime, CBA_missionTime, CBA_missionTime + CHECK_INTERVAL, call _fnc_seedPush
     ];
 
     if (GVAR(pfh) == -1) then {
+        // Seed the ramp clock with the handler it belongs to. Left at whatever the
+        // last maneuver of the last engagement set it to, the first pass would
+        // measure a delta running back to then — possibly hours — and hand every
+        // record a full frame's ramp at once.
+        GVAR(lastTick) = CBA_missionTime;
         GVAR(pfh) = [LINKFUNC(slideTick), 0] call CBA_fnc_addPerFrameHandler;
     };
 };

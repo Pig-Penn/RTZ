@@ -31,6 +31,14 @@ params ["", "_objects", "_args"];
 private _display = findDisplay IDD_RSCDISPLAYCURATOR;
 if (isNull _display) exitWith {false};
 
+// ZEN's own picker is on the same display and consumes the same presses. Its
+// re-entry guard reads this flag but only ever sees ZEN's sessions, and nothing on
+// ZEN's side keeps a curator out of an RTZ action while one is open —
+// zen_context_menu's keybind checks isPlacementActive but not this — so the test
+// has to be made here. It is also what makes clearing the flag in FUNC(endAiming)
+// safe: no ZEN session can be running underneath this one.
+if (GETMVAR(zen_common_selectPositionActive,false)) exitWith {false};
+
 // Never two at once. A second session would install a second set of handlers on the
 // same display and only one of them would ever be removed.
 if (GVAR(aiming) isNotEqualTo []) then {
@@ -53,6 +61,12 @@ if (GVAR(aiming) isNotEqualTo []) then {
 // rtz_path needs no such guard at all because it is opened by a keybind, and CBA
 // keybinds cannot be bound to a mouse button.
 GVAR(aiming) = [_objects, _args, [], -1, [], diag_frameNo, false, -1];
+
+// Stand ZEN's pickers down for the gesture's lifetime, the way ZEN stands its own
+// down. Read by zen_common_fnc_selectPosition for re-entry and by
+// zen_context_menu's right-click handler, which will not open a menu over an
+// active picker. Set after the endAiming call above, which clears it.
+zen_common_selectPositionActive = true;
 
 private _handlers = [_display] call FUNC(handleAimInput);
 GVAR(aiming) set [4, _handlers];

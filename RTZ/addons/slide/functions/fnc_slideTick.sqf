@@ -10,13 +10,16 @@
  * travel and a speed, never a flag, so nothing in this loop branches on which
  * kind of order it is driving.
  *
- * The per-frame rate is spent on the two things that need it and nothing else:
+ * The per-frame rate is spent on the three things that need it and nothing else:
  *
  *  - The velocity push. setVelocity sets absolute velocity, so anything slower
  *    than every frame lets rolling resistance eat the speed back between ticks
  *    and the vehicle visibly pulses. This is the reason the handler runs at 0.
  *  - The arrival test, which is what stops the vehicle on its mark instead of a
  *    tick-length overshoot past it.
+ *  - The speed ramp, which is an integration: it advances the commanded speed by
+ *    one frame's worth of acceleration, so it has to see every frame the push
+ *    does or the two disagree about how fast the vehicle is supposed to be going.
  *
  * Every other reason a maneuver ends — driver lost, vehicle wrecked or
  * immobilised, ownership moved, timeout, stuck — changes on human timescales and
@@ -35,6 +38,13 @@
  *  - Overshoot is measured against that same fixed axis. Measured against live
  *    facing, a hull that yaws past 90 degrees reports "arrived" the instant it
  *    does so, wherever it happens to be.
+ *
+ * The speed a record is driven at is not the speed it was ordered at. The push
+ * accelerates in from whatever the hull was already doing and brakes down as the
+ * destination nears, because setVelocity applied whole is a step function: full
+ * speed on the first frame, nothing on the last, which looks like a shove rather
+ * than a drive. MANEUVER_SPEED is the ceiling; MANEUVER_PUSH_SPEED is what is
+ * actually being asked for this frame.
  *
  * Arguments:
  * None (CBA per-frame handler)
@@ -59,6 +69,14 @@ if (GVAR(active) isEqualTo []) exitWith {
 // is judged against the same instant anyway, and the throttled block below would
 // otherwise ask for the clock four more times per vehicle.
 private _time = CBA_missionTime;
+
+// One delta for every maneuver on this frame — they are all being integrated
+// across the same interval. Capped so a frame hitch, a loading pause or a
+// debugger break ramps by one frame's worth rather than by however long the game
+// was away, which would hand the hull its full speed in a single step and undo
+// the point of ramping at all.
+private _delta = ((_time - GVAR(lastTick)) max 0) min MAX_TICK_DELTA;
+GVAR(lastTick) = _time;
 
 // Backwards, so a finished maneuver can be deleted without disturbing the
 // indices of the ones not visited yet
@@ -132,12 +150,37 @@ for "_i" from (count GVAR(active)) - 1 to 0 step -1 do {
         continue;
     };
 
+    // What to aim for this frame: the ordered speed, capped by what can still be
+    // bled off before the stopping point at DECEL_MS2. Measured to the arrival
+    // radius rather than to the destination itself, because the radius is where
+    // the maneuver actually ends — a taper aimed at the destination would still
+    // be doing walking pace at the moment it is cut, which is the dead stop this
+    // exists to remove. _remaining is already in hand from the arrival test, so
+    // the envelope costs one square root and no engine calls.
+    // The MIN_PUSH_MS floor is itself capped at the ordered speed. Without that outer
+    // min, an order slower than the creep floor would be driven FASTER than it was
+    // given — the floor is there to stop the braking asymptote creeping forever, not
+    // to overrule the order. Cannot happen at the current fixed speeds; it is the
+    // constants above that make it true, and they are exactly what gets retuned.
+    private _ordered = _record select MANEUVER_SPEED;
+    private _brakeSpeed = sqrt (2 * DECEL_MS2 * ((_remaining - ARRIVAL_DISTANCE) max 0));
+    private _target = ((_ordered min _brakeSpeed) max MIN_PUSH_MS) min _ordered;
+
+    // Ramp toward it. Pulling away and stopping have separate rates because a
+    // vehicle doing the one does not look like a vehicle doing the other.
+    private _push = _record select MANEUVER_PUSH_SPEED;
+    _push = if (_push < _target) then {
+        (_push + ACCEL_MS2 * _delta) min _target
+    } else {
+        (_push - DECEL_MS2 * _delta) max _target
+    };
+    _record set [MANEUVER_PUSH_SPEED, _push];
+
     // Push along the fixed axis; the vertical component is left alone so
     // gravity, suspension and terrain still own the vehicle's height
-    private _speed = _record select MANEUVER_SPEED;
     _vehicle setVelocity [
-        _axisX * _speed,
-        _axisY * _speed,
+        _axisX * _push,
+        _axisY * _push,
         (velocity _vehicle) select 2
     ];
 };

@@ -52,15 +52,21 @@ class zen_context_menu_actions {
             priority = 4;
         };
 
-        // Third state, checked first by the modifier/toggle: a group still
-        // under the editor-placed Dynamic Simulation system shows blue and
-        // this click turns that off instead of hiding/freezing. See
+        // Third state, checked first by the modifier/toggle: any ENTITY still
+        // under the editor-placed Dynamic Simulation system shows blue and this
+        // click turns that off instead of hiding/freezing. See
         // FUNC(squadHideActionModifier).
+        //
+        // All three entry points resolve the same set through the same
+        // FUNC(collectHideEntities) — groups AND vehicles, because Arma flags
+        // Dynamic Simulation on each separately. Resolving to crew groups alone
+        // (as this used to) made the action inert on a crewed vehicle and hid it
+        // outright on a crewless one.
         class GVAR(squadHide) {
             displayName = CSTRING(ActionDisableSimulation);
             icon = ICON_HIDE;
             statement = QUOTE([_objects + [_hoveredEntity]] call FUNC(squadHideToggle));
-            condition = QUOTE(GVAR(enableSquadHide) && {([_objects + [_hoveredEntity]] call EFUNC(common,collectSquads)) isNotEqualTo []});
+            condition = QUOTE(GVAR(enableSquadHide) && {([_objects + [_hoveredEntity]] call FUNC(collectHideEntities)) isNotEqualTo []});
             modifierFunction = QUOTE([ARR_2(_this select 0,_objects + [_hoveredEntity])] call FUNC(squadHideActionModifier));
             priority = 2;
         };

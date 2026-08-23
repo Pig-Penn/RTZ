@@ -1,6 +1,7 @@
 PREP(canReset);
 PREP(canTakeOwnership);
 PREP(collectDismountVehicles);
+PREP(collectHideEntities);
 PREP(collectReloadSquads);
 PREP(disableDynamicSimulationApply);
 PREP(dismountActionModifier);
