@@ -140,3 +140,8 @@
 #define STRIKE_CRUISE   15   // m/s, derived once at order time
 #define STRIKE_PROGRESS 16   // 0..1 fire progress, drives the rail's aim raise
 #define STRIKE_FIRE_END 17   // absolute time the firing window closes
+#define STRIKE_FIRE_DONE 18  // the window has closed and must not reopen. FUNC(release)
+                             // reports this; without somewhere to keep it the rail would
+                             // call it again on the very next frame and go on firing at
+                             // FIRE_DELAY for the rest of the run, past both FIRE_DURATION
+                             // and the shot cap.

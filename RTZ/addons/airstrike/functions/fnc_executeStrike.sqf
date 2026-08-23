@@ -73,7 +73,7 @@ GVAR(active) pushBack [
     _vehicle, _driver, _aim, _bearing, _weaponData,
     PHASE_INGRESS, _start, _restore, [], objNull,
     0, 0, _now + INGRESS_TIMEOUT, _now + STRIKE_TIMEOUT, 0,
-    _cruise, 0, 0
+    _cruise, 0, 0, false
 ];
 
 // Created by the first strike, destroyed by the last. Between strikes the handler

@@ -145,16 +145,65 @@ for "_i" from (count GVAR(active)) - 1 to 0 step -1 do {
                 // release range inside one tick still finishes its burst.
                 private _range = RELEASE_RANGE select _type;
 
-                if (!isNull (_record select STRIKE_LASER) || {(getPosASL _vehicle) distance _aim < _range}) then {
-                    [_record, _now] call FUNC(release);
+                if (!(_record select STRIKE_FIRE_DONE)
+                    && {!isNull (_record select STRIKE_LASER) || {(getPosASL _vehicle) distance _aim < _range}}
+                ) then {
+                    _record set [STRIKE_FIRE_DONE, [_record, _now] call FUNC(release)];
                 };
 
                 if ((_now - _t0) >= _duration) then {
-                    // Task 7 replaces this with the hand-off to egress.
+                    _record set [STRIKE_PHASE, PHASE_EGRESS];
+                    _record set [STRIKE_PHASE_AT, _now + EGRESS_TIMEOUT];
+
+                    // The aircraft is handed back to its AI HERE rather than at teardown,
+                    // so the pull-off is flown by the pilot and looks like flying rather
+                    // than like a scripted object being released mid-dive. Teardown still
+                    // runs the same restores — they are idempotent, and teardown is also
+                    // reached by paths that never get here.
+                    private _egress = _aim getPos [EGRESS_DISTANCE, _record select STRIKE_BEARING];
+                    _egress set [2, (getTerrainHeightASL _egress) + RUN_IN_ALTITUDE];
+
+                    (_record select STRIKE_RESTORE) params ["_move"];
+
+                    if (_move) then {(_record select STRIKE_DRIVER) enableAI "MOVE"};
+
+                    _vehicle flyInHeight RUN_IN_ALTITUDE;
+                    _vehicle doMove (ASLToAGL _egress);
+                };
+            };
+
+            case PHASE_EGRESS: {
+                // Nothing to drive: the AI has the aircraft back and is flying the
+                // pull-off itself. This phase exists only to keep the record alive long
+                // enough for the aircraft to get clear of its own bombs before the mark
+                // is deleted, and it ends on distance or on EGRESS_TIMEOUT.
+                if ((getPosASL _vehicle) distance (_record select STRIKE_AIM) > RUN_IN_DISTANCE) then {
                     _finished = true;
                 };
             };
         };
+    };
+
+    // Everything that changes on human timescales. Roughly a dozen engine calls per
+    // aircraft traded from once a frame down to four times a second, on each record's
+    // own stagger. Skipped entirely once something faster has already ended the strike.
+    if (!_finished && {_now >= (_record select STRIKE_CHECK)}) then {
+        _record set [STRIKE_CHECK, _now + CHECK_INTERVAL];
+
+        private _driver = _record select STRIKE_DRIVER;
+        (_record select STRIKE_WEAPON) params ["_weapon"];
+
+        _finished =
+            // Not "is there a driver" but "is it still HIM" — a swapped seat ends the
+            // strike so teardown can restore the unit it actually disabled.
+            (driver _vehicle) isNotEqualTo _driver
+            || {!alive _driver}
+            || {isPlayer _driver}
+            // Dry BEFORE the window ever opened: there is nothing left to deliver, so
+            // flying the rest of the run is theatre.
+            || {(_record select STRIKE_PHASE) != PHASE_EGRESS
+                && {isNull (_record select STRIKE_LASER)}
+                && {_vehicle ammo _weapon <= 0}};
     };
 
     if (_finished) then {
