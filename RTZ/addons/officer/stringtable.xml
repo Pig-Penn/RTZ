@@ -34,6 +34,12 @@
         <Key ID="STR_RTZ_Officer_AuraRadius_Description">
             <English>Radius, in metres, of an officer's command aura.</English>
         </Key>
+        <Key ID="STR_RTZ_Officer_CooldownEnable">
+            <English>Editing Area Cooldown</English>
+        </Key>
+        <Key ID="STR_RTZ_Officer_CooldownEnable_Description">
+            <English>After an officer's editing area is removed — whether by a Zeus or by the officer entering combat — require a wait before a new area can be planted for him.</English>
+        </Key>
         <Key ID="STR_RTZ_Officer_DisplayName">
             <English>Officer Zones</English>
         </Key>
@@ -50,16 +56,16 @@
             <English>Command Aura Active</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaBlocked">
-            <English>Officer Unavailable</English>
+            <English>Officer Engaged</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaCombatRemoved">
-            <English>Officer Engaged — Editing Zone Lost</English>
+            <English>Editing Area Lost</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaCooldown">
             <English>%1 [s] Cooldown</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAreaRemoved">
-            <English>Editing zone removed</English>
+            <English>Editing Area Removed</English>
         </Key>
         <Key ID="STR_RTZ_Officer_MsgAuraAdded">
             <English>%1 [m] Aura Active</English>

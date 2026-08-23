@@ -61,12 +61,14 @@ PREP(unitCount);
 // The two entry builders differ in which fields they collect and not at all in
 // what they do with them, so the shared tail and the shared draw live once:
 // tagEntryTail composes and measures the line, drawTagLine renders it with the
-// tactic and the status word split off into their own colours, tagAnchor
+// tactic and the status word split off into their own colours, drawTagBar
+// renders the ammunition gauge at the end of the icon chain, tagAnchor
 // resolves what either kind of entity hangs its tag above.
 PREP(buildTagEntry);
 PREP(buildVtagEntry);
 PREP(tagEntryTail);
 PREP(drawTagLine);
+PREP(drawTagBar);
 PREP(tagAnchor);
 PREP(loadTagLabels);
 PREP(textWidth);

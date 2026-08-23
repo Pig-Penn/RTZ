@@ -103,6 +103,8 @@ private _pairs = [
     ["Hide!",                       "Hide"],                     // moving to a nearby cover position
     ["Hide (inside)",               "Hide"],            // took cover inside a building instead
     ["Hide (re-hide)",              "Hide"],           // group hide's delayed second hide once ready
+    ["Hide (group)",                "Hide"],           // group hide's default call (fnc_tacticsHide, no _action)
+    ["Hide (holding)",              "Hide"],           // group hide called from fnc_tacticsHold
     ["Leader Hide",                 "Hide"],              // leader's own marker while "Hiding" runs
     ["Fleeing",                     "Flee"],                     // routed on foot (engine `fleeing`, fnc_doFleeing)
     ["Fleeing (vehicle)",           "Flee"],           // routed while mounted in a vehicle

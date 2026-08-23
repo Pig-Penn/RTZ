@@ -21,7 +21,7 @@ _costs append [
     ["ACM_b_sam_men_RTO", 1.2], // RTO
     ["ACM_b_sam_men_RTO2", 1.2], // RTO 2
     ["ACM_b_sam_men_MG", 1.3], // Machinegunner
-    ["ACM_b_sam_men_Marksman", 1.5], // Marksman
+    ["ACM_b_sam_men_Marksman", 1.1], // Marksman
     ["ACM_b_sam_men_SL", 1.2], // Sergeant
     ["ACM_b_sam_men_HMG", 1.5], // Heavy Machinegunner
     ["ACM_b_sam_men_grenadier", 1.5], // Grenadier
@@ -35,7 +35,7 @@ _costs append [
     ["ACM_b_sam_men_police_riot_shotgunner", 1], // Riot Shotgunner
     ["ACM_b_sam_men_police_riot_SubMachine1", 1], // Riot SubmachineGunner 1
     ["ACM_b_sam_men_police_riot_SubMachine2", 1], // Riot SubmachineGunner 2
-    ["ACM_b_sam_men_police_riot_Marksman", 1.5], // Riot Marksman
+    ["ACM_b_sam_men_police_riot_Marksman", 1.1], // Riot Marksman
     ["ACM_b_sam_men_police_riot_Grenadier", 1.5], // Riot Gas Controller
     ["ACM_b_sam_men_police_riot_ArmedResponse", 1.5], // Riot Armed Response
 
@@ -56,7 +56,7 @@ _costs append [
     // Cars
     ["acm_b_sac_vehicle_m151", 3], // M151
     ["acm_b_sac_vehicle_m151_mg", 8], // M151 (MG)
-    ["acm_b_sac_vehicle_m151_mg_patrol", 7], // M151 (MG, Patrol)
+    ["acm_b_sac_vehicle_m151_mg_patrol", 9], // M151 (MG, Patrol)
     ["acm_b_sac_vehicle_m151_Armoured", 8], // M151 (Armored)
     ["acm_b_sac_vehicle_m151_M40", 13], // M151 (M40 Recoilless)
     ["acm_b_sac_vehicle_m151_TOW", 15], // M151 (TOW)
@@ -69,7 +69,7 @@ _costs append [
     ["acm_b_sac_vehicle_m54_repair", 9], // M54 (Repair)
     ["acm_b_sac_vehicle_m54_ammo", 10], // M54 (Ammo)
     ["acm_b_sac_vehicle_m54_battleBus", 13], // M54 (MG)
-    ["acm_b_sac_vehicle_m54_AA", 16], // M54 (AA)
+    ["acm_b_sac_vehicle_m54_AA", 15], // M54 (AA)
 
     // APCs
     ["acm_b_sog_sac_vehicle_m113", 15], // M113
@@ -86,13 +86,13 @@ _costs append [
     // Turrets
     ["acm_b_sac_turret_m2_low", 6], // M2 HMG
     ["acm_b_sac_turret_m2_high", 6], // M2 HMG (Raised)
-    ["acm_b_sac_turret_mortar", 7], // M2 Mortar
+    ["acm_b_sac_turret_mortar", 8], // M2 Mortar
     ["acm_b_sac_turret_m101_AT", 20], // M101 Howitzer (Direct Fire)
     ["acm_b_sac_turret_m45", 12], // M45 Quadmount (AA)
     ["acm_b_sac_turret_m40", 10], // M40 Recoilless Rifle
     ["acm_b_sac_turret_tow", 12], // TOW Launcher
     ["acm_b_sac_turret_l60mk3", 16], // Bofors L/60 Mk3 (AA)
-    ["acm_b_sac_turret_l70mk2", 20], // Bofors L/70 Mk2 (AA)
+    ["acm_b_sac_turret_l70mk2", 18], // Bofors L/70 Mk2 (AA)
 
     // Artillery
     ["acm_b_sac_turret_m101_arty", 25] // M101 Howitzer

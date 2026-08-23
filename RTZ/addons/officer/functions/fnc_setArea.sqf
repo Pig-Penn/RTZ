@@ -12,7 +12,8 @@
  * allocated area id is tracked per officer, since nothing re-reads the centre
  * or radius afterwards. A successful removal arms GVAR(cooldowns) for
  * COOLDOWN_DURATION seconds (see FUNC(isOnCooldown)), so an area cannot be
- * instantly re-planted — moving your editing rights is meant to cost that wait.
+ * instantly re-planted — moving your editing rights is meant to cost that
+ * wait. Gated on GVAR(cooldownEnable); when off, removal is instant.
  *
  * Locality: call on any curator machine. The BIS curator logic is local to the
  * SERVER and add/removeCuratorEditingArea require the curator to be local, so
@@ -62,6 +63,8 @@ if (_enable) then {
     if (isNil "_entry") exitWith {false};
 
     [QGVAR(applyArea), ["remove", _curator, [_entry select 0]]] call CBA_fnc_serverEvent;
-    GVAR(cooldowns) set [_key, CBA_missionTime + COOLDOWN_DURATION];
+    if (GVAR(cooldownEnable)) then {
+        GVAR(cooldowns) set [_key, CBA_missionTime + COOLDOWN_DURATION];
+    };
     true
 };

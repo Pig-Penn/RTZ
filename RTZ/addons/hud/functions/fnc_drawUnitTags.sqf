@@ -27,6 +27,12 @@
  *     cause if any, else its current attack target (danger always wins, the same
  *     rule the dialog uses) — hovering reveals the full detail.
  *
+ * A vertical ammunition gauge (GVAR(tagShowAmmoBar)) closes the right-side chain
+ * past both icons: the loaded primary magazine as a fill, amber then red as it
+ * runs down (FUNC(drawTagBar), shared with the vehicle tags). It has no hover —
+ * the fill is the whole reading — and unlike the text ammo field it stays drawn
+ * at full, because a gauge that vanishes reads as broken rather than as full.
+ *
  * Per-frame cost: the text, colours, widths and icon offsets are all cached per
  * unit (TAG_CACHE) and rebuilt only after a fresh server push or a tag* setting
  * change, so the steady state is two hashmap lookups and the draws below.
@@ -192,7 +198,8 @@ private _showFlags = GVAR(tagShowFlagIcon);
     _entry params [
         "_mainSep", "_rgbMain", "_tacticSep", "_rgbTactic", "_statusText", "_rgbStatus",
         "_flagsText", "_threatIcon", "_rgbThreat", "_threatHover",
-        "_wMainSep", "_wTacticSep", "_wStatus", "_threatCenterUI", "_flagCenterUI"
+        "_wMainSep", "_wTacticSep", "_wStatus", "_threatCenterUI", "_flagCenterUI",
+        "", "", "_ammoFill", "_ammoCenterUI"
     ];
 
     // The distance fade is the only per-frame part of the colour, so build each
@@ -200,18 +207,41 @@ private _showFlags = GVAR(tagShowFlagIcon);
     private _colMain   = _rgbMain + [_alpha];
     private _colThreat = _rgbThreat + [_alpha];
 
-    private _dposASL = _posASL;
-    if (_yShift != 0) then {
+    // UI-y per metre of camera-up. Three callers now — the de-confliction nudge
+    // below, the right-side chain's baseline nudge, and the ammo bar's fill
+    // offset — so it is measured ONCE here for whichever of them needs it, rather
+    // than inside the shift branch it used to live in. Which is why the test
+    // names the icons as well as the bar: a tag with neither, unshifted (the
+    // common case), still pays no worldToScreen for it.
+    private _hasIcon = _threatIcon != "" || {_showFlags && {_flagsText != ""}};
+    private _perMetreUp = 0;
+    if (_yShift != 0 || {_ammoFill >= 0} || {_hasIcon}) then {
         private _oneUp = worldToScreen (ASLToAGL (_posASL vectorAdd _camUp));
         if (_oneUp isNotEqualTo []) then {
-            private _perMetreUp = (_oneUp select 1) - (_scr select 1);
-            if (abs _perMetreUp > 1e-6) then {
-                _dposASL = _posASL vectorAdd (_camUp vectorMultiply (_yShift / _perMetreUp));
-            };
+            _perMetreUp = (_oneUp select 1) - (_scr select 1);
         };
+    };
+
+    private _dposASL = _posASL;
+    if (_yShift != 0 && {abs _perMetreUp > 1e-6}) then {
+        _dposASL = _posASL vectorAdd (_camUp vectorMultiply (_yShift / _perMetreUp));
     };
     private _scrX = _scr select 0;
     private _scrY = (_scr select 1) + _yShift;
+
+    // Baseline of the right-side chain. The tag's anchor is where the text hangs
+    // FROM (FUNC(drawTagLine) draws it on a zero-size icon, and drawIcon3D puts
+    // text below its icon), so anything CENTRED on that anchor floats half a line
+    // above the words — see ICON_BASELINE in script_component.hpp. One nudged
+    // anchor for the whole chain, so the icons cannot drift apart from each
+    // other; the bar takes the same offset inside FUNC(drawTagBar).
+    private _rowASL = _dposASL;
+    private _rowY   = _scrY;
+    if (_hasIcon && {abs _perMetreUp > 1e-6}) then {
+        private _drop = _size * ICON_BASELINE;
+        _rowASL = _dposASL vectorAdd (_camUp vectorMultiply (_drop / _perMetreUp));
+        _rowY   = _scrY + _drop;
+    };
 
     // Main line, with the LAMBS tactic and the status word split off into their
     // own colours — shared with the vehicle tags so both families measure and
@@ -229,8 +259,8 @@ private _showFlags = GVAR(tagShowFlagIcon);
 
     // Threat icon (danger/target) — flush to the right edge of the line.
     if (_threatIcon != "") then {
-        private _iconPos = ASLToAGL (_dposASL vectorAdd (_camRight vectorMultiply (_threatCenterUI / _perMetre)));
-        if ([_scrX + _threatCenterUI, _scrY] distance2D _mouse < ICON_HOVER_RADIUS) then {
+        private _iconPos = ASLToAGL (_rowASL vectorAdd (_camRight vectorMultiply (_threatCenterUI / _perMetre)));
+        if ([_scrX + _threatCenterUI, _rowY] distance2D _mouse < ICON_HOVER_RADIUS) then {
             drawIcon3D [_threatIcon, _colThreat, _iconPos, _iconDraw, _iconDraw, 0, _threatHover, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
         } else {
             drawIcon3D [_threatIcon, _colThreat, _iconPos, _iconDraw, _iconDraw, 0, "", 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
@@ -238,13 +268,27 @@ private _showFlags = GVAR(tagShowFlagIcon);
     };
 
     // Flag-inventory icon — flush past the threat icon when both show, else flush
-    // to the text. Hovering expands the full flag list.
+    // to the text. Hovering expands the full flag list. Drawn at the trimmed size
+    // rather than the shared one because its sheet is cropped tighter than the
+    // simpletask family's (FLAG_ICON_SCALE, script_component.hpp) — its SLOT is
+    // still one ICON_FOOT like every other icon's, so only the draw changes.
     if (_showFlags && {_flagsText != ""}) then {
-        private _iconPos = ASLToAGL (_dposASL vectorAdd (_camRight vectorMultiply (_flagCenterUI / _perMetre)));
-        if ([_scrX + _flagCenterUI, _scrY] distance2D _mouse < ICON_HOVER_RADIUS) then {
-            drawIcon3D [FLAG_ICON, COL_GOLD, _iconPos, _iconDraw, _iconDraw, 0, _flagsText, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
+        private _iconPos = ASLToAGL (_rowASL vectorAdd (_camRight vectorMultiply (_flagCenterUI / _perMetre)));
+        private _flagDraw = _iconDraw * FLAG_ICON_SCALE;
+        if ([_scrX + _flagCenterUI, _rowY] distance2D _mouse < ICON_HOVER_RADIUS) then {
+            drawIcon3D [FLAG_ICON, COL_GOLD, _iconPos, _flagDraw, _flagDraw, 0, _flagsText, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
         } else {
-            drawIcon3D [FLAG_ICON, _colMain, _iconPos, _iconDraw, _iconDraw, 0, "", 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
+            drawIcon3D [FLAG_ICON, _colMain, _iconPos, _flagDraw, _flagDraw, 0, "", 2, _size, "RobotoCondensedBold", "center", false, 0, 0];
         };
+    };
+
+    // Ammunition gauge — last in the right-side chain, so it sits past whichever
+    // icons are showing. Shared with the vehicle tags (FUNC(drawTagBar)); no
+    // hover, the fill IS the reading.
+    if (_ammoFill >= 0) then {
+        [
+            _dposASL, _perMetre, _perMetreUp, _camRight, _camUp,
+            _ammoCenterUI, _ammoFill, _size, _alpha
+        ] call FUNC(drawTagBar);
     };
 } forEach _records;

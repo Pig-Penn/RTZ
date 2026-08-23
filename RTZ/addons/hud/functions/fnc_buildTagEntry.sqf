@@ -25,13 +25,14 @@
  *
  * Return Value:
  * Cache entry <ARRAY>
- *   0 mainSep (main line + its separator)   1 mainRGB
- *   2 tacticSep (tactic + its separator)    3 tacticRGB
+ *   0 mainSep (main line + its neighbouring separators)   1 mainRGB
+ *   2 tacticSep (bare tactic word, no separator)          3 tacticRGB
  *   4 statusText                            5 statusRGB
  *   6 flagsText  7 threatIcon  8 threatRGB  9 threatHover
  *   10 mainSepWidth  11 tacticSepWidth  12 statusWidth
  *   13 threatCentreUI  14 flagCentreUI
  *   15 layoutHalfWidth  16 hasContent
+ *   17 ammoFill (0..1; -1 for no bar)  18 ammoCentreUI
  *
  * The bare main line and the separator used to ride along as their own slots.
  * Nothing read them — FUNC(drawUnitTags) is the only consumer and draws the
@@ -64,6 +65,7 @@ private _labels = GVAR(tagLabels);
 
 private _segs = [];
 private _tacText = "";
+private _ammoFill = -1;   // -1: no bar (see the ammo block below)
 if (GVAR(tagShowRole)) then { _segs pushBack _role };
 if (GVAR(tagShowHealth) && { _hp < 100 }) then {
     _segs pushBack format [LLSTRING(TagFieldHealth), _hp];
@@ -83,6 +85,15 @@ if (_isLocal) then {
         // no localizing. A full magazine (_ammo == _ammoCap) is dropped
         // entirely — only partial/depleted mags are worth flagging.
         _segs pushBack ([str _ammo, format [LLSTRING(TagFieldAmmo), _ammo, _ammoCap]] select (_ammoCap > 0));
+    };
+    // The same rounds as a gauge, which is what makes a screen full of tags
+    // answerable at a glance. A capacity of -1 (no primary, or none loaded) has
+    // no denominator, so there is no fraction to draw — the bar drops out rather
+    // than showing an arbitrary one. Unlike the text field above it does NOT
+    // vanish at full: a gauge that disappears reads as broken, not as full.
+    // Clamped because a chambered round can put a magazine one over capacity.
+    if (GVAR(tagShowAmmoBar) && { _ammoCap > 0 } && { _ammo >= 0 }) then {
+        _ammoFill = (_ammo / _ammoCap) min 1;
     };
     if (GVAR(tagShowCommand) && { _cmd != "" }) then { _segs pushBack _cmd };
     // Group-wide fact — leader's tag only, so a squad doesn't repeat the same
@@ -115,8 +126,11 @@ private _statusCol = [_col, COL_BAD] select _urgent;
 // everything from here to the end of the line is the same job in both builders
 // (FUNC(tagEntryTail)).
 private _tagSize = GVAR(tagSize);
+// _status comes back OUT as well as in: the tail drops it when it merely repeats
+// the tactic (FUNC(tagEntryTail)), and the entry has to ship the string the
+// widths were measured against, not the one passed in.
 ([_segs, _tacText, _status, _tagSize] call FUNC(tagEntryTail))
-    params ["_mainSep", "_tacticSep", "_wMainSep", "_wTacticSep", "_wStatus"];
+    params ["_mainSep", "_tacticSep", "_status", "_wMainSep", "_wTacticSep", "_wStatus"];
 
 // Threat icon (between the text and the flag icon) — LAMBS danger cause beats a
 // live attack target, same rule the dialog uses for its right-side indicator.
@@ -148,28 +162,50 @@ if (GVAR(tagShowThreatIcon) && _isLocal) then {
 
 private _halfFull = (_wMainSep + _wTacticSep + _wStatus) / 2;   // text half-width (UI-x)
 
-// Icon layout (UI-x, from the unit's centre). Each icon butts flush against the
-// text or the previous icon with one small ICON_GAP. Right side only: threat
-// then flag.
-private _iconW   = _tagSize * ICON_FOOT;          // icon on-screen footprint
-private _gap     = _tagSize * ICON_GAP;           // gap between two adjacent icons
-private _textGap = _tagSize * ICON_TEXT_GAP;      // larger gap: text ↔ its first icon
-private _step    = _iconW + _gap;                 // centre-to-centre, adjacent icons
-private _flush   = _halfFull + _textGap + (_iconW / 2); // first icon offset from a text edge
-
-private _threatCenterUI = _flush;                 // right of the text
-// Flag follows the threat icon when both show, otherwise sits flush itself.
-private _flagCenterUI = _flush + ([0, _step] select (_threatIcon != ""));
-
 // Only the flags the flag ICON will actually carry — an entry whose label maps
 // to "" contributes nothing to the hover list.
 private _flagsText = ((_flags apply { _labels getOrDefault [_x, _x] }) select { _x != "" }) joinString " · ";
 private _hasFlag   = GVAR(tagShowFlagIcon) && { _flagsText != "" };
 
-// De-confliction half-width: the text half plus whichever side carries icons, so
-// the stacking pass knows each tag's true footprint (icons included).
-private _nRight   = parseNumber (_threatIcon != "") + parseNumber _hasFlag;
-private _hwLayout = [_halfFull, _flush + (_iconW / 2) + ([0, _step] select (_nRight > 1))] select (_nRight > 0);
+// Right-side layout (UI-x, from the unit's centre): threat icon, then flag icon,
+// then the ammo bar, each butting flush against the text or its predecessor with
+// one small ICON_GAP. Walked as a running cursor holding the LEFT EDGE of the
+// next slot — the previous form placed each item with its own offset expression
+// off a shared _flush, which only ever worked because there were exactly two of
+// them; a third could not be expressed that way, and the vehicle tags need N.
+// An absent item consumes nothing, so switching the flag icon off slides the bar
+// left against the threat icon.
+private _iconW   = _tagSize * ICON_FOOT;          // icon on-screen footprint
+private _barW    = _tagSize * BAR_FOOT;           // ammo bar's, narrower
+private _gap     = _tagSize * ICON_GAP;           // gap between two adjacent items
+private _textGap = _tagSize * ICON_TEXT_GAP;      // larger gap: text ↔ its first item
+private _left    = _halfFull + _textGap;          // left edge of the first slot
+private _cursor  = _left;
+
+// Centres of the items that are absent are never read — every draw is gated on
+// the same condition that placed it — so they stay 0 rather than costing a
+// meaningless offset.
+private _threatCenterUI = 0;
+if (_threatIcon != "") then {
+    _threatCenterUI = _cursor + (_iconW / 2);
+    _cursor = _cursor + _iconW + _gap;
+};
+private _flagCenterUI = 0;
+if (_hasFlag) then {
+    _flagCenterUI = _cursor + (_iconW / 2);
+    _cursor = _cursor + _iconW + _gap;
+};
+private _ammoCenterUI = 0;
+if (_ammoFill >= 0) then {
+    _ammoCenterUI = _cursor + (_barW / 2);
+    _cursor = _cursor + _barW + _gap;
+};
+
+// De-confliction half-width: the text half plus whichever side carries items, so
+// the stacking pass knows each tag's true footprint (icons and bar included).
+// The cursor has already stepped past the last item's trailing gap, which is not
+// part of the footprint.
+private _hwLayout = [_halfFull, _cursor - _gap] select (_cursor > _left);
 
 // Precomputed "anything to draw at all" flag — the per-frame resolve pass reads
 // this single boolean instead of unpacking the entry to re-derive it every frame
@@ -178,7 +214,7 @@ private _hwLayout = [_halfFull, _flush + (_iconW / 2) + ([0, _step] select (_nRi
 // cost an empty drawIcon3D every frame. _mainSep / _tacticSep are empty exactly
 // when their own chunk is (FUNC(tagEntryTail)), so they stand in for them here.
 private _hasContent = _mainSep != "" || { _tacticSep != "" } || { _status != "" }
-    || { _hasFlag } || { _threatIcon != "" };
+    || { _hasFlag } || { _threatIcon != "" } || { _ammoFill >= 0 };
 
 [
     _mainSep,
@@ -197,5 +233,7 @@ private _hasContent = _mainSep != "" || { _tacticSep != "" } || { _status != "" 
     _threatCenterUI,
     _flagCenterUI,
     _hwLayout,
-    _hasContent
+    _hasContent,
+    _ammoFill,
+    _ammoCenterUI
 ]

@@ -18,6 +18,12 @@ PREP_RECOMPILE_END;
 // ─────────────────────────────────────────────────────────────────────────────
 // Must exist before the first stream tick reads it:
 //   seatCntCache — vehicle class → total seat count (FUNC(gatherVehicleInfo))
+//   turretsCache — vehicle class → turret paths (FUNC(gatherVehicleInfo))
+//
+// Both are keyed by CLASS, not by entity: turret paths and seat counts are
+// class-static, so these are bounded by the mission's vehicle classes and need no
+// prune, while `allTurrets` / `fullCrew` allocate their whole list on every call
+// and would otherwise do so per vehicle per gather tick.
 //
 // FUNC(gatherUnitInfo)'s magazine-capacity cache is NOT here. rtz_control and
 // rtz_supply ask the identical per-class question, so it moved to
@@ -25,6 +31,7 @@ PREP_RECOMPILE_END;
 // behind this isServer gate, because those two callers run on curator clients.
 if (isServer) then {
     GVAR(seatCntCache) = createHashMap;
+    GVAR(turretsCache) = createHashMap;
 };
 
 if (!hasInterface) exitWith { ADDON = true };

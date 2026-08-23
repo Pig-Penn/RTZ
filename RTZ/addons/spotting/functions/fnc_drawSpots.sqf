@@ -256,25 +256,11 @@ private _groupHoverByLeader = createHashMap;
         _aim = _anchor modelToWorldVisual [0, 0, _top];
     };
     if (count _aim < 3) then { continue };
+    // AGL, like everything the engine draws with — the +Z lift is vertical, so it
+    // shares the icon's terrain sample and holds. The amplifier's offset below is
+    // NOT vertical and does not.
     private _iconPos = _aim vectorAdd [0, 0, _zMod];
-    // Size amplifier lifted along CAMERA-UP, not world +Z. drawIcon3D offers no
-    // screen-space offset for the ICON — its offsetX/offsetY move the TEXT, which
-    // here is "" — so the gap has to be a world vector, and the axis it rides is
-    // what matters. A world +Z gap projects to screen as gap * sin(angle between
-    // +Z and the view axis): full looking at the horizon, HALF at 60° down, and
-    // ZERO looking straight down, where the amplifier landed exactly on the group
-    // icon it is meant to sit above. Top-down is the Zeus working angle, so that
-    // collapse was the normal case, not an edge case. Camera-up is perpendicular
-    // to the view axis by construction, so this offset leaves the amplifier at the
-    // icon's depth and the screen gap is exact at every pitch. Same fix and same
-    // reason as EFUNC(hud,drawUnitTags)' tag lift; the frame loop resolves the
-    // camera basis once per frame precisely so renderers can do this.
-    //
-    // Still scaled by _dist (not _zMod, which floors close up) so the gap also
-    // holds through zoom. Each side's frame peaks at a different height, so the
-    // size comes from the per-side table above via the payload's side index.
-    private _ampPos = _iconPos vectorAdd (_camUp vectorMultiply (_dist * (_AMP_GAPS select _sideIdx)));
-    private _iconW  = GROUP_ICON_WIDTH;
+    private _iconW   = GROUP_ICON_WIDTH;
 
     // Only worth asking for a group that HAS chevrons waiting past the cutoff.
     if (_anyPeek && {_ldrId in _peekByLeader}) then {
@@ -310,6 +296,36 @@ private _groupHoverByLeader = createHashMap;
     drawLine3D [_iconPos, _aim, [0, 0, 0, _col select 3]];
     drawIcon3D [_texture, _col, _iconPos, _iconW, _iconW, 0, "", 0, 0.03, "RobotoCondensed", "center", false, 0, -0.035];
     if (_echelonTex != "") then {
+        // Size amplifier lifted along CAMERA-UP, not world +Z. drawIcon3D offers no
+        // screen-space offset for the ICON — its offsetX/offsetY move the TEXT, which
+        // here is "" — so the gap has to be a world vector, and the axis it rides is
+        // what matters. A world +Z gap projects to screen as gap * sin(angle between
+        // +Z and the view axis): full looking at the horizon, HALF at 60° down, and
+        // ZERO looking straight down, where the amplifier landed exactly on the group
+        // icon it is meant to sit above. Top-down is the Zeus working angle, so that
+        // collapse was the normal case, not an edge case. Camera-up is perpendicular
+        // to the view axis by construction, so this offset leaves the amplifier at the
+        // icon's depth and the screen gap is exact at every pitch. Same fix and same
+        // reason as EFUNC(hud,drawUnitTags)' tag lift; the frame loop resolves the
+        // camera basis once per frame precisely so renderers can do this.
+        //
+        // AND THE OFFSET IS APPLIED IN ASL, NEVER TO THE AGL _iconPos. An AGL Z is
+        // measured from the terrain DIRECTLY UNDER THE POINT, so adding a vector
+        // with any HORIZONTAL component holds height above ground constant and
+        // walks the amplifier up and down the hill instead of lifting it. Camera-up
+        // is almost entirely horizontal exactly when the camera looks down — the
+        // Zeus working angle, and the same angle this camera-up lift exists to
+        // serve — so at tag range the gap landed metres off its icon over any
+        // slope, and slid as the group moved across one. Same reason and same fix
+        // as EFUNC(hud,drawTagLine)'s chunk anchors.
+        //
+        // Still scaled by _dist (not _zMod, which floors close up) so the gap also
+        // holds through zoom. Each side's frame peaks at a different height, so the
+        // size comes from the per-side table above via the payload's side index.
+        //
+        // Computed HERE rather than beside _iconPos: only a group that draws an
+        // echelon frame owes the two conversions, and most do not.
+        private _ampPos = ASLToAGL ((AGLToASL _iconPos) vectorAdd (_camUp vectorMultiply (_dist * (_AMP_GAPS select _sideIdx))));
         drawIcon3D [_echelonTex, _col, _ampPos, _iconW, _iconW, 0, "", 0, 0.03, "RobotoCondensed", "center", false, 0, -0.035];
     };
 } forEach _groups;

@@ -96,7 +96,30 @@ if (!hasInterface) exitWith {};
     // unit vectors in world space — the axes screen-space offsets are applied
     // along, so "right of the text" and "one line down" hold at any camera
     // orientation (a world +Z lift projects to nothing from a top-down camera).
-    private _camPos = positionCameraToWorld [0, 0, 0];
+    //
+    // THE BASIS IS DIFFERENCED IN ASL, NEVER IN THE AGL positionCameraToWorld
+    // RETURNS. Its documented return is PositionAGL, whose Z is measured from the
+    // terrain DIRECTLY UNDER THE POINT, so subtracting two AGL probes taken 1 m
+    // apart does not yield the camera axis — it yields that axis PLUS the terrain
+    // slope under the camera:
+    //
+    //     camRight.z = trueRight.z + (terrainZ(cam) - terrainZ(cam + right))
+    //
+    // Renderers multiply this vector by tens of metres (a tag chunk offset, an
+    // icon gap), so a hillside under the camera tilted the axis enough to lay a
+    // head tag out along a DIAGONAL: its three coloured chunks stepped upward left
+    // to right, spaced correctly but each on its own screen line. The horizontal
+    // spacing stayed right because the callers measure their UI scale off a
+    // screen-X delta, which a spurious world-Z does not disturb — and the tell
+    // was that the break moved with the CAMERA, not with the tagged entity.
+    //
+    // The camera POSITION stays AGL: renderers use it only for `distance` against
+    // AGL anchors, and every consumer would have to change together.
+    //
+    // Input axis order is [x, z, y] — x right, z UP, y forward, Y and Z swapped
+    // versus model space — so [1,0,0] and [0,1,0] are right and up as intended.
+    private _camPos    = positionCameraToWorld [0, 0, 0];
+    private _camPosASL = AGLToASL _camPos;
 
     // Renderers divide by this for their distance fade, so it must never be 0.
     private _viewDist = getObjectViewDistance select 0;
@@ -104,8 +127,8 @@ if (!hasInterface) exitWith {};
 
     private _ctx = [
         _camPos,
-        (positionCameraToWorld [1, 0, 0]) vectorDiff _camPos,
-        (positionCameraToWorld [0, 1, 0]) vectorDiff _camPos,
+        (AGLToASL positionCameraToWorld [1, 0, 0]) vectorDiff _camPosASL,
+        (AGLToASL positionCameraToWorld [0, 1, 0]) vectorDiff _camPosASL,
         getMousePosition,
         CBA_missionTime,
         _viewDist

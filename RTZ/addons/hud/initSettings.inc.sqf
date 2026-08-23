@@ -40,6 +40,7 @@ private _catOverlays = [ELSTRING(main,DisplayName), ELSTRING(core,CategoryOverla
     [QGVAR(tagShowMorale),      LSTRING(TagShowMorale),      LSTRING(TagShowMorale_Description),       false],
     [QGVAR(tagShowSuppression), LSTRING(TagShowSuppression), LSTRING(TagShowSuppression_Description),  false],
     [QGVAR(tagShowAmmo),        LSTRING(TagShowAmmo),        LSTRING(TagShowAmmo_Description),         false],
+    [QGVAR(tagShowAmmoBar),     LSTRING(TagShowAmmoBar),     LSTRING(TagShowAmmoBar_Description),      false],
     [QGVAR(tagShowStatus),      LSTRING(TagShowStatus),      LSTRING(TagShowStatus_Description),       true],
     [QGVAR(tagShowTactic),      LSTRING(TagShowTactic),      LSTRING(TagShowTactic_Description),       true],
     [QGVAR(tagShowCommand),     LSTRING(TagShowCommand),     LSTRING(TagShowCommand_Description),      false],
@@ -104,7 +105,7 @@ private _catOverlays = [ELSTRING(main,DisplayName), ELSTRING(core,CategoryOverla
     [QGVAR(vtagShowHull),      LSTRING(VtagShowHull),      LSTRING(VtagShowHull_Description),       true],
     [QGVAR(vtagShowFlyHeight), LSTRING(VtagShowFlyHeight), LSTRING(VtagShowFlyHeight_Description),  true],
     [QGVAR(vtagShowAmmo),      LSTRING(VtagShowAmmo),      LSTRING(VtagShowAmmo_Description),      false],
-    [QGVAR(vtagShowCommander), LSTRING(VtagShowCommander), LSTRING(VtagShowCommander_Description), false],
+    [QGVAR(vtagShowAmmoBar),   LSTRING(VtagShowAmmoBar),   LSTRING(VtagShowAmmoBar_Description),   false],
     [QGVAR(vtagShowStatus),    LSTRING(VtagShowStatus),    LSTRING(VtagShowStatus_Description),     true],
     [QGVAR(vtagShowTactic),    LSTRING(VtagShowTactic),    LSTRING(VtagShowTactic_Description),     true]
 ];

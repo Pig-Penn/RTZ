@@ -271,6 +271,12 @@
         <Key ID="STR_RTZ_HUD_TagShowAmmo">
             <English>Show Ammo</English>
         </Key>
+        <Key ID="STR_RTZ_HUD_TagShowAmmoBar">
+            <English>Show Ammo Bar</English>
+        </Key>
+        <Key ID="STR_RTZ_HUD_TagShowAmmoBar_Description">
+            <English>Draw a vertical gauge at the end of the tag showing how full the current primary-weapon magazine is. Turns amber below half and red below a quarter. Unlike the ammo text, it stays visible when the magazine is full.</English>
+        </Key>
         <Key ID="STR_RTZ_HUD_TagShowAmmo_Description">
             <English>Include rounds left in the current primary-weapon magazine.</English>
         </Key>
@@ -376,9 +382,6 @@
         <Key ID="STR_RTZ_HUD_VtagFieldAmmo">
             <English>AMMO %1</English>
         </Key>
-        <Key ID="STR_RTZ_HUD_VtagFieldCommander">
-            <English>CDR %1</English>
-        </Key>
         <Key ID="STR_RTZ_HUD_VtagFieldCrew">
             <English>CREW %1</English>
         </Key>
@@ -409,14 +412,14 @@
         <Key ID="STR_RTZ_HUD_VtagShowAmmo">
             <English>Show Ammo</English>
         </Key>
+        <Key ID="STR_RTZ_HUD_VtagShowAmmoBar">
+            <English>Show Ammo Bar</English>
+        </Key>
+        <Key ID="STR_RTZ_HUD_VtagShowAmmoBar_Description">
+            <English>Draw a vertical gauge at the end of the tag for each armed turret, showing how full its loaded magazine is. Turns amber below half and red below a quarter.</English>
+        </Key>
         <Key ID="STR_RTZ_HUD_VtagShowAmmo_Description">
             <English>Include rounds left in the crew's currently selected weapon.</English>
-        </Key>
-        <Key ID="STR_RTZ_HUD_VtagShowCommander">
-            <English>Show Commander</English>
-        </Key>
-        <Key ID="STR_RTZ_HUD_VtagShowCommander_Description">
-            <English>Include the effective commander's name.</English>
         </Key>
         <Key ID="STR_RTZ_HUD_VtagShowCrew">
             <English>Show Crew</English>

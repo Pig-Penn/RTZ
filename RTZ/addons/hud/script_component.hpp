@@ -115,8 +115,26 @@
 
 // BIS simpletask icon family shared by the selection dialog rows
 // (FUNC(buildSelectionRows)) and the unit head tags (FUNC(drawUnitTags)) —
-// direct texture paths; CfgMarkers lookups can silently return "". FLAG_ICON
-// is the flag-inventory marker texture (unit tags only).
+// direct texture paths; CfgMarkers lookups can silently return "".
+//
+// FLAG_ICON is the status-flag icon at the right end of a unit tag (unit tags
+// only). The Take Flag action glyph, NOT the map-marker flag it used to be:
+// solid white where the marker is a hairline, and at the ~30 px this is drawn
+// at, ink is what decides whether an icon reads or dissolves (45% of its sheet
+// is ink against the marker's 22%). It is also the only flag texture in the
+// game or in ZEN that is drawn solid — the other three (the two markers and
+// returnflag_ca) are all outlines.
+//
+// FLAG_ICON_SCALE is the price of that choice. drawIcon3D scales the SHEET, not
+// the glyph, so two icons at one size only come out the same size if they are
+// cropped alike, and this one is not: it is a pole-and-flag drawn to the sheet's
+// top and bottom edges (bbox 78% wide x 100% tall), while the simpletask family
+// beside it is inset ~12% on every side. Left at the shared ICON_DRAW it would
+// stand a head taller than the threat icon next to it — visibly a different
+// system, and no gap constant can fix a size difference. The trim is that ratio,
+// 0.875/1.0, applied to the DRAW only: the layout slot stays one ICON_FOOT for
+// every icon, so the chain arithmetic in FUNC(buildTagEntry) still has one kind
+// of item to place, and a narrower glyph simply sits with more air around it.
 #define ICON_ATTACK  "\a3\ui_f\data\igui\cfg\simpletasks\types\attack_ca.paa"
 #define ICON_SEARCH  "\a3\ui_f\data\igui\cfg\simpletasks\types\search_ca.paa"
 #define ICON_MOVE    "\a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa"
@@ -126,7 +144,8 @@
 #define ICON_DANGER  "\a3\ui_f\data\igui\cfg\simpletasks\types\danger_ca.paa"
 #define ICON_TARGET  "\a3\ui_f\data\igui\cfg\simpletasks\types\target_ca.paa"
 #define ICON_UNKNOWN "\a3\ui_f\data\igui\cfg\simpletasks\types\unknown_ca.paa"
-#define FLAG_ICON    "\a3\ui_f\data\map\markers\military\flag_ca.paa"
+#define FLAG_ICON       "\a3\ui_f\data\igui\cfg\actions\takeflag_ca.paa"
+#define FLAG_ICON_SCALE 0.875
 
 // ── Unit tag icon geometry ───────────────────────────────────────────────────
 // One tuned set, split across two files: FUNC(buildTagEntry) measures the icon
@@ -139,8 +158,21 @@
 //   ICON_TEXT_GAP  larger gap between the text and its first icon, so a status
 //                  word like DOWN isn't cramped against the icon beside it
 //   ICON_GAP       tighter gap between two adjacent icons
+//   ICON_BASELINE  downward nudge, as a multiple of the text size, applied to
+//                  EVERY item in the right-side chain (both icons and the ammo
+//                  bar, in both tag families)
 // Tuned so the default (size 0.03) reproduces the old ~0.7 icon — nudge FOOT /
 // TEXT_GAP / GAP if icons overlap or drift at your UI scale.
+//
+// WHY THE BASELINE. drawIcon3D centres its ICON on the anchor it is given but
+// hangs its TEXT below that anchor, and the tag line is drawn as text on a
+// zero-size icon (FUNC(drawTagLine)). So an item sharing the line's anchor is
+// centred half a line of text ABOVE the words it belongs to — which is exactly
+// how the flag icon came to float up and right of the tag instead of reading as
+// part of it. Half the font height puts an item's centre back on the text's
+// em-box centre; the text size is already a UI-y measure (it is what
+// FUNC(textWidth) measures with), so unlike BAR_HEIGHT this needs no axis-aspect
+// conversion.
 // ICON_HOVER_RADIUS is the Zeus-cursor pick distance (UI coordinates) for an
 // icon's hover-expand.
 //
@@ -154,7 +186,39 @@
 #define ICON_FOOT          1.1
 #define ICON_TEXT_GAP      0.9
 #define ICON_GAP           0.3
+#define ICON_BASELINE      0.5
 #define ICON_HOVER_RADIUS  0.03
+
+// ── Ammo bar geometry ────────────────────────────────────────────────────────
+// The vertical magazine gauge that rides at the right end of the icon chain on
+// both tag families (FUNC(drawTagBar)). Same contract as the icon block above:
+// multiples of the tag's text size, measured in the builders and drawn in the
+// renderers, so the two must agree.
+//   BAR_FOOT / BAR_HEIGHT  the bar's on-screen footprint in the SAME units as
+//                          ICON_FOOT — i.e. UI-x for the width, and for the
+//                          height the UI-x-equivalent of a PHYSICALLY square
+//                          extent, which FUNC(drawTagBar) converts to real UI-y
+//                          through the measured axis aspect. Expressing both in
+//                          one unit is what lets the layout cursor treat a bar
+//                          and an icon as the same kind of thing.
+//   BAR_PER_UI             UI footprint -> drawIcon3D size parameter. Derived
+//                          from the icon pair rather than tuned again: the two
+//                          describe the same mapping, and a second constant
+//                          would be a second thing to keep in step.
+//   BAR_WARN_AT/BAR_BAD_AT fill fractions at which the bar takes COL_WARN and
+//                          then COL_BAD, the same urgency palette the status
+//                          word uses.
+//   BAR_MAX_VEH            cap on bars per vehicle tag, so a many-turreted hull
+//                          cannot run its gauges off the end of the line.
+#define BAR_FOOT     0.30
+#define BAR_HEIGHT   1.40
+#define BAR_PER_UI   (ICON_DRAW / ICON_FOOT)
+#define BAR_WARN_AT  0.5
+#define BAR_BAD_AT   0.25
+#define BAR_MAX_VEH  4
+// Procedural solid white, tinted per draw by the colour argument. A texture path
+// would be a file dependency for a filled rectangle the engine can generate.
+#define BAR_TEXTURE  "#(argb,8,8,3)color(1,1,1,1)"
 
 // ── Status-flag tokens ───────────────────────────────────────────────────────
 // The flags[] field of both packet layouts. These are WIRE values, not display

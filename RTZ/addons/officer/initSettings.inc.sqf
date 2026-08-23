@@ -31,3 +31,11 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     [50, 300, 100, 0],
     true
 ] call CBA_fnc_addSetting;
+
+[
+    QGVAR(cooldownEnable), "CHECKBOX",
+    [LSTRING(CooldownEnable), LSTRING(CooldownEnable_Description)],
+    _category,
+    true,
+    true
+] call CBA_fnc_addSetting;

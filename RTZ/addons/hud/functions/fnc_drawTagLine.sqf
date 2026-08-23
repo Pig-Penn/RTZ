@@ -13,7 +13,8 @@
  * How the split works. drawIcon3D has no way to colour part of a string, so the
  * line is up to three draws laid end to end from its left edge: leftEdge =
  * centre - halfWidth(all three chunks), then each chunk is anchored at the
- * running cursor and the cursor advances by that chunk's measured width. UI-x
+ * running cursor and the cursor advances by that chunk's measured width, walking
+ * tactic, then main line, then status left to right. UI-x
  * offsets convert to world metres through _perMetre. textAlign names the SIDE of
  * the anchor the text sits on — NOT typographic alignment — so "right" STARTS at
  * the anchor, which is what makes a left-to-right walk possible at all. The
@@ -40,8 +41,9 @@
  * 0: World position to centre on, ASL <ARRAY>
  * 1: UI-x per metre of camera-right at this depth; <= 0 forces the fallback <NUMBER>
  * 2: Camera-right unit vector, CTX_CAMRIGHT <ARRAY>
- * 3: Main line INCLUDING its trailing separator, baked by FUNC(tagEntryTail) <STRING>
- * 4: Tactic INCLUDING its trailing separator, "" for none <STRING>
+ * 3: Main line, with its neighbouring separators already baked in by
+ *    FUNC(tagEntryTail) <STRING>
+ * 4: Bare tactic word, no separator, "" for none <STRING>
  * 5: Status word, "" for none <STRING>
  * 6: Main line colour, RGBA <ARRAY>
  * 7: Tactic colour, RGBA <ARRAY>
@@ -76,17 +78,17 @@ if ((_tacticSep == "" && {_status == ""}) || {_perMetre <= 1e-6}) exitWith {
 private _scale  = 1 / _perMetre;                                   // UI-x → metres
 private _cursor = -((_wMainSep + _wTacticSep + _wStatus) / 2);
 
-if (_mainSep != "") then {
-    private _anchor = ASLToAGL (_posASL vectorAdd (_camRight vectorMultiply (_cursor * _scale)));
-    drawIcon3D ["", _colMain, _anchor, 0, 0, 0, _mainSep, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
-};
-_cursor = _cursor + _wMainSep;
-
 if (_tacticSep != "") then {
     private _anchor = ASLToAGL (_posASL vectorAdd (_camRight vectorMultiply (_cursor * _scale)));
     drawIcon3D ["", _colTactic, _anchor, 0, 0, 0, _tacticSep, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
 };
 _cursor = _cursor + _wTacticSep;
+
+if (_mainSep != "") then {
+    private _anchor = ASLToAGL (_posASL vectorAdd (_camRight vectorMultiply (_cursor * _scale)));
+    drawIcon3D ["", _colMain, _anchor, 0, 0, 0, _mainSep, 2, _size, "RobotoCondensedBold", "right", false, 0, 0];
+};
+_cursor = _cursor + _wMainSep;
 
 if (_status != "") then {
     private _anchor = ASLToAGL (_posASL vectorAdd (_camRight vectorMultiply (_cursor * _scale)));

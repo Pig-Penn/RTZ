@@ -118,7 +118,7 @@
 // Echelon amplifier vertical gap above the group icon, indexed by side idx
 // (0 = BLUFOR rectangle, 1 = OPFOR diamond — peaks highest, 2 = independent/
 // civilian square), in map screen-space.
-#define AMP_GAPS_MAP [0.005, 0.008, 0.005]
+#define AMP_GAPS_MAP [0.002, 0.010, 0.004]
 #define MAP_ICON_SIZE 24
 
 // ── 3D world spot rendering (FUNC(drawSpots)) ────────────────────────────────

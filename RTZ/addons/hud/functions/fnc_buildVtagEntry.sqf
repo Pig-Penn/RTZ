@@ -24,10 +24,11 @@
  *
  * Return Value:
  * Cache entry <ARRAY>
- *   0 mainSep (main line + its separator)  1 mainRGB
- *   2 tacticSep (tactic + its separator)   3 tacticRGB
+ *   0 mainSep (main line + its neighbouring separators)   1 mainRGB
+ *   2 tacticSep (bare tactic word, no separator)          3 tacticRGB
  *   4 statusText                           5 statusRGB
  *   6 mainSepWidth  7 tacticSepWidth  8 statusWidth  9 hasContent
+ *   10 bars ([[centreUI, fill], ...], one per armed turret; [] for none)
  *
  * Layout matches FUNC(buildTagEntry)'s leading fields — both are composed by
  * FUNC(tagEntryTail) and drawn by FUNC(drawTagLine).
@@ -43,7 +44,7 @@ params ["_pkt"];
 _pkt params [
     "_vNet", "_dName", "_speedKmh", "_fuelPct", "_healthPct",
     "_crewCnt", "_ecNet", "_flags", "_task", "_tactic",
-    ["_seatCnt", -1], ["_flyHeight", -1], ["_selAmmo", -1]
+    ["_seatCnt", -1], ["_flyHeight", -1], ["_selAmmo", -1], ["_ammoBars", []]
 ];
 
 // Display-label remap (FUNC(loadTagLabels)) — LAMBS strings and RTZ tokens to
@@ -59,7 +60,11 @@ if (GVAR(vtagShowSpeed) && { _speedKmh > 0 }) then {
 // slot — a crew count adds nothing a player doesn't already see. The lookup is
 // inside the setting guard: it resolves an object from a netId purely to answer
 // a question nobody asked when the crew field is switched off.
-if (GVAR(vtagShowCrew) && { !((objectFromNetId _vNet) isKindOf "StaticWeapon") }) then {
+// A full crew (aboard == seats) is the expected state and adds nothing a
+// player doesn't already see — only surface the field short of full crew.
+// Unknown seat counts (-1: a pre-seat-count server build) can't be judged
+// full, so those still show the bare aboard count.
+if (GVAR(vtagShowCrew) && { _crewCnt < _seatCnt || _seatCnt < 0 } && { !((objectFromNetId _vNet) isKindOf "StaticWeapon") }) then {
     // "<aboard>/<positions>"; positions can be unknown (-1: a pre-seat-count
     // server build) — degrade to the bare aboard count.
     _segs pushBack ([
@@ -80,15 +85,6 @@ if (GVAR(vtagShowFlyHeight) && { _flyHeight >= 0 }) then {
 if (GVAR(vtagShowAmmo) && { _selAmmo >= 0 }) then {
     _segs pushBack format [LLSTRING(VtagFieldAmmo), _selAmmo];
 };
-// Dead-commander guard: `name` returns garbage for dead units, so a commander
-// killed between server pushes must drop the segment entirely.
-if (GVAR(vtagShowCommander) && { _ecNet != "" }) then {
-    private _ec = objectFromNetId _ecNet;
-    if (!isNull _ec && { alive _ec }) then {
-        _segs pushBack format [LLSTRING(VtagFieldCommander), name _ec];
-    };
-};
-
 // Kept OUT of _segs: drawn as its own chunk in COL_TACTIC, and that colour is
 // what marks it as the tactic — it spends no line width on a "TAC " prefix. A
 // tactic mapped to "" (LAMBS' "None") drops the chunk entirely.
@@ -122,18 +118,50 @@ private _statusCol = switch (true) do {
 // the vtag* prefix in the settings watcher, so these stay in step with
 // GVAR(vtagSize)). Shared with the unit tags — see FUNC(tagEntryTail), which is
 // also what stopped this path rebuilding the composed line every frame.
-([_segs, _tacText, _status, GVAR(vtagSize)] call FUNC(tagEntryTail))
-    params ["_mainSep", "_tacticSep", "_wMainSep", "_wTacticSep", "_wStatus"];
+private _tagSize = GVAR(vtagSize);
+// _status comes back OUT as well as in: the tail drops it when it merely repeats
+// the tactic (FUNC(tagEntryTail)), and the entry has to ship the string the
+// widths were measured against, not the one passed in.
+([_segs, _tacText, _status, _tagSize] call FUNC(tagEntryTail))
+    params ["_mainSep", "_tacticSep", "_status", "_wMainSep", "_wTacticSep", "_wStatus"];
+
+// Ammunition gauges, right of the text: one per armed turret, so an IFV reads its
+// main gun and its commander MG side by side rather than collapsing both into the
+// one selected-weapon count the text field shows. Placed by the same running
+// cursor FUNC(buildTagEntry) walks its icon chain with, and with the same
+// constants, so the two tag families put their bars in the same place relative to
+// their text. A turret with no capacity (index 13 is [] off the owning machine)
+// has no denominator and so no gauge, rather than an arbitrary fill; the count is
+// capped because a many-turreted hull would otherwise run its bars off the end of
+// the line. Clamped for the chambered round that puts a magazine one over.
+private _bars = [];
+if (GVAR(vtagShowAmmoBar) && { _ammoBars isNotEqualTo [] }) then {
+    private _barW   = _tagSize * BAR_FOOT;
+    private _gap    = _tagSize * ICON_GAP;
+    private _cursor = ((_wMainSep + _wTacticSep + _wStatus) / 2) + (_tagSize * ICON_TEXT_GAP);
+    {
+        // Tested at the TOP: exitWith in a forEach body is a continue, not a
+        // break (docs/Knowledge Base/Gotchas.md §2).
+        if (count _bars >= BAR_MAX_VEH) then { break };
+        _x params ["_rounds", "_cap"];
+        if (_cap > 0 && { _rounds >= 0 }) then {
+            _bars pushBack [_cursor + (_barW / 2), (_rounds / _cap) min 1];
+            _cursor = _cursor + _barW + _gap;
+        };
+    } forEach _ammoBars;
+};
 
 // Precomputed "anything to draw at all", matching FUNC(buildTagEntry): the draw
 // pass reads this one boolean instead of unpacking the whole entry to work it out
 // per vehicle per frame. _mainSep / _tacticSep are empty exactly when their own
 // chunk is.
-private _hasContent = _mainSep != "" || { _tacticSep != "" } || { _status != "" };
+private _hasContent = _mainSep != "" || { _tacticSep != "" } || { _status != "" }
+    || { _bars isNotEqualTo [] };
 
 [
     _mainSep, _col select [0, 3],
     _tacticSep, (COL_TACTIC) select [0, 3],
     _status, _statusCol select [0, 3],
-    _wMainSep, _wTacticSep, _wStatus, _hasContent
+    _wMainSep, _wTacticSep, _wStatus, _hasContent,
+    _bars
 ]

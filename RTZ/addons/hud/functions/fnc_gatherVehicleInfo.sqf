@@ -15,6 +15,7 @@
  *   6 ecNetId  7 flags[]  8 task  9 tactic  10 seatCnt
  *   11 flyHeight (commanded AI fly-in height, m; -1 unset)
  *   12 selAmmo (rounds in the crew's currently selected weapon; -1 unset/unknown)
+ *   13 ammoBars ([[rounds, capacity], ...], one per armed turret; [] unknown)
  *
  * A sideNum and a magazine count used to ride along at indices 1 and 11. Both
  * were read only by the bottom-right stat cards, which are gone; the magazine
@@ -59,6 +60,10 @@ if (!isNull _ec && { local _ec }) then {
 // are server-local); -1 elsewhere or with no armed gunner, so the tag drops the
 // field rather than showing a stale/zero count.
 private _selAmmo = -1;
+// One [rounds, capacity] pair per armed turret, for the ammo gauges — the same
+// reading as _selAmmo above but across every turret rather than only the one the
+// crew has selected, and carrying the denominator a bar needs.
+private _ammoBars = [];
 if (local _veh) then {
     private _shooter = gunner _veh;
     if (isNull _shooter) then { _shooter = _ec };
@@ -74,6 +79,24 @@ if (local _veh) then {
             };
         };
     };
+
+    // Turret paths are class-static, so the list is built once per class — see
+    // the note at GVAR(seatCntCache) below and in XEH_preInit. This field used to
+    // have a magazinesAllTurrets ancestor that allocated per vehicle per tick
+    // (see the packet-layout note above); what is left here is a handful of
+    // cheap engine reads over a cached list.
+    {
+        private _muzzle = _veh currentWeaponTurret _x;
+        if (_muzzle != "") then {
+            private _wstate = weaponState [_veh, _x, _muzzle];
+            private _mag = _wstate param [3, ""];
+            // Same magazine-less skip as above — an unarmed turret contributes
+            // no gauge rather than a permanently empty one.
+            if (_mag != "") then {
+                _ammoBars pushBack [_wstate param [4, -1], [_mag] call EFUNC(common,magazineCapacity)];
+            };
+        };
+    } forEach (GVAR(turretsCache) getOrDefaultCall [typeOf _veh, { allTurrets _veh }, true]);
 };
 
 [
@@ -95,5 +118,6 @@ if (local _veh) then {
     // component's requiredAddons — the order writes the variable, this
     // display reports it.
     _veh getVariable [QEGVAR(orders,flyHeight), -1],
-    _selAmmo
+    _selAmmo,
+    _ammoBars
 ]

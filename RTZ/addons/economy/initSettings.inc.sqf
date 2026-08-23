@@ -28,7 +28,7 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     QGVAR(income), "SLIDER",
     [LSTRING(Income), LSTRING(Income_Description)],
     _category,
-    [0, 60, 5, 1],
+    [0, 60, 3, 1],
     true
 ] call CBA_fnc_addSetting;
 
@@ -36,7 +36,7 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     QGVAR(incomeInterval), "SLIDER",
     [LSTRING(IncomeInterval), LSTRING(IncomeInterval_Description)],
     _category,
-    [5, 300, 60, 0],
+    [0, 600, 60, 0],
     true
 ] call CBA_fnc_addSetting;
 

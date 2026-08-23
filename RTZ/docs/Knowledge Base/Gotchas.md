@@ -504,6 +504,50 @@ That removes the "no display yet, fall back to a per-character estimate" branch 
 measurement needs — and with it the silently-wrong widths that branch baked into any cache entry
 built too early.
 
+### `drawIcon3D` centres its ICON on the anchor but hangs its TEXT below it
+
+One call, two anchoring rules. The texture is drawn **centred** on the position; the string is
+drawn **below** it, starting at roughly `y + height/2`. So an icon and a text label given the
+*same* position do not line up — the icon rides about half a line of text high.
+
+That is invisible until you mix the two, which is exactly what a tag row does.
+[`EFUNC(hud,drawTagLine)`](addons/hud/functions/fnc_drawTagLine.sqf) draws the words as text on a
+**zero-size** icon, so with `height = 0` the text simply hangs from the anchor — and every icon
+and bar in the row beside it, centred on that same anchor, floated half a line above the words
+it belonged to. `ICON_BASELINE` (`addons/hud/script_component.hpp`) is the nudge back down, half
+the font height, applied to every item in the chain by
+[`EFUNC(hud,drawUnitTags)`](addons/hud/functions/fnc_drawUnitTags.sqf) and
+[`EFUNC(hud,drawTagBar)`](addons/hud/functions/fnc_drawTagBar.sqf) so they cannot drift apart.
+
+No aspect correction on that one: the text size *is* a UI-y measure (it is what `getTextWidth`
+takes as its height), unlike `BAR_HEIGHT`, which is stated in UI-x and has to be converted.
+
+The other direction works too — parameters 13 and 14 are the **text** offset, so a negative
+`offsetY` pulls the label up onto the icon instead of pushing the icon down onto the label. Pick
+one and use it everywhere; the tags nudge the icons, because the text anchor is also what the
+de-confliction pass measures overlaps with.
+
+### The texture's own crop is part of its size
+
+Two icons drawn at the same `drawIcon3D` size do not render the same size — the *sheet* is what
+gets scaled, not the glyph inside it. The A3 simpletask family
+(`\a3\ui_f\data\igui\cfg\simpletasks\types\*`) insets its glyphs about 12% on every side; the
+flag textures do not. The map-marker flag (`\a3\ui_f\data\map\markers\military\flag_ca.paa`) is
+a map *pin* — pole to both sheet edges, flag mass in the top third — so at the family's size it
+came out taller than its neighbours *and* top-heavy, and no `ICON_TEXT_GAP` or `ICON_DRAW` value
+fixes either, because the mismatch is in the art.
+
+Two separate decisions come out of that. Which glyph: at ~30 px, **ink** decides whether an icon
+reads or dissolves, and of the four flag textures that exist across every A3 PBO and ZEN, only
+`\a3\ui_f\data\igui\cfg\actions\takeflag_ca.paa` is drawn solid (45% ink; the markers and
+`returnflag_ca` are all hairline outlines at 21–28%). And what size to draw it: `takeflag` is
+also edge-to-edge vertically, so `FLAG_ICON_SCALE` trims its *draw* by the crop ratio (0.875)
+while its layout *slot* stays one `ICON_FOOT` like every other icon's — the chain arithmetic
+keeps one kind of item to place, and the narrower glyph just sits with more air.
+
+Both are cheap to check before you tune anything: decode the sheet, take the alpha bounding box
+and the ink fraction, and compare them against the icons it will sit next to.
+
 ### A screen-space offset added to an AGL position rides the terrain
 
 `drawIcon3D`, `drawLine3D` and `worldToScreen` all take **PositionAGL**, whose Z is measured

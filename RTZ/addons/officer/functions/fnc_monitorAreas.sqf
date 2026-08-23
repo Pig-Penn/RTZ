@@ -19,7 +19,8 @@
  *    the entry block in FUNC(setArea): a Zeus should not keep editing rights
  *    over a position once his anchor is in a firefight or not paying
  *    attention), arming the same COOLDOWN_DURATION so it cannot be instantly
- *    re-planted once behaviour normalizes.
+ *    re-planted once behaviour normalizes. Gated on GVAR(cooldownEnable);
+ *    when off, the area is still torn down but re-planting is instant.
  *
  * Areas do NOT follow their officer. An area is anchored to the position the
  * officer stood on when it was planted and stays there for its whole life; the
@@ -95,7 +96,9 @@ if (!hasInterface) exitWith {};
         } else {
             if (behaviour _officer in ["COMBAT", "CARELESS"]) then {
                 [QGVAR(applyArea), ["remove", _curator, [_areaId]]] call CBA_fnc_serverEvent;
-                GVAR(cooldowns) set [_x, CBA_missionTime + COOLDOWN_DURATION];
+                if (GVAR(cooldownEnable)) then {
+                    GVAR(cooldowns) set [_x, CBA_missionTime + COOLDOWN_DURATION];
+                };
                 _toDelete pushBack _x;
                 _combatRemoved = true;
             };

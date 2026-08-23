@@ -12,13 +12,18 @@
  * EFUNC(core,selectionPoll) and GVAR(vehicleData) from the STREAM_VEH feed.
  *
  * The line is assembled by FUNC(buildVtagEntry) from the fields enabled in CBA
- * settings (name, speed, crew/seats, fuel, hull, fly height, ammo, commander,
+ * settings (name, speed, crew/seats, fuel, hull, fly height, ammo,
  * LAMBS task, tactic) and drawn in a static colour. Two pieces carry their own:
  * the LAMBS tactic (amber, the Draw Destinations tint, which is what names it as
  * the tactic without a "TAC " prefix), and the trailing status word — the warning
  * flags (LOW FUEL amber, DAMAGED red) always show regardless of the status field
  * setting. Both are split off at measured text boundaries by FUNC(drawTagLine).
  * Tags fade out approaching GVAR(vtagMaxDistance) from the camera.
+ *
+ * Right of the text sit the optional ammunition gauges (GVAR(vtagShowAmmoBar)),
+ * one per armed turret — so an IFV reads its main gun and its commander MG side
+ * by side instead of collapsing both into the one selected-weapon count the text
+ * field carries. Same bar the infantry tags draw (FUNC(drawTagBar)).
  *
  * Per-frame cost: the text, colours and widths are cached per vehicle (TAG_CACHE)
  * and rebuilt only after a fresh server push or a vtag* setting change, so the
@@ -107,21 +112,32 @@ private _curSide = side player;
 
     _entry params [
         "_mainSep", "_rgbMain", "_tacticSep", "_rgbTactic", "_statusText", "_rgbStatus",
-        "_wMainSep", "_wTacticSep", "_wStatus"
+        "_wMainSep", "_wTacticSep", "_wStatus", "", "_bars"
     ];
 
-    // Screen-space scale (UI units per metre of camera-right at this vehicle's
-    // depth) — needed to split the tactic and the status word into their own
-    // coloured draws. Exact for any FOV, no fov-formula guesswork. Only measured
-    // when there IS something to split off: without one, FUNC(drawTagLine) draws
-    // a single centred line and never looks at the scale, so the two
-    // worldToScreen calls would be wasted.
-    private _perMetre = 0;
-    if (_tacticSep != "" || {_statusText != ""}) then {
+    // Screen-space scales (UI units per metre of camera-right / camera-up at this
+    // vehicle's depth) — needed to split the tactic and the status word into their
+    // own coloured draws, and to place and fill the ammo gauges. Exact for any
+    // FOV, no fov-formula guesswork. Only measured when something actually needs
+    // them: with a single centred line and no bars, FUNC(drawTagLine) never looks
+    // at the scale, so the worldToScreen calls would be wasted. The vertical one
+    // is a bar-only cost — this renderer has no de-confliction pass to share it
+    // with, unlike FUNC(drawUnitTags).
+    private _perMetre   = 0;
+    private _perMetreUp = 0;
+    if (_tacticSep != "" || {_statusText != ""} || {_bars isNotEqualTo []}) then {
         private _scr = worldToScreen _pos;
-        private _oneRight = worldToScreen (ASLToAGL (_posASL vectorAdd _camRight));
-        if (_scr isNotEqualTo [] && {_oneRight isNotEqualTo []}) then {
-            _perMetre = (_oneRight select 0) - (_scr select 0);
+        if (_scr isNotEqualTo []) then {
+            private _oneRight = worldToScreen (ASLToAGL (_posASL vectorAdd _camRight));
+            if (_oneRight isNotEqualTo []) then {
+                _perMetre = (_oneRight select 0) - (_scr select 0);
+            };
+            if (_bars isNotEqualTo []) then {
+                private _oneUp = worldToScreen (ASLToAGL (_posASL vectorAdd _camUp));
+                if (_oneUp isNotEqualTo []) then {
+                    _perMetreUp = (_oneUp select 1) - (_scr select 1);
+                };
+            };
         };
     };
 
@@ -133,4 +149,15 @@ private _curSide = side player;
         _rgbMain + [_alpha], _rgbTactic + [_alpha], _rgbStatus + [_alpha], _size,
         _wMainSep, _wTacticSep, _wStatus
     ] call FUNC(drawTagLine);
+
+    // Ammunition gauges, right of the text — one per armed turret, already placed
+    // and filled at cache-build time. Shared with the unit tags so both families
+    // draw an identical bar.
+    {
+        _x params ["_centreUI", "_fill"];
+        [
+            _posASL, _perMetre, _perMetreUp, _camRight, _camUp,
+            _centreUI, _fill, _size, _alpha
+        ] call FUNC(drawTagBar);
+    } forEach _bars;
 } forEach _ids;

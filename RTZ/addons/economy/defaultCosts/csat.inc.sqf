@@ -77,7 +77,7 @@ _costs append [
 
     // Helicopters
     ["O_Heli_Light_02_unarmed_F", 20], // PO-30 Orca (Unarmed)
-    ["O_Heli_Light_02_dynamicLoadout_F", 30], // PO-30 Orca
+    ["O_Heli_Light_02_dynamicLoadout_F", 25], // PO-30 Orca
     ["O_Heli_Transport_04_F", 20], // Mi-290 Taru
     ["O_Heli_Transport_04_bench_F", 22], // Mi-290 Taru (Bench)
     ["O_Heli_Transport_04_covered_F", 25], // Mi-290 Taru (Transport)
@@ -86,7 +86,7 @@ _costs append [
     ["O_Heli_Transport_04_fuel_F", 28], // Mi-290 Taru (Fuel)
     ["O_Heli_Transport_04_repair_F", 29], // Mi-290 Taru (Repair)
     ["O_Heli_Transport_04_ammo_F", 30], // Mi-290 Taru (Ammo)
-    ["O_Heli_Attack_02_dynamicLoadout_F", 45], // Mi-48 Kajman
+    ["O_Heli_Attack_02_dynamicLoadout_F", 40], // Mi-48 Kajman
 
     // Men
     ["O_Survivor_F", 0], // Survivor
