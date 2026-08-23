@@ -138,7 +138,16 @@ for "_i" from (count GVAR(active)) - 1 to 0 step -1 do {
                 // the line; both references do exactly this and it is not redundant.
                 _vehicle setVelocity (velocity _vehicle);
 
-                // Task 6 opens the firing window here.
+                // The window opens on slant range, not on rail progress: a bomb wants a
+                // long, high release and a gun run a short one, and the two arrive at
+                // very different fractions of the same rail. The !isNull half keeps the
+                // window open once it HAS opened, so a fast aircraft that overshoots the
+                // release range inside one tick still finishes its burst.
+                private _range = RELEASE_RANGE select _type;
+
+                if (!isNull (_record select STRIKE_LASER) || {(getPosASL _vehicle) distance _aim < _range}) then {
+                    [_record, _now] call FUNC(release);
+                };
 
                 if ((_now - _t0) >= _duration) then {
                     // Task 7 replaces this with the hand-off to egress.

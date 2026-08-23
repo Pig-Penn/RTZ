@@ -6,6 +6,7 @@ PREP(endStrike);
 PREP(executeStrike);
 PREP(handleAimInput);
 PREP(orderStrike);
+PREP(release);
 PREP(steerToward);
 PREP(strikeActions);
 PREP(strikeAircraft);
