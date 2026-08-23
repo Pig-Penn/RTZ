@@ -72,7 +72,76 @@ for "_i" from (count GVAR(active)) - 1 to 0 step -1 do {
                 private _offset = ((getDir _vehicle) - (_record select STRIKE_BEARING) + 540) % 360 - 180;
 
                 if (abs _offset < HEADING_TOLERANCE && {(getPosASL _vehicle) distance _start < RUN_IN_CAPTURE}) then {
-                    // Task 5 replaces this with the hand-off onto the rail.
+                    private _origin = getPosASL _vehicle;
+                    private _aim = _record select STRIKE_AIM;
+                    private _cruise = _record select STRIKE_CRUISE;
+
+                    private _dir = _origin vectorFromTo _aim;
+
+                    // The dive angle the module uses, from the two legs of the descent
+                    // rather than from a fixed number: -90 plus the angle between the
+                    // horizontal run and the drop. Floored so an aim point at or above
+                    // the aircraft cannot divide by zero.
+                    private _horizontal = _origin distance2D _aim;
+                    private _drop = (((_origin select 2) - (_aim select 2))) max 1;
+                    private _pitch = -90 + atan (_horizontal / _drop);
+
+                    _vehicle setVectorDir _dir;
+                    [_vehicle, _pitch, 0] call BIS_fnc_setPitchBank;
+
+                    // Captured ONCE. setVelocityTransformation interpolates between two
+                    // fixed states, so re-deriving these every tick would move the
+                    // goalposts under the interpolation and the aircraft would never
+                    // arrive.
+                    _record set [STRIKE_RAIL, [
+                        _origin,
+                        _dir vectorMultiply _cruise,
+                        _dir,
+                        vectorUp _vehicle,
+                        _now,
+                        (_origin distance _aim) / _cruise
+                    ]];
+
+                    _record set [STRIKE_PHASE, PHASE_RUN];
+                    _record set [STRIKE_PHASE_AT, _now + RUN_TIMEOUT];
+                };
+            };
+
+            case PHASE_RUN: {
+                (_record select STRIKE_RAIL) params ["_origin", "_velocity", "_dir", "_up", "_t0", "_duration"];
+
+                private _aim = _record select STRIKE_AIM;
+                private _type = (_record select STRIKE_WEAPON) select 2;
+
+                // The aim point is raised by a per-type offset plus the fire progress.
+                // The offset keeps a guided missile from nosing into the dirt short of a
+                // ground-level mark; the progress term is the module's own fudge, which
+                // walks the burst forward instead of stacking every round on one spot.
+                private _target = +_aim;
+                _target set [2,
+                    (_target select 2)
+                    + ((AIM_OFFSET) select _type)
+                    + (_record select STRIKE_PROGRESS) * AIM_RAISE
+                ];
+
+                _vehicle setVelocityTransformation [
+                    _origin, _target,
+                    _velocity, _velocity,
+                    _dir, _dir,
+                    _up, _up,
+                    (_now - _t0) / _duration
+                ];
+
+                // setVelocityTransformation writes the interpolated state but leaves the
+                // engine's own velocity integration to fight it on the next physics step.
+                // Re-asserting the velocity it just produced is what keeps the aircraft on
+                // the line; both references do exactly this and it is not redundant.
+                _vehicle setVelocity (velocity _vehicle);
+
+                // Task 6 opens the firing window here.
+
+                if ((_now - _t0) >= _duration) then {
+                    // Task 7 replaces this with the hand-off to egress.
                     _finished = true;
                 };
             };
