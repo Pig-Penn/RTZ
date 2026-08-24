@@ -124,7 +124,7 @@ on, so each later hit overwrote the result and the **last** surface won instead 
 | Site | Symptom |
 |---|---|
 | [fnc_teleportToCursor.sqf](addons/orders/functions/fnc_teleportToCursor.sqf) | Trace runs downward from 200 m up, so "first" means highest. Units teleported onto a multi-storey building landed on its ground floor, and units aimed at a bridge landed underneath it |
-| [fnc_placementPreview.sqf](addons/common/functions/fnc_placementPreview.sqf) | Trace runs outward from the curator camera, so "first" means nearest. The placement ghost snapped through the roof under the cursor down to the ground below it |
+| `common/fnc_placementPreview.sqf` *(since removed)* | Trace ran outward from the curator camera, so "first" meant nearest. The placement ghost snapped through the roof under the cursor down to the ground below it |
 
 ### `params` with the same name twice silently discards the first argument
 

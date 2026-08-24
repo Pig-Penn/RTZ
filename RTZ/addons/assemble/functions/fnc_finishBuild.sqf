@@ -60,7 +60,7 @@ if (!isNull _weapon) then {
     };
 
     // Align to the ground slope, after setDir - which would reset the vector.
-    // surfaceNormal is fed ASL, as EFUNC(common,placementPreview) does, so the weapon
+    // surfaceNormal is fed ASL - it takes a PositionASL - so the weapon
     // lies flush on a rooftop or a bridge rather than on the terrain beneath it
     _weapon setVectorUp (surfaceNormal (getPosASL _weapon));
 

@@ -26,12 +26,6 @@
 // FUNC(sideColor) palette index for a side with no entry of its own (civilian)
 #define SIDE_COLOR_DEFAULT 4
 
-// Default 3D icon drawn at the spot by the placement preview picker, and the
-// size it and its hint text are drawn at
-#define ICON_PREVIEW "\a3\ui_f\data\igui\cfg\cursors\select_target_ca.paa"
-#define PREVIEW_ICON_SIZE 1.2
-#define PREVIEW_TEXT_SIZE 0.03
-
 // Icons for the shared context-menu submenu anchors (CfgZenContext.hpp)
 #define ICON_SUBMENU_OVERLAYS "\a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa"
 #define ICON_SUBMENU_CONTROL "\a3\ui_f\data\igui\cfg\simpletasks\types\help_ca.paa"

@@ -22,7 +22,8 @@
  *
  * Landing height: ground units get a vertical surface trace at their own
  * target x/y (the same "flush to any mostly-flat surface" test
- * FUNC(placementPreview) uses to ghost objects onto rooftops), so each unit
+ * zen_placement_fnc_updatePreview uses to ghost objects onto rooftops), so each
+ * unit
  * lands on top of whatever is directly beneath it — terrain, a roof, a
  * bridge — not the bare terrain mesh a plain setPos ground-snap would fall
  * through to. Needed because the formation-preserving per-unit offsets each

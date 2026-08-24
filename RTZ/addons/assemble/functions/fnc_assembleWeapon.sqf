@@ -20,10 +20,12 @@
  * 0: Gunner <OBJECT> - carries the primary weapon bag
  * 1: Static Class <STRING> - assembleInfo >> assembleTo
  * 2: Assistant <OBJECT> - carries the support bag, objNull for single bag and UAVs
- * 3: Position AGL <ARRAY> - the cursor spot to build at, as reported by
- *    EFUNC(common,placementPreview) (default: the gunner's own)
- * 4: Direction <NUMBER> - facing chosen in the placement preview, -1 auto-faces the
- *    nearest known enemy (default: -1)
+ * 3: Position AGL <ARRAY> - the cursor spot to build at, converted by
+ *    FUNC(orderAssemble) from the ASL zen_common_fnc_selectPosition reports
+ *    (default: the gunner's own)
+ * 4: Direction <NUMBER> - facing for the built weapon, -1 auto-faces the nearest
+ *    known enemy (default: -1). FUNC(orderAssemble) always passes -1: the picker
+ *    chooses no facing
  * 5: Curator's Player <OBJECT> - feedback toasts (default: objNull)
  *
  * Return Value:
