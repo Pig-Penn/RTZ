@@ -45,3 +45,22 @@ if (hasInterface) then {
         };
     }] call CBA_fnc_addEventHandler;
 };
+
+// QGVAR(unitReplacing) — [_unit] — is DECLARED here and raised by rtz_control's
+// FUNC(rcRebuild). No receiver lives in this component; the definition sits here because
+// the event is a cross-component contract and rtz_common is where those are documented.
+//
+// Meaning: "this unit is about to be deleted and replaced by a new object of the same
+// type. Release anything you are holding on it." Raised globally, while the unit still
+// exists, and BEFORE the rebuild captures its AI features and sweeps its variables —
+// which is the whole value of it. A listener that clears state here has that state
+// neither copied onto the replacement nor stranded on the corpse; a listener that ran
+// afterwards would have to un-copy it.
+//
+// Listeners must test their own locality. CBA runs local handlers synchronously, so the
+// rebuild's capture on the next line genuinely sees the result.
+//
+// The replacement object is deliberately NOT passed. Nothing has needed to migrate state
+// onto it — every listener so far tears down instead — and handing it out would invite
+// exactly the half-migrated errand this event exists to avoid. Add a second, post-build
+// event if a real migration case ever appears; do not widen this one.

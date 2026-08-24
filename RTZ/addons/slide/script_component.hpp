@@ -101,7 +101,7 @@
 // texture — the same glyph rtz_common's teleport draws for a move order, which
 // is what this is: a destination, not a man on foot.
 #define HINT_DURATION 3
-#define ICON_MOVE "\a3\ui_f\data\igui\cfg\simpleTasks\types\move_ca.paa"
+#define ICON_MOVE "\a3\ui_f\data\igui\cfg\simpletasks\types\run_ca.paa"
 #define COLOR_INVALID [0.9, 0.2, 0.2, 1]
 
 // Layout of a maneuver record in GVAR(active) — one entry per vehicle currently

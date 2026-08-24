@@ -64,8 +64,22 @@ _driver setBehaviour "CARELESS";
 private _start = _aim getPos [RUN_IN_DISTANCE, _bearing + 180];
 _start set [2, (getTerrainHeightASL _start) + RUN_IN_ALTITUDE];
 
-// Derived ONCE, here, rather than re-read from config on every tick.
-private _cruise = ((getNumber (configOf _vehicle >> "maxSpeed") * CRUISE_COEF) / 3.6) max CRUISE_MIN;
+// Derived ONCE, here, rather than re-read from config on every tick. Bounded at BOTH
+// ends: uncapped, a fast jet flies the whole rail in seven seconds and the dive reads
+// as a blur, while a propeller aircraft on the floor alone takes over a minute and runs
+// out of RUN_TIMEOUT partway down.
+private _cruise = ((((getNumber (configOf _vehicle >> "maxSpeed") * CRUISE_COEF) / 3.6) max CRUISE_MIN) min CRUISE_MAX);
+
+// The steering rate-limits pitch and bank, so both are STATE carried between ticks and
+// both have to start from what the aircraft is ACTUALLY doing. Seeded from zero, the
+// first ingress tick would level a banked aircraft in one frame — the exact snap the
+// rate limits exist to remove.
+//
+// The getter takes the object BARE, unlike BIS_fnc_setPitchBank next door, which takes
+// it in an array with the two angles. Handing this one an array reaches a `getDir` on it
+// inside fn_getPitchBank and throws "Type Array, expected Object". ZEN's
+// zen_modules_fnc_moduleRotateObject is the pattern.
+(_vehicle call BIS_fnc_getPitchBank) params ["_pitch", "_bank"];
 
 private _now = CBA_missionTime;
 
@@ -73,7 +87,8 @@ GVAR(active) pushBack [
     _vehicle, _driver, _aim, _bearing, _weaponData,
     PHASE_INGRESS, _start, _restore, [], objNull,
     0, 0, _now + INGRESS_TIMEOUT, _now + STRIKE_TIMEOUT, 0,
-    _cruise, 0, 0, false
+    _cruise, 0, 0, false,
+    _pitch, _bank, 0, []
 ];
 
 // Created by the first strike, destroyed by the last. Between strikes the handler

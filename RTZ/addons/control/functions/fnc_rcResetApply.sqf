@@ -2,9 +2,16 @@
 /*
  * Author: Maxim
  * Handler body for QGVAR(rcReset) (registered on EVERY machine in XEH_postInit).
- * Clears the animation and look state a Zeus remote control leaves behind, so
- * the released unit drops back into a natural pose instead of holding whatever
- * the RC camera was pointed at.
+ * Waits out the ownership handover a Zeus remote-control release starts, then hands
+ * the unit to FUNC(rcRebuild) on whichever machine ends up owning it.
+ *
+ * This function used to clear the released unit's animation and look state, which
+ * fixed the POSE it was let go in. That was a real fix for a real symptom, and it
+ * was not the important one: the unit also comes back unable to AIM (engine bug
+ * T179189), and a remedy ladder run in-game established that nothing short of
+ * recreating the unit clears that — including the LAMBS hard taskReset this
+ * component already ships. FUNC(rcRebuild) carries the reasoning and the evidence.
+ * A rebuilt unit gets the pose fix for free, since it is a new unit.
  *
  * Registered unconditionally, with no hasInterface guard: FUNC(rcReset) raises
  * this globally and the unit's owner can be a headless client or the dedicated
@@ -24,24 +31,19 @@
  * after the release — i.e. squarely inside the handover window, which is what
  * made the reset vanish silently. A condition is the right tool here precisely
  * because the settling time is a network round trip, not a frame count. It is
- * bounded per the per-tick rule in CLAUDE.md; on timeout it gives up in silence,
- * which is the same outcome the old code produced by accident.
+ * bounded per the per-tick rule in CLAUDE.md; on timeout it gives up in silence.
  *
- * The one-frame minimum the old code bought on purpose is still there for free:
- * CBA evaluates a waitUntil condition no earlier than the next frame, so a
- * switchMove can never land inside ZEN's own multi-frame teardown (objNull
- * remoteControl, player switchCamera, then openCuratorInterface next frame).
+ * The one-frame minimum the old code bought on purpose is still there for free,
+ * and matters more now than it did: CBA evaluates a waitUntil condition no earlier
+ * than the next frame, so the rebuild can never begin inside ZEN's own multi-frame
+ * teardown (objNull remoteControl, player switchCamera, then openCuratorInterface
+ * next frame). Deleting the unit out from under that sequence is a worse outcome
+ * than the mistimed switchMove this originally guarded against.
  *
  * EVERY GUARD IS RE-CHECKED IN THE STATEMENT, not just on arrival. There is a
  * network hop and then a wait in between, and a guard that protects a command
  * has to be evaluated where and when that command runs — the unit can board a
  * vehicle, go down, or die while the handover completes.
- *
- * doWatch / lookAt are cleared for the same reason FUNC(resetApply) clears them
- * after a LAMBS taskReset — the watch and the head/aim look are separate engine
- * channels that survive an animation reset and leave the unit staring at the old
- * point. objNull rather than [0,0,0], for the reason spelled out against the
- * matching pair in fnc_resetApply.sqf.
  *
  * Arguments:
  * 0: Released unit <OBJECT>
@@ -64,16 +66,16 @@
 // is about to receive the unit. It is tested separately alongside this macro.
 //
 // vehicle: ZEN remote controls effectiveCommander, so a VEHICLE takeover arrives
-//   here as the crewman object — a switchMove on a seated unit destroys its seat
-//   animation. Also covers the unit boarding something during the wait.
-// INCAPACITATED: a switchMove would yank a downed unit out of its unconscious
-//   animation.
+//   here as the crewman object. Crew are excluded deliberately and not as a gap —
+//   T179189 does not break a remote-controlled crewman's aiming, so there is
+//   nothing to rebuild, and recreating a unit into a specific seat would be real
+//   work for no benefit. Also covers the unit boarding something during the wait.
+// INCAPACITATED: a downed unit is mid-revive-state and must not be replaced out
+//   from under whatever is treating it.
 // surrendered / captured: rtz_captive holds prisoners in a forced pose WITH
 //   disableAI "ANIM" (its FUNC(surrenderApply)), and ZEN's canControl lets a
-//   curator remote control a surrendered unit, so this is reachable. Resetting
-//   there would break the pose and then leave the unit frozen in the new one,
-//   because ANIM is still disabled. Read as plain object variables, which adds no
-//   requiredAddons edge on rtz_captive.
+//   curator remote control a surrendered unit, so this is reachable. Read as plain
+//   object variables, which adds no requiredAddons edge on rtz_captive.
 #define RC_RESET_ELIGIBLE(unit) ( \
     !isNull unit \
     && {alive unit} \
@@ -102,13 +104,8 @@ if !(RC_RESET_ELIGIBLE(_unit)) exitWith {};
         // Only one of the two settling conditions means "act".
         if !(local _unit && {RC_RESET_ELIGIBLE(_unit)}) exitWith {};
 
-        _unit switchMove "";
-        _unit setUnitPos "AUTO";
-        _unit doWatch objNull;
-        _unit lookAt objNull;
+        [_unit] call FUNC(rcRebuild);
     },
     [_unit],
     RC_RESET_TIMEOUT
-    // No timeout code: the unit never became ours, which is the normal outcome on
-    // every machine but one.
 ] call CBA_fnc_waitUntilAndExecute;

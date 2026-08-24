@@ -53,3 +53,17 @@
 // never get the unit, and the only cost of undershooting is a reset that never
 // lands.
 #define RC_RESET_TIMEOUT 3
+
+// ── Remote-control rebuild ───────────────────────────────────────────────────
+// Seconds between the three steps of FUNC(rcRebuild): create, then apply state and
+// delete the original, then place the replacement. Wargame uses 0.2 and 0.1 sleeps
+// for the same two gaps; this is unscheduled code where sleep is illegal, so they
+// are CBA_fnc_waitAndExecute steps instead.
+#define RC_REBUILD_SETTLE 0.25
+
+// Every AI feature the engine exposes, captured and re-applied by FUNC(rcRebuild).
+// Read with checkAIFeature rather than assumed, because a unit can arrive here with
+// features another RTZ order deliberately disabled, and a rebuild must not quietly
+// switch them back on. Kept on one line: a line-continuation in a macro that is then
+// used inside `apply` is exactly the trailing-backslash trap in Gotchas.md §6.
+#define RC_AI_FEATURES ["AIMINGERROR","ANIM","AUTOCOMBAT","AUTOTARGET","CHECKVISIBLE","COVER","FSM","LIGHTS","MINEDETECTION","MOVE","NVG","PATH","RADIOPROTOCOL","SUPPRESSION","TARGET","TEAMSWITCH","WEAPONAIM"]

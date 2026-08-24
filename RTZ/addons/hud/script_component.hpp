@@ -264,7 +264,7 @@
 #define ICON_DEST "\a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa"
 #define ICON_TGT  "\a3\ui_f\data\igui\cfg\simpletasks\types\kill_ca.paa"
 #define COLOR_DEST [1.00, 0.80, 0.40, 1]
-#define COLOR_TGT  [0.60, 0.20, 0.20, 1]
+#define COLOR_TGT  [0.70, 0.20, 0.20, 1]
 
 // MAX_DRAW_DIST / FADE_NEAR / LABEL_CURSOR_RADIUS / LABEL_TEXT_SIZE / LABEL_FONT
 // come from core/script_macros_core.hpp, included above — they are the shared

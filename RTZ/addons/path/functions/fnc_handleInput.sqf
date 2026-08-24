@@ -23,7 +23,7 @@
  * handler for what reading it live would do.
  *
  * There is deliberately no "ignore the frame we started on" guard of the kind
- * EFUNC(airstrike,beginAiming) needs. That guard exists because a picker is
+ * EFUNC(common,placementPreview) needs. That guard exists because a picker is
  * opened by clicking a context-menu entry, and the same click would otherwise
  * confirm it instantly; this mode is opened by a keybind, and CBA keybinds
  * cannot be bound to a mouse button.
@@ -61,8 +61,7 @@ _handlers pushBack ["MouseButtonDown", _display displayAddEventHandler ["MouseBu
     // result, so a handle that happened to land under the create tree was grabbable
     // straight through it. Guarded here rather than in the renderer because the
     // renderer's answer is also what the hover highlight is drawn from, and that
-    // should keep tracking. See EFUNC(airstrike,handleAimInput), which guards the
-    // same press the same way.
+    // should keep tracking. See EFUNC(common,placementPreview).
     //
     // The release below is deliberately NOT guarded the same way: a drag begun in
     // the world has to be able to end with the cursor anywhere, or the handle

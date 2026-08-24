@@ -6,6 +6,10 @@ PREP_RECOMPILE_START;
 #include "XEH_PREP.hpp"
 PREP_RECOMPILE_END;
 
+// Bumped by every placement cost hint, so an older hint's pending fade-out
+// leaves a newer one alone (see fnc_placementToast)
+GVAR(toastToken) = 0;
+
 // Classname -> cost category index, built lazily as classes are first priced
 GVAR(categories) = createHashMap;
 

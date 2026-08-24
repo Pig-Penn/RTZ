@@ -22,6 +22,7 @@ PREP(magazineCapacity);
 
 // Shared UI / presentation helpers.
 PREP(notifyCurator);
+PREP(placementPreview);
 PREP(removeContextActions);
 PREP(showCountMessage);
 PREP(sideColor);

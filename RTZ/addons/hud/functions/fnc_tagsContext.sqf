@@ -29,7 +29,7 @@ if (!hasInterface) exitWith {};
 private _action = [
     "RTZ_ToggleTags",
     LLSTRING(ActionDrawTags),
-    ["\a3\ui_f\data\igui\cfg\simpletasks\types\documents_ca.paa", [1, 1, 1, 1]],
+    ["\a3\Modules_F_Curator\Data\portraitMissionName_ca.paa", [1, 1, 1, 1]],
     { call FUNC(toggleTags) },
     { true },
     [],

@@ -51,10 +51,8 @@ _handlers pushBack ["MouseButtonDown", _display displayAddEventHandler ["MouseBu
     // was projected under the panel and opened the gesture on it. ZEN guards its own
     // picker the same way (zen_common_fnc_selectPosition).
     //
-    // After the frame guard, never before: whether the context-menu control is still
-    // under the cursor by the time this display handler runs is engine-ordering
-    // dependent, so the opening press stays decided by frame number alone. See
-    // FUNC(beginAiming), which works that problem at length.
+    // After the frame guard, never before: see EFUNC(common,placementPreview) for
+    // why the opening context-menu press must stay decided by frame number alone.
     //
     // False, not true — the press belongs to the control under it. The release and
     // the Escape handler are deliberately NOT guarded this way: a gesture begun in

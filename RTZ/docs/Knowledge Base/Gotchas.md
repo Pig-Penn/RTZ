@@ -124,7 +124,7 @@ on, so each later hit overwrote the result and the **last** surface won instead 
 | Site | Symptom |
 |---|---|
 | [fnc_teleportToCursor.sqf](addons/orders/functions/fnc_teleportToCursor.sqf) | Trace runs downward from 200 m up, so "first" means highest. Units teleported onto a multi-storey building landed on its ground floor, and units aimed at a bridge landed underneath it |
-| `common/fnc_placementPreview.sqf` *(since removed)* | Trace ran outward from the curator camera, so "first" meant nearest. The placement ghost snapped through the roof under the cursor down to the ground below it |
+| [fnc_placementPreview.sqf](addons/common/functions/fnc_placementPreview.sqf) | Trace runs outward from the curator camera, so "first" means nearest. The placement ghost snapped through the roof under the cursor down to the ground below it |
 
 ### `params` with the same name twice silently discards the first argument
 
@@ -379,6 +379,76 @@ not the fault (the `Zero Divisor` was blamed on the line that merely read the va
 guard placed **after** the throwing statement can never run — instrument *before* it.
 
 If the function header says `Arguments: 0: <thing>`, the caller owes it `[thing]`.
+
+### A unit released from remote control cannot aim, and only recreating it helps (T179189)
+
+Take a unit with Zeus remote control, release it, and it comes back **combat-ineffective**:
+it turns toward an enemy but never puts its gun on target. Engine bug, not a scripting
+fault, and invisible until the unit fails to shoot — nothing about its state looks wrong.
+`animationState` is byte-identical either side of the release, and `checkAIFeature` reports
+every feature enabled.
+
+A remedy ladder was run in-game against a live broken unit, cheapest first. **Everything
+short of recreation fails**, including things that look like they must work:
+
+| Attempt | Result |
+|---|---|
+| LAMBS hard `taskReset` — new group, `joinSilent`, old group discarded | fails |
+| `disableAI "ALL"` then `enableAI "ALL"` | fails |
+| Re-applying every skill value (`aimingAccuracy`, `aimingShake`, `aimingSpeed`, …) | fails |
+| `setUnitLoadout` + `selectWeapon primaryWeapon` — re-seat the weapon | fails |
+| `createGroup` + `joinSilent` — fresh group | fails |
+| `createUnit` a replacement, copy state, `deleteVehicle` the original | **works** |
+
+Zeus Wargame hit this independently and says so in its own source
+(`jac_wargameMain.sqf:2054`). `rtz_control_fnc_rcRebuild` is RTZ's implementation.
+
+The trap for anyone re-investigating: the *pose* the unit was released in is a **separate**
+bug with a separate fix (`lambs_main_fnc_doAnimation`, `doWatch objNull`, `lookAt objNull`),
+and that one does work. Fixing the pose makes the unit look right while leaving it unable
+to shoot, which is easy to mistake for success.
+
+### CBA's XEH re-runs on `createUnit`; hand-added event handlers do not
+
+Relevant whenever an object is replaced rather than repaired. Anything registered through
+CBA's Extended Event Handlers — ACE3's, ZEN's, LAMBS', RTZ's own `XEH_preInit` classes —
+is re-attached to a freshly created unit automatically, along with its `init` state. So
+replacing a unit costs far less than it first appears.
+
+What is **not** carried is anything installed with a bare `addEventHandler` at runtime, and
+neither is anything a long-lived registry holds by object reference. Before replacing an
+object, the question to ask is not "what state does it have" but "who is holding a handle
+on it" — grep for `addEventHandler` on that object's type and for registries storing it.
+
+`allVariables _object` works on objects, not just namespaces, and is the cheap way to move
+per-object variables without a hand-maintained list that goes stale. It cannot tell you
+whether a variable was originally set public, so a generic sweep has to pick one and say
+so.
+
+### `BIS_fnc_getPitchBank` takes the object bare; its setter takes an array
+
+The mirror image of the entry above, and it costs the same debugging. These two read as a
+matched getter/setter pair. They do not share a calling convention:
+
+```sqf
+[_object, _pitch, _bank] call BIS_fnc_setPitchBank;               // array of three
+(_object call BIS_fnc_getPitchBank) params ["_pitch", "_bank"];   // BARE object
+```
+
+Handing the getter `[_object]` reaches a `getDir` on it inside
+`\A3\Functions_F\Objects\fn_getPitchBank.sqf` and throws *getdir: Type Array, expected
+Object*. The error names a BIS file and a line number **inside it**, with nothing pointing
+back at the call site that is actually wrong — so the instinct is to go read a stock
+function rather than to re-check what was passed to it.
+
+`hemtt check` cannot catch this class of bug at all: `[_object] call SOMETHING` is legal
+SQF, and the fault is a runtime type mismatch inside a function it does not analyse. This
+one reached in-game testing and aborted the strike order before its record was ever pushed,
+so the whole feature under test looked inert rather than broken.
+
+The cheap defence is to copy a convention from a mod that already uses it instead of
+inferring it from the sibling — ZEN's `zen_modules_fnc_moduleRotateObject` and ACE3's
+`ace_common_fnc_getPitchBankYaw` both pass the object bare.
 
 ### Position commands return `[]`, and one fallback is not enough
 
@@ -958,3 +1028,6 @@ when someone looks.
 | An event bounces between two machines forever | teardown re-routes on both ends; pass an "apply only" flag (§4) |
 | A unit arrives on a new owner with its AI back on | `disableAI` is machine-local and does not travel — re-apply from a `"Local"` handler (§4) |
 | A drawn text line reads lopsided — every separator has a wider gap after it than before it, and the whole line sits slightly left of its entity | widths measured with `ctrlTextWidth`, which adds 0.008 UI-x of control margin per side — measure with `getTextWidth` (§3) |
+| An error naming a line *inside* a stock `\A3\Functions_F\` file, on a call your own code makes | a BIS function handed `[obj]` when it wants `obj` bare — a getter/setter pair need not agree (§3) |
+| A unit released from Zeus remote control turns toward enemies but never fires | engine bug T179189 — only recreating the unit clears it; every cheaper remedy fails (§3) |
+| A replaced/recreated object loses some behaviour but keeps most of it | CBA XEH re-attaches on `createUnit`; hand-added `addEventHandler` calls and registry references do not (§3) |

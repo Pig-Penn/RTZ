@@ -8,6 +8,7 @@ PREP(dismountActionModifier);
 PREP(dismountApply);
 PREP(dismountToggle);
 PREP(needsReload);
+PREP(rcRebuild);
 PREP(rcReset);
 PREP(rcResetApply);
 PREP(reloadSquad);

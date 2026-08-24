@@ -13,6 +13,12 @@
         <Key ID="STR_RTZ_Common_ErrandOwnershipLost">
             <English>Order cancelled - the unit is no longer controlled by this machine.</English>
         </Key>
+        <Key ID="STR_RTZ_Common_PreviewHint">
+            <English>LMB place  |  ESC cancel</English>
+        </Key>
+        <Key ID="STR_RTZ_Common_PreviewHintRotate">
+            <English>LMB place  |  hold rotate modifier to turn  |  ESC cancel</English>
+        </Key>
         <Key ID="STR_RTZ_Common_SubmenuControl">
             <English>Controls</English>
         </Key>

@@ -16,18 +16,18 @@ class EditorData
 	};
 	class LayerIndexProvider
 	{
-		nextID=78;
+		nextID=82;
 	};
 	class Camera
 	{
-		pos[]={2.87061,12.954776,-10.432641};
+		pos[]={-0.26352566,5.8176427,-5.4486356};
 		dir[]={-1.2363449e-07,-0.70710683,0.70710683};
 		up[]={-1.2363449e-07,0.70710671,0.70710683};
 		aside[]={1,0,1.7484557e-07};
 	};
 };
 binarizationWanted=0;
-sourceName="test";
+sourceName="~test";
 addons[]=
 {
 	"A3_Characters_F",
@@ -4003,19 +4003,6 @@ class Mission
 			{
 				class Attribute0
 				{
-					property="lambs_WP_Editor_IsArtillery";
-					expression="if (_value) then {_this spawn {waitUntil {!(isNil 'lambs_wp_fnc_taskArtilleryRegister')};[gunner _this] call lambs_wp_fnc_taskArtilleryRegister;};};";
-					class Value
-					{
-						class data
-						{
-							singleType="BOOL";
-							value=1;
-						};
-					};
-				};
-				class Attribute1
-				{
 					property="VehicleCustomization";
 					expression="if (local _this) then {([_this] + _value + [true]) call (uinamespace getvariable 'BIS_fnc_initVehicle')};";
 					class Value
@@ -4145,6 +4132,19 @@ class Mission
 									};
 								};
 							};
+						};
+					};
+				};
+				class Attribute1
+				{
+					property="lambs_WP_Editor_IsArtillery";
+					expression="if (_value) then {_this spawn {waitUntil {!(isNil 'lambs_wp_fnc_taskArtilleryRegister')};[gunner _this] call lambs_wp_fnc_taskArtilleryRegister;};};";
+					class Value
+					{
+						class data
+						{
+							singleType="BOOL";
+							value=1;
 						};
 					};
 				};
@@ -4813,6 +4813,7 @@ class Mission
 			};
 			id=295;
 			type="I_GMG_01_F";
+			atlOffset=0.019348145;
 		};
 		class Item60
 		{

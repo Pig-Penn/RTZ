@@ -33,6 +33,17 @@
 
 #define IDCS_CREATE_TREES [IDC_CREATE_UNITS_WEST, IDC_CREATE_UNITS_EAST, IDC_CREATE_UNITS_GUER, IDC_CREATE_UNITS_CIV, IDC_CREATE_UNITS_EMPTY, IDC_CREATE_RECENT]
 
+// RscDisplayCurator's feedback message control (\a3\ui_f_curator\ui\defineResinclDesign.inc),
+// driven directly by FUNC(placementToast): BIS_fnc_showCuratorFeedbackMessage,
+// and so zen_common_fnc_showMessage on top of it, plays an error sound on every
+// call, which turns browsing the create tree into a machine gun
+#define IDC_CURATOR_FEEDBACKMESSAGE 15512
+
+// Seconds the cost stays up, then the fade-out duration. Both match the BIS
+// function's own timings so the hint behaves like every other Zeus message
+#define TOAST_DURATION 3
+#define TOAST_FADE 0.5
+
 // Cost category indices, order matches the base cost array in fnc_registerCosts
 #define INDEX_FREE -1
 #define INDEX_INFANTRY 0

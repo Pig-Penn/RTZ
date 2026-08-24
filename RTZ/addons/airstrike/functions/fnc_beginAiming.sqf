@@ -47,7 +47,7 @@ if (GVAR(aiming) isNotEqualTo []) then {
 
 // Index 5 is a FRAME guard, not a one-shot flag: the frame this session opened
 // on, tested in FUNC(handleAimInput) as `diag_frameNo > (GVAR(aiming) select 5)`
-// — a frame number latched at open and only ever compared, never cleared.
+// — the exact recipe EFUNC(common,placementPreview) uses for GVAR(previewStartFrame).
 // This session is opened by CLICKING a context-menu entry, so without a guard the
 // very click that picked the weapon can arrive at this display's MouseButtonDown
 // and latch the aim point instantly. A one-shot "swallow the first press" boolean
