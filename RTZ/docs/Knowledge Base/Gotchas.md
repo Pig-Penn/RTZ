@@ -72,7 +72,9 @@ It takes a timeout and a timeout branch; use them:
 ```
 
 Shipped in `fnc_addWaypoint`, which watched a DESTROY target for deletion with no timeout — one
-per-frame condition per attack order, forever, and re-tasking a group added another.
+per-frame condition per attack order, forever, and re-tasking a group added another. The watch
+was bounded, then deleted outright: in-game testing showed a DESTROY waypoint completes within
+seconds on its own — target alive, dead, or deleted — so there was never an orphan to clean up.
 
 ### `while` loops in unscheduled code silently stop at 10,000 iterations
 

@@ -44,3 +44,12 @@
 #define COLOR_LOCKED [1.00, 0.78, 0.22, 1]
 // Cyan
 #define COLOR_UNLOCKED [0.40, 0.80, 1.00, 1]
+
+// Bound on FUNC(rcResetApply)'s wait for the remote-control ownership handover.
+// `objNull remoteControl` returns the unit to its previous owner over the
+// network, so the machine that will run the reset is NOT known at dispatch time
+// — see the dispatch note in fnc_rcReset.sqf. Seconds; generous, because the
+// only cost of overshooting is a `local` test per frame on the machines that
+// never get the unit, and the only cost of undershooting is a reset that never
+// lands.
+#define RC_RESET_TIMEOUT 3

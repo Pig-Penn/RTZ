@@ -35,8 +35,8 @@ if (isNull _driver || {!alive _driver} || {isPlayer _driver}) exitWith {};
 
 // A re-order REPLACES, it never stacks. Without this a curator who re-tasks the same
 // jet three times gets three records driving one hull, each fighting the others for
-// its velocity — the same shape as the watch stacking EFUNC(attack,addWaypoint)
-// carries a comment about.
+// its velocity — the same shape as the per-order watch EFUNC(attack,addWaypoint)
+// used to stack, since deleted.
 private _existing = GVAR(active) findIf {(_x select STRIKE_PLANE) isEqualTo _vehicle};
 
 if (_existing != -1) then {

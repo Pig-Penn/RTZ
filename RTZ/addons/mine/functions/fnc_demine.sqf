@@ -29,9 +29,13 @@ params ["_group", "_position", "_clearUnknownMines"];
 
 if (isNull _group || {units _group isEqualTo []}) exitWith {};
 
-// A new order supersedes all existing waypoints
+// A new order supersedes all existing waypoints, except the implicit waypoint 0
+// every group is created with: that is the one the group is already standing on,
+// so an order placed there can be treated as reached the moment it is set
+private _waypoints = waypoints _group;
+_waypoints deleteAt 0;
 {
     deleteWaypoint _x;
-} forEachReversed (waypoints _group);
+} forEachReversed _waypoints;
 
 [_group, _position, objNull, _clearUnknownMines] call BIS_fnc_wpDemine;

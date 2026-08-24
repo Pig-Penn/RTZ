@@ -25,16 +25,40 @@
  * controller learns their own release ended", which the event delivers on
  * exactly the machine that owns the per-client setting.
  *
+ * ZEN raises the event with a BARE OBJECT, not [_unit] — CBA passes _params
+ * straight through as _this (fnc_localEvent.sqf:27). `params` wraps a non-array
+ * into a one-element array, so the destructure below is correct as written; do
+ * not "fix" it into `_this select 0`, and do not assume an array arrives.
+ *
  * Accepted limitation: a curator who DISCONNECTS mid-RC never fires the event,
  * so the unit is not reset. ZEN leaks the same case (its owner variable is never
  * cleared either, so the indicator icon sticks for everyone else) — pre-existing
  * and upstream. Same for a mission script driving BIS_fnc_moduleRemoteControl
  * directly.
  *
- * The unit's locality after release is not guaranteed to be this machine, so the
- * commands themselves go out as a targetEvent (see FUNC(rcResetApply)); the
- * checks here are only a cheap pre-filter so an ineligible release costs no
- * network message. GVAR(enableRcReset) is read LIVE, per curator.
+ * DISPATCH IS A GLOBAL EVENT, NOT A targetEvent — deliberately, and this is the
+ * part that was wrong before. `remoteControl` moves the unit's locality to the
+ * CONTROLLING client (fnc_remoteControlIndicator.sqf:12 already says so), and
+ * ZEN raises this event nine lines after `objNull remoteControl _unit`, in the
+ * same frame. The handover back to the previous owner is a network operation, so
+ * at this instant the unit is still local HERE, whoever ends up owning it.
+ *
+ * CBA_fnc_targetEvent resolves its routing from `local` AT SEND TIME
+ * (fnc_targetEvent.sqf:32-40). Aimed at the unit from here it therefore finds no
+ * remote target, raises the event on this machine alone and sends nothing — and
+ * then FUNC(rcResetApply)'s locality guard fails the moment ownership lands
+ * elsewhere, with no other machine ever having been told. Silent total loss, and
+ * a race with no retry: exactly the shape of "the reset sometimes does nothing".
+ *
+ * A global event costs one message per release — a handful of times in a
+ * multi-hour operation — and lets the machine that ACTUALLY ends up owning the
+ * unit decide, once the handover has settled. The reset is idempotent (every
+ * command in the applier is a set-to-neutral, not a toggle), so the pathological
+ * case — handover still in flight, two machines both apply it — converges on the
+ * same pose either way.
+ *
+ * The checks below stay as a cheap pre-filter, so an ineligible release costs no
+ * network message at all. GVAR(enableRcReset) is read LIVE, per curator.
  *
  * Arguments:
  * 0: Released unit <OBJECT>
@@ -58,4 +82,4 @@ if (!GVAR(enableRcReset)) exitWith {};
 if (isNull _unit || {!alive _unit} || {!(_unit isKindOf "CAManBase")}) exitWith {};
 if (vehicle _unit isNotEqualTo _unit) exitWith {};
 
-[QGVAR(rcReset), [_unit], _unit] call CBA_fnc_targetEvent;
+[QGVAR(rcReset), [_unit]] call CBA_fnc_globalEvent;

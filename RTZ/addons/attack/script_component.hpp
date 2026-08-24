@@ -24,15 +24,6 @@
 // Sides are hostile below this getFriend value (engine threshold)
 #define HOSTILE_THRESHOLD 0.6
 
-// How long (s) FUNC(addWaypoint) watches a live DESTROY target for the one case
-// the engine does not resolve on its own: a target DELETED by Zeus, which leaves
-// the group holding a waypoint attached to nothing. The watch is a per-frame
-// condition, so it is bounded rather than left running for the whole mission —
-// a target still alive after this long is the engine's problem, not an orphan.
-// Generous: an attack order that takes longer than this to resolve has already
-// been superseded or forgotten.
-#define ORPHAN_WATCH_TIMEOUT 600
-
 // Order feedback drawing
 #define HINT_DURATION 3
 #define ICON_ATTACK "\a3\3DEN\Data\CfgWaypoints\destroy_ca.paa"
