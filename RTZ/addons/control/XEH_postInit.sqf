@@ -8,6 +8,12 @@ if (isServer) then {
     [QGVAR(squadHide), LINKFUNC(squadHideApply)] call CBA_fnc_addEventHandler;
     [QGVAR(disableDynamicSimulation), LINKFUNC(disableDynamicSimulationApply)] call CBA_fnc_addEventHandler;
     [QGVAR(takeOwnership), LINKFUNC(takeOwnershipApply)] call CBA_fnc_addEventHandler;
+
+    // The two halves of a remote-control rebuild that need the server: the arbiter that
+    // picks which single machine rebuilds a released unit, and the ordered
+    // hide/grant/delete tail every rebuild finishes through.
+    [QGVAR(rcClaim), LINKFUNC(rcClaim)] call CBA_fnc_addEventHandler;
+    [QGVAR(rcHandover), LINKFUNC(rcHandover)] call CBA_fnc_addEventHandler;
 };
 
 // Everywhere-receivers. Both bodies need the group LOCAL, and local does not
@@ -45,3 +51,8 @@ if (isServer) then {
 // setting is read live inside FUNC(rcReset) rather than gating registration.
 ["zen_remoteControlStopped", LINKFUNC(rcReset)] call CBA_fnc_addEventHandler;
 [QGVAR(rcReset), LINKFUNC(rcResetApply)] call CBA_fnc_addEventHandler;
+
+// The arbiter's answer, aimed at one client ID with CBA_fnc_ownerEvent. Registered
+// everywhere for the same reason the two above are: the machine that wins the claim can
+// be a curator's client, a headless client or the server itself.
+[QGVAR(rcRebuildAt), LINKFUNC(rcRebuild)] call CBA_fnc_addEventHandler;

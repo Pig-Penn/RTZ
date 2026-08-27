@@ -8,6 +8,8 @@ PREP(dismountActionModifier);
 PREP(dismountApply);
 PREP(dismountToggle);
 PREP(needsReload);
+PREP(rcClaim);
+PREP(rcHandover);
 PREP(rcRebuild);
 PREP(rcReset);
 PREP(rcResetApply);

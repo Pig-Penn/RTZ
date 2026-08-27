@@ -52,10 +52,18 @@
  *
  * A global event costs one message per release — a handful of times in a
  * multi-hour operation — and lets the machine that ACTUALLY ends up owning the
- * unit decide, once the handover has settled. The reset is idempotent (every
- * command in the applier is a set-to-neutral, not a toggle), so the pathological
- * case — handover still in flight, two machines both apply it — converges on the
- * same pose either way.
+ * unit decide, once the handover has settled.
+ *
+ * WHAT THE GLOBAL DISPATCH DOES NOT BUY, and used to be argued that it did: this
+ * paragraph once ended "the reset is idempotent (every command in the applier is
+ * a set-to-neutral, not a toggle), so the pathological case — handover still in
+ * flight, two machines both apply it — converges on the same pose either way".
+ * That was true of the animation reset this function was written for. It stopped
+ * being true the day the applier became a REBUILD: creating a unit and deleting
+ * another is not a set-to-neutral, and two machines applying it produce two
+ * replacements for one unit. The pathological case is also the normal one, since
+ * `local` is still true on this machine and stays true until the handover lands
+ * somewhere else. Exclusion is now the server's job — see FUNC(rcClaim).
  *
  * The checks below stay as a cheap pre-filter, so an ineligible release costs no
  * network message at all. GVAR(enableRcReset) is read LIVE, per curator.

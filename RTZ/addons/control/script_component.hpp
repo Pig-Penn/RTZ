@@ -17,6 +17,18 @@
 
 // Toggle icon/tint pair for the "Disable/Enable Simulation" context action and
 // its modifierFunction.
+//
+// Both are solid white silhouettes carried entirely by their alpha, because
+// ZEN tints them with ctrlSetTextColor and that multiplies the texture. RGB is
+// white even where alpha is 0 — transparent texels still bleed into the edge
+// when the engine scales the sheet down to the ~18px the menu draws, and black
+// ones showed up as a dark fringe.
+//
+// Sized against ICON_DELETE so the three RTZ glyphs carry the same weight in
+// one submenu: 128px sheets, a 100px vertical extent, and an ink fraction in
+// the 30-34% band. The play triangle sits 3px right of centre, since a
+// triangle is optically centred nearer its centroid than its bounding box.
+// Regenerate with tools/icons — see tools/icons/README.md.
 #define ICON_HIDE "\x\rtz\addons\control\ui\pause_ca.paa"
 #define ICON_SHOW "\x\rtz\addons\control\ui\play_ca.paa"
 // Orange
@@ -53,6 +65,12 @@
 // never get the unit, and the only cost of undershooting is a reset that never
 // lands.
 #define RC_RESET_TIMEOUT 3
+
+// Seconds a rebuild claim is remembered by FUNC(rcClaim) before it lapses. Only has to
+// outlast the spread between the first candidate machine settling and the last one — a
+// round trip, generously over-covered here — and it is what bounds GVAR(rcClaims) on a
+// multi-hour operation.
+#define RC_CLAIM_WINDOW 30
 
 // ── Remote-control rebuild ───────────────────────────────────────────────────
 // Seconds between the three steps of FUNC(rcRebuild): create, then apply state and

@@ -24,8 +24,16 @@
 GVAR(mines) = (detectedMines (side group player)) select {
     !isNull _x && {mineActive _x}
 } apply {
-    private _pos = ASLToAGL getPosASL _x;
-    // Lift the icon off the ground so it stays readable over the mine model
-    _pos set [2, (_pos select 2) + ICON_OFFSET_Z];
-    _pos
+    // NO VERTICAL LIFT. The obvious "raise it off the ground so it reads over the
+    // mine model" is a world-METRE offset, and drawIcon3D draws the icon at a
+    // FIXED SCREEN SIZE - so the gap it opens on screen is 0.5 / (distance *
+    // tan(vFOV/2)) and belongs to the camera, not to the marker. First person is
+    // locked to a wide FOV at infantry ranges, where half a metre lands on the
+    // model; the Zeus camera zooms freely, and at a narrow FOV that same half
+    // metre threw the icon hundreds of pixels up into the sky, still aligned over
+    // a mine it had visibly detached from. Top-down it collapsed to nothing
+    // instead. A constant screen gap would have to be measured per frame the way
+    // rtz_hud measures its per-metre scale; centring the icon on the mine needs no
+    // measurement and cannot come apart at any zoom or angle.
+    ASLToAGL getPosASL _x
 };

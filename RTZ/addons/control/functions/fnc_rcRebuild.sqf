@@ -37,8 +37,14 @@
  * listeners can release their state while the unit still exists and it is never copied
  * onto the replacement. Raising one afterwards would mean un-copying, which is worse.
  *
- * Runs where the unit is local — FUNC(rcResetApply) has already waited out the ownership
- * handover before calling this.
+ * Runs where the unit is local, and on exactly ONE machine. FUNC(rcResetApply) waits out
+ * the ownership handover on every machine and the first to see the unit go local asks
+ * FUNC(rcClaim) — on the server, where `owner` is authoritative — for the job. Reached as
+ * the QGVAR(rcRebuildAt) receiver, never called directly across the wire.
+ *
+ * The tail of the rebuild is a second server hop, FUNC(rcHandover): the hide, the curator
+ * grant and the delete of the original all need the server, and the grant has to be
+ * ordered before the delete.
  *
  * Arguments:
  * 0: Released unit <OBJECT>
@@ -69,6 +75,11 @@ private _loadout = getUnitLoadout _unit;
 private _attached = attachedObjects _unit;
 private _synchronized = synchronizedObjects _unit;
 private _varName = vehicleVarName _unit;
+
+// Captured HERE rather than read inside the settle with the other carry-over state,
+// because it is the one field that leaves this machine: FUNC(rcHandover) applies it on
+// the server, and the original may already be gone by the time that hop is served.
+private _hidden = isObjectHidden _unit;
 
 // Read locally and re-applied locally. checkAIFeature answers for THIS machine, so a
 // global re-application would be asserting a state this machine never actually knew —
@@ -101,7 +112,7 @@ if (isNull _new) exitWith {
 
 [{
     params ["_unit", "_new", "_group", "_wasLeader", "_posATL", "_dir", "_loadout",
-        "_attached", "_synchronized", "_varName", "_featureState", "_variables"];
+        "_attached", "_synchronized", "_varName", "_featureState", "_variables", "_hidden"];
 
     if (isNull _new) exitWith {};
 
@@ -116,7 +127,18 @@ if (isNull _new) exitWith {
     if (_haveOld) then {
         _new setRank (rank _unit);
         _new setFace (face _unit);
-        _new setName (name _unit);
+        // setName's PERSON syntax is the three-element array; the bare string form
+        // is the LOCATION syntax and does nothing at all to a unit — the engine
+        // leaves the replacement's randomly generated name in place, which rtz_hud's
+        // vehicle tags and rtz_spotting's chevrons then display. Wargame's rebuild
+        // has the same line and the same no-op. Only the last element reaches the
+        // command bar, so the full name is passed there rather than a bare surname.
+        // BI documents person naming as singleplayer-only; if that still holds this
+        // is inert either way, but it is inert in the CORRECT shape and costs three
+        // string reads a release.
+        private _name = name _unit;
+        private _words = _name splitString " ";
+        _new setName [_name, _words param [0, _name, [""]], _name];
         _new setSuppression (getSuppression _unit);
         _new setCaptive (captive _unit);
         _new setUnitPos (unitPos _unit);
@@ -124,7 +146,6 @@ if (isNull _new) exitWith {
         // already in, so writing the group's combat mode here would either be a no-op or,
         // if the original had been given its own, quietly impose that on every other member.
         _new setCombatMode (combatMode _unit);
-        _new hideObjectGlobal (isObjectHidden _unit);
 
         // Last of the engine writes, so a unit rebuilt at high damage is not being poked
         // with loadout and stance changes while already near death. ACE medical does not
@@ -148,25 +169,32 @@ if (isNull _new) exitWith {
 
     {_new synchronizeObjectsAdd [_x]} forEach _synchronized;
 
-    // BEFORE the original is deleted, so EFUNC(common,curatorsOf) can still read who owned
-    // it and per-officer ownership survives. Off-server this is a serverEvent and could in
-    // principle lose the race with the delete below; grantCurators' documented fallback is
-    // "all live curators", so the failure mode is a unit owned too widely rather than one
-    // orphaned. Wargame grants only to the RELEASING curator and loses the rest outright.
-    [_new, _unit] call EFUNC(common,grantCurators);
-
-    if (_haveOld) then {
-        deleteVehicle _unit;
-    };
+    // The hide, the curator grant and the delete of the original are ONE server-side
+    // step, not three statements here — all three are server commands, and the grant
+    // has to be ORDERED before the delete because it reads the original's editable-set
+    // membership. FUNC(rcHandover) carries the full reasoning. This used to be a grant
+    // that hopped to the server and a deleteVehicle on the next line, which lost that
+    // race on the client-local path and quietly widened per-officer ownership to every
+    // curator in the mission.
+    [QGVAR(rcHandover), [_new, _unit, _hidden]] call CBA_fnc_serverEvent;
 
     [{
         params ["_new", "_group", "_wasLeader", "_posATL", "_attached", "_varName"];
 
         if (isNull _new) exitWith {};
 
-        {_x attachTo [_new]} forEach _attached;
-
+        // POSITION FIRST, THEN ATTACH. `attachTo` with no offset does not snap the
+        // child to the parent's origin — it keeps the child's CURRENT position
+        // relative to the parent, which is why ACE3 creates an effect source at the
+        // parent's position before attaching it bare (fnc_burnEffects) and why ZEN's
+        // Attach To leaves objects where the curator left them. The replacement is
+        // still standing at the map origin until the line below, so attaching first
+        // captured an offset equal to the original's whole world position and the
+        // move then applied it twice, throwing anything attached to roughly double
+        // the map coordinate. Wargame's rebuild has the same ordering.
         _new setPosATL _posATL;
+
+        {_x attachTo [_new]} forEach _attached;
 
         // Re-asserted after the original is gone. joinSilent on the group's own units is
         // Wargame's idiom for making the engine re-seat formation slots around the
@@ -186,4 +214,4 @@ if (isNull _new) exitWith {
     }, [_new, _group, _wasLeader, _posATL, _attached, _varName], RC_REBUILD_SETTLE] call CBA_fnc_waitAndExecute;
 
 }, [_unit, _new, _group, _wasLeader, _posATL, _dir, _loadout, _attached, _synchronized,
-    _varName, _featureState, _variables], RC_REBUILD_SETTLE] call CBA_fnc_waitAndExecute;
+    _varName, _featureState, _variables, _hidden], RC_REBUILD_SETTLE] call CBA_fnc_waitAndExecute;

@@ -22,6 +22,7 @@
 // No slot cut-outs: the menu draws icons at roughly 18px, where slots average
 // out to grey and leave the can looking washed out next to solid neighbours
 // like ICON_LOCKED. The lid gap and the taper carry the shape at that size.
+// Regenerate with tools/icons — see tools/icons/README.md.
 #define ICON_DELETE "\x\rtz\addons\delete\ui\trash_ca.paa"
 
 // Seconds the group-cleanup pass waits before counting a group's members.

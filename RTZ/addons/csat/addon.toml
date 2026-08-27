@@ -1,0 +1,11 @@
+# Everything under this addon came straight out of CUP's PBOs: CUP_Zubr.p3d is
+# already ODOL (binarised), and the .rvmat/.paa files are finished assets too.
+# Handing them back to Binarize would fail, so the step is switched off and the
+# files are packed as-is.
+[binarize]
+enabled = false
+
+# The rip scripts and the notes are for whoever maintains this addon, not for the
+# game. Keep them out of the PBO.
+[files]
+exclude = ["_rip/**", "*.md"]

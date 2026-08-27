@@ -1,0 +1,980 @@
+// Ripped from CUP Vehicles 1.19.2, cup_watervehicles_zubr.pbo, class
+// CUP_ZUBR_Base / CUP_O_ZUBR_CSAT_T. Paths, class names and stringtable keys
+// rebased onto rtz_csat; the values themselves are CUP's, unchanged.
+// See README.md in this folder before touching anything here.
+
+
+class Components;
+class SensorTemplateActiveRadar;
+class SensorTemplatePassiveRadar;
+class DefaultVehicleSystemsDisplayManagerLeft
+{
+};
+class DefaultVehicleSystemsDisplayManagerRight
+{
+};
+class VehicleSystemsTemplateLeftDriver: DefaultVehicleSystemsDisplayManagerLeft
+{
+};
+class VehicleSystemsTemplateRightDriver: DefaultVehicleSystemsDisplayManagerRight
+{
+};
+class VehicleSystemsTemplateLeftCommander: DefaultVehicleSystemsDisplayManagerLeft
+{
+};
+class VehicleSystemsTemplateRightCommander: DefaultVehicleSystemsDisplayManagerRight
+{
+};
+class VehicleSystemsTemplateLeftGunner: DefaultVehicleSystemsDisplayManagerLeft
+{
+	class components;
+};
+class VehicleSystemsTemplateRightGunner: DefaultVehicleSystemsDisplayManagerRight
+{
+	class components;
+};
+class Eventhandlers;
+class RCWSOptics;
+class NewTurret;
+
+class CfgVehicles {
+    class Ship_F;
+
+	class RTZ_Zubr_Base: Ship_F
+	{
+		author = "$STR_RTZ_CSAT_author";
+		mapSize = 60;
+		class SpeechVariants
+		{
+			class Default
+			{
+				speechSingular[] = {"veh_ship_attackBoat_s"};
+				speechPlural[] = {"veh_ship_attackBoat_p"};
+			};
+		};
+		textSingular = "attack boat";
+		textPlural = "attack boats";
+		nameSound = "veh_ship_attackBoat_s";
+		scope = 0;
+		side = 1;
+		crew = "B_Soldier_F";
+		displayName = "$STR_RTZ_CSAT_Zubr_Base";
+		vehicleClass = "Ship";
+		model = "x\rtz\addons\csat\zubr_hovercraft_assets\cup_zubr.p3d";
+		unitInfoType = "RscUnitInfoShip";
+		editorSubcategory = "EdSubcat_Boats";
+		picture = "\A3\boat_f\Boat_Armed_01\data\ui\Boat_Armed_01_base.paa";
+		Icon = "\A3\boat_f\Boat_Armed_01\data\ui\map_boat_armed_01.paa";
+		memoryPointTaskMarker = "TaskMarker_1_pos";
+		slingLoadCargoMemoryPoints[] = {"SlingLoadCargo1","SlingLoadCargo2","SlingLoadCargo3","SlingLoadCargo4"};
+		insideSoundCoef = 0;
+		attenuationEffectType = "PlaneAttenuation";
+		soundDammage[] = {"",0.562341,1};
+		soundLocked[] = {"\A3\Sounds_F\weapons\Rockets\locked_1",0.316228,1};
+		soundIncommingMissile[] = {"\A3\Sounds_F\vehicles\air\noises\alarm_locked_by_missile_1",0.316228,1};
+		soundEngineOnInt[] = {"A3\Sounds_F_Exp\vehicles\air\VTOL_02\VTOL_02_start_int.wss",0.794328,1};
+		soundEngineOnExt[] = {"A3\Sounds_F_Exp\vehicles\air\VTOL_02\VTOL_02_start_ext.wss",1,1,500};
+		soundEngineOffInt[] = {"A3\Sounds_F_Exp\vehicles\air\VTOL_02\VTOL_02_stop_int.wss",0.794328,1};
+		soundEngineOffExt[] = {"A3\Sounds_F_Exp\vehicles\air\VTOL_02\VTOL_02_stop_ext.wss",1,1,500};
+		buildCrash0[] = {"A3\Sounds_F\vehicles\crashes\cars\cars_coll_big_default_ext_1.wss",3.16228,1,900};
+		buildCrash1[] = {"A3\Sounds_F\vehicles\crashes\cars\cars_coll_big_default_ext_2.wss",3.16228,1,900};
+		buildCrash2[] = {"A3\Sounds_F\vehicles\crashes\cars\cars_coll_big_default_ext_3.wss",3.16228,1,900};
+		buildCrash3[] = {"A3\Sounds_F\vehicles\crashes\cars\cars_coll_big_default_ext_4.wss",3.16228,1,900};
+		soundBuildingCrash[] = {"buildCrash0",0.25,"buildCrash1",0.25,"buildCrash2",0.25,"buildCrash3",0.25};
+		WoodCrash0[] = {"A3\Sounds_F\vehicles\crashes\cars\cars_coll_big_wood_ext_1.wss",3.16228,1,900};
+		WoodCrash1[] = {"A3\Sounds_F\vehicles\crashes\cars\cars_coll_big_wood_ext_2.wss",3.16228,1,900};
+		WoodCrash2[] = {"A3\Sounds_F\vehicles\crashes\cars\cars_coll_big_wood_ext_6.wss",3.16228,1,900};
+		WoodCrash3[] = {"A3\Sounds_F\vehicles\crashes\cars\cars_coll_big_wood_ext_8.wss",3.16228,1,900};
+		soundWoodCrash[] = {"woodCrash0",0.25,"woodCrash1",0.25,"woodCrash2",0.25,"woodCrash3",0.25};
+		armorCrash0[] = {"A3\Sounds_F\vehicles\crashes\helis\Heli_coll_default_ext_1.wss",3.16228,1,900};
+		armorCrash1[] = {"A3\Sounds_F\vehicles\crashes\helis\Heli_coll_default_ext_2.wss",3.16228,1,900};
+		armorCrash2[] = {"A3\Sounds_F\vehicles\crashes\helis\Heli_coll_default_ext_3.wss",3.16228,1,900};
+		soundArmorCrash[] = {"ArmorCrash0",0.33,"ArmorCrash1",0.33,"ArmorCrash2",0.34};
+		Crash0[] = {"A3\Sounds_F\vehicles\crashes\cars\cars_coll_big_default_ext_1.wss",3.16228,1,900};
+		Crash1[] = {"A3\Sounds_F\vehicles\crashes\cars\cars_coll_big_default_ext_2.wss",3.16228,1,900};
+		Crash2[] = {"A3\Sounds_F\vehicles\crashes\cars\cars_coll_big_default_ext_3.wss",3.16228,1,900};
+		Crash3[] = {"A3\Sounds_F\vehicles\crashes\cars\cars_coll_big_default_ext_4.wss",3.16228,1,900};
+		soundCrashes[] = {"Crash0",0.25,"Crash1",0.25,"Crash2",0.25,"Crash3",0.25};
+		class Sounds
+		{
+			class EngineLowOut
+			{
+				sound[] = {"x\rtz\addons\csat\sound\ext_engine_low.wss","db5",1,1000};
+				frequency = "1.0 min (rpm + 0.5)";
+				volume = "camPos*engineOn*(rpm factor[0, 0.7])";
+			};
+			class EngineHighOut
+			{
+				sound[] = {"x\rtz\addons\csat\sound\ext_engine_hi.wss","db5",1,1500};
+				frequency = "1";
+				volume = "camPos*engineOn*(rpm factor[0.55, 1.0])";
+			};
+			class ForsageOut
+			{
+				sound[] = {"x\rtz\addons\csat\sound\ext_forsage_1.wss","db4",1,2000};
+				frequency = "1";
+				volume = "camPos*engineOn*(thrust factor[0.5, 1.0])";
+				cone[] = {1.14,3.92,2.0,0.4};
+			};
+			class EngineLowIn
+			{
+				sound[] = {"x\rtz\addons\csat\sound\int_engine_low.wss","db0",1.0};
+				frequency = "1.0 min (rpm + 0.5)";
+				volume = "(1-camPos)*(engineOn*(rpm factor[0, 0.7]))";
+			};
+			class EngineHighIn
+			{
+				sound[] = {"x\rtz\addons\csat\sound\int_engine_hi.wss","db0",1.0};
+				frequency = "1";
+				volume = "(1-camPos)*(engineOn*(rpm factor[0.55, 1.0]))";
+			};
+			class ForsageIn
+			{
+				sound[] = {"x\rtz\addons\csat\sound\int_forsage_1.wss","db2",1.1};
+				frequency = "1";
+				volume = "(1-camPos)*(engineOn*(thrust factor[0.5, 1.0]))";
+			};
+			class WaternoiseOutW0
+			{
+				sound[] = {"A3\Sounds_F\vehicles\boat\SFX\voda-o-bok-lodi-0-speed1.wss",0.707946,1,150};
+				frequency = "1";
+				volume = "(speed factor[4, 1]) * water";
+			};
+			class WaternoiseOutW1
+			{
+				sound[] = {"A3\Sounds_F\vehicles\boat\SFX\voda-o-bok-lodi-20-speed.wss",0.794328,1,250};
+				frequency = "1";
+				volume = "((speed factor[2, 6]) min (speed factor[6, 4]))";
+			};
+			class WaternoiseOutW2
+			{
+				sound[] = {"A3\Sounds_F\vehicles\boat\SFX\voda-o-bok-lodi-50-speed.wss",1,1,350};
+				frequency = "1";
+				volume = "(speed factor[3, 9])";
+			};
+			class WaternoiseOutW3
+			{
+				sound[] = {"A3\Sounds_F\vehicles\boat\SFX\voda-o-bok-lodi-0-speed1.wss",0.707946,1,150};
+				frequency = "1";
+				volume = "(speed factor[-4, -1]) * water";
+			};
+			class WaternoiseOutW4
+			{
+				sound[] = {"A3\Sounds_F\vehicles\boat\SFX\voda-o-bok-lodi-20-speed.wss",0.794328,0.9,250};
+				frequency = "1";
+				volume = "((speed factor[-2, -6]) min (speed factor[-6, -4]))";
+			};
+			class WaternoiseOutW5
+			{
+				sound[] = {"A3\Sounds_F\vehicles\boat\SFX\voda-o-bok-lodi-50-speed.wss",1,0.9,350};
+				frequency = "1";
+				volume = "(speed factor[-3, -9])";
+			};
+			class scrubLandExt
+			{
+				sound[] = {"A3\Sounds_F\vehicles\boat\noises\boat_land_on_shallow.wss",1.77828,0.9,100};
+				frequency = 1;
+				volume = "(scrubLand factor[0.01, 0.20])";
+			};
+			class RainExt
+			{
+				sound[] = {"A3\Sounds_F\vehicles\noises\rain1_ext.wss",1,1,100};
+				frequency = 1;
+				volume = "camPos * (rain - rotorSpeed/2) * 2";
+			};
+			class RainInt
+			{
+				sound[] = {"A3\Sounds_F\vehicles\noises\rain1_ext.wss",1,1,100};
+				frequency = 1;
+				volume = "(1-camPos)*(rain - rotorSpeed/2)*2";
+			};
+			class WindInt
+			{
+				sound[] = {"A3\Sounds_F\vehicles\air\noises\wind_closed.wss",0.562341,1,50};
+				frequency = 1;
+				volume = "(1-camPos)*(speed factor[5, 50])*(speed factor[5, 50])";
+			};
+		};
+		memoryPointsGetInDriver = "pos driver";
+		memoryPointsGetInDriverDir = "pos driver dir";
+		memoryPointsGetInCargo = "pos cargo";
+		memoryPointsGetInCargoDir = "pos cargo dir";
+		memoryPointMissile[] = {"missile_beg","laser_beg"};
+		memoryPointMissileDir[] = {"missile_end","laser_end"};
+		memoryPointLMissile = "missile_l";
+		memoryPointRMissile = "missile_r";
+		crewVulnerable = 0;
+		crewCrashProtection = 1.0;
+		crewExplosionProtection = 0.99;
+		class RenderTargets{};
+		class Turrets
+		{
+			class CommanderTurret: NewTurret
+			{
+				class HitPoints
+				{
+					class HitTurret
+					{
+						armor = -250;
+						material = -1;
+						armorComponent = "hit_commander_turret";
+						name = "hit_commander_turret_point";
+						visual = "-";
+						passThrough = 0;
+						minimalHit = 0.03;
+						explosionShielding = 0.2;
+						radius = 0.25;
+						isTurret = 1;
+					};
+					class HitGun
+					{
+						armor = -250;
+						material = -1;
+						armorComponent = "hit_commander_gun";
+						name = "hit_commander_gun_point";
+						visual = "-";
+						passThrough = 0;
+						minimalHit = 0.03;
+						explosionShielding = 0.4;
+						radius = 0.2;
+						isGun = 1;
+					};
+				};
+				stabilizedInAxes = 4;
+				body = "commander_turret";
+				gun = "commander_gun";
+				animationSourceBody = "commander_turret";
+				animationSourceGun = "commander_gun";
+				gunnerAction = "driver_boat01";
+				gunnerGetInAction = "GetInHigh";
+				gunnerGetOutAction = "GetOutHigh";
+				ejectDeadGunner = 0;
+				outGunnerMayFire = 1;
+				inGunnerMayFire = 1;
+				gunBeg = "laser_beg";
+				gunEnd = "laser_end";
+				weapons[] = {"Laserdesignator_vehicle"};
+				magazines[] = {"Laserbatteries"};
+				soundServo[] = {"A3\Sounds_F\vehicles\boat\Boat_Armed_01\servo_boat_comm.wss",1.4125376,1,30};
+				soundServoVertical[] = {"A3\Sounds_F\vehicles\boat\Boat_Armed_01\servo_boat_comm_vertical.wss",1.4125376,1,30};
+				gunnerName = "$STR_GETIN_POS_COMM";
+				memoryPointGunnerOptics = "commander_view";
+				gunnerOpticsModel = "\A3\weapons_f\reticle\Optics_Gunner_02_F";
+				turretInfoType = "RscOptics_crows";
+				gunnerForceOptics = 1;
+				startEngine = 0;
+				proxyIndex = 1;
+				commanding = 2;
+				primaryGunner = 0;
+				primaryObserver = 1;
+				LODTurnedIn = 1100;
+				LODTurnedOut = 1100;
+				minElev = -15;
+				maxElev = 40;
+				initElev = 0;
+				minTurn = -360;
+				maxTurn = 360;
+				initTurn = 0;
+				class ViewOptics: RCWSOptics{};
+				class Components
+				{
+					class VehicleSystemsDisplayManagerComponentLeft: VehicleSystemsTemplateLeftGunner
+					{
+						class Components: Components
+						{
+							class SensorDisplay
+							{
+								componentType = "SensorsDisplayComponent";
+								range[] = {32000,16000,8000,4000,2000};
+								resource = "RscCustomInfoSensors";
+							};
+						};
+					};
+					class VehicleSystemsDisplayManagerComponentRight: VehicleSystemsTemplateRightGunner
+					{
+						defaultDisplay = "SensorDisplay";
+						class Components: Components
+						{
+							class SensorDisplay
+							{
+								componentType = "SensorsDisplayComponent";
+								range[] = {32000,16000,8000,4000,2000};
+								resource = "RscCustomInfoSensors";
+							};
+						};
+					};
+				};
+			};
+			class CIWSTurret_1: CommanderTurret
+			{
+				class HitPoints: HitPoints
+				{
+					class HitTurret: HitTurret
+					{
+						armorComponent = "hit_turret_1";
+						name = "hit_turret_1_point";
+					};
+					class HitGun: HitGun
+					{
+						armor = -250;
+						material = -1;
+						armorComponent = "hit_gun_1";
+						name = "hit_gun_1_point";
+					};
+				};
+				body = "turret_1";
+				gun = "gun_1";
+				animationSourceBody = "turret_1";
+				animationSourceGun = "gun_1";
+				gunBeg = "gun_1_beg";
+				gunEnd = "gun_1_end";
+				memoryPointGunnerOptics = "gun_1_view";
+				memoryPointGun = "gun_1_beg";
+				weapons[] = {"RTZ_Vacannon_AK630_1_veh"};
+				magazines[] = {"RTZ_2000Rnd_30mm_AK630_M"};
+				discreteDistance[] = {200,400,600,800,1000,1200,1400,1600,1800,2000,2200,2400,2600,2800,3000};
+				discreteDistanceInitIndex = 4;
+				gunnerName = "$STR_RTZ_CSAT_pos_LeftGunner";
+				proxyIndex = 2;
+				commanding = 1;
+				primaryGunner = 1;
+				primaryObserver = 0;
+				minElev = -5;
+				maxElev = 85;
+				minTurn = -95;
+				maxTurn = 169;
+			};
+			class CIWSTurret_2: CommanderTurret
+			{
+				class HitPoints: HitPoints
+				{
+					class HitTurret: HitTurret
+					{
+						armorComponent = "hit_turret_2";
+						name = "hit_turret_2_point";
+					};
+					class HitGun: HitGun
+					{
+						armor = -250;
+						material = -1;
+						armorComponent = "hit_gun_2";
+						name = "hit_gun_2_point";
+					};
+				};
+				body = "turret_2";
+				gun = "gun_2";
+				animationSourceBody = "turret_2";
+				animationSourceGun = "gun_2";
+				gunBeg = "gun_2_beg";
+				gunEnd = "gun_2_end";
+				memoryPointGunnerOptics = "gun_2_view";
+				memoryPointGun = "gun_2_beg";
+				weapons[] = {"RTZ_Vacannon_AK630_2_veh"};
+				magazines[] = {"RTZ_2000Rnd_30mm_AK630_M"};
+				discreteDistance[] = {200,400,600,800,1000,1200,1400,1600,1800,2000,2200,2400,2600,2800,3000};
+				discreteDistanceInitIndex = 4;
+				gunnerName = "$STR_RTZ_CSAT_pos_RightGunner";
+				proxyIndex = 3;
+				commanding = 1;
+				primaryGunner = 0;
+				primaryObserver = 0;
+				minElev = -5;
+				maxElev = 85;
+				minTurn = -169;
+				maxTurn = 95;
+			};
+		};
+		armor = 3000;
+		armorStructural = 4.0;
+		damageResistance = 0.00882;
+		class HitPoints
+		{
+			class HitBody
+			{
+				armor = 0.2;
+				material = 50;
+				name = "karoserie";
+				visual = "zbytek";
+				passThrough = 1;
+				explosionShielding = 2;
+			};
+			class HitEngine
+			{
+				armor = 0.6;
+				material = -1;
+				armorComponent = "hit_engine";
+				name = "hit_engine_point";
+				visual = "-";
+				passThrough = 0.5;
+				minimalHit = 0.2;
+				explosionShielding = 0.2;
+				radius = 0.3;
+			};
+			class HitFuel
+			{
+				armor = 0.5;
+				material = -1;
+				armorComponent = "hit_fuel";
+				name = "hit_fuel_point";
+				visual = "-";
+				passThrough = 0.3;
+				minimalHit = 0.1;
+				explosionShielding = 0.6;
+				radius = 0.3;
+			};
+		};
+		driverForceOptics = 1;
+		driverOpticsModel = "A3\drones_f\Weapons_F_Gamma\Reticle\UGV_01_Optics_Driver_F.p3d";
+		memoryPointDriverOptics = "driver_view";
+		driverLeftHandAnimName = "";
+		driverRightHandAnimName = "";
+		driverAction = "driver_boat01";
+		cargoAction[] = {"RTZ_Zubr_Cargo"};
+		getInAction = "GetInHigh";
+		getOutAction = "GetOutHigh";
+		cargoGetInAction[] = {"GetInHigh"};
+		cargoGetOutAction[] = {"GetOutHigh"};
+		castDriverShadow = 1;
+		castCargoShadow = 1;
+		gunnerHasFlares = 0;
+		enableGPS = 1;
+		enableRadio = 1;
+		transportSoldier = 57;
+		class TransportItems{};
+		steerAheadSimul = 0.5;
+		steerAheadPlan = 0.35;
+		predictTurnPlan = 0.8;
+		predictTurnSimul = 0.6;
+		acceleration = 15;
+		turnCoef = 0.75;
+		maxSpeed = 120;
+		simulation = "shipx";
+		thrustDelay = 0.5;
+		overSpeedBrakeCoef = 0.1;
+		enginePower = 25000;
+		engineShiftY = 5;
+		waterLeakiness = 100;
+		waterLinearDampingCoefY = 15;
+		waterLinearDampingCoefX = 1;
+		waterAngularDampingCoef = 1;
+		waterResistance = 1;
+		waterResistanceCoef = 0.001;
+		engineEffectSpeed = 10;
+		waterEffectSpeed = 10;
+		waterFastEffectSpeed = 50;
+		rudderForceCoef = 10;
+		rudderForceCoefAtMaxSpeed = 0.3;
+		idleRpm = 200;
+		redRpm = 1200;
+		class complexGearbox
+		{
+			GearboxRatios[] = {"R1",-0.782,"N",0,"D1",2,"D2",1.7,"D3",1.45,"D4",1.25,"D5",1.1,"D6",1.0,"D7",0.95};
+			TransmissionRatios[] = {"High",1};
+			gearBoxMode = "auto";
+			moveOffGear = 1;
+			driveString = "D";
+			neutralString = "N";
+			reverseString = "R";
+		};
+		driveOnComponent[] = {"cushion_buoy"};
+		enableManualFire = 0;
+		smokeLauncherGrenadeCount = 8;
+		smokeLauncherVelocity = 14;
+		smokeLauncherOnTurret = 0;
+		smokeLauncherAngle = 360;
+		weapons[] = {"RTZ_Vmlauncher_OGON_veh"};
+		magazines[] = {"RTZ_44Rnd_Ogon_HE","RTZ_44Rnd_Ogon_HE","RTZ_44Rnd_Ogon_HE"};
+		class Exhausts{};
+		dustEffect = "HeliDust";
+		waterEffect = "HeliWater";
+		leftFastWaterEffect = "LFastWaterEffects";
+		rightFastWaterEffect = "RFastWaterEffects";
+		class AnimationSources
+		{
+			class ramp_front_source
+			{
+				source = "user";
+				initPhase = 0;
+				animPeriod = 1;
+			};
+			class ramp_rear_source
+			{
+				source = "user";
+				initPhase = 0;
+				animPeriod = 1;
+			};
+			class flag_source
+			{
+				source = "user";
+				initPhase = 0;
+				animPeriod = 0.0001;
+			};
+			class propellers_source
+			{
+				source = "user";
+				initPhase = 0;
+				animPeriod = 1e-06;
+			};
+			class engineon_source
+			{
+				source = "user";
+				initPhase = 0;
+				animPeriod = 5;
+			};
+			class mlrs_reload_source
+			{
+				source = "reloadmagazine";
+				initPhase = 1;
+				weapon = "RTZ_Vmlauncher_OGON_veh";
+			};
+			class mlrs_revolving_source
+			{
+				source = "revolving";
+				initPhase = 1;
+				weapon = "RTZ_Vmlauncher_OGON_veh";
+			};
+			class gatling_1_reload
+			{
+				source = "reload";
+				weapon = "RTZ_Vacannon_AK630_1_veh";
+			};
+			class gatling_2_reload
+			{
+				source = "reload";
+				weapon = "RTZ_Vacannon_AK630_2_veh";
+			};
+		};
+		class Library
+		{
+			libTextDesc = "peepee poopoo";
+		};
+		extCameraPosition[] = {0,10,-50};
+		class Damage
+		{
+			tex[] = {};
+			mat[] = {"x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_1.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_1_damage.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_1_destruct.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_2.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_2_damage.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_2_destruct.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_details.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_details_damage.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_details_destruct.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_interiors.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_interiors_damage.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_interiors_destruct.rvmat"};
+		};
+		class Reflectors
+		{
+			class light_1
+			{
+				color[] = {1900,1800,1700};
+				ambient[] = {5,5,5};
+				position = "light_1_pos";
+				direction = "light_1_dir";
+				hitpoint = "light_1_pos";
+				selection = "light_1";
+				size = 1;
+				innerAngle = 60;
+				outerAngle = 100;
+				coneFadeCoef = 10;
+				intensity = 1;
+				useFlare = 1;
+				dayLight = 0;
+				flareSize = 2;
+				class Attenuation
+				{
+					start = 1;
+					constant = 0;
+					linear = 0;
+					quadratic = 0.25;
+					hardLimitStart = 30;
+					hardLimitEnd = 60;
+				};
+			};
+			class light_2: light_1
+			{
+				position = "light_2_pos";
+				direction = "light_2_dir";
+				hitpoint = "light_2_pos";
+				selection = "light_2";
+				useFlare = 1;
+			};
+		};
+		aggregateReflectors[] = {};
+		class MarkerLights
+		{
+			class CollisionRed_1
+			{
+				color[] = {0.9,0.15,0.1};
+				ambient[] = {0.09,0.015,0.01};
+				name = "CollisionLight_Red_1_Pos";
+				intensity = 75;
+				activeLight = 0;
+				blinking = 1;
+				dayLight = 0;
+				useFlare = 0;
+				blinkingPattern[] = {0.5,0.5};
+				blinkingPatternGuarantee = 0;
+				drawLight = 1;
+				drawLightSize = 0.25;
+				drawLightCenterSize = 0.08;
+				class Attenuation
+				{
+					start = 0;
+					constant = 0;
+					linear = 25;
+					quadratic = 50;
+					hardLimitStart = 0.75;
+					hardLimitEnd = 1;
+				};
+			};
+			class CollisionRed_2: CollisionRed_1
+			{
+				name = "CollisionLight_Red_2_Pos";
+			};
+			class PositionRed_1
+			{
+				color[] = {0.8,0,0};
+				ambient[] = {0.08,0,0};
+				intensity = 75;
+				name = "PositionLight_red_1_pos";
+				drawLight = 1;
+				drawLightSize = 0.15;
+				drawLightCenterSize = 0.04;
+				activeLight = 0;
+				blinking = 0;
+				dayLight = 0;
+				useFlare = 0;
+				class Attenuation
+				{
+					start = 0;
+					constant = 0;
+					linear = 25;
+					quadratic = 50;
+					hardLimitStart = 0.75;
+					hardLimitEnd = 1;
+				};
+			};
+			class PositionGreen_1: PositionRed_1
+			{
+				color[] = {0,0.8,0};
+				ambient[] = {0,0.08,0};
+				name = "PositionLight_green_1_pos";
+			};
+			class PositionWhite_1: PositionRed_1
+			{
+				color[] = {1,1,1};
+				ambient[] = {0.1,0.1,0.1};
+				name = "PositionLight_white_1_pos";
+				drawLightSize = 0.2;
+			};
+			class PositionRed_2: PositionRed_1
+			{
+				name = "PositionLight_red_2_pos";
+				drawLightSize = 0.35;
+			};
+		};
+		class Components: Components
+		{
+			class VehicleSystemsDisplayManagerComponentLeft: DefaultVehicleSystemsDisplayManagerLeft
+			{
+				defaultDisplay = "EmptyDisplay";
+				class Components
+				{
+					class MissileDisplay
+					{
+						componentType = "TransportFeedDisplayComponent";
+						source = "Missile";
+					};
+					class VehicleGunnerDisplay
+					{
+						componentType = "TransportFeedDisplayComponent";
+						source = "PrimaryGunner";
+					};
+					class SensorsDisplay
+					{
+						componentType = "SensorsDisplayComponent";
+						range[] = {32000,16000,8000,4000,2000};
+						resource = "RscCustomInfoSensors";
+					};
+					class CrewDisplay
+					{
+						componentType = "CrewDisplayComponent";
+						resource = "RscCustomInfoCrew";
+					};
+					class MinimapDisplay
+					{
+						componentType = "MinimapDisplayComponent";
+						resource = "RscCustomInfoMiniMap";
+					};
+					class EmptyDisplay
+					{
+						componentType = "EmptyDisplayComponent";
+					};
+				};
+			};
+			class VehicleSystemsDisplayManagerComponentRight: DefaultVehicleSystemsDisplayManagerRight
+			{
+				defaultDisplay = "SensorsDisplay";
+				class Components
+				{
+					class VehicleGunnerDisplay
+					{
+						componentType = "TransportFeedDisplayComponent";
+						source = "PrimaryGunner";
+					};
+					class MissileDisplay
+					{
+						componentType = "TransportFeedDisplayComponent";
+						source = "Missile";
+					};
+					class SensorsDisplay
+					{
+						componentType = "SensorsDisplayComponent";
+						range[] = {32000,16000,8000,4000,2000};
+						resource = "RscCustomInfoSensors";
+					};
+					class CrewDisplay
+					{
+						componentType = "CrewDisplayComponent";
+						resource = "RscCustomInfoCrew";
+					};
+					class MinimapDisplay
+					{
+						componentType = "MinimapDisplayComponent";
+						resource = "RscCustomInfoMiniMap";
+					};
+					class EmptyDisplay
+					{
+						componentType = "EmptyDisplayComponent";
+					};
+				};
+			};
+			class SensorsManagerComponent
+			{
+				class Components
+				{
+					class PassiveSensorComponent: SensorTemplatePassiveRadar{};
+					class ActiveRadarSensorComponent: SensorTemplateActiveRadar
+					{
+						aimDown = 0;
+						animDirection = "Radar";
+						angleRangeHorizontal = 360;
+						angleRangeVertical = 150;
+						typeRecognitionDistance = 6000;
+						groundNoiseDistanceCoef = -1;
+						class AirTarget
+						{
+							maxRange = 22000;
+							minRange = 15000;
+							objectDistanceLimitCoef = -1;
+							viewDistanceLimitCoef = -1;
+						};
+						class GroundTarget
+						{
+							maxRange = 0;
+							minRange = 0;
+							objectDistanceLimitCoef = -1;
+							viewDistanceLimitCoef = -1;
+						};
+					};
+				};
+			};
+		};
+		hiddenSelections[] = {"Camo1","Camo2","Camo3","Camo4","number_1","number_2","number_3","flag"};
+		hiddenSelectionsTextures[] = {"\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_1_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_2_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_details_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_interiors_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_7_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_7_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_0_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\flags\flag_run_co.paa"};
+		class TextureSources
+		{
+			class CSAT_T
+			{
+				displayName = "$STR_A3_TEXTURESOURCES_GREENHEX0";
+				author = "$STR_RTZ_CSAT_author";
+				textures[] = {"\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_1_white_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_2_white_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_details_white_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_interiors_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_3_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_2_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_5_ca.paa","\a3\data_f\flags\flag_csat_co.paa"};
+				factions[] = {};
+			};
+		};
+		class Attributes
+		{
+			class CustomShipNumber1
+			{
+				displayName = "$STR_RTZ_CSAT_atrb_HullNumber1";
+				tooltip = "$STR_RTZ_CSAT_atrb_HullNumber1_tooltip";
+				property = "CustomShipNumber1";
+				control = "EditShort";
+				expression = "[_this, _value, 4] spawn rtz_csat_fnc_zubrHullNumbers;";
+				defaultValue = "7";
+				validate = "number";
+				typeName = "NUMBER";
+			};
+			class CustomShipNumber2
+			{
+				displayName = "$STR_RTZ_CSAT_atrb_HullNumber2";
+				tooltip = "$STR_RTZ_CSAT_atrb_HullNumber2_tooltip";
+				property = "CustomShipNumber2";
+				control = "EditShort";
+				expression = "[_this, _value, 5] spawn rtz_csat_fnc_zubrHullNumbers;";
+				defaultValue = "7";
+				validate = "number";
+				typeName = "NUMBER";
+			};
+			class CustomShipNumber3
+			{
+				displayName = "$STR_RTZ_CSAT_atrb_HullNumber3";
+				tooltip = "$STR_RTZ_CSAT_atrb_HullNumber3_tooltip";
+				property = "CustomShipNumber3";
+				control = "EditShort";
+				expression = "[_this, _value, 6] spawn rtz_csat_fnc_zubrHullNumbers;";
+				defaultValue = "0";
+				validate = "number";
+				typeName = "NUMBER";
+			};
+			class CustomShipFlag
+			{
+				displayName = "$STR_RTZ_CSAT_atrb_Flag";
+				tooltip = "$STR_RTZ_CSAT_atrb_Flag_tooltip";
+				property = "CustomShipFlag";
+				control = "Edit";
+				expression = "if (local _this) then {_this setObjectTextureGlobal [7, _value];}";
+				defaultValue = "'x\rtz\addons\csat\zubr_hovercraft_assets\data\flags\flag_run_co.paa'";
+				typeName = "STRING";
+			};
+			class FrontRamp
+			{
+				displayName = "$STR_RTZ_CSAT_atrb_FrontRamp";
+				tooltip = "$STR_RTZ_CSAT_atrb_FrontRamp_tooltip";
+				property = "FrontRampPosition";
+				control = "CheckboxNumber";
+				expression = "_this animateSource [""ramp_front_source"",_value,true];";
+				defaultValue = "0";
+				typeName = "NUMBER";
+			};
+			class RearRamp
+			{
+				displayName = "$STR_RTZ_CSAT_atrb_RearRamp";
+				tooltip = "$STR_RTZ_CSAT_atrb_RearRamp_tooltip";
+				property = "RearRampPosition";
+				control = "CheckboxNumber";
+				expression = "_this animateSource [""ramp_rear_source"",_value,true];";
+				defaultValue = "0";
+				typeName = "NUMBER";
+			};
+			class FlagHide
+			{
+				displayName = "$STR_RTZ_CSAT_atrb_FlagHide";
+				tooltip = "$STR_RTZ_CSAT_atrb_FlagHide_tooltip";
+				property = "FlagHide";
+				control = "CheckboxNumber";
+				expression = "_this animateSource [""flag_source"",_value,true];";
+				defaultValue = "0";
+				typeName = "NUMBER";
+			};
+		};
+		class VehicleTransport
+		{
+			class Carrier
+			{
+				cargoBayDimensions[] = {"VTV_limit_1","VTV_limit_2"};
+				disableHeightLimit = 1;
+				maxLoadMass = 160000;
+				cargoAlignment[] = {"right","back"};
+				cargoSpacing[] = {0,0,0};
+				exits[] = {"VTV_exit_1"};
+				unloadingInterval = 3;
+				loadingDistance = 15;
+				loadingAngle = 60;
+				parachuteClassDefault = "B_Parachute_02_F";
+				parachuteHeightLimitDefault = 50;
+			};
+		};
+		class EventHandlers: EventHandlers
+		{
+			init = "if (local (_this select 0)) then {(_this select 0) spawn rtz_csat_fnc_zubrEngineMonitor}";
+			fired = "[_this select 0,_this select 6,'missile_set','RTZ_R_140mm_Ogon_HE'] call BIS_fnc_missileLaunchPositionFix;[_this select 0,_this select 3,_this select 6,'RTZ_R_140mm_Ogon_HE'] spawn rtz_csat_fnc_zubrMissileRangingFix;";
+		};
+	};
+	class RTZ_O_Zubr_CSAT_T: RTZ_Zubr_Base
+	{
+		author = "$STR_RTZ_CSAT_author";
+		scope = 2;
+		scopeCurator = 2;
+		side = 0;
+		faction = "OPF_F";
+		crew = "O_crew_F";
+		hiddenSelectionsTextures[] = {"\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_1_white_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_2_white_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_details_white_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_interiors_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_3_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_2_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_5_ca.paa","\a3\data_f\flags\flag_csat_co.paa"};
+		editorPreview = "\x\rtz\addons\csat\zubr_hovercraft_assets\data\preview\RTZ_O_Zubr_CSAT_T.jpg";
+		class TransportWeapons
+		{
+			class _xx_arifle_CTAR_blk_F
+			{
+				weapon = "arifle_CTAR_blk_F";
+				count = 4;
+			};
+			class _xx_launch_RPG32_F
+			{
+				weapon = "launch_RPG32_F";
+				count = 2;
+			};
+		};
+		class TransportMagazines
+		{
+			class _xx_30Rnd_580x42_Mag_F
+			{
+				magazine = "30Rnd_580x42_Mag_F";
+				count = 20;
+			};
+			class _xx_1Rnd_HE_Grenade_shell
+			{
+				magazine = "1Rnd_HE_Grenade_shell";
+				count = 4;
+			};
+			class _xx_RPG32_F
+			{
+				magazine = "RPG32_F";
+				count = 10;
+			};
+			class _xx_HandGrenade
+			{
+				magazine = "HandGrenade";
+				count = 2;
+			};
+			class _xx_SmokeShell
+			{
+				magazine = "SmokeShell";
+				count = 4;
+			};
+			class _xx_SmokeShellOrange
+			{
+				magazine = "SmokeShellOrange";
+				count = 4;
+			};
+			class _xx_SmokeShellRed
+			{
+				magazine = "SmokeShellRed";
+				count = 4;
+			};
+			class _xx_Chemlight_Red
+			{
+				magazine = "Chemlight_Red";
+				count = 4;
+			};
+		};
+		maximumLoad = 5000;
+		class TransportItems
+		{
+			class _xx_FirstAidKit
+			{
+				name = "FirstAidKit";
+				count = 20;
+			};
+			class _xx_MediKit
+			{
+				name = "MediKit";
+				count = 2;
+			};
+			class _xx_ToolKit
+			{
+				name = "ToolKit";
+				count = 1;
+			};
+		};
+		class TransportBackpacks
+		{
+			class _xx_B_AssaultPack_ocamo
+			{
+				backpack = "B_AssaultPack_ocamo";
+				count = 8;
+			};
+		};
+	};
+};

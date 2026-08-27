@@ -32,9 +32,9 @@
 // Detected mine cache refresh interval (seconds)
 #define REFRESH_INTERVAL 10
 
-// Mine marker drawing, icon is raised above the ground for 3D visibility
+// Mine marker drawing. The 3D icon is drawn CENTRED on the mine - see
+// FUNC(refreshMines) for why there is no vertical offset to define here.
 #define ICON_FALLBACK "\a3\ui_f\data\igui\cfg\simpleTasks\types\danger_ca.paa"
 #define ICON_SIZE_3D 0.8
 #define ICON_SIZE_MAP 24
-#define ICON_OFFSET_Z 0.5
 #define COLOR_MINE [0.9, 0.2, 0.2, 1]

@@ -2,8 +2,8 @@
 /*
  * Author: Maxim
  * Handler body for QGVAR(rcReset) (registered on EVERY machine in XEH_postInit).
- * Waits out the ownership handover a Zeus remote-control release starts, then hands
- * the unit to FUNC(rcRebuild) on whichever machine ends up owning it.
+ * Waits out the ownership handover a Zeus remote-control release starts, then asks
+ * FUNC(rcClaim) on the server for the right to rebuild the unit.
  *
  * This function used to clear the released unit's animation and look state, which
  * fixed the POSE it was let go in. That was a real fix for a real symptom, and it
@@ -17,6 +17,16 @@
  * this globally and the unit's owner can be a headless client or the dedicated
  * server — the same reasoning already written out for the dismount receiver in
  * XEH_postInit.
+ *
+ * IT ASKS RATHER THAN ACTS, and that is not ceremony. `local` LAGS during the
+ * handover: the ex-controller still reads local true — that is the whole reason the
+ * dispatch is global — so its wait settles on the first frame it is evaluated, while
+ * the machine the unit lands on settles a round trip later with the original still
+ * alive and still eligible. Both used to call FUNC(rcRebuild), and a release across
+ * two machines produced TWO replacements for one unit. No machine can settle this
+ * alone, because none can observe a handover it is not the destination of; the server
+ * can, so it arbitrates. See FUNC(rcClaim). The winner is answered with
+ * QGVAR(rcRebuildAt), which is where FUNC(rcRebuild) is reached from.
  *
  * THIS RUNS EVERYWHERE AND WAITS FOR OWNERSHIP, rather than being routed to an
  * owner by the sender. The reason is in the dispatch note in fnc_rcReset.sqf:
@@ -104,7 +114,9 @@ if !(RC_RESET_ELIGIBLE(_unit)) exitWith {};
         // Only one of the two settling conditions means "act".
         if !(local _unit && {RC_RESET_ELIGIBLE(_unit)}) exitWith {};
 
-        [_unit] call FUNC(rcRebuild);
+        // clientOwner, so the server can check this machine still owns the unit
+        // before spending the one claim on it (FUNC(rcClaim)).
+        [QGVAR(rcClaim), [_unit, clientOwner]] call CBA_fnc_serverEvent;
     },
     [_unit],
     RC_RESET_TIMEOUT

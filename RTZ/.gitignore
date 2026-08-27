@@ -6,5 +6,9 @@ releases/
 *.bikey
 texHeaders.bin
 
+# Intermediate PNGs from tools/icons — the .paa files are the deliverable
+tools/icons/build/
+__pycache__/
+
 # Claude Code personal settings
 .claude/settings.local.json

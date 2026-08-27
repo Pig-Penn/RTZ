@@ -14,6 +14,15 @@ PREP_RECOMPILE_END;
 // EFUNC(common,magazineCapacity). This one has no caller outside this component.
 GVAR(weaponMagazines) = createHashMap;  // weapon class -> compatible magazines
 
+// SERVER-side arbitration state for FUNC(rcClaim): released unit netId -> the
+// CBA_missionTime its rebuild was claimed, so a release can only ever be claimed once.
+// Declared unconditionally with the rest of preInit's state rather than behind isServer,
+// which is where the receiver is gated; an empty hashmap on a client costs nothing and a
+// global that exists only on some machines is the kind of asymmetry that reads as a bug
+// the next time someone greps for it. Bounded by pruning on write, not by a cap — see
+// FUNC(rcClaim).
+GVAR(rcClaims) = createHashMap;
+
 #include "initSettings.inc.sqf"
 
 ADDON = true;
