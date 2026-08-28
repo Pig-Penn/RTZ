@@ -94,11 +94,10 @@ GVAR(blinkUntil) = createHashMap;
 // map can be live. -1 rather than 0 because `time` starts at 0.
 GVAR(blinkAnyUntil) = -1;
 
-// NOTE: GVAR(chevronsEnabled), GVAR(officerZonesVisible) and the GVAR(chevronNames)
-// fallback are initialized in XEH_preInit, NOT here — this function is gated on the
-// GVAR(enableSpottingSystem) setting, whereas the context action's modifierFunction
-// runs unconditionally and would read them as nil with the system disabled. See the
-// comment block in XEH_preInit.sqf.
+// NOTE: GVAR(officerZonesVisible) and the GVAR(chevronNames) fallback are
+// initialized in XEH_preInit, NOT here — this function is gated on the
+// GVAR(enableSpottingSystem) setting, whereas some readers of these are not.
+// See the comment block in XEH_preInit.sqf.
 
 // Draw 3D world icons above each spotted enemy every frame; positions are sampled
 // live from the unit so icons track smoothly between the server's spot cycles.

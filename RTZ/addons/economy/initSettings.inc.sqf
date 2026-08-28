@@ -16,6 +16,19 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     false
 ] call CBA_fnc_addSetting;
 
+// Independent of Enable Economy: hiding still applies with costs disabled.
+// Read once per CuratorObjectRegistered call (Zeus interface open/reopen),
+// same as every other entry in the cost table — no rejoin needed, but a
+// curator already in the interface needs to back out and re-enter to see it
+// change.
+[
+    QGVAR(cleanModuleTree), "CHECKBOX",
+    [LSTRING(CleanModuleTree), LSTRING(CleanModuleTree_Description)],
+    _category,
+    false,
+    true // Global
+] call CBA_fnc_addSetting;
+
 [
     QGVAR(startingPoints), "SLIDER",
     [LSTRING(StartingPoints), LSTRING(StartingPoints_Description)],

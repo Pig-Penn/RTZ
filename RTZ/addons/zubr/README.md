@@ -44,9 +44,9 @@ different length shifts every subsequent LOD and corrupts the model. So each
 replacement directory is padded to match the CUP path it replaced byte for byte:
 
 ```
-cup\watervehicles\cup_watervehicles_zubr  ->  x\rtz\addons\csat\zubr_hovercraft_assets   (40 == 40)
-cup\watervehicles\cup_watervehicles_rhib  ->  x\rtz\addons\csat\rhib_proxy_assets_data   (40 == 40)
-cup\airvehicles\cup_airvehicles_core      ->  x\rtz\addons\csat\vehicle_logo_asset       (36 == 36)
+cup\watervehicles\cup_watervehicles_zubr  ->  x\rtz\addons\zubr\zubr_hovercraft_assets   (40 == 40)
+cup\watervehicles\cup_watervehicles_rhib  ->  x\rtz\addons\zubr\rhib_proxy_assets_data   (40 == 40)
+cup\airvehicles\cup_airvehicles_core      ->  x\rtz\addons\zubr\vehicle_logo_asset       (36 == 36)
 ```
 
 **Renaming any of those three folders breaks the model.** If you must rename one,

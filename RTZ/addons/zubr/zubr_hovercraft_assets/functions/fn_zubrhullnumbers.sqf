@@ -43,4 +43,4 @@ private _ship = param [0, objNull];
 private _number = param [1, 0];
 private _selection = param [2];
 
-_ship setObjectTextureGlobal [_selection, (format ["\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_%1_ca.paa",_number])];
+_ship setObjectTextureGlobal [_selection, (format ["\x\rtz\addons\zubr\zubr_hovercraft_assets\data\num\hull_num_%1_ca.paa",_number])];

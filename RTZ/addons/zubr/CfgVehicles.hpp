@@ -42,7 +42,7 @@ class CfgVehicles {
 
 	class RTZ_Zubr_Base: Ship_F
 	{
-		author = "$STR_RTZ_CSAT_author";
+		author = "$STR_RTZ_Zubr_author";
 		mapSize = 60;
 		class SpeechVariants
 		{
@@ -58,9 +58,9 @@ class CfgVehicles {
 		scope = 0;
 		side = 1;
 		crew = "B_Soldier_F";
-		displayName = "$STR_RTZ_CSAT_Zubr_Base";
+		displayName = "$STR_RTZ_Zubr_Base";
 		vehicleClass = "Ship";
-		model = "x\rtz\addons\csat\zubr_hovercraft_assets\cup_zubr.p3d";
+		model = "x\rtz\addons\zubr\zubr_hovercraft_assets\cup_zubr.p3d";
 		unitInfoType = "RscUnitInfoShip";
 		editorSubcategory = "EdSubcat_Boats";
 		picture = "\A3\boat_f\Boat_Armed_01\data\ui\Boat_Armed_01_base.paa";
@@ -99,38 +99,38 @@ class CfgVehicles {
 		{
 			class EngineLowOut
 			{
-				sound[] = {"x\rtz\addons\csat\sound\ext_engine_low.wss","db5",1,1000};
+				sound[] = {"x\rtz\addons\zubr\sound\ext_engine_low.wss","db5",1,1000};
 				frequency = "1.0 min (rpm + 0.5)";
 				volume = "camPos*engineOn*(rpm factor[0, 0.7])";
 			};
 			class EngineHighOut
 			{
-				sound[] = {"x\rtz\addons\csat\sound\ext_engine_hi.wss","db5",1,1500};
+				sound[] = {"x\rtz\addons\zubr\sound\ext_engine_hi.wss","db5",1,1500};
 				frequency = "1";
 				volume = "camPos*engineOn*(rpm factor[0.55, 1.0])";
 			};
 			class ForsageOut
 			{
-				sound[] = {"x\rtz\addons\csat\sound\ext_forsage_1.wss","db4",1,2000};
+				sound[] = {"x\rtz\addons\zubr\sound\ext_forsage_1.wss","db4",1,2000};
 				frequency = "1";
 				volume = "camPos*engineOn*(thrust factor[0.5, 1.0])";
 				cone[] = {1.14,3.92,2.0,0.4};
 			};
 			class EngineLowIn
 			{
-				sound[] = {"x\rtz\addons\csat\sound\int_engine_low.wss","db0",1.0};
+				sound[] = {"x\rtz\addons\zubr\sound\int_engine_low.wss","db0",1.0};
 				frequency = "1.0 min (rpm + 0.5)";
 				volume = "(1-camPos)*(engineOn*(rpm factor[0, 0.7]))";
 			};
 			class EngineHighIn
 			{
-				sound[] = {"x\rtz\addons\csat\sound\int_engine_hi.wss","db0",1.0};
+				sound[] = {"x\rtz\addons\zubr\sound\int_engine_hi.wss","db0",1.0};
 				frequency = "1";
 				volume = "(1-camPos)*(engineOn*(rpm factor[0.55, 1.0]))";
 			};
 			class ForsageIn
 			{
-				sound[] = {"x\rtz\addons\csat\sound\int_forsage_1.wss","db2",1.1};
+				sound[] = {"x\rtz\addons\zubr\sound\int_forsage_1.wss","db2",1.1};
 				frequency = "1";
 				volume = "(1-camPos)*(engineOn*(thrust factor[0.5, 1.0]))";
 			};
@@ -334,7 +334,7 @@ class CfgVehicles {
 				magazines[] = {"RTZ_2000Rnd_30mm_AK630_M"};
 				discreteDistance[] = {200,400,600,800,1000,1200,1400,1600,1800,2000,2200,2400,2600,2800,3000};
 				discreteDistanceInitIndex = 4;
-				gunnerName = "$STR_RTZ_CSAT_pos_LeftGunner";
+				gunnerName = "$STR_RTZ_Zubr_pos_LeftGunner";
 				proxyIndex = 2;
 				commanding = 1;
 				primaryGunner = 1;
@@ -373,7 +373,7 @@ class CfgVehicles {
 				magazines[] = {"RTZ_2000Rnd_30mm_AK630_M"};
 				discreteDistance[] = {200,400,600,800,1000,1200,1400,1600,1800,2000,2200,2400,2600,2800,3000};
 				discreteDistanceInitIndex = 4;
-				gunnerName = "$STR_RTZ_CSAT_pos_RightGunner";
+				gunnerName = "$STR_RTZ_Zubr_pos_RightGunner";
 				proxyIndex = 3;
 				commanding = 1;
 				primaryGunner = 0;
@@ -552,7 +552,7 @@ class CfgVehicles {
 		class Damage
 		{
 			tex[] = {};
-			mat[] = {"x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_1.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_1_damage.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_1_destruct.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_2.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_2_damage.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_2_destruct.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_details.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_details_damage.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_details_destruct.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_interiors.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_interiors_damage.rvmat","x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_interiors_destruct.rvmat"};
+			mat[] = {"x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_body_1.rvmat","x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_body_1_damage.rvmat","x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_body_1_destruct.rvmat","x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_body_2.rvmat","x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_body_2_damage.rvmat","x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_body_2_destruct.rvmat","x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_details.rvmat","x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_details_damage.rvmat","x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_details_destruct.rvmat","x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_interiors.rvmat","x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_interiors_damage.rvmat","x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_interiors_destruct.rvmat"};
 		};
 		class Reflectors
 		{
@@ -773,14 +773,14 @@ class CfgVehicles {
 			};
 		};
 		hiddenSelections[] = {"Camo1","Camo2","Camo3","Camo4","number_1","number_2","number_3","flag"};
-		hiddenSelectionsTextures[] = {"\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_1_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_2_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_details_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_interiors_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_7_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_7_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_0_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\flags\flag_run_co.paa"};
+		hiddenSelectionsTextures[] = {"\x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_body_1_co.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_body_2_co.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_details_co.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_interiors_co.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\num\hull_num_7_ca.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\num\hull_num_7_ca.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\num\hull_num_0_ca.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\flags\flag_run_co.paa"};
 		class TextureSources
 		{
 			class CSAT_T
 			{
 				displayName = "$STR_A3_TEXTURESOURCES_GREENHEX0";
-				author = "$STR_RTZ_CSAT_author";
-				textures[] = {"\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_1_white_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_2_white_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_details_white_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_interiors_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_3_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_2_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_5_ca.paa","\a3\data_f\flags\flag_csat_co.paa"};
+				author = "$STR_RTZ_Zubr_author";
+				textures[] = {"\x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_body_1_white_co.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_body_2_white_co.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_details_white_co.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_interiors_co.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\num\hull_num_3_ca.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\num\hull_num_2_ca.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\num\hull_num_5_ca.paa","\a3\data_f\flags\flag_csat_co.paa"};
 				factions[] = {};
 			};
 		};
@@ -788,8 +788,8 @@ class CfgVehicles {
 		{
 			class CustomShipNumber1
 			{
-				displayName = "$STR_RTZ_CSAT_atrb_HullNumber1";
-				tooltip = "$STR_RTZ_CSAT_atrb_HullNumber1_tooltip";
+				displayName = "$STR_RTZ_Zubr_atrb_HullNumber1";
+				tooltip = "$STR_RTZ_Zubr_atrb_HullNumber1_tooltip";
 				property = "CustomShipNumber1";
 				control = "EditShort";
 				expression = "[_this, _value, 4] spawn rtz_csat_fnc_zubrHullNumbers;";
@@ -799,8 +799,8 @@ class CfgVehicles {
 			};
 			class CustomShipNumber2
 			{
-				displayName = "$STR_RTZ_CSAT_atrb_HullNumber2";
-				tooltip = "$STR_RTZ_CSAT_atrb_HullNumber2_tooltip";
+				displayName = "$STR_RTZ_Zubr_atrb_HullNumber2";
+				tooltip = "$STR_RTZ_Zubr_atrb_HullNumber2_tooltip";
 				property = "CustomShipNumber2";
 				control = "EditShort";
 				expression = "[_this, _value, 5] spawn rtz_csat_fnc_zubrHullNumbers;";
@@ -810,8 +810,8 @@ class CfgVehicles {
 			};
 			class CustomShipNumber3
 			{
-				displayName = "$STR_RTZ_CSAT_atrb_HullNumber3";
-				tooltip = "$STR_RTZ_CSAT_atrb_HullNumber3_tooltip";
+				displayName = "$STR_RTZ_Zubr_atrb_HullNumber3";
+				tooltip = "$STR_RTZ_Zubr_atrb_HullNumber3_tooltip";
 				property = "CustomShipNumber3";
 				control = "EditShort";
 				expression = "[_this, _value, 6] spawn rtz_csat_fnc_zubrHullNumbers;";
@@ -821,18 +821,18 @@ class CfgVehicles {
 			};
 			class CustomShipFlag
 			{
-				displayName = "$STR_RTZ_CSAT_atrb_Flag";
-				tooltip = "$STR_RTZ_CSAT_atrb_Flag_tooltip";
+				displayName = "$STR_RTZ_Zubr_atrb_Flag";
+				tooltip = "$STR_RTZ_Zubr_atrb_Flag_tooltip";
 				property = "CustomShipFlag";
 				control = "Edit";
 				expression = "if (local _this) then {_this setObjectTextureGlobal [7, _value];}";
-				defaultValue = "'x\rtz\addons\csat\zubr_hovercraft_assets\data\flags\flag_run_co.paa'";
+				defaultValue = "'x\rtz\addons\zubr\zubr_hovercraft_assets\data\flags\flag_run_co.paa'";
 				typeName = "STRING";
 			};
 			class FrontRamp
 			{
-				displayName = "$STR_RTZ_CSAT_atrb_FrontRamp";
-				tooltip = "$STR_RTZ_CSAT_atrb_FrontRamp_tooltip";
+				displayName = "$STR_RTZ_Zubr_atrb_FrontRamp";
+				tooltip = "$STR_RTZ_Zubr_atrb_FrontRamp_tooltip";
 				property = "FrontRampPosition";
 				control = "CheckboxNumber";
 				expression = "_this animateSource [""ramp_front_source"",_value,true];";
@@ -841,8 +841,8 @@ class CfgVehicles {
 			};
 			class RearRamp
 			{
-				displayName = "$STR_RTZ_CSAT_atrb_RearRamp";
-				tooltip = "$STR_RTZ_CSAT_atrb_RearRamp_tooltip";
+				displayName = "$STR_RTZ_Zubr_atrb_RearRamp";
+				tooltip = "$STR_RTZ_Zubr_atrb_RearRamp_tooltip";
 				property = "RearRampPosition";
 				control = "CheckboxNumber";
 				expression = "_this animateSource [""ramp_rear_source"",_value,true];";
@@ -851,8 +851,8 @@ class CfgVehicles {
 			};
 			class FlagHide
 			{
-				displayName = "$STR_RTZ_CSAT_atrb_FlagHide";
-				tooltip = "$STR_RTZ_CSAT_atrb_FlagHide_tooltip";
+				displayName = "$STR_RTZ_Zubr_atrb_FlagHide";
+				tooltip = "$STR_RTZ_Zubr_atrb_FlagHide_tooltip";
 				property = "FlagHide";
 				control = "CheckboxNumber";
 				expression = "_this animateSource [""flag_source"",_value,true];";
@@ -885,14 +885,14 @@ class CfgVehicles {
 	};
 	class RTZ_O_Zubr_CSAT_T: RTZ_Zubr_Base
 	{
-		author = "$STR_RTZ_CSAT_author";
+		author = "$STR_RTZ_Zubr_author";
 		scope = 2;
 		scopeCurator = 2;
 		side = 0;
 		faction = "OPF_F";
 		crew = "O_crew_F";
-		hiddenSelectionsTextures[] = {"\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_1_white_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_2_white_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_details_white_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_interiors_co.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_3_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_2_ca.paa","\x\rtz\addons\csat\zubr_hovercraft_assets\data\num\hull_num_5_ca.paa","\a3\data_f\flags\flag_csat_co.paa"};
-		editorPreview = "\x\rtz\addons\csat\zubr_hovercraft_assets\data\preview\RTZ_O_Zubr_CSAT_T.jpg";
+		hiddenSelectionsTextures[] = {"\x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_body_1_white_co.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_body_2_white_co.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_details_white_co.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_interiors_co.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\num\hull_num_3_ca.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\num\hull_num_2_ca.paa","\x\rtz\addons\zubr\zubr_hovercraft_assets\data\num\hull_num_5_ca.paa","\a3\data_f\flags\flag_csat_co.paa"};
+		editorPreview = "\x\rtz\addons\zubr\zubr_hovercraft_assets\data\preview\RTZ_O_Zubr_CSAT_T.jpg";
 		class TransportWeapons
 		{
 			class _xx_arifle_CTAR_blk_F

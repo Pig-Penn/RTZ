@@ -26,6 +26,7 @@ _costs append [
     ["EF_O_CombatBoat_Unarmed_OPF", 14], // Combat Boat (Unarmed)
     ["EF_O_CombatBoat_HMG_OPF", 20], // Combat Boat (HMG)
     ["EF_O_CombatBoat_AT_OPF", 26], // Combat Boat (AT)
+    ["RTZ_O_Zubr_CSAT_T", 60], // Zubr Hovercraft
 
     // Cars
     ["O_Quadbike_01_F", 2], // Quad Bike

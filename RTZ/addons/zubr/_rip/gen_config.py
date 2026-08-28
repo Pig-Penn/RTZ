@@ -5,7 +5,7 @@ import os, re, shutil
 import sound_ext
 
 R    = r"C:\Users\Maxim\AppData\Local\Temp\rtzrip"
-DEST = r"c:\Users\Maxim\OneDrive\1D Documents\Modding\Real-Time Zeus\RTZ\addons\csat"
+DEST = r"c:\Users\Maxim\OneDrive\1D Documents\Modding\Real-Time Zeus\RTZ\addons\zubr"
 SRC  = os.path.join(R, "cup_watervehicles_zubr", "CUP", "WaterVehicles",
                     "CUP_WaterVehicles_Zubr", "config.cpp")
 RHIB = os.path.join(R, "cup_watervehicles_rhib", "CUP", "WaterVehicles", "CUP_WaterVehicles_RHIB")
@@ -35,8 +35,8 @@ csat_t    = slice_(1193, 1286)         # class CUP_O_ZUBR_CSAT_T
 # Paths. Only the .p3d needed byte-for-byte padding; these are plain config
 # strings, but they use the same padded folders so there is one layout.
 PATHS = [
-    (r"cup\watervehicles\cup_watervehicles_zubr", r"x\rtz\addons\csat\zubr_hovercraft_assets"),
-    (r"CUP\AirVehicles\CUP_AirVehicles_C130J\data\sound", r"x\rtz\addons\csat\sound"),
+    (r"cup\watervehicles\cup_watervehicles_zubr", r"x\rtz\addons\zubr\zubr_hovercraft_assets"),
+    (r"CUP\AirVehicles\CUP_AirVehicles_C130J\data\sound", r"x\rtz\addons\zubr\sound"),
 ]
 # Class names. Renamed so the addon never collides with CUP when both load.
 CLASSES = [
@@ -58,16 +58,16 @@ FUNCS = [
 ]
 # Stringtable keys, longest prefix first.
 STRINGS = [
-    ("STR_CUP_dn_LCU1600_Atrb_CustomShipNumber", "STR_RTZ_csat_atrb_HullNumber"),
-    ("STR_CUP_dn_ZUBR_Atrb_CustomShipFlag",      "STR_RTZ_csat_atrb_Flag"),
-    ("STR_CUP_dn_ZUBR_Atrb_FrontRampPos",        "STR_RTZ_csat_atrb_FrontRamp"),
-    ("STR_CUP_dn_ZUBR_Atrb_RearRampPos",         "STR_RTZ_csat_atrb_RearRamp"),
-    ("STR_CUP_dn_ZUBR_Atrb_FlagHide",            "STR_RTZ_csat_atrb_FlagHide"),
-    ("STR_CUP_dn_Core_tex_",                     "STR_RTZ_csat_tex_"),
-    ("STR_CUP_POSITION_Core_LG",                 "STR_RTZ_csat_pos_LeftGunner"),
-    ("STR_CUP_POSITION_Core_RG",                 "STR_RTZ_csat_pos_RightGunner"),
-    ("STR_CUP_dn_ZUBR_Base",                     "STR_RTZ_csat_Zubr_Base"),
-    ("STR_CUP_AUTHOR_STRING",                    "STR_RTZ_csat_author"),
+    ("STR_CUP_dn_LCU1600_Atrb_CustomShipNumber", "STR_RTZ_Zubr_atrb_HullNumber"),
+    ("STR_CUP_dn_ZUBR_Atrb_CustomShipFlag",      "STR_RTZ_Zubr_atrb_Flag"),
+    ("STR_CUP_dn_ZUBR_Atrb_FrontRampPos",        "STR_RTZ_Zubr_atrb_FrontRamp"),
+    ("STR_CUP_dn_ZUBR_Atrb_RearRampPos",         "STR_RTZ_Zubr_atrb_RearRamp"),
+    ("STR_CUP_dn_ZUBR_Atrb_FlagHide",            "STR_RTZ_Zubr_atrb_FlagHide"),
+    ("STR_CUP_dn_Core_tex_",                     "STR_RTZ_Zubr_tex_"),
+    ("STR_CUP_POSITION_Core_LG",                 "STR_RTZ_Zubr_pos_LeftGunner"),
+    ("STR_CUP_POSITION_Core_RG",                 "STR_RTZ_Zubr_pos_RightGunner"),
+    ("STR_CUP_dn_ZUBR_Base",                     "STR_RTZ_Zubr_Base"),
+    ("STR_CUP_AUTHOR_STRING",                    "STR_RTZ_Zubr_author"),
 ]
 
 def apply(text):

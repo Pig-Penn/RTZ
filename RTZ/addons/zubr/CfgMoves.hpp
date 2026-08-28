@@ -15,7 +15,7 @@ class CfgMovesMaleSdr: CfgMovesBasic {
         class Crew;
 
         class RTZ_KIA_Zubr_Cargo: DefaultDie {
-            file = "\x\rtz\addons\csat\anim\KIA_RHIB_Cargo.rtm";
+            file = "\x\rtz\addons\zubr\anim\KIA_RHIB_Cargo.rtm";
             actions = "DeadActions";
             speed = 0.5;
             looped = 0;
@@ -26,7 +26,7 @@ class CfgMovesMaleSdr: CfgMovesBasic {
         };
 
         class RTZ_Zubr_Cargo: Crew {
-            file = "\x\rtz\addons\csat\anim\RHIB_Cargo.rtm";
+            file = "\x\rtz\addons\zubr\anim\RHIB_Cargo.rtm";
             interpolateTo[] = {"RTZ_KIA_Zubr_Cargo", 1};
             leftHandIKCurve[] = {1};
             rightHandIKCurve[] = {1};

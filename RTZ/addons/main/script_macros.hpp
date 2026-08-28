@@ -34,7 +34,9 @@
 // (ace_spectator_fnc_ui_draw3D).
 //
 // NOT for the head tags. A label that hangs OVER an entity wants a fixed height, not
-// an animated one — see MODEL_TOP below, and EFUNC(hud,tagAnchor) for the split.
+// an animated one — see MAN_TAG_TOP (rtz_hud's script_component.hpp) and
+// EFUNC(hud,tagAnchor) for the split. Note that MODEL_TOP below is NOT that fixed
+// height for a man either: it is animated too, just less obviously.
 //
 // A MACRO, not a function, and NOT cached — both deliberate, and the two are the
 // same decision. `selectionPosition` returns the selection "in model space
@@ -58,31 +60,32 @@
 // [...] stays [] — every caller must still test `count < 3` (Gotchas §3).
 #define HEAD_POS(obj) ((obj) modelToWorldVisual ((obj) selectionPosition "Head"))
 
-// Model-space Z of an object's bounding-box top — the anchor height for anything that
-// hangs OVER an entity rather than on it — EFUNC(hud,tagAnchor)'s man branch, and the
-// fallback its vehicle branch already used.
+// Model-space Z of an object's bounding-box top — the anchor height for something
+// hanging OVER a VEHICLE: the fallback behind unitAimPositionVisual in
+// EFUNC(hud,tagAnchor), EFUNC(spotting,drawSpots) and EFUNC(spotting,drawRcIndicator),
+// for a hull with no crew aim point to resolve through.
 //
-// Static where HEAD_POS is animated, and that is the whole point of it existing. A tag
-// anchored to the live head DROPS WITH THE STANCE: a man's head sits ~1.65 m up in model
-// space standing and ~0.3 m up (and ~1 m forward) prone, so going prone dropped his tag
-// about a metre and a third — straight onto the basegame Zeus entity icon, which does
-// not move. boundingBoxReal reports the MODEL's extent, not the current animation's, so
-// the tag holds one height through every stance change and a squad in mixed stances
-// still reads as one row of labels rather than a staircase.
+// NOT FOR MEN, and the reason is a trap worth the paragraph. This macro used to
+// anchor EFUNC(hud,tagAnchor)'s man branch on the belief that boundingBoxReal reports
+// the MODEL's extent rather than the current animation's — the stance-free constant
+// that `selectionPosition` (HEAD_POS, above) is documented NOT to be. Measured, that
+// belief is false: for CAManBase the engine returns a GENERIC box — identical x/y on
+// every man, sized to a PRONE footprint — whose top is stance-quantized at 1.9 upright
+// and 0.8 prone. `boundingBox` returns byte-identical values. EFUNC(hud,tagAnchor)'s
+// header carries the three-unit measurement that shows it.
 //
-// Do NOT "fix" this back towards a memoized selectionPosition. That was the same bug
-// from the other side (Gotchas §`selectionPosition` is animated): static-per-class is
-// genuinely what a tag anchor wants, the bounding box actually IS that, and a memoized
-// animated read only impersonates it — it freezes every man of a class in whichever
-// pose the first one happened to be in.
+// So a man's tag takes a flat MAN_TAG_TOP (rtz_hud's script_component.hpp) and asks the
+// engine nothing. Reaching for this macro to anchor anything on a man reintroduces the
+// bug: a tag at CHEST height on every upright man of a class whose cache entry was
+// filled from a prone one.
 //
-// Being genuinely static-per-class cuts the other way too, and EFUNC(hud,tagAnchor)
-// takes it: it memoizes this result by `typeOf` rather than asking the engine for a
-// model's geometry once per tagged entity per frame. That is safe for exactly the
-// reason the paragraph above is true, and it is NOT safe for HEAD_POS. The two other
-// callers (EFUNC(spotting,drawSpots), EFUNC(spotting,drawRcIndicator)) deliberately
-// do not cache: both are cold fallbacks behind unitAimPositionVisual, and both are
-// inline in a per-entity loop where the `call` would cost more than the read.
+// Memoizing it by `typeOf` — which EFUNC(hud,tagAnchor) does, now on the vehicle branch
+// only — is therefore safe only where the box is a real model fit and the entity has no
+// stance to quantize it by. It was NEVER safe for men, for the same reason it is not
+// safe for HEAD_POS, and the memo is what turned a per-frame wobble into a value frozen
+// wrong for the rest of the mission. The two spotting callers deliberately do not cache:
+// both are cold fallbacks, and both sit inline in a per-entity loop where the `call`
+// would cost more than the read.
 //
 // Evaluates its argument TWICE — pass a plain variable, never a command or an
 // expression with side effects. Yields 0 rather than throwing while the model has not

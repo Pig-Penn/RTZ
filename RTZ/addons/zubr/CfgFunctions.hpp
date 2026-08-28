@@ -12,15 +12,15 @@ class CfgFunctions {
 
         class zubr {
             class zubrEngineMonitor {
-                file = "\x\rtz\addons\csat\zubr_hovercraft_assets\functions\fn_ZubrEngineMonitor.sqf";
+                file = "\x\rtz\addons\zubr\zubr_hovercraft_assets\functions\fn_ZubrEngineMonitor.sqf";
                 recompile = 1;
             };
             class zubrMissileRangingFix {
-                file = "\x\rtz\addons\csat\zubr_hovercraft_assets\functions\fn_zubrMissileRangingFix.sqf";
+                file = "\x\rtz\addons\zubr\zubr_hovercraft_assets\functions\fn_zubrMissileRangingFix.sqf";
                 recompile = 0;
             };
             class zubrHullNumbers {
-                file = "\x\rtz\addons\csat\zubr_hovercraft_assets\functions\fn_zubrhullnumbers.sqf";
+                file = "\x\rtz\addons\zubr\zubr_hovercraft_assets\functions\fn_zubrhullnumbers.sqf";
                 recompile = 0;
             };
         };

@@ -210,12 +210,11 @@ private _hasRC     = count _rcDisplay > 0;
 // ── Pass 1: group icons ─────────────────────────────────────────────────────
 // Also records which group leaders the mouse is currently near, so pass 2 can
 // reveal that group's chevrons past the cutoff.
-private _chevronsEnabled = GVAR(chevronsEnabled);
 // The hover test exists ONLY to unlock the peek bucket, so it is gated on that bucket
 // having something in it — on the ordinary frame, where every spotted man is either
 // inside the cutoff or not spotted at all, no worldToScreen runs at all.
 private _peekByLeader = GVAR(spotChevronsPeek);
-private _anyPeek      = _chevronsEnabled && {count _peekByLeader > 0};
+private _anyPeek      = count _peekByLeader > 0;
 // Built unconditionally, even though only pass 2 reads it and only under _anyPeek.
 // Making it conditional would save one small map allocation per frame and leave a
 // possibly-nil private in a renderer — and a nil read aborts the whole enclosing scope
@@ -331,10 +330,6 @@ private _groupHoverByLeader = createHashMap;
 } forEach _groups;
 
 // ── Pass 2: individual chevrons ─────────────────────────────────────────────
-// Skipped entirely while chevrons are toggled off (FUNC(toggleChevrons)) —
-// group icons above are unaffected.
-if (!_chevronsEnabled) exitWith {};
-
 private _chevronNames = GVAR(chevronNames);
 
 // The frame's draw list: everything inside the cutoff, plus the peek buckets of whichever

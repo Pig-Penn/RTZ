@@ -47,7 +47,7 @@ class zen_context_menu_actions {
             displayName = CSTRING(ActionForbidDismount);
             icon = ICON_LOCKED;
             statement = QUOTE([_objects + [_hoveredEntity]] call FUNC(dismountToggle));
-            condition = QUOTE(GVAR(enableDismount) && {([_objects + [_hoveredEntity]] call FUNC(collectDismountVehicles)) isNotEqualTo []});
+            condition = QUOTE(([_objects + [_hoveredEntity]] call FUNC(collectDismountVehicles)) isNotEqualTo []);
             modifierFunction = QUOTE([ARR_2(_this select 0,_objects + [_hoveredEntity])] call FUNC(dismountActionModifier));
             priority = 4;
         };
@@ -75,7 +75,7 @@ class zen_context_menu_actions {
             displayName = CSTRING(ActionReset);
             icon = ICON_RESET;
             statement = QUOTE([ARR_3(_objects,_groups,_hoveredEntity)] call FUNC(reset));
-            condition = QUOTE(GVAR(enableReset) && {[ARR_3(_objects,_groups,_hoveredEntity)] call FUNC(canReset)});
+            condition = QUOTE([ARR_3(_objects,_groups,_hoveredEntity)] call FUNC(canReset));
             priority = 0;
         };
     };

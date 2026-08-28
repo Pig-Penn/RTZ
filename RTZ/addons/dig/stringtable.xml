@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Dig">
+        <Key ID="STR_RTZ_Dig_ActionDig">
+            <English>Dig Trench</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_CellDuration">
+            <English>Seconds Per Section</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_CellDuration_Description">
+            <English>How long one engineer works on one section of trench. A trench costs this much per section, shared out among the engineers ordered to dig it.</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_DigTimeout">
+            <English>Walk Timeout</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_DigTimeout_Description">
+            <English>How long an engineer is given to reach his section before the order is abandoned and he rejoins formation.</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_DisplayName">
+            <English>Dig</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_Enabled">
+            <English>Enable Digging</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_Enabled_Description">
+            <English>Lets curators order engineers to dig trench lines, cutting the trench into the terrain itself. The terrain change is permanent for the rest of the mission and cannot be undone. Off by default.</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_HintDig">
+            <English>Dig</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_MaxTrenches">
+            <English>Remembered Trenches</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_MaxTrenches_Description">
+            <English>How many dug trenches the server keeps a record of. Older trenches stay in the world but are forgotten, so they can no longer be filled back in. Digging is never blocked by this limit.</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_MsgComplete">
+            <English>Trench complete</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_MsgDigging">
+            <English>Digging in</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_MsgNoDiggers">
+            <English>No engineers left to dig</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_MsgUnreachable">
+            <English>Engineer cannot reach the trench</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_ReasonBounds">
+            <English>Too close to the map edge</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_ReasonObject">
+            <English>Blocked by an object</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_ReasonRoad">
+            <English>Blocked by a road</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_ReasonShort">
+            <English>Trench too short</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_ReasonSurface">
+            <English>Ground too hard to dig</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_ReasonTerrainObject">
+            <English>Blocked by terrain</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_ReasonWater">
+            <English>Under water</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_ReasonWorld">
+            <English>Terrain too coarse to dig</English>
+        </Key>
+    </Package>
+</Project>

@@ -8,7 +8,7 @@ class CfgWeapons {
 
 class RTZ_Vacannon_AK630_veh: CannonCore
 {
-	author = "$STR_RTZ_CSAT_author";
+	author = "$STR_RTZ_Zubr_author";
 	scope = 1;
 	displayName = "AK-630";
 	nameSound = "cannon";
@@ -27,7 +27,7 @@ class RTZ_Vacannon_AK630_veh: CannonCore
 		class StandardSound
 		{
 			weaponSoundEffect = "DefaultRifle";
-			begin1[] = {"x\rtz\addons\csat\sound\GAU8_05sec_burst.wss",7,1,1800};
+			begin1[] = {"x\rtz\addons\zubr\sound\GAU8_05sec_burst.wss",7,1,1800};
 			soundBegin[] = {"begin1",1};
 		};
 		reloadTime = 0.03;
@@ -125,9 +125,9 @@ class RTZ_Vacannon_AK630_2_veh: RTZ_Vacannon_AK630_veh
 
 class RTZ_Vmlauncher_OGON_veh: RocketPods
 {
-	author = "$STR_RTZ_CSAT_author";
+	author = "$STR_RTZ_Zubr_author";
 	scope = 1;
-	displayName = "$STR_RTZ_CSAT_wpn_Ogon";
+	displayName = "$STR_RTZ_Zubr_wpn_Ogon";
 	magazines[] = {"RTZ_44Rnd_Ogon_HE"};
 	magazineReloadTime = 30;
 	modes[] = {"fire_4000","fire_3000","fire_2000","fire_1000"};
@@ -145,7 +145,7 @@ class RTZ_Vmlauncher_OGON_veh: RocketPods
 		maxRangeProbab = 0.11;
 		aiRateOfFire = 0.8;
 		aiRateOfFireDistance = 2500;
-		displayName = "$STR_RTZ_CSAT_wpn_Ogon_4000";
+		displayName = "$STR_RTZ_Zubr_wpn_Ogon_4000";
 		burst = 1;
 		reloadTime = 0.2;
 		autoFire = 1;
@@ -170,7 +170,7 @@ class RTZ_Vmlauncher_OGON_veh: RocketPods
 		maxRangeProbab = 0.11;
 		aiRateOfFire = 0.8;
 		aiRateOfFireDistance = 2500;
-		displayName = "$STR_RTZ_CSAT_wpn_Ogon_3000";
+		displayName = "$STR_RTZ_Zubr_wpn_Ogon_3000";
 		textureType = "burst";
 	};
 	class fire_2000: fire_4000
@@ -183,7 +183,7 @@ class RTZ_Vmlauncher_OGON_veh: RocketPods
 		maxRangeProbab = 0.11;
 		aiRateOfFire = 0.8;
 		aiRateOfFireDistance = 2500;
-		displayName = "$STR_RTZ_CSAT_wpn_Ogon_2000";
+		displayName = "$STR_RTZ_Zubr_wpn_Ogon_2000";
 		textureType = "dual";
 	};
 	class fire_1000: fire_4000
@@ -196,7 +196,7 @@ class RTZ_Vmlauncher_OGON_veh: RocketPods
 		maxRangeProbab = 0.11;
 		aiRateOfFire = 0.8;
 		aiRateOfFireDistance = 2500;
-		displayName = "$STR_RTZ_CSAT_wpn_Ogon_1000";
+		displayName = "$STR_RTZ_Zubr_wpn_Ogon_1000";
 		textureType = "semi";
 	};
 };

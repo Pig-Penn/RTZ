@@ -38,3 +38,22 @@
 #define ICON_COMBAT_MODE "\x\zen\addons\context_actions\ui\hold_ca.paa"
 #define COLOR_HOLD_FIRE [1, 0, 0, 1]
 #define COLOR_OPEN_FIRE [1, 1, 1, 1]
+
+// Arma 3's gear / inventory display (RscDisplayInventory). FUNC(keepGearAnimation)
+// watches it to tell whether the curator still has a loadout open.
+#define IDD_GEAR 602
+
+// Gear-animation session, in seconds. The watcher only polls the CURATOR's own
+// display — the animation itself is driven by an AnimDone handler on the man's
+// machine, so nothing here is a replay interval. GRACE is how long the watcher
+// waits for the display to appear before giving up on it; MAX is the hard cap on
+// one session, so a display that never closes cleanly cannot leak forever.
+#define GEAR_WATCH_INTERVAL 0.5
+#define GEAR_ANIM_GRACE 5
+#define GEAR_ANIM_MAX 600
+
+// Floor on the gap between two plays, purely so a rejected animation cannot spin
+// the handler as fast as the engine raises AnimDone. Deliberately below the eye's
+// threshold — this is a safety valve, not a pacing control, and anything large
+// enough to see would reintroduce the gap FUNC(playGearAnim) exists to close.
+#define GEAR_ANIM_MIN_GAP 0.05

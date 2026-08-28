@@ -57,7 +57,7 @@ class Stage3
 };
 class Stage4
 {
-	texture = "x\rtz\addons\csat\zubr_hovercraft_assets\data\zubr_body_1_as.paa";
+	texture = "x\rtz\addons\zubr\zubr_hovercraft_assets\data\zubr_body_1_as.paa";
 	uvSource = "tex";
 	class uvTransform
 	{

@@ -83,8 +83,10 @@ private _text = [
     _extraSeg
 ] call FUNC(joinRow);
 
-// Colour driven by the most urgent condition; shaken/wounded units go amber even
-// without an explicit flag.
+// Colour driven by the most urgent condition; shaken or badly hurt units go amber.
+// Health is read straight off the packet rather than off a flag: the row already
+// prints HP, so a WOUNDED flag riding the wire alongside it was a second copy of
+// the same fact to keep in sync.
 private _color = switch (true) do {
     case (_downed):                    { COL_BAD };
     case (FLAG_FLEEING in _flags):     { COL_BAD };
@@ -93,7 +95,7 @@ private _color = switch (true) do {
         || { FLAG_FORCED in _flags }): { COL_WARN };
     case (_moralePct <= 25
         || { _suppPct >= 60 }
-        || { FLAG_WOUNDED in _flags }): { COL_WARN };
+        || { _hp <= 65 }):             { COL_WARN };
     default                            { COL_NORMAL };
 };
 

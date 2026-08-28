@@ -104,37 +104,34 @@
             <English>Show a small floating status tag above each selected vehicle in Zeus. Requires Selection Info enabled. Toggle in-mission via the RTZ context menu.</English>
         </Key>
         <Key ID="STR_RTZ_HUD_FlagBusy">
-            <English>BUSY</English>
+            <English>Busy</English>
         </Key>
         <Key ID="STR_RTZ_HUD_FlagDamaged">
-            <English>DAMAGED</English>
+            <English>Damaged</English>
         </Key>
         <Key ID="STR_RTZ_HUD_FlagFleeing">
-            <English>FLEEING</English>
+            <English>Flee</English>
         </Key>
         <Key ID="STR_RTZ_HUD_FlagForced">
-            <English>FORCED</English>
+            <English>Forced</English>
         </Key>
         <Key ID="STR_RTZ_HUD_FlagHidden">
-            <English>HIDDEN</English>
+            <English>Hidden</English>
         </Key>
         <Key ID="STR_RTZ_HUD_FlagInside">
-            <English>INSIDE</English>
+            <English>Inside</English>
         </Key>
         <Key ID="STR_RTZ_HUD_FlagLowFuel">
             <English>LOW FUEL</English>
         </Key>
         <Key ID="STR_RTZ_HUD_FlagMounted">
-            <English>MOUNTED</English>
+            <English>Mounted</English>
         </Key>
         <Key ID="STR_RTZ_HUD_FlagMoveOff">
-            <English>MOVE OFF</English>
+            <English>Move Off</English>
         </Key>
         <Key ID="STR_RTZ_HUD_FlagPathOff">
-            <English>PATH OFF</English>
-        </Key>
-        <Key ID="STR_RTZ_HUD_FlagWounded">
-            <English>WOUNDED</English>
+            <English>Path Off</English>
         </Key>
         <Key ID="STR_RTZ_HUD_GatherInterval">
             <English>Data Refresh Interval</English>
@@ -236,13 +233,13 @@
             <English>no live data</English>
         </Key>
         <Key ID="STR_RTZ_HUD_StatusDown">
-            <English>DOWN</English>
+            <English>Down</English>
         </Key>
         <Key ID="STR_RTZ_HUD_StatusDowned">
-            <English>DOWNED</English>
+            <English>Downed</English>
         </Key>
         <Key ID="STR_RTZ_HUD_StatusFleeing">
-            <English>FLEEING</English>
+            <English>Flee</English>
         </Key>
         <Key ID="STR_RTZ_HUD_TagFieldAmmo">
             <English>%1/%2</English>
@@ -290,7 +287,7 @@
             <English>Show Flag Icon</English>
         </Key>
         <Key ID="STR_RTZ_HUD_TagShowFlagIcon_Description">
-            <English>Show a flag icon at the right end of the tag when the unit carries status flags (WOUNDED, HIDDEN, BUSY, PATH OFF, ...). Hover the Zeus cursor over it to list them.</English>
+            <English>Show a flag icon at the right end of the tag when the unit carries status flags (HIDDEN, BUSY, PATH OFF, ...). Hover the Zeus cursor over it to list them.</English>
         </Key>
         <Key ID="STR_RTZ_HUD_TagShowHealth">
             <English>Show Health</English>
@@ -314,7 +311,7 @@
             <English>Show Status</English>
         </Key>
         <Key ID="STR_RTZ_HUD_TagShowStatus_Description">
-            <English>Include the current LAMBS task. DOWN / FLEEING always shows regardless.</English>
+            <English>Include the current LAMBS task. DOWN / Flee always shows regardless.</English>
         </Key>
         <Key ID="STR_RTZ_HUD_TagShowSuppression">
             <English>Show Suppression</English>

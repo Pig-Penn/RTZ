@@ -1,76 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
-    <Package name="CSAT">
-        <Key ID="STR_RTZ_CSAT_Zubr_Base">
+    <Package name="Zubr">
+        <Key ID="STR_RTZ_Zubr_Base">
             <English>Zubr-Class LCAC</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_Flag">
+        <Key ID="STR_RTZ_Zubr_atrb_Flag">
             <English>Flag</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_FlagHide">
+        <Key ID="STR_RTZ_Zubr_atrb_FlagHide">
             <English>Hide Flags</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_FlagHide_tooltip">
+        <Key ID="STR_RTZ_Zubr_atrb_FlagHide_tooltip">
             <English>Hide the flags on the propeller ducts.</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_Flag_tooltip">
+        <Key ID="STR_RTZ_Zubr_atrb_Flag_tooltip">
             <English>Change the flag displayed on the engines to a custom one. Uses normal flag paths.</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_FrontRamp">
+        <Key ID="STR_RTZ_Zubr_atrb_FrontRamp">
             <English>Open Front Ramp</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_FrontRamp_tooltip">
+        <Key ID="STR_RTZ_Zubr_atrb_FrontRamp_tooltip">
             <English>Deflate the cushion and open the front ramp. Visual only - this does not change how the craft drives.</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_HullNumber1">
+        <Key ID="STR_RTZ_Zubr_atrb_HullNumber1">
             <English>Hull Number - First Digit</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_HullNumber1_tooltip">
+        <Key ID="STR_RTZ_Zubr_atrb_HullNumber1_tooltip">
             <English>First digit of the hull number painted on the craft.</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_HullNumber2">
+        <Key ID="STR_RTZ_Zubr_atrb_HullNumber2">
             <English>Hull Number - Second Digit</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_HullNumber2_tooltip">
+        <Key ID="STR_RTZ_Zubr_atrb_HullNumber2_tooltip">
             <English>Second digit of the hull number painted on the craft.</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_HullNumber3">
+        <Key ID="STR_RTZ_Zubr_atrb_HullNumber3">
             <English>Hull Number - Third Digit</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_HullNumber3_tooltip">
+        <Key ID="STR_RTZ_Zubr_atrb_HullNumber3_tooltip">
             <English>Third digit of the hull number painted on the craft.</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_RearRamp">
+        <Key ID="STR_RTZ_Zubr_atrb_RearRamp">
             <English>Open Rear Ramp</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_atrb_RearRamp_tooltip">
+        <Key ID="STR_RTZ_Zubr_atrb_RearRamp_tooltip">
             <English>Open the rear ramp. Visual only - this does not change how the craft drives.</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_author">
+        <Key ID="STR_RTZ_Zubr_author">
             <English>Community Upgrade Project</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_mag_Ogon_HE">
+        <Key ID="STR_RTZ_Zubr_mag_Ogon_HE">
             <English>OF-45 (HE) Rocket</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_pos_LeftGunner">
+        <Key ID="STR_RTZ_Zubr_pos_LeftGunner">
             <English>Left Gunner</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_pos_RightGunner">
+        <Key ID="STR_RTZ_Zubr_pos_RightGunner">
             <English>Right Gunner</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_wpn_Ogon">
+        <Key ID="STR_RTZ_Zubr_wpn_Ogon">
             <English>A-22 Ogon</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_wpn_Ogon_1000">
+        <Key ID="STR_RTZ_Zubr_wpn_Ogon_1000">
             <English>1000m</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_wpn_Ogon_2000">
+        <Key ID="STR_RTZ_Zubr_wpn_Ogon_2000">
             <English>2000m</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_wpn_Ogon_3000">
+        <Key ID="STR_RTZ_Zubr_wpn_Ogon_3000">
             <English>3000m</English>
         </Key>
-        <Key ID="STR_RTZ_CSAT_wpn_Ogon_4000">
+        <Key ID="STR_RTZ_Zubr_wpn_Ogon_4000">
             <English>4000m</English>
         </Key>
     </Package>

@@ -1,7 +1,7 @@
 import os, re, shutil
 
 R    = r"C:\Users\Maxim\AppData\Local\Temp\rtzrip"
-DEST = r"c:\Users\Maxim\OneDrive\1D Documents\Modding\Real-Time Zeus\RTZ\addons\csat"
+DEST = r"c:\Users\Maxim\OneDrive\1D Documents\Modding\Real-Time Zeus\RTZ\addons\zubr"
 
 ZUBR = os.path.join(R, "cup_watervehicles_zubr", "CUP", "WaterVehicles", "CUP_WaterVehicles_Zubr")
 RHIB = os.path.join(R, "cup_watervehicles_rhib", "CUP", "WaterVehicles", "CUP_WaterVehicles_RHIB")
@@ -14,9 +14,9 @@ C130 = os.path.join(R, "cup_airvehicles_c130j", "CUP", "AirVehicles", "CUP_AirVe
 # would shift every LOD and corrupt the model. Each replacement directory name
 # is padded to match the CUP path it replaces byte for byte.
 REWRITES = [
-    (rb"cup\watervehicles\cup_watervehicles_zubr", rb"x\rtz\addons\csat\zubr_hovercraft_assets"),
-    (rb"cup\watervehicles\cup_watervehicles_rhib", rb"x\rtz\addons\csat\rhib_proxy_assets_data"),
-    (rb"cup\airvehicles\cup_airvehicles_core",     rb"x\rtz\addons\csat\vehicle_logo_asset"),
+    (rb"cup\watervehicles\cup_watervehicles_zubr", rb"x\rtz\addons\zubr\zubr_hovercraft_assets"),
+    (rb"cup\watervehicles\cup_watervehicles_rhib", rb"x\rtz\addons\zubr\rhib_proxy_assets_data"),
+    (rb"cup\airvehicles\cup_airvehicles_core",     rb"x\rtz\addons\zubr\vehicle_logo_asset"),
 ]
 for old, new in REWRITES:
     assert len(old) == len(new), (old, new, len(old), len(new))

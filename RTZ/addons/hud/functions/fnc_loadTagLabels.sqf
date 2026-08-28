@@ -154,8 +154,7 @@ private _pairs = [
     [FLAG_HIDDEN,   LLSTRING(FlagHidden)],  // hidden from the enemy — engine `isHidden`
     [FLAG_INSIDE,   LLSTRING(FlagInside)],  // fully indoors — `insideBuilding _unit isEqualTo 1`
     [FLAG_BUSY,     LLSTRING(FlagBusy)],    // still executing an order — `!(unitReady _unit)`
-    [FLAG_MOUNTED,  LLSTRING(FlagMounted)], // in a vehicle — `!isNull objectParent _unit`
-    [FLAG_WOUNDED,  LLSTRING(FlagWounded)]  // health at or below 65 %
+    [FLAG_MOUNTED,  LLSTRING(FlagMounted)]  // in a vehicle — `!isNull objectParent _unit`
 ];
 
 { GVAR(tagLabels) set _x } forEach _pairs;

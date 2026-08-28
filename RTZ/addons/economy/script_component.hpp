@@ -44,6 +44,19 @@
 #define TOAST_DURATION 3
 #define TOAST_FADE 0.5
 
+// Modules RTZ replaces with its own systems, gated behind GVAR(cleanModuleTree)
+// in fnc_registerCosts. Lowercase: matched against toLowerANSI class names.
+// Reinforcements: ZEN's Create LZ, Create RP and Spawn Reinforcements.
+// Fire support: ZEN's CAS and Atomic Bomb modules, plus vanilla's Howitzer,
+// Mortar and Rocket — all superseded by the airstrike and battery components.
+// Objects: ZEN's Make Invincible.
+#define HIDDEN_MODULES [ \
+    "zen_modules_modulecreatelz", "zen_modules_modulecreaterp", "zen_modules_modulespawnreinforcements", \
+    "zen_modules_modulecasgun", "zen_modules_modulecasmissile", "zen_modules_modulecasgunmissile", "zen_modules_modulecasbomb", \
+    "moduleordnancehowitzer_f", "moduleordnancemortar_f", "moduleordnancerocket_f", \
+    "zen_modules_modulemakeinvincible" \
+]
+
 // Cost category indices, order matches the base cost array in fnc_registerCosts
 #define INDEX_FREE -1
 #define INDEX_INFANTRY 0

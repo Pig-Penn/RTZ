@@ -12,7 +12,7 @@
  * Client, or currently remote-controlled by another curator's client — they
  * stay at their defaults and `_isLocal` is sent false, so the client shows an
  * honest "no live data" note instead of misleading zeros. Identity (netId,
- * leader, group, role, name, side, behaviour, health, MOUNTED/WOUNDED flags)
+ * leader, group, role, name, side, behaviour, health, MOUNTED flag)
  * is valid on every machine and always filled in.
  *
  * `_detailed` gates the two genuinely expensive reads — `targetsQuery` (known
@@ -147,7 +147,6 @@ if (_isLocal) then {
 // Mounted state and health are global (objectParent / damage read on any machine).
 if !(isNull objectParent _unit) then { _flags pushBack FLAG_MOUNTED };
 private _hp = (round ((1 - damage _unit) * 100)) max 0;
-if (_hp <= 65) then { _flags pushBack FLAG_WOUNDED };
 
 [
     _netId, _isLdr, groupId _grp, _role, _sideNum, name _unit,

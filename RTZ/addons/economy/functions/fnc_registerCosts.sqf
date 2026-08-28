@@ -32,9 +32,23 @@
 
 params ["", "_classes"];
 
-// Disabled: keep the full asset tree and make everything free
-if (!GVAR(enable)) exitWith {_classes apply {[true, 0]}};
+// Read once rather than per class: this walks every CfgVehicles class.
+private _hide = GVAR(cleanModuleTree);
+private _costFree = !GVAR(enable);
 
+// if/then/else rather than exitWith: exitWith inside an apply block yields no
+// value at all, leaving a nil element the engine then ignores. Same family as
+// the exitWith-in-forEach trap in docs/Knowledge Base/Gotchas.md §2.
+//
 // A vehicle costs the same placed with or without its crew, so a single
-// cost (charged for both cases by the engine) is enough for every class
-_classes apply {[true, (_x call FUNC(getCost)) / POINTS_MAX]}
+// cost (charged for both cases by the engine) is enough for every class.
+// Hiding wins over cost: a hidden module has no cost to show.
+_classes apply {
+    private _class = _x;
+
+    if (_hide && {(toLowerANSI _class) in HIDDEN_MODULES}) then {
+        [false, 0]
+    } else {
+        [true, if (_costFree) then {0} else {(_class call FUNC(getCost)) / POINTS_MAX}]
+    }
+}

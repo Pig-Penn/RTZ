@@ -12,18 +12,18 @@ class EditorData
 	};
 	class ItemIDProvider
 	{
-		nextID=1277;
+		nextID=1278;
 	};
 	class LayerIndexProvider
 	{
-		nextID=78;
+		nextID=98;
 	};
 	class Camera
 	{
-		pos[]={2.87061,12.954776,-10.432641};
-		dir[]={-1.2363449e-07,-0.70710683,0.70710683};
-		up[]={-1.2363449e-07,0.70710671,0.70710683};
-		aside[]={1,0,1.7484557e-07};
+		pos[]={24.004463,9.2305174,-22.859003};
+		dir[]={-0.36045387,-0.21976945,0.9065178};
+		up[]={-0.081201993,0.9755519,0.20421767};
+		aside[]={0.92923599,0,0.3694872};
 	};
 };
 binarizationWanted=0;
@@ -379,7 +379,7 @@ class Mission
 					dataType="Object";
 					class PositionInfo
 					{
-						position[]={0,0.00043177605,7.4505806e-09};
+						position[]={0,-1.459945,7.4505806e-09};
 					};
 					side="West";
 					flags=2;
@@ -390,7 +390,7 @@ class Mission
 					};
 					id=1275;
 					type="B_Soldier_unarmed_F";
-					atlOffset=185.96899;
+					atlOffset=184.50862;
 					class CustomAttributes
 					{
 						class Attribute0
@@ -453,7 +453,7 @@ class Mission
 			{
 			};
 			id=0;
-			atlOffset=185.96899;
+			atlOffset=184.50862;
 		};
 		class Item1
 		{
@@ -4003,19 +4003,6 @@ class Mission
 			{
 				class Attribute0
 				{
-					property="lambs_WP_Editor_IsArtillery";
-					expression="if (_value) then {_this spawn {waitUntil {!(isNil 'lambs_wp_fnc_taskArtilleryRegister')};[gunner _this] call lambs_wp_fnc_taskArtilleryRegister;};};";
-					class Value
-					{
-						class data
-						{
-							singleType="BOOL";
-							value=1;
-						};
-					};
-				};
-				class Attribute1
-				{
 					property="VehicleCustomization";
 					expression="if (local _this) then {([_this] + _value + [true]) call (uinamespace getvariable 'BIS_fnc_initVehicle')};";
 					class Value
@@ -4145,6 +4132,19 @@ class Mission
 									};
 								};
 							};
+						};
+					};
+				};
+				class Attribute1
+				{
+					property="lambs_WP_Editor_IsArtillery";
+					expression="if (_value) then {_this spawn {waitUntil {!(isNil 'lambs_wp_fnc_taskArtilleryRegister')};[gunner _this] call lambs_wp_fnc_taskArtilleryRegister;};};";
+					class Value
+					{
+						class data
+						{
+							singleType="BOOL";
+							value=1;
 						};
 					};
 				};
@@ -4813,6 +4813,7 @@ class Mission
 			};
 			id=295;
 			type="I_GMG_01_F";
+			atlOffset=0.019348145;
 		};
 		class Item60
 		{

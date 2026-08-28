@@ -7,23 +7,23 @@
 // that folder and including it below; later entries win on duplicate classes.
 private _costs = [];
 
-#include "defaultCosts\msf.inc.sqf"
-#include "defaultCosts\gendarmerie.inc.sqf"
-#include "defaultCosts\csat.inc.sqf"
-#include "defaultCosts\viper.inc.sqf"
-#include "defaultCosts\aaf.inc.sqf"
-#include "defaultCosts\fia.inc.sqf"
-#include "defaultCosts\insurgents.inc.sqf"
-#include "defaultCosts\looters.inc.sqf"
-#include "defaultCosts\syndikat.inc.sqf"
-#include "defaultCosts\tura.inc.sqf"
+#include "defaultCosts\west\msf.inc.sqf"
+#include "defaultCosts\west\gendarmerie.inc.sqf"
+#include "defaultCosts\east\csat.inc.sqf"
+#include "defaultCosts\east\viper.inc.sqf"
+#include "defaultCosts\guerilla\aaf.inc.sqf"
+#include "defaultCosts\guerilla\fia.inc.sqf"
+#include "defaultCosts\guerilla\insurgents.inc.sqf"
+#include "defaultCosts\guerilla\looters.inc.sqf"
+#include "defaultCosts\guerilla\syndikat.inc.sqf"
+#include "defaultCosts\guerilla\tura.inc.sqf"
 
 // Project Anselm, whose two nations each field a Cold War and a 2035 line-up
-#include "defaultCosts\sac.inc.sqf"
-#include "defaultCosts\sac2035.inc.sqf"
-#include "defaultCosts\atiu.inc.sqf"
-#include "defaultCosts\atiu2035.inc.sqf"
-#include "defaultCosts\ubpr.inc.sqf"
+#include "defaultCosts\west\sac.inc.sqf"
+#include "defaultCosts\west\sac2035.inc.sqf"
+#include "defaultCosts\east\atiu.inc.sqf"
+#include "defaultCosts\east\atiu2035.inc.sqf"
+#include "defaultCosts\guerilla\ubpr.inc.sqf"
 
 // Keys are lowercased so lookups are immune to classname case differences
 // between the hand-typed table and the engine's config names (same convention

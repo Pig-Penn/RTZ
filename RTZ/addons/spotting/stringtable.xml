@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Spotting">
-        <Key ID="STR_RTZ_Spotting_ActionHideChevrons">
-            <English>Hide Chevrons</English>
-        </Key>
-        <Key ID="STR_RTZ_Spotting_ActionShowChevrons">
-            <English>Show Chevrons</English>
-        </Key>
         <!-- Radio contact report phrasing. %1 = contact category (Category* below,
              possibly several joined by ContactListJoin), %2 = location qualifier
              (Loc* below, may be empty). One is picked at random per report so
@@ -129,12 +123,6 @@
         </Key>
         <Key ID="STR_RTZ_Spotting_LocNear">
             <English>near %1</English>
-        </Key>
-        <Key ID="STR_RTZ_Spotting_MsgChevronsHidden">
-            <English>Chevrons hidden</English>
-        </Key>
-        <Key ID="STR_RTZ_Spotting_MsgChevronsShown">
-            <English>Chevrons shown</English>
         </Key>
         <Key ID="STR_RTZ_Spotting_RCCheckInterval">
             <English>Remote Control Fallback Scan</English>

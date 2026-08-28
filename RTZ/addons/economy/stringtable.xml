@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Economy">
+        <Key ID="STR_RTZ_Economy_CleanModuleTree">
+            <English>Clean Module Tree</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_CleanModuleTree_Description">
+            <English>Removes ZEN's Create LZ, Create RP, Spawn Reinforcements, CAS, Atomic Bomb and Make Invincible modules, plus the vanilla Howitzer, Mortar and Rocket modules, from the Zeus Create menu entirely — all superseded by RTZ's own systems. Takes effect the next time the Zeus interface is opened.</English>
+        </Key>
         <Key ID="STR_RTZ_Economy_DeleteRefund">
             <English>Refund Coefficient</English>
         </Key>

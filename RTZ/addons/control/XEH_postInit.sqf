@@ -34,12 +34,6 @@ if (isServer) then {
 // local, so FUNC(setDismount) aims a targetEvent at each vehicle and this
 // handler runs on its owner — which on a dedicated server or HC has no
 // interface, hence no hasInterface guard here.
-//
-// Registered unconditionally, NOT behind GVAR(enableDismount): the context
-// action's condition reads that setting LIVE, so gating registration on it
-// would surface a working-looking action on machines that never registered the
-// receiver, and every order would land on a machine that was not listening. An
-// idle CBA event handler costs nothing while the feature stays switched off.
 [QGVAR(dismount), LINKFUNC(dismountApply)] call CBA_fnc_addEventHandler;
 
 // Remote-control animation reset. ZEN raises "zen_remoteControlStopped" LOCALLY

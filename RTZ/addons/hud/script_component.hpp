@@ -70,6 +70,21 @@
 // disagree and the button would lie about what it does.
 #define ANY_TAGS_VISIBLE (((values GVAR(tagSystems)) findIf {_x select TAG_VISIBLE}) != -1)
 
+// Model-space Z a MAN's tag hangs at (FUNC(tagAnchor)), before the Tag Height
+// lift the draw pass adds on top of it. A flat constant because the engine has
+// nothing stance-free to offer about a man: `selectionPosition "Head"` is
+// animated by documentation, and `boundingBoxReal` — which replaced it precisely
+// to escape that — turns out to hand back a GENERIC box for CAManBase whose top
+// is stance-quantized, 1.9 upright and 0.8 prone. FUNC(tagAnchor)'s header
+// carries the measurements. 1.9 is that upright figure: it clears a standing
+// man's head (~1.8 m) and is where the old anchor sat on the frames it happened
+// to be right.
+//
+// A label over an entity wants ONE height through every stance — see the
+// HEAD_POS/MODEL_TOP split in script_macros.hpp. This is not a number to tune
+// against a screenshot of a prone man.
+#define MAN_TAG_TOP 1.9
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SELECTION DIALOG
 // ─────────────────────────────────────────────────────────────────────────────
@@ -131,10 +146,13 @@
 // top and bottom edges (bbox 78% wide x 100% tall), while the simpletask family
 // beside it is inset ~12% on every side. Left at the shared ICON_DRAW it would
 // stand a head taller than the threat icon next to it — visibly a different
-// system, and no gap constant can fix a size difference. The trim is that ratio,
-// 0.875/1.0, applied to the DRAW only: the layout slot stays one ICON_FOOT for
-// every icon, so the chain arithmetic in FUNC(buildTagEntry) still has one kind
-// of item to place, and a narrower glyph simply sits with more air around it.
+// system, and no gap constant can fix a size difference. 0.875/1.0 is that
+// geometric match and the constant sits a little under it: the flag is the only
+// SOLID glyph in the chain, so at an equal height it still carries more ink than
+// the outlines beside it and reads as the larger of the two.
+//
+// The same correction on the layout side is FLAG_ICON_FOOT, below with the rest
+// of the icon geometry — the sheet's own margin is not the tag's to spend.
 #define ICON_ATTACK  "\a3\ui_f\data\igui\cfg\simpletasks\types\attack_ca.paa"
 #define ICON_SEARCH  "\a3\ui_f\data\igui\cfg\simpletasks\types\search_ca.paa"
 #define ICON_MOVE    "\a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa"
@@ -145,7 +163,7 @@
 #define ICON_TARGET  "\a3\ui_f\data\igui\cfg\simpletasks\types\target_ca.paa"
 #define ICON_UNKNOWN "\a3\ui_f\data\igui\cfg\simpletasks\types\unknown_ca.paa"
 #define FLAG_ICON       "\a3\ui_f\data\igui\cfg\actions\takeflag_ca.paa"
-#define FLAG_ICON_SCALE 0.875
+#define FLAG_ICON_SCALE 0.78
 
 // ── Unit tag icon geometry ───────────────────────────────────────────────────
 // One tuned set, split across two files: FUNC(buildTagEntry) measures the icon
@@ -155,6 +173,14 @@
 // 0.7 regardless of Tag Size, leaving large tags with postage-stamp icons).
 //   ICON_DRAW      drawIcon3D render size
 //   ICON_FOOT      icon's on-screen footprint (UI-x), used to butt icons flush
+//   FLAG_ICON_FOOT the flag icon's, which is NOT one ICON_FOOT: its sheet is a
+//                  pole-and-flag inked to ~78% of the width (FLAG_ICON_SCALE
+//                  above), so a full slot pays for margin the simpletask icons
+//                  do not carry and stands the glyph — and everything after it
+//                  in the chain — off the words it belongs to. The slot follows
+//                  the ink. The flag is the only icon that needs its own: every
+//                  other item is a simpletask glyph (ICON_FOOT) or the ammo bar
+//                  (BAR_FOOT)
 //   ICON_TEXT_GAP  larger gap between the text and its first icon, so a status
 //                  word like DOWN isn't cramped against the icon beside it
 //   ICON_GAP       tighter gap between two adjacent icons
@@ -184,6 +210,7 @@
 #define DECONFLICT_MAX_PASSES 2
 #define ICON_DRAW          23
 #define ICON_FOOT          1.1
+#define FLAG_ICON_FOOT     (ICON_FOOT * 0.75)
 #define ICON_TEXT_GAP      0.9
 #define ICON_GAP           0.3
 #define ICON_BASELINE      0.5
@@ -234,7 +261,6 @@
 #define FLAG_INSIDE   "INSIDE"
 #define FLAG_BUSY     "BUSY"
 #define FLAG_MOUNTED  "MOUNTED"
-#define FLAG_WOUNDED  "WOUNDED"
 #define FLAG_LOW_FUEL "LOW FUEL"
 #define FLAG_DAMAGED  "DAMAGED"
 

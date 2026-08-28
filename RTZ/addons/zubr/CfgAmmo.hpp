@@ -39,10 +39,10 @@ class RTZ_B_30mm_CAS_Red_Tracer: BulletBase
 	muzzleEffect = "";
 	class CamShakeExplode
 	{
-		power = "(25 * 0.2)";
+		power = (25 * 0.2);
 		duration = "((round (25^0.5))*0.2 max 0.2)";
 		frequency = 20;
-		distance = "((2 + 25^0.5)*8)";
+		distance = ((2 + 25^0.5)*8);
 	};
 	class CamShakeHit
 	{
@@ -56,7 +56,7 @@ class RTZ_B_30mm_CAS_Red_Tracer: BulletBase
 		power = "(25^0.25)";
 		duration = "((round (25^0.5))*0.2 max 0.2)";
 		frequency = 20;
-		distance = "((25^0.5)*8)";
+		distance = ((25^0.5)*8);
 	};
 	class CamShakePlayerFire
 	{

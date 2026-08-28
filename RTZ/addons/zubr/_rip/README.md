@@ -43,7 +43,7 @@ Run from the repo root, in this order:
 | `gen_config.py` | Slices `CUP_ZUBR_Base` and `CUP_O_ZUBR_CSAT_T` out of CUP's derapified config and writes `CfgVehicles.hpp`, rebasing paths, class names, function names and stringtable keys, and stripping the eight non-CSAT `TextureSources`. |
 | `gen_weapons.py` | Brace-matches the four weapons, two magazines and three ammo types out of CUP Weapons into `CfgWeapons.hpp` / `CfgMagazines.hpp` / `CfgAmmo.hpp`. |
 | `sound_ext.py` | Not run directly. Imported by the two generators to put `.wss` back on the vanilla sound paths CUP writes bare. Raises on any bare path not on its verified list, so a newer CUP fails loudly instead of being guessed at. |
-| `verify_paths.py` | Collects every `x\rtz\addons\csat\…` reference from the built addon and confirms each resolves to a file that exists. Run this last. |
+| `verify_paths.py` | Collects every `x\rtz\addons\zubr\…` reference from the built addon and confirms each resolves to a file that exists. Run this last. |
 
 `build_csat.py` deletes `addons/csat` wholesale, so it also removes the
 hand-written files (`config.cpp`, `script_component.hpp`, `stringtable.xml`,

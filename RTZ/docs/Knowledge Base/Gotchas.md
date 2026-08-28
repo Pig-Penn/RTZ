@@ -126,6 +126,42 @@ on, so each later hit overwrote the result and the **last** surface won instead 
 | [fnc_teleportToCursor.sqf](addons/orders/functions/fnc_teleportToCursor.sqf) | Trace runs downward from 200 m up, so "first" means highest. Units teleported onto a multi-storey building landed on its ground floor, and units aimed at a bridge landed underneath it |
 | [fnc_placementPreview.sqf](addons/common/functions/fnc_placementPreview.sqf) | Trace runs outward from the curator camera, so "first" means nearest. The placement ghost snapped through the roof under the cursor down to the ground below it |
 
+### `exitWith` inside `apply` yields **no value** — the element comes back `nil`
+
+The sibling of the trap above, and a nastier one: `apply` builds its result from each block's
+return value, but a block exited via `exitWith` contributes nothing, so that slot is `nil`.
+There is no error — the array is the right length and the gap only shows up wherever the
+consumer reads it.
+
+```sqf
+// BAD - hidden entries come out nil, not [false, 0]
+_classes apply {
+    if (_hide && {_x in _hidden}) exitWith {[false, 0]};
+    [true, _x call FUNC(getCost)]
+};
+
+// GOOD - if/then/else is an expression and returns its branch
+_classes apply {
+    if (_hide && {_x in _hidden}) then {
+        [false, 0]
+    } else {
+        [true, _x call FUNC(getCost)]
+    }
+};
+```
+
+Shipped in [fnc_registerCosts.sqf](addons/economy/functions/fnc_registerCosts.sqf) while adding
+the Reinforcements-module hiding. The engine reads that table's `[show, cost]` pairs on every
+`CuratorObjectRegistered`; a `nil` entry is ignored, so the modules kept appearing and the
+feature looked like it had simply not been applied. The same edit had also moved the pre-existing
+`if (!GVAR(enable)) exitWith {...}` from *function* scope — where it was correct — to inside the
+`apply`, which silently broke "economy disabled ⇒ everything free" for **every class in the
+game**. Both were invisible until the returned entries were logged and read back.
+
+The lesson generalises: inside any block whose **return value** is the point — `apply`, `select`,
+`count`, `findIf`, sort comparators — use `if/then/else`, never `exitWith`. Reserve `exitWith`
+for blocks executed for their side effects, and remember it is `continue` there (above).
+
 ### `params` with the same name twice silently discards the first argument
 
 ```sqf
@@ -529,17 +565,54 @@ tags dived about a metre and a third on the first man to hit the dirt and landed
 the basegame Zeus entity icon, which does not move. `GVAR(tagHeight)` could not save it —
 that lift is a flat offset added to a floor that is itself moving.
 
+The first fix was `boundingBoxReal`, on the reasoning that it reports the **model's** extent
+rather than the current animation's, and so is the per-class constant `selectionPosition` was
+mistaken for. **That reasoning is wrong, and it shipped.** It cost a second round trip to
+catch, off a screenshot of an upright man wearing his tag at chest height.
+
 ```sqf
-// Label over an entity: static model extent, one height through every stance.
+// BAD - looks static, is not. For CAManBase the engine returns a GENERIC box.
 #define MODEL_TOP(obj) (((boundingBoxReal (obj)) param [1, []]) param [2, 0])
-_obj modelToWorldVisual [0, 0, MODEL_TOP(_obj)]      // EFUNC(hud,tagAnchor)
+_obj modelToWorldVisual [0, 0, MODEL_TOP(_obj)]
+
+// GOOD - a flat model-space constant. Nothing the engine knows about a man is
+// stance-free, so stop asking it. (MAN_TAG_TOP, rtz_hud's script_component.hpp)
+_obj modelToWorldVisual [0, 0, 1.9]                  // EFUNC(hud,tagAnchor)
 ```
 
-`boundingBoxReal` reports the **model's** extent, not the current animation's, so it is the
-per-class constant `selectionPosition` was mistaken for. Note the shape of the mistake: the
-memo was not wrong because caching is wrong, it was wrong because it cached an animated
-value — and swapping in a genuinely static one is a different fix from re-reading the
-animated one per frame. Ask which of the two you actually want *before* reaching for either.
+Measured on three men, `[boundingBoxReal _x, boundingBox _x, stance _x]`:
+
+| class | stance | box |
+|---|---|---|
+| `O_soldier_M_F` | PRONE | `[[-0.8,-1.15,-0.1],[0.8,1.05,0.8]]` |
+| `O_Soldier_AR_F` | CROUCH | `[[-0.8,-1.15,-0.1],[0.8,1.05,1.9]]` |
+| `O_medic_F` | PRONE | `[[-0.8,-1.15,-0.1],[0.8,1.05,0.8]]` |
+
+The x/y extents are **identical on every man** and far too big for one — 1.6 x 2.2 m, a
+prone footprint. For `CAManBase` the engine hands back a generic box, not a model fit, and
+its top is **stance-quantized: 1.9 upright, 0.8 prone**. `boundingBox` returns byte-identical
+values, so it is no escape hatch. Only the *sampling rate* of the animation differs from
+`selectionPosition` — two states instead of continuous — which is exactly what let it pass
+for static.
+
+Then the memo made it permanent. `EFUNC(hud,tagAnchor)` cached the result by `typeOf`, so
+whichever stance the **first** man of a class was in when the cache filled pinned every man
+of that class thereafter: one prone rifleman and every upright rifleman on the map wore his
+tag at 0.8 m for the rest of the mission. The same freezing failure as the `headOffset` memo
+above, reached through the command that was supposed to be immune to it.
+
+Three lessons, in order of how much they cost:
+
+1. **"Real" does not mean "static".** Before caching an engine read by class, prove it does
+   not move — sample the same class in two states and diff, which is the five-line console
+   check that would have caught this at the time.
+2. **A memo converts a small dynamic error into a large permanent one.** Uncached, this was
+   a tag that stepped 1.1 m when a man went prone — annoying, obvious, self-correcting.
+   Cached, it was a tag that was silently wrong forever for units that were never prone at
+   all. Caching does not just save reads, it changes the *shape* of any bug underneath it.
+3. **A wrong fix that removes the symptom is worse than no fix.** Tags did stop diving, so
+   the change looked correct and the false premise went into the docs and the macro comment,
+   where it argued the next reader out of rechecking. Verify the mechanism, not the symptom.
 
 ### `ctrlTextWidth` measures a control, not the glyphs — it adds 0.008 UI-x per side
 

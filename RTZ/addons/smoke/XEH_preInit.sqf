@@ -11,6 +11,4 @@ PREP_RECOMPILE_END;
 // action evaluates on every right-click. Config-derived, so it never expires.
 GVAR(cmWeaponCache) = createHashMap;
 
-#include "initSettings.inc.sqf"
-
 ADDON = true;

@@ -1,0 +1,13 @@
+PREP(beginAiming);
+PREP(buildCell);
+PREP(canDig);
+PREP(cellObstruction);
+PREP(digCell);
+PREP(digStep);
+PREP(drawAim);
+PREP(endAiming);
+PREP(handleAimInput);
+PREP(orderDig);
+PREP(planTrench);
+PREP(startDig);
+PREP(surfaceDiggable);

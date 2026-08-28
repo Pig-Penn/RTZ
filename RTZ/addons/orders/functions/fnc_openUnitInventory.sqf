@@ -79,6 +79,11 @@ if !(_unit isKindOf "CAManBase") exitWith {
     } else {
         player action ["Gear", _veh];
     };
+
+    // The crewman is the man doing the rummaging on either branch — the fallback
+    // reaches the same cargo through the curator's own body, but it is still his
+    // vehicle's gear being sorted.
+    [_actor] call FUNC(keepGearAnimation);
     true
 };
 
@@ -107,5 +112,12 @@ if (local _unit) then {
 } else {
     player action ["Gear", _unit];
 };
+
+// The action plays the gear animation once and the unit's AI then takes the
+// motion state back a second or two later, so the pose has to be kept up by hand
+// for as long as the display is open. This is also what puts the animation on a
+// REMOTE unit at all: the fallback branch above acts as the curator's own body,
+// which leaves the unit standing there doing nothing.
+[_unit] call FUNC(keepGearAnimation);
 
 true

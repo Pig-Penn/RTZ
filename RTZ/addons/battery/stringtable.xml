@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Battery">
+        <Key ID="STR_RTZ_Battery_ActionHideContacts">
+            <English>Hide Counter-Battery</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_ActionShowContacts">
+            <English>Show Counter-Battery</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_AgeMinutes">
+            <English>%1m %2s</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_AgeSeconds">
+            <English>%1s</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_ContactLabel">
+            <English>%1 · %2</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_ContactLifetime">
+            <English>Contact Lifetime</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_ContactLifetime_Description">
+            <English>Time in seconds a counter-battery contact stays on the map after the gun's last round. A gun that fires again after this gets a fresh, independently offset zone rather than the old one.</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_ContactPrefix">
+            <English>%1 ×%2</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_DisplayName">
+            <English>Counter-Battery</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_Enabled">
+            <English>Enable Counter-Battery</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_Enabled_Description">
+            <English>Report hostile artillery fire to opposing curators as a zone on the Zeus map showing roughly where the gun fired from.</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_IncomingRadius">
+            <English>Incoming Impact Radius</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_IncomingRadius_Description">
+            <English>Radius in metres of the circle marking where rounds in flight are about to land. Set to 0 to mark the exact predicted impact point.</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_MsgContactsHidden">
+            <English>Counter-battery contacts hidden</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_MsgContactsShown">
+            <English>Counter-battery contacts shown</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_OriginRadius">
+            <English>Firing Position Radius</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_OriginRadius_Description">
+            <English>Radius in metres of the zone drawn around a detected gun. The zone is offset at random, so the gun can be anywhere inside it — a larger radius means a vaguer fix and more ground to search.</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_ShowIncoming">
+            <English>Show Incoming Impact</English>
+        </Key>
+        <Key ID="STR_RTZ_Battery_ShowIncoming_Description">
+            <English>Also mark where rounds already in flight are about to land, so units can be moved clear before they arrive.</English>
+        </Key>
+    </Package>
+</Project>

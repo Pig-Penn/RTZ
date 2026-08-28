@@ -20,7 +20,7 @@ class CfgMagazines {
 
     class RTZ_44Rnd_Ogon_HE: 24Rnd_missiles
     {
-        displayName = "$STR_RTZ_CSAT_mag_Ogon_HE";
+        displayName = "$STR_RTZ_Zubr_mag_Ogon_HE";
         ammo = "RTZ_R_140mm_Ogon_HE";
         displayNameShort = "$STR_A3_CFGMAGAZINES_250RND_30MM_HE_SHELLS_DNS";
         count = 44;

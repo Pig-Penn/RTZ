@@ -77,4 +77,4 @@
 #define PLAN_ATTEMPTS 3
 
 // Context menu action
-#define ICON_ACTION "\a3\ui_f\data\igui\cfg\actions\gear_ca.paa"
+#define ICON_ACTION "\a3\ui_f\data\igui\cfg\simpleTasks\types\rearm_ca.paa"

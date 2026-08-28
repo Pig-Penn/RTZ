@@ -1,4 +1,3 @@
-PREP(chevronsActionModifier);
 // Once-per-tick halves of a detection pass, split out of FUNC(spotCheck) so the
 // per-contact loop that remains there keeps its shape: collectSides resolves the tick's
 // curator/hostile/spotter picture, pruneStores bounds the long-lived server maps.
@@ -19,5 +18,4 @@ PREP(spotCheck);
 PREP(spottingClient);
 PREP(spottingSystem);
 PREP(startSystems);
-PREP(toggleChevrons);
 PREP(unitMarker);

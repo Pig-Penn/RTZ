@@ -45,7 +45,7 @@
  * Public: No
  */
 
-// Icon geometry (ICON_FOOT / ICON_TEXT_GAP / ICON_GAP) comes from
+// Icon geometry (ICON_FOOT / FLAG_ICON_FOOT / ICON_TEXT_GAP / ICON_GAP) comes from
 // script_component.hpp — the same tuned set FUNC(drawUnitTags) draws with, so the
 // offsets measured here and the icons drawn there cannot drift apart.
 
@@ -163,8 +163,13 @@ if (GVAR(tagShowThreatIcon) && _isLocal) then {
 private _halfFull = (_wMainSep + _wTacticSep + _wStatus) / 2;   // text half-width (UI-x)
 
 // Only the flags the flag ICON will actually carry — an entry whose label maps
-// to "" contributes nothing to the hover list.
-private _flagsText = ((_flags apply { _labels getOrDefault [_x, _x] }) select { _x != "" }) joinString " · ";
+// to "" contributes nothing to the hover list, and neither does the flag the
+// STATUS chunk is already drawing (FLEEING): it is on the tag either way, so
+// listing it again under the icon just prints the same word twice. Filtered on
+// the wire TOKEN rather than the resolved label, so a task label that happens to
+// read like a flag's cannot swallow a flag that is genuinely extra information.
+private _flagsText = (((_flags select { _x != _statusToken })
+    apply { _labels getOrDefault [_x, _x] }) select { _x != "" }) joinString " · ";
 private _hasFlag   = GVAR(tagShowFlagIcon) && { _flagsText != "" };
 
 // Right-side layout (UI-x, from the unit's centre): threat icon, then flag icon,
@@ -176,7 +181,8 @@ private _hasFlag   = GVAR(tagShowFlagIcon) && { _flagsText != "" };
 // An absent item consumes nothing, so switching the flag icon off slides the bar
 // left against the threat icon.
 private _iconW   = _tagSize * ICON_FOOT;          // icon on-screen footprint
-private _barW    = _tagSize * BAR_FOOT;           // ammo bar's, narrower
+private _flagW   = _tagSize * FLAG_ICON_FOOT;     // flag icon's, narrower (its sheet is)
+private _barW    = _tagSize * BAR_FOOT;           // ammo bar's, narrower still
 private _gap     = _tagSize * ICON_GAP;           // gap between two adjacent items
 private _textGap = _tagSize * ICON_TEXT_GAP;      // larger gap: text ↔ its first item
 private _left    = _halfFull + _textGap;          // left edge of the first slot
@@ -192,8 +198,8 @@ if (_threatIcon != "") then {
 };
 private _flagCenterUI = 0;
 if (_hasFlag) then {
-    _flagCenterUI = _cursor + (_iconW / 2);
-    _cursor = _cursor + _iconW + _gap;
+    _flagCenterUI = _cursor + (_flagW / 2);
+    _cursor = _cursor + _flagW + _gap;
 };
 private _ammoCenterUI = 0;
 if (_ammoFill >= 0) then {

@@ -270,8 +270,9 @@ private _showFlags = GVAR(tagShowFlagIcon);
     // Flag-inventory icon — flush past the threat icon when both show, else flush
     // to the text. Hovering expands the full flag list. Drawn at the trimmed size
     // rather than the shared one because its sheet is cropped tighter than the
-    // simpletask family's (FLAG_ICON_SCALE, script_component.hpp) — its SLOT is
-    // still one ICON_FOOT like every other icon's, so only the draw changes.
+    // simpletask family's (FLAG_ICON_SCALE, script_component.hpp); the slot it is
+    // centred in was measured off the matching FLAG_ICON_FOOT, so the ink — not
+    // the sheet's margin — is what sits against the text.
     if (_showFlags && {_flagsText != ""}) then {
         private _iconPos = ASLToAGL (_rowASL vectorAdd (_camRight vectorMultiply (_flagCenterUI / _perMetre)));
         private _flagDraw = _iconDraw * FLAG_ICON_SCALE;
