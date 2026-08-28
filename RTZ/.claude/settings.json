@@ -46,19 +46,5 @@
       "WebFetch(domain:arma.fandom.com)",
       "WebFetch(domain:docs.claude.com)"
     ]
-  },
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "command -v hemtt >/dev/null 2>&1 || exit 0; out=$(hemtt check 2>&1) || { echo \"$out\" >&2; exit 2; }",
-            "timeout": 120,
-            "statusMessage": "Running hemtt check..."
-          }
-        ]
-      }
-    ]
   }
 }

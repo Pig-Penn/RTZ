@@ -3,6 +3,7 @@ PREP(buildCell);
 PREP(canDig);
 PREP(cellObstruction);
 PREP(digCell);
+PREP(dispatchCell);
 PREP(digStep);
 PREP(drawAim);
 PREP(endAiming);

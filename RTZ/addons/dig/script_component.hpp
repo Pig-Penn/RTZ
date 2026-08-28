@@ -111,3 +111,15 @@
                             // so a record handed to another machine would be mutated there
                             // and the server's own copy would never see a block appear.
 #define TRENCH_SCALE    7
+#define TRENCH_DIGGERS  8   // the engineers, ordered along the trench. Kept because the
+                            // run is dispatched ONE CELL AT A TIME: EFUNC(common,approach)
+                            // supersedes any pending order on the same lead, so handing a
+                            // digger his whole run at once left every cell but the last
+                            // silently abandoned before he took a step.
+
+// The cell -> digger rule, written ONCE. Runs are CONTIGUOUS, so cell _i belongs to
+// digger floor(_i * diggers / cells) and two cells are the same digger's when this
+// yields the same index. FUNC(dispatchCell) sends by it and the QGVAR(cellDone)
+// handler tests run continuity with it; a second copy of the rule in either place is
+// the twice-written-rule shape this codebase's audits keep finding bugs in.
+#define DIGGER_INDEX(i,n,total) (floor (((i) * (n)) / (total)))

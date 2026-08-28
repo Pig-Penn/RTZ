@@ -36,4 +36,21 @@ if (!isServer) exitWith {};
     if (_cellIndex < 0 || {_cellIndex >= count _cells}) exitWith {};
 
     [_record, _cells select _cellIndex] call FUNC(buildCell);
+
+    // The digger's NEXT cell goes out only now. His run is walked one cell at a
+    // time because EFUNC(common,approach) supersedes any pending order on the same
+    // lead — see FUNC(dispatchCell) for what dispatching the whole run at once cost.
+    //
+    // Contiguous runs, so the next cell is his when DIGGER_INDEX yields the same
+    // digger for both; a different index means his stretch ended here and the next
+    // cell already has its own digger working toward it.
+    private _diggers = count (_record select TRENCH_DIGGERS);
+    private _total = count _cells;
+    private _next = _cellIndex + 1;
+
+    if (_next >= _total) exitWith {};
+
+    if (DIGGER_INDEX(_next,_diggers,_total) != DIGGER_INDEX(_cellIndex,_diggers,_total)) exitWith {};
+
+    [_record, _next] call FUNC(dispatchCell);
 }] call CBA_fnc_addEventHandler;

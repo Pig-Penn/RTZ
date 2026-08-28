@@ -45,7 +45,7 @@ if (_engineers isEqualTo []) exitWith {
 
 GVAR(nextId) = GVAR(nextId) + 1;
 
-private _record = [GVAR(nextId), [], [], _curator, count _cells, count _cells, _cells, _scale];
+private _record = [GVAR(nextId), [], [], _curator, count _cells, count _cells, _cells, _scale, []];
 
 GVAR(trenches) pushBack _record;
 
@@ -73,13 +73,19 @@ private _ordered = _ranked apply {_engineers select (_x select 1)};
 private _diggers = count _ordered;
 private _total = count _cells;
 
-{
-    private _digger = _ordered select (floor (_forEachIndex * _diggers / _total));
-    private _centre = _x select CELL_CENTRE;
+_record set [TRENCH_DIGGERS, _ordered];
 
-    [
-        QGVAR(digCell),
-        [_digger, GVAR(nextId), _forEachIndex, [_centre select 0, _centre select 1, 0], _curator],
-        _digger
-    ] call CBA_fnc_targetEvent;
+// ONE cell per digger goes out here — the first of his run — and the next is sent
+// only when that one comes back finished (the QGVAR(cellDone) handler in
+// XEH_postInit). EFUNC(common,approach) supersedes any pending order on the same
+// lead, so dispatching a whole run at once abandoned every cell in it but the last
+// before the digger took a step: a trench of any length built exactly one cell per
+// engineer, and TRENCH_PENDING never reached zero so the completion toast never
+// fired. See FUNC(dispatchCell).
+{
+    if (_forEachIndex == 0
+        || {DIGGER_INDEX(_forEachIndex,_diggers,_total) != DIGGER_INDEX(_forEachIndex - 1,_diggers,_total)}
+    ) then {
+        [_record, _forEachIndex] call FUNC(dispatchCell);
+    };
 } forEach _cells;

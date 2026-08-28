@@ -60,8 +60,8 @@ _costs append [
     ["ACM_b_sam_2035_men_SF_Scout_AT", 5], // Recon Scout (AT)
 
     // Boats
-    ["acm_b_sac_boat1_M", 10], // Patrol Boat
-    ["acm_b_sac_boat2_M", 16], // Patrol Boat (Heavy)
+    ["acm_b_sac_boat1_M", 15], // Patrol Boat
+    ["acm_b_sac_boat2_M", 30], // Patrol Boat (Heavy)
 
     // Cars
     ["acm_b_sac_vehicle_Bike_CR", 1], // Bicycle

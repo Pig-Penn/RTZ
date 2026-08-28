@@ -1,7 +1,7 @@
 _costs append [
 
     // Anti-Air
-    ["EF_O_Gyra_Antiair_OPF", 20], // Gyra (AA)
+    ["EF_O_Gyra_Antiair_OPF", 18], // Gyra (AA)
     ["O_APC_Tracked_02_AA_F", 40], // ZSU-39 Tigris
 
     // APCs

@@ -858,6 +858,37 @@ changes hands arrives with its AI enabled. `rtz_captive` re-applies from a `CAMa
 event handler for exactly this reason — see
 [captive/fnc_surrenderApply.sqf](addons/captive/functions/fnc_surrenderApply.sqf).
 
+### One errand per unit at a time — `approach` SUPERSEDES, it does not queue
+
+[common/fnc_approach.sqf](addons/common/functions/fnc_approach.sqf) stamps a fresh
+`approachOrder` token on its lead on every call, and the previous order's watch condition then
+sees a token it does not own. That order resolves **silently**: its `onArrive` *and* its
+`onFail` hooks are both skipped by the supersede guard, so nothing runs, nothing is toasted and
+nothing is logged. That is exactly right when a curator redirects a working engineer — and a
+trap the moment a component means to give one unit a *list* of jobs.
+
+`rtz_dig` did. `startDig` handed each engineer his whole contiguous run of trench cells in one
+`forEach`, all in the same frame:
+
+```sqf
+{
+    private _digger = _ordered select (floor (_forEachIndex * _diggers / _total));
+    [QGVAR(digCell), [_digger, /* ... */], _digger] call CBA_fnc_targetEvent;   // BAD
+} forEach _cells;
+```
+
+Every cell but the **last** of each run was superseded before the digger took a step. A trench
+drawn ten cells long with two engineers dug two cells, `TRENCH_PENDING` never reached zero so
+the completion toast never fired, and the failure looked like an animation or pathing problem
+rather than a dispatch one — the diggers really did walk out and really did dig.
+
+The rule: **dispatch one errand per unit, and send the next only when the current one reports
+back.** `rtz_mine`, `rtz_loot`, `rtz_assemble` and `rtz_repair` all hold to it — `lootSquads`
+walks its candidates to pick exactly one target per unit before it calls `approach` even once.
+`rtz_dig` now chains through
+[dig/fnc_dispatchCell.sqf](addons/dig/functions/fnc_dispatchCell.sqf), called once from
+`startDig` per digger and again from the `QGVAR(cellDone)` handler.
+
 ### `remoteExec`'d code does not capture local variables
 
 The code is transferred and run in a fresh scope on the target. Locals from the sending scope

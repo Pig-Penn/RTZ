@@ -7,6 +7,13 @@
 // that folder and including it below; later entries win on duplicate classes.
 private _costs = [];
 
+#include "defaultCosts\west\nato.inc.sqf"
+#include "defaultCosts\west\natopacific.inc.sqf"
+#include "defaultCosts\west\natowoodland.inc.sqf"
+#include "defaultCosts\west\natodesert.inc.sqf"
+#include "defaultCosts\west\ctrg.inc.sqf"
+#include "defaultCosts\west\mjtf.inc.sqf"
+#include "defaultCosts\west\marines.inc.sqf"
 #include "defaultCosts\west\msf.inc.sqf"
 #include "defaultCosts\west\gendarmerie.inc.sqf"
 #include "defaultCosts\east\csat.inc.sqf"
