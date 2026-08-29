@@ -8,7 +8,6 @@ This is a *weird*, *unofficial*, and *messy* record of my own personal ramblings
 2. Check if having live settings could be detrimental to performance.
 3. Recategorize CBA settings.
 4. See if restoring the default Zeus camera teleport functionality is possible.
-5. Add some way to visualize what amount of money a curator will receive in the given amount of time.
 
 ## Refine
 

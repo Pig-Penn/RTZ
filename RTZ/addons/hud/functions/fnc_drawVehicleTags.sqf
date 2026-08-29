@@ -6,8 +6,8 @@
  * basis and the mouse position are already resolved, so this pass does no camera
  * query of its own.
  *
- * The tag is one discrete text line (e.g. "Hunter HMG · 45 km/h · CREW 3/4 ·
- * FUEL 62 · LOW FUEL") — the vehicle counterpart of the infantry head tags
+ * The tag is one discrete text line (e.g. "LOW FUEL · Hunter HMG · 45 km/h ·
+ * CREW 3/4 · FUEL 62") — the vehicle counterpart of the infantry head tags
  * (FUNC(drawUnitTags)). Fed by EGVAR(core,selVehicles) from
  * EFUNC(core,selectionPoll) and GVAR(vehicleData) from the STREAM_VEH feed.
  *
@@ -15,9 +15,17 @@
  * settings (name, speed, crew/seats, fuel, hull, fly height, ammo,
  * LAMBS task, tactic) and drawn in a static colour. Two pieces carry their own:
  * the LAMBS tactic (amber, the Draw Destinations tint, which is what names it as
- * the tactic without a "TAC " prefix), and the trailing status word — the warning
- * flags (LOW FUEL amber, DAMAGED red) always show regardless of the status field
- * setting. Both are split off at measured text boundaries by FUNC(drawTagLine).
+ * the tactic without a "TAC " prefix), and the status word — the warning flags
+ * (Flee red, DAMAGED red, LOW FUEL amber) always show regardless of the status
+ * field setting. Both are split off at measured text boundaries by FUNC(drawTagLine).
+ *
+ * Both LEAD the line here — tactic, status, then the fields — where the infantry
+ * tag trails its status. A vehicle's field line changes length constantly (speed,
+ * crew, fuel and hull all come and go), so a status parked at its far end moved
+ * about and was easy to miss; against the left edge it holds still beside the
+ * tactic it belongs with. FUNC(tagEntryTail) composes the separators for that
+ * order and FUNC(drawTagLine) takes the chunks positionally, so the two families
+ * still share one composer and one renderer.
  * Tags fade out approaching GVAR(vtagMaxDistance) from the camera.
  *
  * Right of the text sit the optional ammunition gauges (GVAR(vtagShowAmmoBar)),
@@ -103,7 +111,7 @@ private _curSide = side player;
     if (_dist > _maxDist) then { continue };
 
     _entry params [
-        "_mainSep", "_rgbMain", "_tacticSep", "_rgbTactic", "_statusText", "_rgbStatus",
+        "_mainSep", "_rgbMain", "_tacticSep", "_rgbTactic", "_statusSep", "_rgbStatus",
         "_wMainSep", "_wTacticSep", "_wStatus", "", "_bars"
     ];
 
@@ -148,11 +156,12 @@ private _curSide = side player;
 
     // Shared with the unit tags so both families measure and place the coloured
     // splits identically; a degenerate _perMetre falls back to one centred draw
-    // of the whole line.
+    // of the whole line. The chunks are POSITIONAL — left, middle, right — so the
+    // vehicle order (tactic, status, main) is expressed here, in what goes where.
     [
-        _posASL, _perMetre, _camRight, _mainSep, _tacticSep, _statusText,
-        _rgbMain + [_alpha], _rgbTactic + [_alpha], _rgbStatus + [_alpha], _size,
-        _wMainSep, _wTacticSep, _wStatus
+        _posASL, _perMetre, _camRight, _tacticSep, _statusSep, _mainSep,
+        _rgbTactic + [_alpha], _rgbStatus + [_alpha], _rgbMain + [_alpha], _size,
+        _wTacticSep, _wStatus, _wMainSep
     ] call FUNC(drawTagLine);
 
     // Ammunition gauges, right of the text — one per armed turret, already placed

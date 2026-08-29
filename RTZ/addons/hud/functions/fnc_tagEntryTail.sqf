@@ -12,32 +12,40 @@
  *
  * THREE CHUNKS, EACH CARRYING ITS OWN SEPARATORS. drawIcon3D cannot colour part
  * of a string, so a line that wants three colours has to be three draws
- * (FUNC(drawTagLine)) — tactic, main line, status, in that left-to-right order.
- * Separators are owned by the MAIN LINE chunk, not by whichever chunk precedes
- * them: _mainSep carries a leading " · " when a tactic comes before it and a
- * trailing " · " when a status follows it, and _tacticSep is the bare tactic
- * word with nothing appended. This is deliberate, not incidental — the tactic
- * and status chunks are coloured (COL_TACTIC amber, urgency red/white), while
- * the main line is always neutral COL_NORMAL, so parking every separator dot on
- * the main-line chunk is what keeps every " · " reading as neutral punctuation
- * instead of borrowing its neighbour's colour. When the tactic is shown but the
- * main line has nothing (every main-line field toggled off), _mainSep still
- * carries the connector on its own — a bare " · " drawn in its usual neutral
- * colour — rather than leaving the dot to the tactic chunk. Both are fixed by
- * the entry, because FUNC(drawVehicleTags) was rebuilding `_mainText + _sep` per
- * vehicle per FRAME for a string this entry settles once per cache generation.
+ * (FUNC(drawTagLine)), laid out left to right. Separators are owned by the MAIN
+ * LINE chunk wherever the order allows: the tactic and status chunks are
+ * coloured (COL_TACTIC amber, urgency red/white) while the main line is always
+ * neutral COL_NORMAL, so parking a separator dot on the main-line chunk is what
+ * keeps that " · " reading as neutral punctuation instead of borrowing its
+ * neighbour's colour. _tacticSep is therefore always the bare tactic word with
+ * nothing appended. Both chunks are fixed by the entry, because
+ * FUNC(drawVehicleTags) was rebuilding `_mainText + _sep` per vehicle per FRAME
+ * for a string this entry settles once per cache generation.
  *
  * The widths are measured here for the same reason: the draw pass reads them
  * back to place the coloured chunks (FUNC(drawTagLine)) and, for unit tags, the
  * icons. A size change dirties the cache, so they stay in step with the setting.
  *
- * Note _mainSep is empty EXACTLY when there is neither a main line NOR a bridge
- * to carry (i.e. no tactic-to-status connector needed), and _tacticSep exactly
- * when the tactic is: callers testing "is there anything to draw" can test the
- * composed strings directly.
+ * Note _mainSep is empty EXACTLY when there is no main line to carry and no
+ * bridge to carry for it, _tacticSep exactly when the tactic is, and the
+ * returned status exactly when the status is: callers testing "is there anything
+ * to draw" can test the composed strings directly.
  *
- * Visual order is tactic, then main line, then status — the tactic identifies
- * the unit/vehicle's current order at a glance, so it leads the tag.
+ * TWO ORDERS, ONE COMPOSER. The tactic identifies the entity's current order at
+ * a glance, so it leads the tag in both families. What follows it differs:
+ *   — unit tags (default): tactic, main line, status. _mainSep carries a leading
+ *     " · " when a tactic precedes it and a trailing one when a status follows,
+ *     so every dot is neutral; when the tactic shows and the main line has
+ *     nothing, _mainSep still carries that connector alone — a bare " · " in its
+ *     usual neutral colour — rather than leaving the dot to the tactic chunk.
+ *   — vehicle tags (_statusFirst): tactic, status, main line. A vehicle's status
+ *     (LOW FUEL, DAMAGED, or its LAMBS task) belongs beside the tactic rather
+ *     than trailing a field line whose length swings with speed, crew, fuel and
+ *     hull, which is what made it hard to find. The main line is last here, so
+ *     it owns only its own leading dot; the tactic-to-status dot has no neutral
+ *     chunk left to sit on and rides the STATUS chunk, taking that chunk's
+ *     colour with it. That is one dot, and only on a vehicle that is damaged or
+ *     low on fuel — the status is COL_NORMAL like the main line otherwise.
  *
  * REDUNDANT STATUS COLLAPSE. The tactic is a GROUP-scope fact and the status a
  * UNIT-scope one, but FUNC(loadTagLabels) deliberately maps whole families of
@@ -64,46 +72,60 @@
  * 1: LAMBS tactic label, "" for none <STRING>
  * 2: Status word, "" for none <STRING>
  * 3: Tag text size, this system's size setting <NUMBER>
+ * 4: Order the status ahead of the main line — the vehicle-tag layout
+ *    (optional, default false) <BOOL>
  *
  * Return Value:
- * 0: Main line, with a leading separator when a tactic precedes it and a
- *    trailing one when a status follows — a bare " · " when there is a tactic
- *    and a status but no main-line text of its own <STRING>
+ * 0: Main line with the separators it owns — see the two orders above; a bare
+ *    " · " in the default order when there is a tactic and a status but no
+ *    main-line text of its own <STRING>
  * 1: Bare tactic word, no separator <STRING>
- * 2: Status word — the one passed in, or "" when it merely repeated the tactic
- *    and was collapsed into it; THIS is what the caller renders <STRING>
+ * 2: Status word, with its leading separator in _statusFirst order — or "" when
+ *    it merely repeated the tactic and was collapsed into it; THIS is what the
+ *    caller renders <STRING>
  * 3: Measured width of the main line (+ its separators) <NUMBER>
  * 4: Measured width of the bare tactic <NUMBER>
- * 5: Measured width of the status word <NUMBER>
+ * 5: Measured width of the status chunk (+ its separator) <NUMBER>
  *
  * Example:
- * ([_segs, _tactic, _status, GVAR(tagSize)] call rtz_hud_fnc_tagEntryTail) params ["_mainSep", "_tacticSep", "_status", "_wMainSep", "_wTacticSep", "_wStatus"]
+ * ([_segs, _tactic, _status, GVAR(tagSize)] call rtz_hud_fnc_tagEntryTail) params ["_mainSep", "_tacticSep", "_statusSep", "_wMainSep", "_wTacticSep", "_wStatus"]
  *
  * Public: No
  */
 
-params ["_segs", "_tactic", "_status", "_size"];
+params ["_segs", "_tactic", "_status", "_size", ["_statusFirst", false]];
 
 // Redundant status collapse — see the header. Done FIRST, before the separators
 // are chosen and the widths measured, so a collapsed status takes its " · " and
-// its width with it rather than leaving a dangling dot on the main line.
+// its width with it rather than leaving a dangling dot on the line.
 if (_status == _tactic) then { _status = "" };
 
 private _mainText = _segs joinString " · ";
-// The tactic carries no separator of its own — see the header comment. Its
-// connector to whatever comes next (main line, or status directly when the
-// main line is empty) is prepended to _mainSep instead, so it draws in the
-// main line's neutral colour rather than the tactic's amber.
+// The tactic never carries a separator of its own — see the header comment. Its
+// connector to whatever comes next is prepended to THAT chunk instead, so the
+// dot draws in the neutral main-line colour wherever the order still allows it.
 private _tacticSep = _tactic;
-private _leadSep    = ["", " · "] select (_tactic != "" && { _mainText != "" || _status != "" });
-private _trailSep   = ["", " · "] select (_mainText != "" && { _status != "" });
-private _mainSep    = _leadSep + _mainText + _trailSep;
+private _statusSep = _status;
+private _mainSep   = "";
+
+if (_statusFirst) then {
+    // tactic · status · main. The main line is last and so owns only its own
+    // leading dot; the tactic-to-status one has to ride the status chunk.
+    _statusSep = (["", " · "] select (_tactic != "" && { _status != "" })) + _status;
+    _mainSep   = (["", " · "] select ((_tactic != "" || { _status != "" }) && { _mainText != "" })) + _mainText;
+} else {
+    // tactic · main · status. The main line sits between the other two and so
+    // carries every dot in the line, including a lone bridging one.
+    private _leadSep  = ["", " · "] select (_tactic != "" && { _mainText != "" || _status != "" });
+    private _trailSep = ["", " · "] select (_mainText != "" && { _status != "" });
+    _mainSep = _leadSep + _mainText + _trailSep;
+};
 
 [
     _mainSep,
     _tacticSep,
-    _status,
+    _statusSep,
     [_mainSep,   _size] call FUNC(textWidth),
     [_tacticSep, _size] call FUNC(textWidth),
-    [_status,    _size] call FUNC(textWidth)
+    [_statusSep, _size] call FUNC(textWidth)
 ]

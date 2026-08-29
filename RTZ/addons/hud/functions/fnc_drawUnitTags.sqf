@@ -264,11 +264,13 @@ private _showFlags = GVAR(tagShowFlagIcon);
 
     // Main line, with the LAMBS tactic and the status word split off into their
     // own colours — shared with the vehicle tags so both families measure and
-    // place them identically.
+    // place them identically. The chunks are POSITIONAL (left, middle, right);
+    // the infantry order is tactic, main line, status, and the vehicle tags put
+    // their status in the middle slot instead.
     [
-        _dposASL, _perMetre, _camRight, _mainSep, _tacticSep, _statusText,
-        _colMain, _rgbTactic + [_alpha], _rgbStatus + [_alpha], _size,
-        _wMainSep, _wTacticSep, _wStatus
+        _dposASL, _perMetre, _camRight, _tacticSep, _mainSep, _statusText,
+        _rgbTactic + [_alpha], _colMain, _rgbStatus + [_alpha], _size,
+        _wTacticSep, _wMainSep, _wStatus
     ] call FUNC(drawTagLine);
 
     // Icons ride the flush centre offsets measured at cache-build time (UI-x from

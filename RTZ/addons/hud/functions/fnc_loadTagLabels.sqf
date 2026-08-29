@@ -145,7 +145,7 @@ private _pairs = [
     // Status words (always shown, colour-coded by the render path)
     [STATUS_DOWN,   LLSTRING(StatusDown)],  // unit incapacitated (red) — packet's _downed field
     // Status flags (unit flag-icon hover, vehicle status word / card warnings)
-    [FLAG_FLEEING,  LLSTRING(FlagFleeing)], // unit fleeing (red) — engine `fleeing _unit`
+    [FLAG_FLEEING,  LLSTRING(FlagFleeing)], // unit or crew fleeing (red) — engine `fleeing`
     [FLAG_LOW_FUEL, LLSTRING(FlagLowFuel)], // vehicle (amber) — `fuel _veh < 0.15`
     [FLAG_DAMAGED,  LLSTRING(FlagDamaged)], // vehicle (red) — `damage _veh > 0.60`
     [FLAG_PATH_OFF, LLSTRING(FlagPathOff)], // pathfinding disabled — `checkAIFeature "PATH"`

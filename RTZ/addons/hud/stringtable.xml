@@ -122,7 +122,7 @@
             <English>Inside</English>
         </Key>
         <Key ID="STR_RTZ_HUD_FlagLowFuel">
-            <English>LOW FUEL</English>
+            <English>Fuelless</English>
         </Key>
         <Key ID="STR_RTZ_HUD_FlagMounted">
             <English>Mounted</English>
@@ -458,7 +458,7 @@
             <English>Show Status</English>
         </Key>
         <Key ID="STR_RTZ_HUD_VtagShowStatus_Description">
-            <English>Include the crew's current LAMBS task. LOW FUEL / DAMAGED warnings always show regardless.</English>
+            <English>Include the crew's current LAMBS task. Flee / LOW FUEL / DAMAGED warnings always show regardless.</English>
         </Key>
         <Key ID="STR_RTZ_HUD_VtagShowTactic">
             <English>Show Tactic</English>

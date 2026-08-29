@@ -5,9 +5,10 @@
  * head tags (FUNC(drawVehicleTags)).
  *
  * Vehicle-global fields (speed, fuel, damage, crew) are valid on any machine.
- * Crew AI fields (LAMBS task/tactic) are locality-bound so they are read only
- * under an `if (local _ec)` guard; when the crew is on a Headless Client those
- * lines are omitted rather than shown as misleading zeros.
+ * Crew AI fields (LAMBS task/tactic, and the engine `fleeing` state behind the
+ * FLEEING flag) are locality-bound so they are read only under an
+ * `if (local _ec)` guard; when the crew is on a Headless Client those lines are
+ * omitted rather than shown as misleading zeros.
  *
  * Packet layout (index → field) — kept in lockstep with FUNC(buildVtagEntry),
  * its only reader:
@@ -44,13 +45,24 @@ private _ec    = effectiveCommander _veh;
 // Not `select (!isNull _ec)` — that would still evaluate netId on objNull.
 private _ecNet = if (isNull _ec) then { "" } else { netId _ec };
 
+// Locality of the crew, not of the hull: the AI reads below answer only where
+// the commander is, and a vehicle can be local to a machine its crew is not.
+private _ecLocal = !isNull _ec && { local _ec };
+
 private _flags = [];
+// Routed crew — the vehicle counterpart of the infantry FLEEING flag, read
+// under the same locality guard FUNC(gatherUnitInfo) reads it under, because
+// `fleeing` only answers where the unit is. Pushed FIRST so it leads the joined
+// status the tag builds out of these flags: a crew that has broken and is
+// driving away is the one thing on this list worth reading before the hull's
+// own condition.
+if (_ecLocal && { fleeing _ec }) then { _flags pushBack FLAG_FLEEING };
 if (fuel _veh < 0.15)   then { _flags pushBack FLAG_LOW_FUEL };
 if (damage _veh > 0.60) then { _flags pushBack FLAG_DAMAGED };
 
 private _task   = "";
 private _tactic = "";
-if (!isNull _ec && { local _ec }) then {
+if (_ecLocal) then {
     _task   = _ec getVariable ["lambs_main_currentTask", ""];
     _tactic = (group _ec) getVariable ["lambs_main_currentTactic", ""];
 };

@@ -24,14 +24,19 @@
  *
  * Return Value:
  * Cache entry <ARRAY>
- *   0 mainSep (main line + its neighbouring separators)   1 mainRGB
+ *   0 mainSep (main line + its leading separator)         1 mainRGB
  *   2 tacticSep (bare tactic word, no separator)          3 tacticRGB
- *   4 statusText                           5 statusRGB
+ *   4 statusSep (status word + its leading separator)     5 statusRGB
  *   6 mainSepWidth  7 tacticSepWidth  8 statusWidth  9 hasContent
  *   10 bars ([[centreUI, fill], ...], one per armed turret; [] for none)
  *
  * Layout matches FUNC(buildTagEntry)'s leading fields — both are composed by
- * FUNC(tagEntryTail) and drawn by FUNC(drawTagLine).
+ * FUNC(tagEntryTail) and drawn by FUNC(drawTagLine). The vehicle line ORDERS
+ * them differently, tactic · status · main rather than tactic · main · status
+ * (_statusFirst): LOW FUEL, DAMAGED or the LAMBS task sits beside the tactic
+ * instead of trailing a field line whose length swings with speed, crew, fuel
+ * and hull. FUNC(drawVehicleTags) passes the chunks to FUNC(drawTagLine) in that
+ * order; the separators here are composed to match.
  *
  * Example:
  * [_packet] call rtz_hud_fnc_buildVtagEntry
@@ -94,8 +99,8 @@ if (GVAR(vtagShowTactic) && { _tactic != "" }) then {
 };
 
 // Status: warning flags always surface; the LAMBS task only when enabled.
-// Kept out of _segs — it's rendered as its own coloured drawIcon3D so LOW FUEL /
-// DAMAGED can be amber/red without recolouring the line.
+// Kept out of _segs — it's rendered as its own coloured drawIcon3D so Flee /
+// DAMAGED / LOW FUEL can be red/amber without recolouring the line.
 private _status = switch (true) do {
     case (_flags isNotEqualTo []): {
         ((_flags apply { _labels getOrDefault [_x, _x] }) select { _x != "" }) joinString " · "
@@ -105,9 +110,13 @@ private _status = switch (true) do {
 };
 
 private _col = COL_NORMAL;
-// DAMAGED beats LOW FUEL for the status colour (worst condition wins); a LAMBS
-// task name stays the same colour as the rest of the line.
+// Worst condition wins: a routed crew or a wrecked hull is red, low fuel amber,
+// and a LAMBS task name stays the same colour as the rest of the line. Flee is
+// red here for the same reason it is on an infantry tag (FUNC(buildTagEntry)) —
+// it is the same engine state, reported through the same flag, and a crew that
+// has broken reads identically whether it is on foot or in a hull.
 private _statusCol = switch (true) do {
+    case (FLAG_FLEEING in _flags):  { COL_BAD };
     case (FLAG_DAMAGED in _flags):  { COL_BAD };
     case (FLAG_LOW_FUEL in _flags): { COL_WARN };
     default                         { _col };
@@ -120,10 +129,11 @@ private _statusCol = switch (true) do {
 // also what stopped this path rebuilding the composed line every frame.
 private _tagSize = GVAR(vtagSize);
 // _status comes back OUT as well as in: the tail drops it when it merely repeats
-// the tactic (FUNC(tagEntryTail)), and the entry has to ship the string the
-// widths were measured against, not the one passed in.
-([_segs, _tacText, _status, _tagSize] call FUNC(tagEntryTail))
-    params ["_mainSep", "_tacticSep", "_status", "_wMainSep", "_wTacticSep", "_wStatus"];
+// the tactic (FUNC(tagEntryTail)), and adds the leading separator the vehicle
+// order leaves it to carry, so the entry has to ship the string the widths were
+// measured against, not the one passed in.
+([_segs, _tacText, _status, _tagSize, true] call FUNC(tagEntryTail))
+    params ["_mainSep", "_tacticSep", "_statusSep", "_wMainSep", "_wTacticSep", "_wStatus"];
 
 // Ammunition gauges, right of the text: one per armed turret, so an IFV reads its
 // main gun and its commander MG side by side rather than collapsing both into the
@@ -155,13 +165,13 @@ if (GVAR(vtagShowAmmoBar) && { _ammoBars isNotEqualTo [] }) then {
 // pass reads this one boolean instead of unpacking the whole entry to work it out
 // per vehicle per frame. _mainSep / _tacticSep are empty exactly when their own
 // chunk is.
-private _hasContent = _mainSep != "" || { _tacticSep != "" } || { _status != "" }
+private _hasContent = _mainSep != "" || { _tacticSep != "" } || { _statusSep != "" }
     || { _bars isNotEqualTo [] };
 
 [
     _mainSep, _col select [0, 3],
     _tacticSep, (COL_TACTIC) select [0, 3],
-    _status, _statusCol select [0, 3],
+    _statusSep, _statusCol select [0, 3],
     _wMainSep, _wTacticSep, _wStatus, _hasContent,
     _bars
 ]

@@ -21,6 +21,6 @@
 
 params ["_objects"];
 
-if (!GVAR(enableFireMission)) exitWith {false};
+if (!GVAR(enableFireMission)) exitWith { false };
 
 ([_objects] call FUNC(fireMissionGuns)) isNotEqualTo []
