@@ -22,3 +22,22 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     false,
     true // Global
 ] call CBA_fnc_addSetting;
+
+// Hides LAMBS' nine scripted waypoint types from ZEN's waypoint Type toolbox;
+// ZEN_CfgWaypointTypes.hpp carries the reasoning and the config side.
+//
+// Defaults ON, unlike its two siblings. Those take away something a curator can
+// otherwise do, so they wait to be asked for. This one takes away a strictly
+// worse way of doing something that remains available, in fuller form, as a
+// LAMBS module — so the decluttered list is the honest default.
+//
+// Global rather than client-side even though the condition is evaluated on the
+// curator's own machine: which orders exist is a property of the mission, not a
+// per-curator display preference like EGVAR(common,enableCleanContextMenu).
+[
+    QGVAR(lambsWaypoints), "CHECKBOX",
+    [LSTRING(LambsWaypoints), LSTRING(LambsWaypoints_Description)],
+    _category,
+    true,
+    true // Global
+] call CBA_fnc_addSetting;

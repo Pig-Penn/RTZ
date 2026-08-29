@@ -28,7 +28,7 @@
  * one that bites — it was released by the old owner and, unreleased, leaves the
  * hulk free-rolling for the rest of the mission, which is the exact failure the
  * comment below warns about. Same locality trap, and the same fix, as
- * EFUNC(supply,applyFuel).
+ * EFUNC(supply,applyService).
  *
  * So each half is applied where it is local and targeted at its owner where it is
  * not. The vehicle and its driver are normally the same machine and the common

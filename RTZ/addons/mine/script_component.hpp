@@ -22,15 +22,12 @@
 // How close a unit must get before planting a mine (meters)
 #define PLACE_DISTANCE 2
 
-// Radius around the context menu position in which mines are looked up (meters)
-#define SEARCH_RADIUS 15
-
 // How long the "PutDown" animation is given to play before the mine is actually
 // created and the layer's own weapon is put back in his hands (seconds)
 #define PUT_DELAY 1.5
 
 // Detected mine cache refresh interval (seconds)
-#define REFRESH_INTERVAL 10
+#define REFRESH_INTERVAL 15
 
 // Mine marker drawing. The 3D icon is drawn CENTRED on the mine - see
 // FUNC(refreshMines) for why there is no vertical offset to define here.

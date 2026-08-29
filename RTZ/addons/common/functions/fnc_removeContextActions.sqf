@@ -38,6 +38,13 @@ GVAR(contextMenuCleaned) = true;
     ["CombatMode"],
     ["SpeedMode"],
     ["Stance"],
+    // Not declutter but a REPLACEMENT: rtz_battery re-adds an equivalent entry at
+    // ZEN's own priority 70, targeted with the cursor and opening ZEN's Fire Mission
+    // dialog rather than firing a fixed four rounds. A curator who turns this setting
+    // off therefore gets both entries, which is the honest outcome — the setting is
+    // per-client and one-way, so the alternative would be a second removal site
+    // outside its control.
+    ["FireArtillery"],
     ["HealUnits"],
     ["TeleportZeus"],
     ["VehicleAppearance"],

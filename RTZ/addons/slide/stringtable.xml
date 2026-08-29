@@ -20,7 +20,7 @@
             <English>Cursor is not ahead of or behind the vehicle</English>
         </Key>
         <Key ID="STR_RTZ_Slide_MsgDriving">
-            <English>Driving</English>
+            <English>Sliding</English>
         </Key>
         <Key ID="STR_RTZ_Slide_Timeout">
             <English>Drive Timeout</English>

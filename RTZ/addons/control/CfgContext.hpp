@@ -27,7 +27,7 @@ class zen_context_menu_actions {
         displayName = CSTRING(ActionTakeOwnership);
         icon = ICON_OWNERSHIP;
         statement = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(takeOwnership));
-        condition = QUOTE(GVAR(enableTakeOwnership) && {[ARR_2(_objects,_hoveredEntity)] call FUNC(canTakeOwnership)});
+        condition = QUOTE([ARR_2(_objects,_hoveredEntity)] call FUNC(canTakeOwnership));
         priority = 0;
     };
 

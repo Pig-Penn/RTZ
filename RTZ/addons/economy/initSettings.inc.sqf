@@ -16,6 +16,18 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     false
 ] call CBA_fnc_addSetting;
 
+// Client-side, unlike Income and Income Interval: those two must agree across
+// machines (the readout works the payout out from them locally), but whether a
+// curator wants it in their clock bar is a personal preference. Read every tick,
+// so toggling it takes effect without backing out of the Zeus interface.
+[
+    QGVAR(incomeClock), "CHECKBOX",
+    [LSTRING(IncomeClock), LSTRING(IncomeClock_Description)],
+    _category,
+    true,
+    false
+] call CBA_fnc_addSetting;
+
 // Independent of Enable Economy: hiding still applies with costs disabled.
 // Read once per CuratorObjectRegistered call (Zeus interface open/reopen),
 // same as every other entry in the cost table — no rejoin needed, but a

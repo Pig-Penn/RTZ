@@ -1,19 +1,11 @@
 #include "script_component.hpp"
 
-// The bulk of an order runs on ONE machine wherever the serviced vehicles are
-// local. setDamage is documented arg global / eff global, so it works from here
-// against a vehicle owned anywhere.
-//
-// setFuel is NOT in that category, and the note that used to sit here — "relied on
-// for the same, but not re-verified against the wiki" — was wrong to trust. Its
-// ARGUMENT is local, exactly like setVehicleAmmo below, so every refuel this
-// server issued against a headless-client- or player-owned vehicle was a silent
-// no-op while FUNC(endService) still reported the vehicle serviced. It now routes
-// through FUNC(applyFuel), which writes directly when the server owns the vehicle
-// and targets QGVAR(refuel) at its owner when it does not.
-//
-// The server is picked because it owns the AI supply vehicles anyway, and because
-// holding the target claims on a single machine is what makes them mean anything.
+// The ORDER runs on one machine — the server — because that is where the target
+// claims have to live to mean anything, and because every reader the job needs
+// (`damage`, `fuel`, `magazinesAllTurrets`, `getAmmoCargo`) reports correctly from
+// anywhere. What it no longer does is WRITE: the three engine service actions are
+// dispatched to each target's own owner (see QGVAR(service) below), so this
+// machine only watches.
 if (isServer) then {
     [QGVAR(resupply), {
         params ["_orders", ["_curator", objNull]];
@@ -25,29 +17,15 @@ if (isServer) then {
     }] call CBA_fnc_addEventHandler;
 };
 
-// setVehicleAmmo is one of two exceptions: its ARGUMENT is local, so the server
-// calling it on a vehicle owned by a headless client or a player is a silent
-// no-op — which is exactly what used to happen. Registered on every machine and
-// targeted at the vehicle by FUNC(endService). One event per vehicle per completed
-// order, not per tick, because ammo is a single write at the end rather than a ramp.
-[QGVAR(rearm), {
-    params ["_vehicle"];
-    if (isNull _vehicle || {!alive _vehicle}) exitWith {};
-
-    _vehicle setVehicleAmmo 1;
-}] call CBA_fnc_addEventHandler;
-
-// setFuel is the other, and it was missed for exactly as long as this component
-// has existed. Same treatment, registered on every machine and targeted at the
-// vehicle — but sent only for a vehicle the SERVER does not own (FUNC(applyFuel)
-// writes directly otherwise), so the ordinary AI case still costs nothing even
-// though refuelling, unlike rearming, is a per-tick ramp rather than one write.
-[QGVAR(refuel), {
-    params ["_vehicle", "_fuel"];
-    if (isNull _vehicle || {!alive _vehicle}) exitWith {};
-
-    _vehicle setFuel _fuel;
-}] call CBA_fnc_addEventHandler;
+// The whole apply path, and the reason this component no longer owns a simulation.
+// `action` / `actionNow` take a LOCAL argument: the server firing one on a vehicle
+// owned by a headless client or a player is a silent no-op, the same trap that hid
+// the old setFuel bug (docs/Knowledge Base/Gotchas.md, "Argument-local vs
+// argument-global"). Registered on every machine and targeted at the SERVICED
+// object by FUNC(serviceVehicles) — one event per target per order, not per tick,
+// because the engine does the work from there and this component only watches it
+// happen.
+[QGVAR(service), LINKFUNC(applyService)] call CBA_fnc_addEventHandler;
 
 // Completion report, aimed at whoever gave the order. The stringtable KEY comes
 // over the wire rather than the localised text, so the toast renders in the
@@ -79,40 +57,42 @@ if (hasInterface) then {
 // shared overlay interval, so all three AI-state overlays stay in step and one
 // admin slider retunes them together.
 //
-// The overlay bundle carries the renderer and the master setting ONLY — no toasts,
-// no context-menu labels, no idle accent. Those three describe an action a curator
-// clicks, and this overlay has none: it is always on (see FUNC(syncDisplay)), so
-// the engine's defaults are exactly right and anything filled in here would be
-// wording nothing can ever display.
+// The overlay bundle carries the renderer ONLY — no toasts, no context-menu
+// labels, no idle accent. Those three describe an action a curator clicks, and
+// this overlay has none: it is always on, so the engine's defaults are exactly
+// right and anything filled in here would be wording nothing can ever display.
+//
+// The master setting slot is "" deliberately. It used to name a
+// GVAR(enableSupplyDisplay) checkbox; the lines are now simply part of what this
+// component does, so there is nothing to switch off and nothing to spend a
+// settings row on. The engine reads that slot only from its CBA_SettingChanged
+// watchdog, comparing it against the name of a setting that just changed — a name
+// that is never "" — so this registers a stream the watchdog will never touch.
 [
     STREAM_SUPPLY, LINKFUNC(gatherSupply), SRC_HULLS,
     QEGVAR(core,pollInterval), 2,
     ELINKFUNC(core,receiveOverlay),
-    [LINKFUNC(drawSupply), QGVAR(enableSupplyDisplay)]
+    [LINKFUNC(drawSupply), ""]
 ] call EFUNC(core,registerStream);
 
 // ── Always-on activation ─────────────────────────────────────────────────────
-// Nothing else switches this stream on, so it is switched on here: once at
-// settings-sync, and again whenever the master setting changes. Deferred to
-// CBA_settingsInitialized for the usual reason — a setting read straight from
-// postInit races the server→client sync and reads nil, which aborts the rest of
-// the handler (docs/Knowledge Base/Gotchas.md §2). The engine's own watchdog
-// already handles the setting going OFF; the second handler is what brings the
-// overlay back when an admin turns it on again mid-mission.
+// Nothing else switches this stream on, so it is switched on here, once, and
+// never switched off: no context action reaches it and the engine's watchdog
+// cannot match its blank setting name.
 //
-// FUNC(syncDisplay) compares wanted against actual before touching the toggle, so
-// the two handlers overlapping is harmless.
+// Straight-line, immediately after the registration it depends on. This was a
+// FUNC(syncDisplay) call deferred to CBA_settingsInitialized, plus a second
+// CBA_SettingChanged handler to bring the overlay back when an admin flipped the
+// checkbox on again — both of which existed to READ that checkbox safely
+// (a setting read straight from postInit races the server→client sync and reads
+// nil, docs/Knowledge Base/Gotchas.md §2). With no setting to read there is no
+// race to dodge: rtz_core builds every registry this touches in its preInit and
+// requiredAddons orders the two, so everything is in place by the time this runs.
+//
+// hasInterface, because rtz_core's client registries do not exist on a dedicated
+// server at all — its preInit exits before creating them.
 if (hasInterface) then {
-    ["CBA_settingsInitialized", {
-        call FUNC(syncDisplay);
-    }] call CBA_fnc_addEventHandler;
-
-    ["CBA_SettingChanged", {
-        params ["_name"];
-        // Lowercased: CBA_SettingChanged is not guaranteed to report the name in
-        // the case it was registered with.
-        if (toLower _name != toLower QGVAR(enableSupplyDisplay)) exitWith {};
-
-        call FUNC(syncDisplay);
-    }] call CBA_fnc_addEventHandler;
+    // Reporting off: EFUNC(core,toggleOverlay) toasts the new state for a curator
+    // who clicked something, and nobody clicked.
+    [STREAM_SUPPLY, false] call EFUNC(core,toggleOverlay);
 };

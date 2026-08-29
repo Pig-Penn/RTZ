@@ -25,6 +25,15 @@
         <Key ID="STR_RTZ_Economy_Income">
             <English>Income</English>
         </Key>
+        <Key ID="STR_RTZ_Economy_IncomeClock">
+            <English>Income Clock</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_IncomeClockFormat">
+            <English>+%1 in %2</English>
+        </Key>
+        <Key ID="STR_RTZ_Economy_IncomeClock_Description">
+            <English>Show the size of the next income payout, and how long until it arrives, in the Zeus clock bar — in place of the mission countdown, which reads "--:--:--" on a mission with no time limit. Highlighted while your point bar is full, since a payout into a full bar is lost. A real mission countdown always takes the slot back.</English>
+        </Key>
         <Key ID="STR_RTZ_Economy_IncomeInterval">
             <English>Income Interval</English>
         </Key>

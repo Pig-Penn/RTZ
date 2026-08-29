@@ -76,11 +76,5 @@
         <Key ID="STR_RTZ_Control_SquadHide_Description">
             <English>Add a context menu action to toggle the simulation and visibility of selected units.</English>
         </Key>
-        <Key ID="STR_RTZ_Control_TakeOwnership">
-            <English>Take Ownership</English>
-        </Key>
-        <Key ID="STR_RTZ_Control_TakeOwnership_Description">
-            <English>Add a context menu action transferring the selected groups and their vehicles to the curator's own machine. Only appears when the selection holds something simulated elsewhere, which typically happens after a curator reconnects.</English>
-        </Key>
     </Package>
 </Project>

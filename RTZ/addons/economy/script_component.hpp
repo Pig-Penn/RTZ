@@ -44,6 +44,35 @@
 #define TOAST_DURATION 3
 #define TOAST_FADE 0.5
 
+// RscDisplayCurator's clock bar (\a3\ui_f_curator\ui\defineResinclDesign.inc):
+// a controls group holding elapsed mission time, in-game daytime and a mission
+// countdown. The countdown reads "--:--:--" for the whole operation on a mission
+// with no time limit, which is the slot FUNC(incomeClockTick) borrows.
+#define IDC_CURATOR_CLOCK 16808
+#define IDC_CURATOR_CLOCK_DURATION 15506
+#define IDC_CURATOR_CLOCK_DAYTIME 15509
+#define IDC_CURATOR_CLOCK_COUNTDOWN 15511
+
+// How often the income clock rewrites the bar. Vanilla's own cadence — see the
+// "Loop" case of \a3\ui_f_curator\ui\scripts\RscDisplayCurator.sqf, which
+// rate-limits all three fields on a "clocktime" variable it keeps on the
+// assigned curator logic (set locally, so this costs no traffic).
+#define CLOCK_INTERVAL 1
+
+// Seconds pushed into that "clocktime" gate on every tick, which is what stops
+// vanilla writing the slot back. DELIBERATELY LONGER THAN CLOCK_INTERVAL: at
+// exactly one second a frame can land between the gate expiring and this
+// component's PFH firing, and vanilla would win the slot for that frame — one
+// visible flicker of "--:--:--" per second. Two seconds means it never wins the
+// race, and still hands the bar back promptly once RTZ stops leasing it.
+#define CLOCK_LEASE 2
+
+// Income clock tint, applied only while the curator is at a FULL BAR:
+// FUNC(addPoints) caps gains there, so the next payout is thrown away and the
+// countdown is worth pulling the eye to. Below a full bar the readout keeps the
+// control's own colour and sits quietly with the rest of the clock.
+#define COLOR_INCOME [0.40, 1.00, 0.40, 1]
+
 // Modules RTZ replaces with its own systems, gated behind GVAR(cleanModuleTree)
 // in fnc_registerCosts. Lowercase: matched against toLowerANSI class names.
 // Reinforcements: ZEN's Create LZ, Create RP and Spawn Reinforcements.

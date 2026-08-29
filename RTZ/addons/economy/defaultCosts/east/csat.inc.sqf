@@ -234,8 +234,8 @@ _costs append [
     ["Atlas_O_C_Marine_SL_F", 1.2], // Squad Leader
 
     // Planes
-    ["O_Plane_Transport_01_infantry_F", 35], // Iran-150 (Infantry)
-    ["O_Plane_Transport_01_vehicle_F", 35], // Iran-150 (Vehicle)
+    ["O_Plane_Transport_01_infantry_F", 30], // Iran-150 (Infantry)
+    ["O_Plane_Transport_01_vehicle_F", 30], // Iran-150 (Vehicle)
     ["O_Plane_Fighter_03_Cluster_F", 38], // A-143 Buzzard (Cluster)
     ["O_Plane_CAS_02_dynamicLoadout_F", 40], // To-199 Neophron
     ["O_Plane_CAS_02_Cluster_F", 42], // To-199 Neophron (Cluster)

@@ -62,7 +62,10 @@ private _catOverlays = [ELSTRING(main,DisplayName), ELSTRING(core,CategoryOverla
     "SLIDER",
     [LSTRING(TagHeight), LSTRING(TagHeight_Description)],
     _catTags,
-    [0, 2, 0.5, 2],
+    // Fraction of SCREEN HEIGHT, not metres — FUNC(drawUnitTags) lifts the tag by
+    // a measured UI offset so the gap holds at any distance, pitch and zoom. The
+    // default reproduces what the old 0.5 m setting drew at the reference FOV.
+    [0, 0.15, 0.02, 3],
     0
 ] call CBA_fnc_addSetting;
 
@@ -124,7 +127,9 @@ private _catOverlays = [ELSTRING(main,DisplayName), ELSTRING(core,CategoryOverla
     "SLIDER",
     [LSTRING(VtagHeight), LSTRING(VtagHeight_Description)],
     _catVehTags,
-    [0, 6, 2.5, 2],
+    // Fraction of SCREEN HEIGHT, not metres — see QGVAR(tagHeight) above. The
+    // default reproduces what the old 2.5 m setting drew at the reference FOV.
+    [0, 0.25, 0.10, 3],
     0
 ] call CBA_fnc_addSetting;
 

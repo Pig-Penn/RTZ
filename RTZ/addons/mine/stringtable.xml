@@ -1,17 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="RTZ">
     <Package name="Mine">
-        <Key ID="STR_RTZ_Mine_ActionDisarm">
-            <English>Demine</English>
-        </Key>
         <Key ID="STR_RTZ_Mine_ActionPlace">
             <English>Mine</English>
-        </Key>
-        <Key ID="STR_RTZ_Mine_ClearHidden">
-            <English>Clear Undetected Mines</English>
-        </Key>
-        <Key ID="STR_RTZ_Mine_ClearHidden_Description">
-            <English>Let ordered groups clear mines their side has not detected yet, sweeping the whole area instead of only known mines.</English>
         </Key>
         <Key ID="STR_RTZ_Mine_DisplayName">
             <English>Mines</English>
@@ -20,7 +11,7 @@
             <English>Enable Mines</English>
         </Key>
         <Key ID="STR_RTZ_Mine_Enabled_Description">
-            <English>Enable the Place Mine and Clear Mines Zeus context menu actions.</English>
+            <English>Enable the Place Mine Zeus context menu action.</English>
         </Key>
         <Key ID="STR_RTZ_Mine_MagazineLabel">
             <English>%1 (%2 carried)</English>
@@ -42,9 +33,6 @@
         </Key>
         <Key ID="STR_RTZ_Mine_MaxDistance_Description">
             <English>Maximum distance from the camera at which 3D mine markers are drawn.</English>
-        </Key>
-        <Key ID="STR_RTZ_Mine_MsgDemining">
-            <English>Clearing mines</English>
         </Key>
         <Key ID="STR_RTZ_Mine_MsgPlacing">
             <English>Laying mine</English>

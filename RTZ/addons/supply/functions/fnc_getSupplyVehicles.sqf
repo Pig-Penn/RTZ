@@ -20,5 +20,5 @@
 params [["_objects", [], [[]]]];
 
 ([_objects] call EFUNC(common,collectVehicles)) select {
-    alive _x && {true in ([_x] call FUNC(supplyCapabilities))}
+    alive _x && { true in ([_x] call FUNC(supplyCapabilities)) }
 }

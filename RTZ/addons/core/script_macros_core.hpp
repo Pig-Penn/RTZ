@@ -35,11 +35,27 @@
 #define RENDER_UI    1
 
 // Index into the frame context array a RENDER_WORLD renderer receives. Named so
-// a renderer can `select` the one or two it needs without a `params` over all
-// seven. Camera-right/up are unit vectors in WORLD space — the axes screen-space
+// a renderer can `select` the one or two it needs without a `params` over the
+// whole array. Camera-right/up are unit vectors in WORLD space — the axes screen-space
 // offsets ride, so "right of the text" holds at any camera orientation.
 // CTX_VIEWDIST is floored to a positive value by the loop, so renderers may divide
 // by it for their distance fade without guarding.
+//
+// CTX_ASPECT is the screen aspect between the two camera axes: UI-y per metre of
+// camera-up divided by UI-x per metre of camera-right. Both are unit steps
+// PERPENDICULAR to the view axis, so they subtend the same angle at the same
+// depth and the ratio is the projection's fy/fx — the same number everywhere on
+// screen, at every depth, camera pitch and zoom. It is therefore a per-FRAME
+// measurement, not a per-entity one: a renderer that has measured its horizontal
+// scale gets the vertical one for free as
+//
+//     _perMetreUp = _perMetre * (_ctx select CTX_ASPECT)
+//
+// instead of a second `worldToScreen` per drawn entity. NEGATIVE, because UI-y
+// grows downward while camera-up does not — which is the sign convention every
+// existing consumer of a vertical scale already carries. 0 when the probe could
+// not project (never on a normal frame); divide only after testing it, the way
+// the tag renderers do.
 // The context is passed as `[_ctx] call <renderer>`, so a renderer reads it with
 // `params ["_ctx"]` — see the frame loop for why the wrapping array is required.
 #define CTX_CAMPOS   0
@@ -48,6 +64,7 @@
 #define CTX_MOUSE    3
 #define CTX_NOW      4
 #define CTX_VIEWDIST 5
+#define CTX_ASPECT   6
 // No CTX_DISPLAY: a RENDER_WORLD renderer never needs the display, and a
 // RENDER_UI one receives it as its whole argument instead.
 

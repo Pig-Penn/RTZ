@@ -2,6 +2,8 @@ PREP(addPoints);
 PREP(applyCoefs);
 PREP(categorize);
 PREP(getCost);
+PREP(incomeClockTick);
 PREP(initCurator);
 PREP(placementToast);
 PREP(registerCosts);
+PREP(startIncomeClock);

@@ -4,15 +4,15 @@
  * Resolves a Zeus selection to the AI units qualified to run a specialist errand:
  * alive, on foot, not a player and not led by one, holding one of the required
  * unit traits AND carrying one of the required items. Shared filter behind
- * rtz_repair's engineers and rtz_mine's mine layers / deminers, which previously
+ * rtz_repair's engineers and rtz_mine's mine layers, which previously
  * each carried their own copy of it.
  *
  * The selection goes through FUNC(collectUnits) first, so a selected VEHICLE
  * contributes its crew — pick a squad's truck and its dismounting engineer still
  * qualifies for the order.
  *
- * Both lists are OR'd within themselves and AND'd against each other: a deminer
- * needs (engineer OR explosiveSpecialist) AND a mine detector. An empty list is
+ * Both lists are OR'd within themselves and AND'd against each other: rtz_repair's
+ * repairmen need the engineer trait AND a toolkit. An empty list is
  * treated as "no requirement" so a caller can filter on traits alone.
  *
  * Locality is deliberately NOT filtered — this runs on the curator's client,

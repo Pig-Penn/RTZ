@@ -165,8 +165,8 @@ _costs append [
     ["I_Story_Officer_01_F", 20], // Major Gavras
 
     // Planes
-    ["I_Plane_Transport_01_infantry_F", 35], // C-192 Samson (Infantry)
-    ["I_Plane_Transport_01_vehicle_F", 35], // C-192 Samson (Vehicle)
+    ["I_Plane_Transport_01_infantry_F", 30], // C-192 Samson (Infantry)
+    ["I_Plane_Transport_01_vehicle_F", 30], // C-192 Samson (Vehicle)
     ["I_Plane_Fighter_03_dynamicLoadout_F", 36], // A-143 Buzzard
     ["I_Plane_Fighter_03_Cluster_F", 38], // A-143 Buzzard (Cluster)
     ["I_Plane_Fighter_04_F", 50], // A-149 Gryphon

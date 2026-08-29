@@ -14,7 +14,7 @@ class zen_context_menu_actions {
     };
 
     // NO supply-lines entry in the shared RTZ_Overlays submenu, unlike rtz_hud's
-    // destination and target overlays: the lines are ALWAYS drawn (subject to
-    // GVAR(enableSupplyDisplay)), so there is nothing for a curator to switch on.
-    // FUNC(syncDisplay) owns the stream's on/off state instead.
+    // destination and target overlays: the lines are ALWAYS drawn, with no context
+    // action and no setting behind them, so there is nothing for a curator to
+    // switch on. XEH_postInit switches the stream on once and leaves it on.
 };

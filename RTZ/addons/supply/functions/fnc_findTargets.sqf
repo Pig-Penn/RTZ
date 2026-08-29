@@ -1,40 +1,46 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Returns the vehicles parked around a supply vehicle that still need something
- * it can give. The lookup is by position rather than from the curator selection,
- * so the serviced vehicles do not have to be Zeus editable.
+ * Everything around a supply vehicle that it can do something for. Position
+ * based, not selection based, so a curator resupplies a parked column by picking
+ * the truck rather than by box-selecting the column.
  *
- * The capabilities are passed in rather than looked up again, and _limit caps the
- * result: the context menu condition only needs to know whether there is ANY work
- * at all, and asking for one match turns a full sweep of a parked column into a
- * walk that stops at the first hit.
+ * Whether a target needs anything is one number from FUNC(serviceDeficit), which
+ * measures only the services this truck offers and applies the per-service
+ * thresholds. It replaced three inline tests here, the last of which walked every
+ * turret's magazines.
  *
- * The needs-test is ordered cheapest first — the ammo check walks every turret's
- * magazines, so it only runs for vehicles already found fully repaired and
- * fuelled, and only when this supply vehicle carries ammo in the first place.
- *
- * Range is measured the same way the mid-service drop test in FUNC(serviceTick)
- * measures it (3D, hull to hull). It used to acquire in 3D and drop in 2D, which
- * left a band where a vehicle could be too far to pick up yet too close to let go.
+ * SIDE is checked, which it never used to be — a supply truck would happily repair
+ * and rearm an enemy tank parked twenty metres away, and curators here are usually
+ * on OPPOSING sides, so that is a live case rather than a theoretical one. Judged
+ * from the crewed GROUP rather than from `side` on the hull, the same test
+ * VEH_SIDE_OK makes: a crewless wreck a curator wants patched up has no meaningful
+ * side and must stay serviceable, while a manned hostile one must not.
  *
  * Arguments:
  * 0: Supply Vehicle <OBJECT>
- * 1: Capabilities, as returned by FUNC(supplyCapabilities) <ARRAY>
- * 2: Stop After This Many Matches, 0 For All <NUMBER> (default: 0)
+ * 1: Supply Capabilities <ARRAY> — [canRepair, canRefuel, canRearm]
+ * 2: Stop After This Many <NUMBER> — 0 for MAX_SERVICE_TARGETS (default: 0)
  *
  * Return Value:
- * Serviceable Vehicles <ARRAY>
+ * Serviceable Targets <ARRAY of OBJECT>
  *
  * Example:
- * [_truck, [ARR_3(true,true,false)]] call rtz_supply_fnc_findTargets
+ * [_truck, [true, false, false], 1] call rtz_supply_fnc_findTargets
  *
  * Public: No
  */
 
 params ["_supply", "_capabilities", ["_limit", 0]];
 
-_capabilities params ["_canRepair", "_canRefuel", "_canRearm"];
+// Never unbounded. A truck parked in a company motor pool would otherwise produce
+// a hundred-odd claims, a hundred-odd events and a hundred supply lines from one
+// click. Matches SEL_MAX_UNITS, the cap the selection poll already applies.
+if (_limit <= 0) then { _limit = MAX_SERVICE_TARGETS };
+
+private _supplyGroup = group _supply;
+private _checkSide   = !isNull _supplyGroup;
+private _supplySide  = side _supplyGroup;
 
 private _targets = [];
 
@@ -46,17 +52,15 @@ private _targets = [];
     // exitWith inside a forEach unwinds only the current ITERATION, making it a
     // continue (docs/Knowledge Base/Gotchas.md §2). _limit was therefore inert, and the context
     // menu condition — which asks for exactly one match — swept the whole parked
-    // column, running FUNC(needsAmmo) (a walk over every turret's magazines) on
-    // every vehicle in radius to answer a boolean.
-    if (_limit > 0 && {count _targets >= _limit}) then { break };
+    // column, running the ammo walk on every vehicle in radius to answer a boolean.
+    if (count _targets >= _limit) then { break };
 
     if (_x isEqualTo _supply) then { continue };
 
-    if !(
-        (_canRepair && {damage _x > REPAIR_THRESHOLD})
-        || {_canRefuel && {fuel _x < FUEL_THRESHOLD}}
-        || {_canRearm && {[_x] call FUNC(needsAmmo)}}
-    ) then { continue };
+    private _group = group _x;
+    if (_checkSide && { !isNull _group } && { _supplySide getFriend (side _group) < FRIENDLY_THRESHOLD }) then { continue };
+
+    if (([_x, _capabilities] call FUNC(serviceDeficit)) <= 0) then { continue };
 
     _targets pushBack _x;
 } forEach (_supply nearEntities [VEHICLE_TYPES, GVAR(serviceRadius)]);

@@ -37,9 +37,17 @@ if (!hasInterface) exitWith {
 //   visible    — the per-curator overlay toggle (FUNC(toggleDisplay))
 //   hooked     — once-flag for the receiver and curator-display registrations
 //                FUNC(startSystem) makes on the first enable
+//   pendingTarget — the target logic FUNC(selectFireMission) created for the fire
+//                mission dialog currently open, held so FUNC(guiFireMission)'s Unload
+//                handler can delete it again if the curator does not confirm. One
+//                variable rather than a registry because the dialog is modal. Must be
+//                initialized HERE and not on first use: that handler is installed on
+//                EVERY fire mission display, including one opened from the module
+//                tree with nothing pending, and would otherwise read a nil.
 GVAR(contacts) = createHashMap;
 GVAR(nextExpiry) = 1e11;
 GVAR(visible) = true;
 GVAR(hooked) = false;
+GVAR(pendingTarget) = objNull;
 
 ADDON = true;

@@ -1,7 +1,8 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Orders every selected supply vehicle to service the vehicles parked around it.
+ * Orders every selected supply vehicle to service the friendly vehicles parked
+ * around it.
  * The target set is resolved here, on the curator's client, and shipped to the
  * server in a single event so the service loop never has to search again — the
  * server re-validates and claims what it is given (FUNC(serviceVehicles)) rather
@@ -33,6 +34,16 @@ if (!GVAR(enabled)) exitWith {};
 private _orders  = [];
 private _claimed = [];
 
+private _supplies = [_objects] call FUNC(getSupplyVehicles);
+
+// Capabilities are read from live cargo, so a truck that spent its last store
+// between the menu being built and this click is no longer a supply vehicle at
+// all. That is the only way this list can be empty when the condition passed, and
+// it deserves its own wording — "nothing left to resupply" would blame the column.
+if (_supplies isEqualTo []) exitWith {
+    [LLSTRING(MsgSupplyEmpty)] call EFUNC(common,showCountMessage);
+};
+
 {
     private _targets = ([_x, [_x] call FUNC(supplyCapabilities)] call FUNC(findTargets)) - _claimed;
 
@@ -40,7 +51,7 @@ private _claimed = [];
         _claimed append _targets;
         _orders pushBack [_x, _targets];
     };
-} forEach ([_objects] call FUNC(getSupplyVehicles));
+} forEach _supplies;
 
 // The condition passed when the menu was built, but a selection can go stale
 // between the build and the click — say so rather than swallowing the order.

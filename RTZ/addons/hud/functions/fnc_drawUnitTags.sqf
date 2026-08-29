@@ -74,6 +74,7 @@ private _camPos   = _ctx select CTX_CAMPOS;
 private _camRight = _ctx select CTX_CAMRIGHT;
 private _camUp    = _ctx select CTX_CAMUP;
 private _mouse    = _ctx select CTX_MOUSE;
+private _aspect   = _ctx select CTX_ASPECT;
 
 private _cache    = _sys select TAG_CACHE;
 private _data     = GVAR(unitData);
@@ -81,15 +82,16 @@ private _maxDist  = GVAR(tagMaxDistance);
 private _fadeIn   = _maxDist * 0.85;
 private _size     = GVAR(tagSize);
 private _iconDraw = _size * ICON_DRAW;   // icons scale with the tag size
-private _zOff     = GVAR(tagHeight);
+private _liftUI   = GVAR(tagHeight);     // UI-y, NOT metres — see pass 1
 
 // ── Pass 1: resolve each selected unit to a render record ────────────────────
 // [_scr, _perMetreRight, _posASL, _alpha, _entry, _yShift]. Only survivors reach
 // the layout and draw passes. _perMetreRight is UI-x per metre of camera-right
 // at this unit's depth — exact for any FOV, no formula guesswork — used to
-// convert measured UI offsets back to world metres. (The camera-up equivalent is
-// only needed for the rare de-conflicted tag, so the draw pass measures it on
-// demand instead of here for every unit.)
+// convert measured UI offsets back to world metres, and to size the icons. The
+// camera-up equivalent is that same number times the frame's screen aspect
+// (CTX_ASPECT), so it costs a multiply rather than the second `worldToScreen`
+// per unit it used to.
 private _records = [];
 {
     private _entry = _cache get _x;
@@ -112,25 +114,50 @@ private _records = [];
     if (_head isEqualTo []) then { continue };
     private _dist = _camPos distance _head;
     if (_dist > _maxDist) then { continue };
-    // Screen-space vertical lift: offset along camera-up, NOT world +Z (which
-    // projects to nothing from a top-down camera, collapsing the tag onto its
-    // icon). Scaled by camera distance so the on-screen gap above the icon stays
-    // constant at any pitch/zoom; below ~30 m it holds the literal "metres above
-    // head" the Tag Height setting promises.
+
+    // Scales measured at the UNLIFTED anchor, then the lift applied. Legitimate
+    // in either order — the lift rides camera-up, which is perpendicular to the
+    // view axis, so it does not change the point's DEPTH and the per-metre scale
+    // is the same before and after — and this order is what lets the lifted
+    // screen position be arithmetic instead of a third `worldToScreen`.
+    private _headASL = AGLToASL _head;
+    private _scr = worldToScreen _head;
+    if (_scr isEqualTo []) then { continue };                       // unit off-screen
+    private _oneRight = worldToScreen (ASLToAGL (_headASL vectorAdd _camRight));
+    if (_oneRight isEqualTo []) then { continue };
+    private _perMetreRight = (_oneRight select 0) - (_scr select 0);
+    if (_perMetreRight <= 1e-6) then { continue };
+
+    // Vertical lift: a SCREEN distance, offset along camera-up — not world +Z,
+    // which projects to nothing from a top-down camera and collapses the tag onto
+    // its icon.
+    //
+    // This used to be a world-METRE offset, `_zOff * (1 max (_dist / 30))`, and
+    // its comment claimed a gap that was "constant at any pitch/zoom". It was not.
+    // A world offset projects to `offset * |perMetreUp|`, and |perMetreUp| goes as
+    // 1 / (dist * tan(vFOV/2)), so the distance-scaling cancelled DISTANCE and
+    // left the gap proportional to 1 / tan(vFOV/2): the tag climbed off its unit
+    // as the Zeus camera zoomed in and sat down on the icon as it zoomed out. And
+    // under 30 m the `1 max` clamp froze the numerator, so the gap went as 1/dist
+    // there. Converting a UI offset through the measured scale — the same thing
+    // ICON_BASELINE and every chunk offset below already do — is what actually
+    // delivers a constant gap, at any distance, pitch AND zoom.
+    //
     // ASL, not the AGL FUNC(tagAnchor) returns. A camera-basis offset added to an
     // AGL position holds HEIGHT ABOVE GROUND, not altitude, so it rides the terrain
     // under it instead of following the screen axis — see FUNC(drawTagLine), which
     // takes its centre in ASL for the same reason. Everything downstream (the
     // de-confliction nudge, the chunk walk, the icon slots) offsets from this.
-    private _posASL = (AGLToASL _head) vectorAdd (_camUp vectorMultiply (_zOff * (1 max (_dist / 30))));
-    private _pos    = ASLToAGL _posASL;
-
-    private _scr = worldToScreen _pos;
-    if (_scr isEqualTo []) then { continue };                       // unit off-screen
-    private _oneRight = worldToScreen (ASLToAGL (_posASL vectorAdd _camRight));
-    if (_oneRight isEqualTo []) then { continue };
-    private _perMetreRight = (_oneRight select 0) - (_scr select 0);
-    if (_perMetreRight <= 1e-6) then { continue };
+    private _posASL = _headASL;
+    private _perMetreUp = _perMetreRight * _aspect;
+    if (_liftUI > 0 && {abs _perMetreUp > 1e-6}) then {
+        // `abs`: a positive setting must always move the tag UP the screen, and
+        // _perMetreUp is negative (UI-y grows downward, camera-up does not).
+        _posASL = _headASL vectorAdd (_camUp vectorMultiply (_liftUI / (abs _perMetreUp)));
+        // worldToScreen hands back a fresh array per call, so this is ours to
+        // move; the shift is known, which is the whole point of lifting in UI.
+        _scr set [1, (_scr select 1) - _liftUI];
+    };
 
     private _alpha = linearConversion [_fadeIn, _maxDist, _dist, 0.85, 0, true];
     _records pushBack [_scr, _perMetreRight, _posASL, _alpha, _entry, 0];
@@ -189,9 +216,7 @@ private _placed = [];                                              // [xCentre, 
 // ── Pass 3: draw ────────────────────────────────────────────────────────────
 // The de-confliction shift is a screen-space UI-y offset converted to a world
 // nudge along camera-up, applied to the base position so text and icons of one
-// tag move together. The UI-y-per-metre-of-camera-up scale is measured here, only
-// for the (rare) shifted tags — unshifted tags never pay for the extra
-// worldToScreen.
+// tag move together.
 private _showFlags = GVAR(tagShowFlagIcon);
 {
     _x params ["_scr", "_perMetre", "_posASL", "_alpha", "_entry", "_yShift"];
@@ -207,20 +232,14 @@ private _showFlags = GVAR(tagShowFlagIcon);
     private _colMain   = _rgbMain + [_alpha];
     private _colThreat = _rgbThreat + [_alpha];
 
-    // UI-y per metre of camera-up. Three callers now — the de-confliction nudge
-    // below, the right-side chain's baseline nudge, and the ammo bar's fill
-    // offset — so it is measured ONCE here for whichever of them needs it, rather
-    // than inside the shift branch it used to live in. Which is why the test
-    // names the icons as well as the bar: a tag with neither, unshifted (the
-    // common case), still pays no worldToScreen for it.
+    // UI-y per metre of camera-up: the horizontal scale times the frame's screen
+    // aspect (CTX_ASPECT), which is the projection's fy/fx and so the same number
+    // at every depth, pitch and zoom. This was a `worldToScreen` probe per tag,
+    // gated on "does anything actually need it" to keep the common tag from
+    // paying for one. Now it is a multiply, so there is nothing left to gate and
+    // nothing left to skip — the gate cost more than the work does.
     private _hasIcon = _threatIcon != "" || {_showFlags && {_flagsText != ""}};
-    private _perMetreUp = 0;
-    if (_yShift != 0 || {_ammoFill >= 0} || {_hasIcon}) then {
-        private _oneUp = worldToScreen (ASLToAGL (_posASL vectorAdd _camUp));
-        if (_oneUp isNotEqualTo []) then {
-            _perMetreUp = (_oneUp select 1) - (_scr select 1);
-        };
-    };
+    private _perMetreUp = _perMetre * _aspect;
 
     private _dposASL = _posASL;
     if (_yShift != 0 && {abs _perMetreUp > 1e-6}) then {

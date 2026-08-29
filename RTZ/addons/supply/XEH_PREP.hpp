@@ -1,14 +1,14 @@
-PREP(applyFuel);
+PREP(ammoRatio);
+PREP(applyService);
 PREP(canResupply);
 PREP(drawSupply);
 PREP(endService);
 PREP(findTargets);
 PREP(gatherSupply);
 PREP(getSupplyVehicles);
-PREP(needsAmmo);
 PREP(orderResupply);
 PREP(resupplyActionModifier);
+PREP(serviceDeficit);
 PREP(serviceTick);
 PREP(serviceVehicles);
 PREP(supplyCapabilities);
-PREP(syncDisplay);

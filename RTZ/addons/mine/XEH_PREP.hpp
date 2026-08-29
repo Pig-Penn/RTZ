@@ -10,13 +10,6 @@ PREP(placeActions);
 PREP(placeMine);
 PREP(plantMine);
 
-// Clear mines — the context menu entry, its gate, and the group-level sweep.
-// The sweep runs where the group is local.
-PREP(canDisarm);
-PREP(demine);
-PREP(getDeminers);
-PREP(orderDisarm);
-
 // Spotted-mine markers — a curator-only overlay: one cache refreshed on a slow
 // PFH, drawn by whichever of the 3D / map handlers FUNC(start) has registered.
 PREP(draw3D);

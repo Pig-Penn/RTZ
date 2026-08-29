@@ -17,14 +17,6 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
 ] call CBA_fnc_addSetting;
 
 [
-    QGVAR(clearHidden), "CHECKBOX",
-    [LSTRING(ClearHidden), LSTRING(ClearHidden_Description)],
-    _category,
-    false,
-    true // Global
-] call CBA_fnc_addSetting;
-
-[
     QGVAR(mark3D), "CHECKBOX",
     [LSTRING(Mark3D), LSTRING(Mark3D_Description)],
     _category,
@@ -44,6 +36,6 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     QGVAR(maxDistance), "SLIDER",
     [LSTRING(MaxDistance), LSTRING(MaxDistance_Description)],
     _category,
-    [50, 5000, 1000, 0],
+    [100, 1000, 300, 0],
     false // Local
 ] call CBA_fnc_addSetting;

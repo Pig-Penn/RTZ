@@ -5,7 +5,7 @@
  * man contributes himself, a selected vehicle contributes its crew. Non-object and
  * non-man entries (a hovered group/waypoint can arrive via a ZEN modifier) are
  * discarded. Shared expansion primitive behind FUNC(collectSquads), rtz_attack's
- * getGroups and rtz_mine's getDeminers.
+ * getGroups and rtz_mine's getLayers.
  *
  * Arguments:
  * 0: Selected Objects <ARRAY>

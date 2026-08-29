@@ -16,6 +16,12 @@
         <Key ID="STR_RTZ_Restrict_Enabled_Description">
             <English>Healing, repairing, rearming, refueling and skill changes are only possible while the units they would affect are inside one of the curator's editing zones. Sliders stay visible as unit info. Has no effect until the curator has at least one editing zone.</English>
         </Key>
+        <Key ID="STR_RTZ_Restrict_LambsWaypoints">
+            <English>Hide LAMBS Waypoints</English>
+        </Key>
+        <Key ID="STR_RTZ_Restrict_LambsWaypoints_Description">
+            <English>Removes LAMBS' nine TASK waypoints — Assault, Retreat, Garrison, Patrol, Rush, Hunt, Creep, CQB and Register Artillery — from the waypoint Type list. They run a deprecated LAMBS path that hardcodes most of each task's options, and TASK PATROL additionally deletes every other waypoint the group has. Each one has a LAMBS module that offers the full set of options instead. Takes effect the next time a waypoint dialog is opened; LAMBS' modules are not affected.</English>
+        </Key>
         <Key ID="STR_RTZ_Restrict_MsgOutsideZone">
             <English>Outside an editing zone</English>
         </Key>

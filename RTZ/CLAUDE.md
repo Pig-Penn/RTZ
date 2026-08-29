@@ -27,5 +27,4 @@ See [docs/Architecture.md](docs/Architecture.md) for the component structure, th
 
 ## Environment & Verification
 
-- A Stop hook (`.claude/settings.json`) runs `hemtt check` automatically at the end of every session and blocks with the error output if it fails. Fix any reported errors before finishing.
 - Building/linting uses [HEMTT](https://hemtt.dev) (installed via winget, on PATH): `hemtt check`

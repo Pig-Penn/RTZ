@@ -62,13 +62,14 @@ if (_sys select TAG_DIRTY) then {
 private _camPos   = _ctx select CTX_CAMPOS;
 private _camRight = _ctx select CTX_CAMRIGHT;
 private _camUp    = _ctx select CTX_CAMUP;
+private _aspect   = _ctx select CTX_ASPECT;
 
 private _cache   = _sys select TAG_CACHE;
 private _data    = GVAR(vehicleData);
 private _maxDist = GVAR(vtagMaxDistance);
 private _fadeIn  = _maxDist * 0.85;
 private _size    = GVAR(vtagSize);
-private _zOff    = GVAR(vtagHeight);
+private _liftUI  = GVAR(vtagHeight);   // UI-y, NOT metres — see the lift below
 // A virtual Zeus (VirtualMan_F) is the game master, not a PvP officer — exempt
 // from the own-side render filter (mirrors the selection poll and the gather).
 private _anySide = player isKindOf "VirtualMan_F";
@@ -100,15 +101,6 @@ private _curSide = side player;
 
     private _dist = _camPos distance _base;
     if (_dist > _maxDist) then { continue };
-    // Screen-space vertical lift (see FUNC(drawUnitTags)): along camera-up and
-    // distance-scaled, so the tag clears the icon from a top-down camera too.
-    // ASL, not the AGL FUNC(tagAnchor) returns: a camera-basis offset added to an
-    // AGL position holds HEIGHT ABOVE GROUND rather than altitude, so it rides the
-    // terrain instead of the screen axis. See FUNC(drawTagLine), which takes the
-    // centre in ASL for the same reason and converts per chunk at the draw.
-    private _posASL = (AGLToASL _base) vectorAdd (_camUp vectorMultiply (_zOff * (1 max (_dist / 30))));
-    private _pos    = ASLToAGL _posASL;
-    private _alpha = linearConversion [_fadeIn, _maxDist, _dist, 0.85, 0, true];
 
     _entry params [
         "_mainSep", "_rgbMain", "_tacticSep", "_rgbTactic", "_statusText", "_rgbStatus",
@@ -116,30 +108,43 @@ private _curSide = side player;
     ];
 
     // Screen-space scales (UI units per metre of camera-right / camera-up at this
-    // vehicle's depth) — needed to split the tactic and the status word into their
-    // own coloured draws, and to place and fill the ammo gauges. Exact for any
-    // FOV, no fov-formula guesswork. Only measured when something actually needs
-    // them: with a single centred line and no bars, FUNC(drawTagLine) never looks
-    // at the scale, so the worldToScreen calls would be wasted. The vertical one
-    // is a bar-only cost — this renderer has no de-confliction pass to share it
-    // with, unlike FUNC(drawUnitTags).
-    private _perMetre   = 0;
-    private _perMetreUp = 0;
-    if (_tacticSep != "" || {_statusText != ""} || {_bars isNotEqualTo []}) then {
-        private _scr = worldToScreen _pos;
-        if (_scr isNotEqualTo []) then {
-            private _oneRight = worldToScreen (ASLToAGL (_posASL vectorAdd _camRight));
-            if (_oneRight isNotEqualTo []) then {
-                _perMetre = (_oneRight select 0) - (_scr select 0);
-            };
-            if (_bars isNotEqualTo []) then {
-                private _oneUp = worldToScreen (ASLToAGL (_posASL vectorAdd _camUp));
-                if (_oneUp isNotEqualTo []) then {
-                    _perMetreUp = (_oneUp select 1) - (_scr select 1);
-                };
-            };
-        };
+    // vehicle's depth) — used to split the tactic and the status word into their
+    // own coloured draws, to place, size and fill the ammo gauges, and now to lift
+    // the tag. Exact for any FOV, no fov-formula guesswork.
+    //
+    // Measured at the UNLIFTED anchor and no longer conditional. It used to be
+    // skipped for a plain centred line with no bars, which needs no scale — but
+    // the lift needs one for EVERY vehicle now, so there is nothing left to skip.
+    // The vertical scale is the horizontal one times the frame's screen aspect
+    // (CTX_ASPECT), so the bar-only `worldToScreen` this renderer used to spend on
+    // it is gone: the worst case drops from three probes a vehicle to two.
+    // Measuring before the lift is exact — the lift rides camera-up, which is
+    // perpendicular to the view axis and so leaves the point's DEPTH alone.
+    private _baseASL = AGLToASL _base;
+    private _scr = worldToScreen _base;
+    if (_scr isEqualTo []) then { continue };                  // off-screen
+    private _oneRight = worldToScreen (ASLToAGL (_baseASL vectorAdd _camRight));
+    if (_oneRight isEqualTo []) then { continue };
+    private _perMetre = (_oneRight select 0) - (_scr select 0);
+    if (_perMetre <= 1e-6) then { continue };
+    private _perMetreUp = _perMetre * _aspect;
+
+    // Vertical lift — a SCREEN distance along camera-up, not world +Z (which
+    // projects to nothing from a top-down camera) and not world metres either.
+    // See FUNC(drawUnitTags) for why the old `_zOff * (1 max (_dist / 30))` metres
+    // gave a gap that tracked the Zeus camera's zoom instead of holding still.
+    // ASL, not the AGL FUNC(tagAnchor) returns: a camera-basis offset added to an
+    // AGL position holds HEIGHT ABOVE GROUND rather than altitude, so it rides the
+    // terrain instead of the screen axis. See FUNC(drawTagLine), which takes the
+    // centre in ASL for the same reason and converts per chunk at the draw.
+    private _posASL = _baseASL;
+    if (_liftUI > 0 && {abs _perMetreUp > 1e-6}) then {
+        // `abs`: _perMetreUp is negative (UI-y grows downward), and a positive
+        // setting must always move the tag UP the screen.
+        _posASL = _baseASL vectorAdd (_camUp vectorMultiply (_liftUI / (abs _perMetreUp)));
     };
+
+    private _alpha = linearConversion [_fadeIn, _maxDist, _dist, 0.85, 0, true];
 
     // Shared with the unit tags so both families measure and place the coloured
     // splits identically; a degenerate _perMetre falls back to one centred draw

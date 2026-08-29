@@ -257,7 +257,7 @@
             <English>Tag Height</English>
         </Key>
         <Key ID="STR_RTZ_HUD_TagHeight_Description">
-            <English>Metres above the unit's head.</English>
+            <English>How far above the unit the tag sits on screen, as a fraction of screen height. The gap stays the same at any distance, camera angle and zoom.</English>
         </Key>
         <Key ID="STR_RTZ_HUD_TagMaxDistance">
             <English>Tag Draw Distance</English>
@@ -398,7 +398,7 @@
             <English>Tag Height</English>
         </Key>
         <Key ID="STR_RTZ_HUD_VtagHeight_Description">
-            <English>Metres above the vehicle.</English>
+            <English>How far above the vehicle the tag sits on screen, as a fraction of screen height. The gap stays the same at any distance, camera angle and zoom.</English>
         </Key>
         <Key ID="STR_RTZ_HUD_VtagMaxDistance">
             <English>Tag Draw Distance</English>

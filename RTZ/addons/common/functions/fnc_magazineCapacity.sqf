@@ -8,10 +8,10 @@
  * There is no command that reads a vehicle's ammo ratio back, so every caller
  * that wants one compares the loaded magazines against their configured size.
  * That made this the same lookup, behind the same lazily-filled HashMap, in four
- * places: rtz_control (FUNC(needsReload)), rtz_supply (FUNC(needsAmmo)),
+ * places: rtz_control (FUNC(needsReload)), rtz_supply (FUNC(ammoRatio)),
  * rtz_hud (FUNC(gatherUnitInfo)) and rtz_loot (FUNC(weaponScore)) — three of
  * them carrying their own cache global, and control's header already noting it
- * was "the same test, and the same cache pattern, as EFUNC(supply,needsAmmo)".
+ * was "the same test, and the same cache pattern, as EFUNC(supply,ammoRatio)".
  * One rule written down four times is the bug shape this codebase keeps finding:
  * a refinement to what counts as full (a modded magazine whose `count` is absent
  * or zero, say) would otherwise land in one copy and not the others.

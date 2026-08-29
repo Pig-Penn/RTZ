@@ -20,7 +20,7 @@
  * is in his uniform, so the infantry test below would compare a cannon against
  * rifle magazines and answer nonsense. Turret magazines are compared to their
  * configured round count instead — literally the same test as
- * EFUNC(supply,needsAmmo), and now the same code: both go through
+ * EFUNC(supply,ammoRatio), and now the same code: both go through
  * EFUNC(common,magazineCapacity). A driver in an unarmed vehicle therefore
  * answers false, which is correct: nothing there can be reloaded.
  *

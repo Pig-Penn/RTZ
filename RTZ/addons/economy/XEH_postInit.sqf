@@ -32,7 +32,20 @@ if (!isServer && {!hasInterface}) exitWith {};
 
             if (CBA_missionTime >= _nextIncomeRun) then {
                 private _interval = GVAR(incomeInterval);
-                (_this select 0) set [0, CBA_missionTime + _interval];
+                private _next = CBA_missionTime + _interval;
+                (_this select 0) set [0, _next];
+
+                // The schedule otherwise lives only in this PFH's args, so a
+                // curator's own machine has no way to know when the next payout
+                // lands (see FUNC(incomeClockTick)). The size of the payout does
+                // not need publishing — income and incomeInterval are both GLOBAL
+                // settings, so every machine can work it out; only the phase is
+                // missing, and CBA_missionTime is synchronized. One broadcast per
+                // interval, and publicVariable also reaches JIP clients, so a
+                // curator connecting mid-operation gets a correct readout on its
+                // first Zeus open rather than after the next payout.
+                GVAR(nextIncome) = _next;
+                publicVariable QGVAR(nextIncome);
 
                 private _points = GVAR(income) * _interval / 60;
                 {[_x, _points] call FUNC(addPoints)} forEach allCurators;
@@ -57,4 +70,7 @@ if (!hasInterface) exitWith {};
     {
         (_display displayCtrl _x) ctrlAddEventHandler ["TreeSelChanged", LINKFUNC(placementToast)];
     } forEach IDCS_CREATE_TREES;
+
+    // Countdown to the next income payout in the clock bar's dead mission-countdown slot
+    [_display] call FUNC(startIncomeClock);
 }] call CBA_fnc_addEventHandler;

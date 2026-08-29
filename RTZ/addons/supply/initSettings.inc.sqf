@@ -9,19 +9,6 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     true // Global
 ] call CBA_fnc_addSetting;
 
-// The ONLY switch the supply-lines overlay has — there is no context action, the
-// lines are drawn whenever this is on. Needs no mission restart: the stream
-// machinery is registered unconditionally (see XEH_postInit) and idles while
-// nothing is subscribed, and FUNC(syncDisplay) starts or stops the overlay from
-// CBA_SettingChanged either way this is flipped.
-[
-    QGVAR(enableSupplyDisplay), "CHECKBOX",
-    [LSTRING(SupplyDisplay), LSTRING(SupplyDisplay_Description)],
-    _category,
-    true,
-    true // Global
-] call CBA_fnc_addSetting;
-
 // Read on the curator's client when the targets are gathered, and again on the
 // server to drop targets that drive off mid-service
 [
@@ -32,21 +19,6 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     true // Global
 ] call CBA_fnc_addSetting;
 
-// Read on the server when the order starts
-[
-    QGVAR(serviceDuration), "SLIDER",
-    [LSTRING(ServiceDuration), LSTRING(ServiceDuration_Description)],
-    _category,
-    [1, 300, 30, 0],
-    true // Global
-] call CBA_fnc_addSetting;
-
-// Read on the server when the order starts. Progress is clock-interpolated, so
-// this changes how often it is written, not how fast vehicles are serviced.
-[
-    QGVAR(serviceInterval), "SLIDER",
-    [LSTRING(ServiceInterval), LSTRING(ServiceInterval_Description)],
-    _category,
-    [0.5, 5, 1, 1],
-    true // Global
-] call CBA_fnc_addSetting;
+// GVAR(serviceTimeout) and GVAR(serviceInterval) used to sit here. Both are now
+// SERVICE_TIMEOUT / SERVICE_TICK in script_component.hpp — they tune the monitor,
+// not the service, and the reasoning is written out there.

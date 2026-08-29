@@ -58,3 +58,21 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     true,
     false // Local
 ] call CBA_fnc_addSetting;
+
+// The outgoing half, and deliberately NOT gated on GVAR(enabled) above: that one
+// governs counter-battery detection, is Global and defaults OFF, so sharing it
+// would hide this action on every stock server for a reason that has nothing to do
+// with it.
+//
+// Local, unlike detection's pair of machines: everything up to the moment the guns
+// are told to fire happens on the one curator's client — the condition, the picker,
+// ZEN's dialog — and the order itself crosses the wire as ZEN's own
+// zen_common_fireArtillery target event, which does not consult this setting.
+// Default ON because it replaces a ZEN entry that was on by default.
+[
+    QGVAR(enableFireMission), "CHECKBOX",
+    [LSTRING(EnableFireMission), LSTRING(EnableFireMission_Description)],
+    _category,
+    true,
+    false // Local
+] call CBA_fnc_addSetting;

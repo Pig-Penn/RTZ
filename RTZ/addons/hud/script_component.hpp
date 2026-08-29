@@ -171,6 +171,13 @@
 // they must agree or icons land off their measured slots. All are multiples of
 // the tag's text size so icons scale WITH it (the original draw pass used a fixed
 // 0.7 regardless of Tag Size, leaving large tags with postage-stamp icons).
+//
+// ICON_DRAW and ICON_FOOT are two units for one icon, and they stay two: the draw
+// size is drawIcon3D's own, the footprint is UI-x. Their ratio (20.9) is the
+// engine's conversion between them — drawIcon3D holds an icon at a CONSTANT
+// SCREEN SIZE, so it is a fixed number and not a camera. Deriving one from the
+// other through the measured _perMetre was tried and is wrong: it made the icons
+// grow without bound as the camera pulled back.
 //   ICON_DRAW      drawIcon3D render size
 //   ICON_FOOT      icon's on-screen footprint (UI-x), used to butt icons flush
 //   FLAG_ICON_FOOT the flag icon's, which is NOT one ICON_FOOT: its sheet is a

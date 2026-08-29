@@ -686,12 +686,51 @@ Two separate decisions come out of that. Which glyph: at ~30 px, **ink** decides
 reads or dissolves, and of the four flag textures that exist across every A3 PBO and ZEN, only
 `\a3\ui_f\data\igui\cfg\actions\takeflag_ca.paa` is drawn solid (45% ink; the markers and
 `returnflag_ca` are all hairline outlines at 21–28%). And what size to draw it: `takeflag` is
-also edge-to-edge vertically, so `FLAG_ICON_SCALE` trims its *draw* by the crop ratio (0.875)
-while its layout *slot* stays one `ICON_FOOT` like every other icon's — the chain arithmetic
-keeps one kind of item to place, and the narrower glyph just sits with more air.
+also edge-to-edge vertically, so `FLAG_ICON_SCALE` trims its *draw* by the crop ratio while
+`FLAG_ICON_FOOT` narrows its layout *slot* to match, so the ink — not the sheet's margin — is
+what sits against the words.
 
 Both are cheap to check before you tune anything: decode the sheet, take the alpha bounding box
 and the ink fraction, and compare them against the icons it will sit next to.
+
+### `drawIcon3D`'s icon size is a fixed SCREEN size — do not divide it by `_perMetre`
+
+`ICON_DRAW 23` and `ICON_FOOT 1.1` describe one icon in two units — drawIcon3D's own render size,
+and the UI-x footprint the layout cursor butts things against. Their ratio, 20.9, is the
+**engine's conversion between those units**. It is a constant, not a camera: drawIcon3D holds an
+icon at the same screen size however far away its anchor is, exactly like its `textSize`.
+
+Deriving one from the other through the measured per-metre scale —
+
+```sqf
+// BAD - "the drawn footprint IS the measured slot". It is not. This grows without
+// bound as the camera pulls back: 1/_perMetre is ~21 at 16 m and ~67 at 50 m, so a
+// tag icon that read at arm's length became a white slab over the unit.
+private _iconDraw = (_size * ICON_FOOT) / _perMetre;
+
+// GOOD - a screen measure needs no camera term.
+private _iconDraw = _size * ICON_DRAW;
+```
+
+— was tried, and the disproof is worth keeping because it is a *clean* one. If the icon were
+world-sized, tripling the size argument at a given range would have left the rendered glyph
+alone (the extra size cancelling the extra distance). Instead the glyph tripled. **Rendered size
+tracks the argument and nothing else.** One screenshot at one distance settles it; no
+instrumentation is needed, and the same trick works for any "is this measure screen or world"
+question.
+
+What made the hypothesis attractive, and why none of it was evidence:
+
+- The symptom it was invented for — the flag icon appearing to drift from the words as the Zeus
+  camera zooms out — is real and is still **unexplained**. The placement provably cannot cause
+  it: the icon rides `_camRight`, which is perpendicular to the view axis, so translating along
+  it leaves the point's DEPTH alone and its screen-x displacement is *exactly* the UI offset
+  asked for, at every distance and FOV. "Placement is exact, so it must be the size" is a
+  reasonable next step and a bad conclusion — the disjunction was never shown to be complete.
+- ACE3 does multiply a drawIcon3D size by a camera term
+  (`ace_finger`: `_iconBaseSize = ... * (call ace_common_fnc_getZoom)`), which reads as
+  confirmation until you notice `getZoom` is an FOV term, not a distance one, and that ACE's
+  own `proximityScaling` is a *deliberate* feature rather than a correction.
 
 ### A screen-space offset added to an AGL position rides the terrain
 
@@ -785,13 +824,15 @@ Commands that look like siblings do not share a locality rule, and the failure i
 no error, no log line, and any "done" toast you raise afterwards still fires. `rtz_supply`
 repaired and rearmed vehicles correctly for as long as the component existed while never
 refuelling the ones a headless client or a player owned, because `setDamage` and `setFuel` sit
-on opposite sides of this line:
+on opposite sides of this line. The component has since stopped writing either value — the engine's own
+service actions do — but the trap simply moved rather than went away, because `actionNow` is argument-local too:
 
 | Command | Arguments | Notes |
 |---|---|---|
 | `setDamage` | **Global** | Works from anywhere. ACE3 calls it bare in `fnc_doFullRepair` |
-| `setFuel` | **Local** | Routed by [supply/fnc_applyFuel.sqf](addons/supply/functions/fnc_applyFuel.sqf) |
-| `setVehicleAmmo` | **Local** | Routed by `QGVAR(rearm)` in [supply/XEH_postInit.sqf](addons/supply/XEH_postInit.sqf) |
+| `action` / `actionNow` | **Local** (the acting unit) | Routed by `QGVAR(service)` to each target's owner in [supply/fnc_applyService.sqf](addons/supply/functions/fnc_applyService.sqf). This is now the command `rtz_supply`'s whole correctness rests on |
+| `setFuel` | **Local** | `rtz_supply` no longer calls it — the engine writes fuel. The routing pattern it taught lives on in [supply/fnc_applyService.sqf](addons/supply/functions/fnc_applyService.sqf) |
+| `setVehicleAmmo` | **Local** | Likewise. ZEN routes it, and `setAmmoCargo`/`setFuelCargo`/`setRepairCargo`, the same way |
 | `setHit` / `setHitPointDamage` | **Local** | Unlike `setDamage` — the trap that makes this table necessary |
 | `disableAI` / `enableAI` | **Local** | Also stored per machine and does **not** travel with locality (see below) |
 | `setVelocity`, `setDriveOnPath` | **Local** | |
@@ -975,6 +1016,51 @@ Curator modules are **server-local**, and `addCuratorEditableObjects` needs its 
 argument local — so the grant must run on the server. See
 [fnc_grantCurators.sqf](addons/common/functions/fnc_grantCurators.sqf).
 
+### A scripted module logic is renamed out from under you one frame after creation
+
+`zen_modules_fnc_initModule` fires from the `init` event handler on every
+`zen_modules_moduleBase` descendant, and its server half defers a `joinSilent` by a frame
+that moves the logic out of whatever group created it and into one of BI's
+`bis_fnc_initModules_<category>` groups. **That group reassignment resets the entity's
+name.** A `setName` applied in the creation frame reads back correctly on the very next
+line and is blank one frame later:
+
+```
+2 created:   posASL=[10003,17812,131]  name=<>            grp=L Alpha 1-2
+3 named:     computed=<Target Alpha>   readBack=<Target Alpha>
+4 nextFrame: posASL=[10003,17812,131]  name=<>            grp=L Fire Support
+```
+
+ZEN never meets this because it names its position logics from the Create Target dialog's
+**confirm** callback — seconds after the join. Script that creates a target module directly
+has no dialog in the way and lands inside the window.
+
+The fix is to name it again once the rehome has landed, and the rehome is observable:
+`group _logic` stops being the group that created it. Fold that into the same bounded wait
+the registration round trip already needs (`zen_position_logics_fnc_add` is a server hand-off
+from a client), because neither one implies the other has run —
+[fnc_selectFireMission.sqf](addons/battery/functions/fnc_selectFireMission.sqf). `add`'s own
+`CBA_fnc_globalEventJIP` entry is *not* affected by the reset, so JIP players get the right
+name and only the re-assert needs to be a plain `globalEvent`.
+
+The position is **not** disturbed — `createUnit`'s position argument is honoured exactly,
+through creation, the rehome and the dialog. Do not go looking for a placement bug: the
+symptom that sends you there is an unnamed target sitting next to a bogus distance readout,
+and the distance has its own cause (see below).
+
+### A module logic's POSITION is an input to `zen_modules_fnc_gui_fireMission`, not just its attachment
+
+That function reads two things off the logic before deleting it on its third line — the
+gun, through `attachedTo`, and a **position**, through `getPosASL`. The position is what the
+target combo measures every "x.x km" from and what its Nearest/Farthest modes sort by.
+Creating the carrier logic at `[0, 0, 0]` — the idiom for a throwaway logic everywhere else,
+including ZEN's own `fnc_createZeus` — puts that read on the map's south-west corner, and
+every target in the list is then reported tens of kilometres from a gun standing beside it.
+
+Create it **at** the anchor and attach afterwards; that is the same *position first, then
+attach* ordering [fnc_rcRebuild.sqf](addons/control/functions/fnc_rcRebuild.sqf) already
+documents, and it also removes any dependence on when the engine applies the attachment.
+
 ### Remote-control state cannot be read remotely
 
 `remoteControlled` and `isRemoteControlling` are locality-bound: they only answer correctly on
@@ -1135,3 +1221,5 @@ when someone looks.
 | An error naming a line *inside* a stock `\A3\Functions_F\` file, on a call your own code makes | a BIS function handed `[obj]` when it wants `obj` bare — a getter/setter pair need not agree (§3) |
 | A unit released from Zeus remote control turns toward enemies but never fires | engine bug T179189 — only recreating the unit clears it; every cheaper remedy fails (§3) |
 | A replaced/recreated object loses some behaviour but keeps most of it | CBA XEH re-attaches on `createUnit`; hand-added `addEventHandler` calls and registry references do not (§3) |
+| A scripted module logic is named correctly, then blank one frame later | `initModule`'s deferred `joinSilent` rehomes it and the group change resets the name — name it again after the rehome (§5) |
+| Every entry in ZEN's target combo reports a distance of tens of km | the carrier module logic was created at `[0, 0, 0]`; `gui_fireMission` measures from its position, not just its `attachedTo` (§5) |

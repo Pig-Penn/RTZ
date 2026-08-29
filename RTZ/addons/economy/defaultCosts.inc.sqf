@@ -7,6 +7,7 @@
 // that folder and including it below; later entries win on duplicate classes.
 private _costs = [];
 
+// West
 #include "defaultCosts\west\nato.inc.sqf"
 #include "defaultCosts\west\natopacific.inc.sqf"
 #include "defaultCosts\west\natowoodland.inc.sqf"
@@ -16,14 +17,25 @@ private _costs = [];
 #include "defaultCosts\west\marines.inc.sqf"
 #include "defaultCosts\west\msf.inc.sqf"
 #include "defaultCosts\west\gendarmerie.inc.sqf"
+
+// East
 #include "defaultCosts\east\csat.inc.sqf"
 #include "defaultCosts\east\viper.inc.sqf"
+
+// Guerilla
 #include "defaultCosts\guerilla\aaf.inc.sqf"
 #include "defaultCosts\guerilla\fia.inc.sqf"
 #include "defaultCosts\guerilla\insurgents.inc.sqf"
 #include "defaultCosts\guerilla\looters.inc.sqf"
 #include "defaultCosts\guerilla\syndikat.inc.sqf"
 #include "defaultCosts\guerilla\tura.inc.sqf"
+
+// Civilian
+#include "defaultCosts\civilian\civilian.inc.sqf"
+#include "defaultCosts\civilian\idap.inc.sqf"
+#include "defaultCosts\civilian\gm.inc.sqf"
+#include "defaultCosts\civilian\sog.inc.sqf"
+#include "defaultCosts\civilian\animals.inc.sqf"
 
 // Project Anselm, whose two nations each field a Cold War and a 2035 line-up
 #include "defaultCosts\west\sac.inc.sqf"

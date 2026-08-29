@@ -24,10 +24,10 @@
 
 params ["_objects"];
 
-if (!GVAR(enabled)) exitWith {false};
+if (!GVAR(enabled)) exitWith { false };
 
 private _supplies = [_objects] call FUNC(getSupplyVehicles);
-if (_supplies isEqualTo []) exitWith {false};
+if (_supplies isEqualTo []) exitWith { false };
 
 // One serviceable vehicle anywhere in the selection is enough to offer the order
 (_supplies findIf {

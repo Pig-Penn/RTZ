@@ -2,7 +2,6 @@
 
 // Orders are executed where the ordered unit is local
 [QGVAR(place), LINKFUNC(placeMine)] call CBA_fnc_addEventHandler;
-[QGVAR(disarm), LINKFUNC(demine)] call CBA_fnc_addEventHandler;
 
 if (!hasInterface) exitWith {};
 

@@ -125,15 +125,43 @@ if (!hasInterface) exitWith {};
     private _viewDist = getObjectViewDistance select 0;
     if (_viewDist <= 0) then { _viewDist = viewDistance };
 
+    // Screen aspect between the two camera axes (CTX_ASPECT): UI-y per metre of
+    // camera-up over UI-x per metre of camera-right. Both axes are perpendicular
+    // to the view direction, so one metre along either subtends the SAME angle at
+    // the same depth — the ratio is the projection's fy/fx and is therefore the
+    // same number at every depth, screen position, camera pitch and zoom. Which
+    // is what makes it a per-frame measurement: a renderer that already measured
+    // its horizontal scale for an entity multiplies by this instead of spending a
+    // second `worldToScreen` per entity on the vertical one. Three probes a frame
+    // replace one per drawn entity, and a curator can have thirty-odd tagged.
+    //
+    // Probed 50 m ahead so all three points sit near the centre of the screen and
+    // project at any FOV. Fed to worldToScreen as the AGL positionCameraToWorld
+    // hands back, NOT differenced in world space first — the ASL rule above is
+    // about building world VECTORS out of AGL probes; these three are differenced
+    // in SCREEN space, where each point is exactly the position the engine names.
+    private _pOrigin = worldToScreen (positionCameraToWorld [0, 0, 50]);
+    private _pRight  = worldToScreen (positionCameraToWorld [1, 0, 50]);
+    private _pUp     = worldToScreen (positionCameraToWorld [0, 1, 50]);
+    private _aspect  = 0;   // "could not measure" — consumers test before dividing
+    if (_pOrigin isNotEqualTo [] && {_pRight isNotEqualTo []} && {_pUp isNotEqualTo []}) then {
+        private _dx = (_pRight select 0) - (_pOrigin select 0);
+        if (_dx > 1e-6) then {
+            // Negative: UI-y grows downward, camera-up does not.
+            _aspect = ((_pUp select 1) - (_pOrigin select 1)) / _dx;
+        };
+    };
+
     private _ctx = [
         _camPos,
         (AGLToASL positionCameraToWorld [1, 0, 0]) vectorDiff _camPosASL,
         (AGLToASL positionCameraToWorld [0, 1, 0]) vectorDiff _camPosASL,
         getMousePosition,
         CBA_missionTime,
-        _viewDist
+        _viewDist,
+        _aspect
     ];
-    // The display is deliberately NOT a seventh element. RENDER_UI renderers get
+    // The display is deliberately NOT an eighth element. RENDER_UI renderers get
     // it as their whole argument above; RENDER_WORLD renderers never read it, so
     // carrying it here was one array slot built per frame for nobody.
 

@@ -1,6 +1,17 @@
 #include "script_component.hpp"
 
-// Everything here is setting-gated, so it is deferred to CBA_settingsInitialized.
+// Receiver for FUNC(discardTarget), registered on EVERY machine and outside the
+// settings gate below. Both are deliberate: the fire mission target can end up local
+// to a machine with no curator and no interface on it (initModule rehomes module
+// logics from the server), and the counter-battery setting this file otherwise waits
+// on has nothing to do with the fire mission action, which carries its own.
+[QGVAR(discardTarget), {
+    params ["_target"];
+
+    deleteVehicle _target;
+}] call CBA_fnc_addEventHandler;
+
+// Everything below here is setting-gated, so it is deferred to CBA_settingsInitialized.
 // Reading a setting straight from postInit is a race: a CLIENT's values arrive from
 // the server a frame or more later, so a bare read is nil — and `if (nil) then`
 // aborts the whole postInit silently (Gotchas §2/§4) — while a defensive default

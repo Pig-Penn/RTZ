@@ -22,41 +22,26 @@
         <Key ID="STR_RTZ_Supply_Enabled_Description">
             <English>Enable the Resupply Vehicles Zeus context menu action.</English>
         </Key>
-        <Key ID="STR_RTZ_Supply_LabelServicing">
-            <English>Servicing</English>
-        </Key>
         <Key ID="STR_RTZ_Supply_MsgNothingToService">
             <English>Nothing left to resupply</English>
         </Key>
         <Key ID="STR_RTZ_Supply_MsgResupplyComplete">
-            <English>Resupply complete</English>
+            <English>Resupplied</English>
         </Key>
         <Key ID="STR_RTZ_Supply_MsgResupplying">
             <English>Resupplying</English>
         </Key>
-        <Key ID="STR_RTZ_Supply_ServiceDuration">
-            <English>Service Duration</English>
+        <Key ID="STR_RTZ_Supply_MsgServiceIncomplete">
+            <English>Resupply timed out, still unfinished</English>
         </Key>
-        <Key ID="STR_RTZ_Supply_ServiceDuration_Description">
-            <English>Time in seconds a supply vehicle takes to fully repair, refuel and rearm the vehicles around it.</English>
-        </Key>
-        <Key ID="STR_RTZ_Supply_ServiceInterval">
-            <English>Service Update Interval</English>
-        </Key>
-        <Key ID="STR_RTZ_Supply_ServiceInterval_Description">
-            <English>Seconds between service progress updates. Only changes how often repair and fuel are written — total service time is set by the duration setting. Applies to newly started orders.</English>
+        <Key ID="STR_RTZ_Supply_MsgSupplyEmpty">
+            <English>Supply Vehicle Depleted</English>
         </Key>
         <Key ID="STR_RTZ_Supply_ServiceRadius">
             <English>Service Radius</English>
         </Key>
         <Key ID="STR_RTZ_Supply_ServiceRadius_Description">
-            <English>Distance in meters within which a supply vehicle can service other vehicles. Vehicles that leave this range mid-service keep whatever they were given.</English>
-        </Key>
-        <Key ID="STR_RTZ_Supply_SupplyDisplay">
-            <English>Supply Lines Overlay</English>
-        </Key>
-        <Key ID="STR_RTZ_Supply_SupplyDisplay_Description">
-            <English>Draw a line from each selected supply vehicle to every vehicle it is currently servicing, filling as the service progresses. Always shown while enabled — there is no context menu toggle.</English>
+            <English>Distance in meters around a supply vehicle that one Resupply order picks up. This is a scoping choice, not a hardware limit: vehicles that leave the range mid-service still keep, and finish, whatever they were given.</English>
         </Key>
     </Package>
 </Project>

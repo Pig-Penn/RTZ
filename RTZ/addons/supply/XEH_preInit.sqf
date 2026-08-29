@@ -6,13 +6,16 @@ PREP_RECOMPILE_START;
 #include "XEH_PREP.hpp"
 PREP_RECOMPILE_END;
 
-// Config lookups are the expensive part of deciding what a vehicle can give, and
-// the answer only depends on the class name. Filled lazily on first use, on
-// every machine that either opens the context menu (curator clients) or runs the
-// service loop (server). What it still NEEDS is the other half of that question,
-// and its magazine-capacity cache is shared rather than kept here — rtz_control
-// and rtz_hud ask it too, so it lives in EFUNC(common,magazineCapacity).
-GVAR(capabilities) = createHashMap;   // vehicle class -> [repair, fuel, ammo]
+// There is deliberately no capabilities cache here any more. What a vehicle can
+// hand out used to be read from its transport* config entries, which depend only
+// on the class name and so were worth caching; FUNC(supplyCapabilities) now reads
+// getRepairCargo / getFuelCargo / getAmmoCargo instead, which are per OBJECT and
+// fall as the truck is used. Caching that by class would have been wrong, not
+// merely stale — it is the very quantity the depletion model is built on.
+//
+// The magazine-capacity cache the rearm test needs is shared rather than kept
+// here: rtz_control and rtz_hud ask the same question, so it lives in
+// EFUNC(common,magazineCapacity).
 
 #include "initSettings.inc.sqf"
 

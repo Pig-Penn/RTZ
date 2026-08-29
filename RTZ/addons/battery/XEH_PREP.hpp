@@ -27,3 +27,23 @@ PREP(stopDisplay);
 // CURATOR CLIENT — the ZEN context action's two halves.
 PREP(displayActionModifier);
 PREP(toggleDisplay);
+
+// CURATOR CLIENT — the outgoing fire mission action. FUNC(fireMissionGuns) is its
+// own function rather than inlined because both halves need the same answer at
+// different moments: the condition to decide whether the entry appears at all, the
+// statement to decide the anchor and which guns the picker draws lines from.
+PREP(fireMissionGuns);
+PREP(canFireMission);
+PREP(selectFireMission);
+
+// CURATOR CLIENT — the two ZEN overrides the action installs, each resolved from a
+// `function` config entry rather than called by RTZ (CfgVehicles.hpp and gui.hpp).
+// Both delegate to ZEN once they have done their one piece of work, so a curator who
+// reaches either the Create Target module or the fire mission dialog by ZEN's own
+// route sees stock behaviour.
+PREP(createTarget);
+PREP(guiFireMission);
+
+// ANY MACHINE — the target cleanup, PREP'd everywhere because the target logic can
+// end up local to a machine that has no curator on it.
+PREP(discardTarget);
