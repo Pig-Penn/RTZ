@@ -26,19 +26,19 @@
             <English>Hull Number - First Digit</English>
         </Key>
         <Key ID="STR_RTZ_Zubr_atrb_HullNumber1_tooltip">
-            <English>First digit of the hull number painted on the craft.</English>
+            <English>First digit of the hull number painted on the craft. Only the digits 0, 2, 3, 5 and 7 are painted for this craft; anything else leaves the selection unchanged.</English>
         </Key>
         <Key ID="STR_RTZ_Zubr_atrb_HullNumber2">
             <English>Hull Number - Second Digit</English>
         </Key>
         <Key ID="STR_RTZ_Zubr_atrb_HullNumber2_tooltip">
-            <English>Second digit of the hull number painted on the craft.</English>
+            <English>Second digit of the hull number painted on the craft. Only the digits 0, 2, 3, 5 and 7 are painted for this craft; anything else leaves the selection unchanged.</English>
         </Key>
         <Key ID="STR_RTZ_Zubr_atrb_HullNumber3">
             <English>Hull Number - Third Digit</English>
         </Key>
         <Key ID="STR_RTZ_Zubr_atrb_HullNumber3_tooltip">
-            <English>Third digit of the hull number painted on the craft.</English>
+            <English>Third digit of the hull number painted on the craft. Only the digits 0, 2, 3, 5 and 7 are painted for this craft; anything else leaves the selection unchanged.</English>
         </Key>
         <Key ID="STR_RTZ_Zubr_atrb_RearRamp">
             <English>Open Rear Ramp</English>

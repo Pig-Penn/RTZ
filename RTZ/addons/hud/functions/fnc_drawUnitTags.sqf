@@ -196,8 +196,10 @@ private _placed = [];                                              // [xCentre, 
     while {_bumped && {_pass < DECONFLICT_MAX_PASSES}} do {
         _bumped = false;
         {
-            // ALIAS-FREE: the outer forEach's _x is already read into _rec above,
-            // so rebinding it here is safe (docs/Knowledge Base/Gotchas.md §2).
+            // Rebinding _x here is safe twice over: the inner block binds its own
+            // in its own scope (docs/Knowledge Base/Gotchas.md §2), and the outer
+            // one was read into _rec above regardless. This used to cite the
+            // second reason alone, on the belief that the first was not true.
             _x params ["_pXc", "_pHw", "_pY"];
             if ((abs (_xC - _pXc) < (_hw + _pHw)) && {abs (_finalY - _pY) < _lineH}) then {
                 private _clear = _pY + _lineH;

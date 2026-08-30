@@ -461,6 +461,41 @@ per-object variables without a hand-maintained list that goes stale. It cannot t
 whether a variable was originally set public, so a generic sweep has to pick one and say
 so.
 
+#### …so never store a MACHINE-LOCAL HANDLE in an object variable
+
+That sweep is generic on purpose, and the price of generic is that it cannot tell a fact
+about the unit from a handle into this machine's state. An event-handler index, a PFH id,
+a display or control reference: all of them are numbers or references that mean something
+only where they were created, and `rcRebuild` copies every one of them onto the replacement
+**and broadcasts it public**. The replacement then carries a handle to something that does
+not exist, everywhere.
+
+The bug that follows is not the dead handle — it is the *guard* built on it:
+
+```sqf
+// BAD - the marker rides the rebuild, the handler does not, and this latches shut
+if (!isNil {_unit getVariable QGVAR(myEH)}) exitWith {};
+_unit setVariable [QGVAR(myEH), _unit addEventHandler ["AnimDone", {...}]];
+
+// GOOD - machine-local state in a machine-local map, keyed by netId
+if (netId _unit in GVAR(myEHs)) exitWith {};
+GVAR(myEHs) set [netId _unit, _unit addEventHandler ["AnimDone", {...}]];
+```
+
+Shipped in `rtz_orders`' gear animation. A curator opening a man's inventory installs an
+`AnimDone` handler on him and recorded its index on the unit; if any curator then took and
+released remote control of that same man, the rebuilt unit arrived with a non-nil marker
+and no handler, and the guard above skipped installation **for the rest of the mission**,
+on every machine. Nothing errored — the animation simply never played again for that man.
+
+The symptom generalises: a rebuilt object that has lost one behaviour and kept everything
+else. Note that the fix is not to clear the stale index on the replacement — after a
+rebuild that number may name a completely different mod's handler on the new object.
+
+Values that are genuinely *about the unit* — a timestamp, a claim, a loadout flag — are
+exactly what the sweep is for and should stay on the object. The test is whether the value
+would still be true if the unit woke up on another machine.
+
 ### `BIS_fnc_getPitchBank` takes the object bare; its setter takes an array
 
 The mirror image of the entry above, and it costs the same debugging. These two read as a
@@ -948,6 +983,22 @@ Also worth keeping straight:
 `publicVariable` broadcasts but does **not** reach players who join later. `SETPVAR` in
 [script_macros.hpp:22-23](addons/main/script_macros.hpp#L22-L23) is the public-flag helper.
 
+**The proof is CBA's own JIP stack**, which is worth knowing because the Biki cannot be
+fetched (§4, above) and because a comment in this repo once asserted the opposite and was
+believed. `CBA_fnc_globalEventJIP` does not use `publicVariable` to reach late joiners.
+It creates a **networked namespace** (`true call CBA_fnc_createNamespace`), publishes that
+*object reference* once, and then writes every JIP entry onto it with
+`setVariable [_jipID, _value, true]` — the object public flag
+([CBA_A3/addons/events/fnc_globalEventJIP.sqf](https://github.com/CBATeam/CBA_A3/blob/master/addons/events/fnc_globalEventJIP.sqf)).
+If `publicVariable` reached JIP clients, that whole apparatus would be one line.
+
+So a missionNamespace global published on a schedule leaves a late joiner reading whatever
+its `preInit` default was, indefinitely. That shipped in `rtz_economy`: the income clock
+publishes the next payout time once per interval, and a curator connecting mid-operation
+read `-1` and saw a blank countdown until the next payout came round — the one thing the
+display exists to say. It now goes out as a `CBA_fnc_globalEventJIP` under a **stable JIP
+id**, so each payout overwrites the last rather than stacking one entry per interval.
+
 ### CBA settings are not ready in `postInit`
 
 A client receives its synced setting values a frame or more *after* `postInit`. Reading one
@@ -1221,5 +1272,6 @@ when someone looks.
 | An error naming a line *inside* a stock `\A3\Functions_F\` file, on a call your own code makes | a BIS function handed `[obj]` when it wants `obj` bare — a getter/setter pair need not agree (§3) |
 | A unit released from Zeus remote control turns toward enemies but never fires | engine bug T179189 — only recreating the unit clears it; every cheaper remedy fails (§3) |
 | A replaced/recreated object loses some behaviour but keeps most of it | CBA XEH re-attaches on `createUnit`; hand-added `addEventHandler` calls and registry references do not (§3) |
+| A behaviour stops working on one unit, permanently, after somebody remote-controlled it | an event-handler index was kept in an object variable; `rcRebuild`'s `allVariables` sweep carried it to the replacement and its "already installed" guard latched shut (§3) |
 | A scripted module logic is named correctly, then blank one frame later | `initModule`'s deferred `joinSilent` rehomes it and the group change resets the name — name it again after the rehome (§5) |
 | Every entry in ZEN's target combo reports a distance of tens of km | the carrier module logic was created at `[0, 0, 0]`; `gui_fireMission` measures from its position, not just its `attachedTo` (§5) |

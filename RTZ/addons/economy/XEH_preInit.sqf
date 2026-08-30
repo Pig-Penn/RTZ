@@ -14,10 +14,10 @@ GVAR(toastToken) = 0;
 GVAR(categories) = createHashMap;
 
 // CBA_missionTime of the next income payout, published by the server on every
-// payout (see XEH_postInit) so a curator's own machine can count down to it.
-// -1 means nothing is scheduled yet. Defined here rather than left nil because
-// the income clock reads it every tick and a nil read aborts the whole
-// enclosing script (docs/Knowledge Base/Gotchas.md §2)
+// payout as QGVAR(nextIncomeAt) (see XEH_postInit) so a curator's own machine can
+// count down to it. -1 means nothing is scheduled yet. Defined here rather than
+// left nil because the income clock reads it every tick and a nil read aborts the
+// whole enclosing script (docs/Knowledge Base/Gotchas.md §2)
 GVAR(nextIncome) = -1;
 
 // Base cost in points, indexed by cost category

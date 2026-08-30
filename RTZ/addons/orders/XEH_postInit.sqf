@@ -52,10 +52,26 @@
 
     if (!alive _actor) exitWith {};
 
-    // Re-opening the same man's gear must not stack a second handler on him.
-    if (!isNil {_actor getVariable QGVAR(gearAnimEH)}) exitWith {};
+    private _key = netId _actor;
 
-    _actor setVariable [QGVAR(gearAnimEH), _actor addEventHandler ["AnimDone", {
+    // Re-opening the same man's gear must not stack a second handler on him.
+    //
+    // The record is GVAR(gearAnimEHs), NOT a variable on the unit: a handler index
+    // is machine-local state, and EFUNC(control,rcRebuild)'s allVariables sweep
+    // would copy one to a rebuilt unit that has no such handler and broadcast it,
+    // latching this guard shut forever. Full reasoning in XEH_preInit.
+    if (_key in GVAR(gearAnimEHs)) exitWith {};
+
+    // Entries for men deleted mid-session: the watcher sends QGVAR(gearAnimStop)
+    // even for a dead actor, but not for one already deleted — CBA_fnc_targetEvent
+    // has nowhere to deliver that. Swept here rather than on a timer because this
+    // event fires a handful of times an operation and the map is a few entries at
+    // its largest, so the walk is cheaper than anything that would watch for it.
+    {
+        if (isNull (objectFromNetId _x)) then { GVAR(gearAnimEHs) deleteAt _x };
+    } forEach keys GVAR(gearAnimEHs);
+
+    GVAR(gearAnimEHs) set [_key, _actor addEventHandler ["AnimDone", {
         params ["_actor"];
         [_actor] call FUNC(playGearAnim);
     }]];
@@ -70,11 +86,15 @@
 
     // Dropped even on a dead man: the handler outlives him, and the watcher that
     // sends this is the only thing that will ever come to take it off.
-    private _eh = _actor getVariable [QGVAR(gearAnimEH), -1];
-    if (_eh > -1) then {
+    //
+    // deleteAt returns the removed value, so the lookup and the removal are one
+    // read. nil back means there was nothing installed HERE — which is the normal
+    // answer on every machine but the man's owner, since the handler was only ever
+    // added there.
+    private _eh = GVAR(gearAnimEHs) deleteAt (netId _actor);
+    if (!isNil "_eh") then {
         _actor removeEventHandler ["AnimDone", _eh];
     };
 
-    _actor setVariable [QGVAR(gearAnimEH), nil];
     _actor setVariable [QGVAR(gearAnimLast), nil];
 }] call CBA_fnc_addEventHandler;

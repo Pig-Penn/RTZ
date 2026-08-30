@@ -1,5 +1,5 @@
 """Pull the four weapons, two magazines and three ammo types the Zubr needs out of
-CUP Weapons and rebase them onto rtz_csat. Every parent class they inherit from is
+CUP Weapons and rebase them onto rtz_zubr. Every parent class they inherit from is
 vanilla Arma, so nothing here drags in a CUP dependency."""
 import os, re
 

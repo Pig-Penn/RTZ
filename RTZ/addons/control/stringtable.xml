@@ -70,6 +70,12 @@
         <Key ID="STR_RTZ_Control_ReloadSquad_Description">
             <English>Add a context menu action ordering selected units to reload their current weapon. The action only appears while a selected squad is carrying a magazine better than the one in the weapon.</English>
         </Key>
+        <Key ID="STR_RTZ_Control_ResetSelected">
+            <English>Reset Selected</English>
+        </Key>
+        <Key ID="STR_RTZ_Control_ResetSelected_Description">
+            <English>Reset the selected AI groups: clear their waypoints, drop the task they are running and return them to a clean slate. Identical to the Reset entry in the context menu, on a key. Groups with no AI members are skipped, and the key passes through untouched when nothing resettable is selected.</English>
+        </Key>
         <Key ID="STR_RTZ_Control_SquadHide">
             <English>Simulation Control</English>
         </Key>

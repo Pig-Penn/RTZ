@@ -2,7 +2,7 @@
 <Project name="RTZ">
     <Package name="Common">
         <Key ID="STR_RTZ_Common_CleanContextMenu">
-            <English>Clean Context Menu</English>
+            <English>Prune Context Menu</English>
         </Key>
         <Key ID="STR_RTZ_Common_CleanContextMenu_Description">
             <English>Remove cluttered entries from the context menu.</English>
@@ -11,7 +11,7 @@
             <English>Common</English>
         </Key>
         <Key ID="STR_RTZ_Common_ErrandOwnershipLost">
-            <English>Order cancelled - the unit is no longer controlled by this machine.</English>
+            <English>Order cancelled; the unit is no longer controlled by this machine.</English>
         </Key>
         <Key ID="STR_RTZ_Common_PreviewHint">
             <English>LMB place  |  ESC cancel</English>

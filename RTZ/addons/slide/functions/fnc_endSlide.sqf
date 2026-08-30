@@ -96,4 +96,8 @@ if (!_reroute || {_remote isEqualTo []}) exitWith {};
 // The whole record travels, not just the stranded half: the receiver re-runs this
 // same function and picks out whatever IS local to it, so there is no second
 // teardown implementation to keep in step with this one.
-[QGVAR(release), [_record, false], _remote] call CBA_fnc_targetEvent;
+//
+// Only the record travels. The handler hardcodes _reroute false rather than
+// reading it from here — see the note at the QGVAR(release) receiver — so sending
+// the flag as well would put the rule in two places and let them disagree.
+[QGVAR(release), [_record], _remote] call CBA_fnc_targetEvent;

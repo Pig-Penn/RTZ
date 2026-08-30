@@ -57,11 +57,16 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     true
 ] call CBA_fnc_addSetting;
 
+// Floor is TICK_INTERVAL, not 0, so the slider cannot offer a spacing the payout
+// loop is unable to honour — at 0 every tick is due the moment the last one landed.
+// The floor is ENFORCED at the read (INCOME_INTERVAL, script_component.hpp) rather
+// than here: a server CBA config can set a value off the slider entirely, so this
+// range is honesty for the person moving it, not the guard.
 [
     QGVAR(incomeInterval), "SLIDER",
     [LSTRING(IncomeInterval), LSTRING(IncomeInterval_Description)],
     _category,
-    [0, 600, 60, 0],
+    [TICK_INTERVAL, 600, 60, 0],
     true
 ] call CBA_fnc_addSetting;
 

@@ -119,6 +119,12 @@ private _statusCol = switch (true) do {
     case (FLAG_FLEEING in _flags):  { COL_BAD };
     case (FLAG_DAMAGED in _flags):  { COL_BAD };
     case (FLAG_LOW_FUEL in _flags): { COL_WARN };
+    // Reached only when _flags is EMPTY — the three cases above cover every
+    // token FUNC(gatherVehicleInfo) can push — which is exactly when the LAMBS
+    // task is what the status word shows. A crew that reports itself routed
+    // reads the same red as one the engine flagged: the flag is server-local
+    // only, so on a Headless Client crew the task is the only route there is.
+    case (_task in TASKS_FLEEING):  { COL_BAD };
     default                         { _col };
 };
 

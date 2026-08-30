@@ -22,6 +22,17 @@
 // Income tick and new curator module detection interval (seconds)
 #define TICK_INTERVAL 5
 
+// GVAR(incomeInterval) as the payout scheduler and the clock may use it. The
+// setting's slider bottoms out at 0, and a server CBA config can set a value
+// off the slider entirely, so the raw read is not safe to schedule from: at 0
+// the next payout is due the instant the last one landed, which turns the
+// server's income PFH into a publicVariable broadcast plus a payout of exactly
+// zero points to every curator every TICK_INTERVAL, for the rest of a
+// multi-hour operation. Nothing about that is visible in game — the clock just
+// reads 00 forever. Floored at the tick that drives it, which is the fastest
+// cadence the schedule can actually be honoured at.
+#define INCOME_INTERVAL (GVAR(incomeInterval) max TICK_INTERVAL)
+
 // RscDisplayCurator create trees whose leaves are single CfgVehicles classes.
 // The group, module and marker trees have no such class and stay unhooked
 #define IDC_CREATE_UNITS_WEST 270
@@ -73,17 +84,22 @@
 // control's own colour and sits quietly with the rest of the clock.
 #define COLOR_INCOME [0.40, 1.00, 0.40, 1]
 
-// Modules RTZ replaces with its own systems, gated behind GVAR(cleanModuleTree)
-// in fnc_registerCosts. Lowercase: matched against toLowerANSI class names.
+// Modules a curator does not get, gated behind GVAR(cleanModuleTree) in
+// fnc_registerCosts. Lowercase: matched against toLowerANSI class names.
 // Reinforcements: ZEN's Create LZ, Create RP and Spawn Reinforcements.
 // Fire support: ZEN's CAS and Atomic Bomb modules, plus vanilla's Howitzer,
 // Mortar and Rocket — all superseded by the airstrike and battery components.
 // Objects: ZEN's Make Invincible.
+// Ambient Flyby: ZEN's, and the one entry here no RTZ system replaces. The
+// engine bills placement through the cost table this component builds, and a
+// module logic has no cost — so the 1-3 crewed aircraft the flyby spawns
+// server-side are never charged to anyone.
 #define HIDDEN_MODULES [ \
     "zen_modules_modulecreatelz", "zen_modules_modulecreaterp", "zen_modules_modulespawnreinforcements", \
     "zen_modules_modulecasgun", "zen_modules_modulecasmissile", "zen_modules_modulecasgunmissile", "zen_modules_modulecasbomb", \
     "moduleordnancehowitzer_f", "moduleordnancemortar_f", "moduleordnancerocket_f", \
-    "zen_modules_modulemakeinvincible" \
+    "zen_modules_modulemakeinvincible", \
+    "zen_modules_moduleambientflyby" \
 ]
 
 // Cost category indices, order matches the base cost array in fnc_registerCosts

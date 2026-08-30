@@ -24,5 +24,6 @@ GVAR(weaponMagazines) = createHashMap;  // weapon class -> compatible magazines
 GVAR(rcClaims) = createHashMap;
 
 #include "initSettings.inc.sqf"
+#include "initKeybinds.inc.sqf"
 
 ADDON = true;

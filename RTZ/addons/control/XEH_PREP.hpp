@@ -17,6 +17,7 @@ PREP(reloadSquad);
 PREP(reloadSquadApply);
 PREP(reset);
 PREP(resetApply);
+PREP(resetSelected);
 PREP(setDismount);
 PREP(squadHideActionModifier);
 PREP(squadHideApply);

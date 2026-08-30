@@ -14,7 +14,7 @@
             <English>Assembling</English>
         </Key>
         <Key ID="STR_RTZ_Assemble_BuildInPlace">
-            <English>Crew couldn't reach the spot - building in place</English>
+            <English>Building in place</English>
         </Key>
         <Key ID="STR_RTZ_Assemble_Disassembling">
             <English>Disassembling</English>
@@ -38,7 +38,7 @@
             <English>Assemble and disassemble static weapons instantly: skip the walk to the picked spot and the kneel-and-assemble animation, spawning (or packing) the weapon at once. Drones are already instant either way.</English>
         </Key>
         <Key ID="STR_RTZ_Assemble_PackInPlace">
-            <English>Assistant couldn't reach - packing in place</English>
+            <English>Packing in place</English>
         </Key>
         <Key ID="STR_RTZ_Assemble_Packed">
             <English>Packed</English>

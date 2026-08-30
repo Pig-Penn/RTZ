@@ -106,6 +106,9 @@ private _pairs = [
     ["Hide (group)",                "Hide"],           // group hide's default call (fnc_tacticsHide, no _action)
     ["Hide (holding)",              "Hide"],           // group hide called from fnc_tacticsHold
     ["Leader Hide",                 "Hide"],              // leader's own marker while "Hiding" runs
+    // These three KEYS are also listed in TASKS_FLEEING (script_component.hpp),
+    // which is what paints the status red — rename the right side freely, but a
+    // LAMBS change to a left side has to be made in both places.
     ["Fleeing",                     "Flee"],                     // routed on foot (engine `fleeing`, fnc_doFleeing)
     ["Fleeing (vehicle)",           "Flee"],           // routed while mounted in a vehicle
     ["Fleeing (enemy near)",        "Flee"],        // routed with the enemy close or in line of sight

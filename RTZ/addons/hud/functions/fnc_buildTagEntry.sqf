@@ -117,7 +117,9 @@ private _statusToken = switch (true) do {
 };
 private _status = _labels getOrDefault [_statusToken, _statusToken];
 
-private _urgent = _downed || { FLAG_FLEEING in _flags };
+// _statusToken, not _flags: the task only earns the red when it is the word
+// actually being drawn, and the switch above has already picked that winner.
+private _urgent = _downed || { FLAG_FLEEING in _flags } || { _statusToken in TASKS_FLEEING };
 private _col = COL_NORMAL;
 private _statusCol = [_col, COL_BAD] select _urgent;
 

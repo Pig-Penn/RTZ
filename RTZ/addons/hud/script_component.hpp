@@ -276,6 +276,19 @@
 // (FUNC(loadTagLabels) for the tags, LLSTRING directly for the dialog).
 #define STATUS_DOWN "DOWN"
 
+// ── LAMBS tasks that mean ROUTED ─────────────────────────────────────────────
+// The task-side counterpart of FLAG_FLEEING, so a status word reading "Flee"
+// draws red whether it arrived as RTZ's own flag (engine `fleeing`, which only
+// answers where the unit is) or as the LAMBS task a remote crew still reports.
+// Colour is keyed on these RAW strings and never on the display label: the
+// labels are user-editable literals on one side and a stringtable entry on the
+// other (FUNC(loadTagLabels)), so comparing what the reader sees would drop the
+// red the first time either is re-worded or translated.
+// LAMBS-EMITTED, so byte-for-byte exact — the same rows appear as keys in
+// FUNC(loadTagLabels) and both places move together if LAMBS renames one.
+// Panic and Retreat are deliberately NOT here: they are shaken, not broken.
+#define TASKS_FLEEING ["Fleeing", "Fleeing (vehicle)", "Fleeing (enemy near)"]
+
 // ── LAMBS danger-cause labels ────────────────────────────────────────────────
 // Stringtable keys indexed by dangerType + 2 (-2 Forced AI … 10 Assessing; out
 // of range → ""). Mirrors lambs_main_fnc_debugDangerType, inlined so the addon

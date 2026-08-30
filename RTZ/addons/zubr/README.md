@@ -1,4 +1,4 @@
-# rtz_csat — CSAT Zubr-class LCAC
+# rtz_zubr — CSAT Zubr-class LCAC
 
 It contains the Zubr-class LCAC hovercraft lifted out of **CUP Vehicles 1.19.2** —
 model, textures, materials, sounds, animations and configs — repathed so it runs
@@ -67,11 +67,42 @@ re-patched to match.
 - The model keeps CUP's `proxy:\ca\temp\proxies\rhib\cargo.NNN` cargo-position
   proxies. That path does not exist in CUP either — they are inert placeholders —
   so behaviour matches CUP's Zubr exactly.
-- `fn_ZubrEngineMonitor.sqf` runs `while {alive _vehicle} do { ... sleep 0.05 }`
-  per craft, for the life of the craft. That is CUP's design and is untouched, but
-  it is worth knowing about given RTZ targets multi-hour sessions with many units.
+- **Only five of the ten hull-number digits are packed** — 0, 2, 3, 5 and 7.
+  `_rip/build_csat.py` used to prune 1, 4, 6, 8 and 9 as unreferenced once the
+  non-CSAT liveries were stripped, which is true of the *config* and false of the
+  addon: the three `CustomShipNumber` Eden attributes build the texture path at
+  runtime from a typed number, and no static reference scan sees that. The prune is
+  fixed, so a re-rip will pack all ten; until one is run, `fn_zubrhullnumbers.sqf`
+  checks the assembled path with `fileExists` and leaves the selection alone (with
+  an RPT warning) rather than painting a missing texture. Restoring the digits needs
+  no code change — but do update the three `..._tooltip` stringtable keys, which
+  currently name the five.
 - `addon.toml` disables binarization: everything here is already binarised, and
   handing ODOL back to Binarize fails.
+
+## What this addon does NOT keep from CUP
+
+The two helper scripts are ports, not copies, because CUP's shape is the one thing
+RTZ rules out globally (see `CLAUDE.md` and `docs/Knowledge Base/Gotchas.md` §1):
+
+- **The engine monitor was a `spawn`ed `while {alive _vehicle} do { … sleep 0.05 }`
+  per craft**, for the life of the craft — the only `spawn`/`sleep` left anywhere
+  in the mod. It is now one shared CBA per-frame handler over a registry, created
+  by the first Zubr and destroyed by the last, with its rates stated per second and
+  integrated against real elapsed time. Two bugs went with it: CUP re-read three
+  animation phases per iteration and used none of them (60 dead engine calls a
+  second per craft), and CUP's creation-time `if (local …)` guard combined with a
+  monitor that never re-tested locality meant a hull changing owner lost its
+  animation permanently. Locality is now a per-tick test and every machine holds a
+  record, so a handover is picked up in both directions.
+- **The Ogon ranging fix was a `spawn` for a bare `sleep 1.1`** — one scheduled
+  script per rocket, so a salvo spawned a dozen. It is a `CBA_fnc_waitAndExecute`
+  now, and the projectile is re-validated *after* the wait rather than only before
+  it. The `fire_4000` case, which needs no adjustment at all, is settled before the
+  wait instead of after it.
+
+Both keep CUP's names and their `CfgFunctions` registration, because the config
+expressions reach them by built name — see `CfgFunctions.hpp`.
 
 ## Provenance
 

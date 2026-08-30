@@ -11,4 +11,4 @@ private _category = ELSTRING(main,DisplayName);
 // including when nothing drivable is selected, which the old handler used to
 // swallow.
 [_category, QGVAR(slideToCursor), [LSTRING(DriveToCursor), LSTRING(DriveToCursor_Description)],
-    {call FUNC(orderSlide)}, {}, [0x13, [true, false, false]]] call CBA_fnc_addKeybind; // Default: Shift + R
+    { call FUNC(orderSlide) }, {}, [0x13, [true, false, false]]] call CBA_fnc_addKeybind; // Default: Shift + R

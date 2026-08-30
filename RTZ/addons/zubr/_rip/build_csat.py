@@ -48,15 +48,29 @@ os.replace(os.path.join(DATA, "preview", "CUP_O_ZUBR_CSAT_T.jpg"),
 
 # Only the CSAT Pacific livery ships. gen_config.py strips CUP's other eight
 # TextureSources entries, which leaves these unreferenced - the _dark_co set,
-# the non-CSAT flags, five hull-number digits and the other previews. The light
-# blue _co set, flag_run and hull_num_0 are NOT prunable: they are baked into
-# CUP_Zubr.p3d as the model's default face textures. Run verify_paths.py after
-# any change here.
+# the non-CSAT flags and the other previews. The light blue _co set, flag_run and
+# hull_num_0 are NOT prunable: they are baked into CUP_Zubr.p3d as the model's
+# default face textures. Run verify_paths.py after any change here.
+#
+# THE HULL-NUMBER DIGITS ARE NOT PRUNABLE EITHER, and used to be. This list
+# carried hull_num_{1,4,6,8,9}_ca.paa on the reasoning that stripping the liveries
+# left them unreferenced. It leaves them unreferenced BY THE CONFIG, which is not
+# the same thing: the three CustomShipNumber Eden attributes call
+# fn_zubrhullnumbers.sqf, which assembles "hull_num_%1_ca.paa" at runtime from a
+# number the mission maker types. No static reference scan can see that, so the
+# prune silently took away half the digits and the attribute painted nothing for
+# five of the ten values it accepts.
+#
+# The function now guards with fileExists, so it degrades honestly either way -
+# but with the digits packed it simply works. If a re-rip restores them, update
+# STR_RTZ_Zubr_atrb_HullNumber{1,2,3}_tooltip, which currently names the five.
+#
+# The lesson generalises to anything else added here: prune on what the ADDON
+# reaches for, not on what the config names.
 PRUNE = (
     ["zubr_body_1_dark_co.paa", "zubr_body_2_dark_co.paa", "zubr_details_dark_co.paa"]
     + [os.path.join("flags", f) for f in
        ["flag_greece_co.paa", "flag_plan_co.paa", "flag_sovn_co.paa"]]
-    + [os.path.join("num", "hull_num_%d_ca.paa" % d) for d in (1, 4, 6, 8, 9)]
     + [os.path.join("preview", f) for f in
        ["CUP_B_ZUBR_CDF.jpg", "CUP_I_ZUBR_AAF.jpg", "CUP_I_ZUBR_UN.jpg",
         "CUP_O_ZUBR_RU.jpg", "CUP_O_ZUBR_SLA.jpg"]]

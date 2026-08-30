@@ -14,6 +14,11 @@
 // FUNC(endSlide) itself is the body: it applies whichever half is local here and
 // ignores the other. The `false` is what stops a split pair (player in the seat of
 // an AI-owned hull) bouncing the event between the two owners forever.
+// The `false` is hardcoded, not read off the wire. FUNC(endSlide) sends a second
+// payload element carrying it, but a receiver that took the sender's word for
+// whether to re-route would be trusting the very machine that has just proved it
+// cannot finish the teardown — and there is no case where this handler should
+// re-route, since it IS the re-route. Stated here, once, rather than travelling.
 [QGVAR(release), {
     params ["_record"];
 

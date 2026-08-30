@@ -20,7 +20,7 @@
             <English>Enable Resupply</English>
         </Key>
         <Key ID="STR_RTZ_Supply_Enabled_Description">
-            <English>Enable the Resupply Vehicles Zeus context menu action.</English>
+            <English>Enable context-menu buttons allowing resupply actions.</English>
         </Key>
         <Key ID="STR_RTZ_Supply_MsgNothingToService">
             <English>Nothing left to resupply</English>
@@ -32,16 +32,16 @@
             <English>Resupplying</English>
         </Key>
         <Key ID="STR_RTZ_Supply_MsgServiceIncomplete">
-            <English>Resupply timed out, still unfinished</English>
+            <English>Timed Out</English>
         </Key>
         <Key ID="STR_RTZ_Supply_MsgSupplyEmpty">
-            <English>Supply Vehicle Depleted</English>
+            <English>Depleted</English>
         </Key>
         <Key ID="STR_RTZ_Supply_ServiceRadius">
             <English>Service Radius</English>
         </Key>
         <Key ID="STR_RTZ_Supply_ServiceRadius_Description">
-            <English>Distance in meters around a supply vehicle that one Resupply order picks up. This is a scoping choice, not a hardware limit: vehicles that leave the range mid-service still keep, and finish, whatever they were given.</English>
+            <English>Distance, in meters, around a supply vehicle that one Resupply order picks up. This is a scoping choice, not a hardware limit: vehicles that leave the range mid-service still keep, and finish, whatever they were given.</English>
         </Key>
     </Package>
 </Project>

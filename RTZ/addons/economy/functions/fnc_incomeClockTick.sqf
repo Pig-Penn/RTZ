@@ -78,7 +78,10 @@ if (
 _logic setVariable ["clocktime", time + CLOCK_LEASE];
 
 private _remaining = (GVAR(nextIncome) - CBA_missionTime) max 0;
-private _interval = GVAR(incomeInterval);
+// The same floor the server schedules on (INCOME_INTERVAL, script_component.hpp),
+// so the payout size printed here and the one paid out are the same figure and the
+// "one field or two" decision below matches the spacing actually being used.
+private _interval = INCOME_INTERVAL;
 
 // Both settings are GLOBAL, so this is the same figure the server will pay out
 // (see the income tick in XEH_postInit). Whole numbers print bare — a payout of

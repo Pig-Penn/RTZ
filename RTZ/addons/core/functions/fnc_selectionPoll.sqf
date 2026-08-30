@@ -252,9 +252,10 @@ if (!hasInterface) exitWith {};
         // Entries for entities deselected since the last snapshot drop on the
         // spot rather than lingering until the next server push. Objects compare
         // directly — no netId round-trip for a set the client already holds.
-        // ALIAS THE KEY: the inner `select` block rebinds _x to a snapshot entry
-        // and leaves it clobbered for the rest of this iteration
-        // (docs/Knowledge Base/Gotchas.md §2).
+        // ALIASED FOR READABILITY, not for correctness: the inner `select` block
+        // binds its own _x in its own scope and does not clobber the outer one
+        // (docs/Knowledge Base/Gotchas.md §2 — this comment used to claim it did).
+        // A stream id and a snapshot entry are still the pair worth naming apart.
         {
             private _stream = _x;
             private _rec = GVAR(streamData) get _stream;

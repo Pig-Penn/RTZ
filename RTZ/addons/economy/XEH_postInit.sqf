@@ -4,6 +4,15 @@
 // points and income are managed by the server
 if (!isServer && {!hasInterface}) exitWith {};
 
+// When the next income payout lands, published by the server on every payout (see
+// the income tick below) and replayed to JIP clients off CBA's own JIP stack.
+// Registered at top level rather than inside the settings gate: the JIP replay
+// arrives on its own schedule and must not be able to land before its handler.
+[QGVAR(nextIncomeAt), {
+    params ["_next"];
+    GVAR(nextIncome) = _next;
+}] call CBA_fnc_addEventHandler;
+
 ["CBA_settingsInitialized", {
     // Curator modules can be created mid-mission (e.g. ZEN's Add Zeus module),
     // so the income tick doubles as lazy detection of new modules. The PFH
@@ -31,7 +40,11 @@ if (!isServer && {!hasInterface}) exitWith {};
             (_this select 0) params ["_nextIncomeRun"];
 
             if (CBA_missionTime >= _nextIncomeRun) then {
-                private _interval = GVAR(incomeInterval);
+                // Floored at TICK_INTERVAL, not the bare setting — see
+                // INCOME_INTERVAL in script_component.hpp for what a zero does
+                // to this loop. FUNC(incomeClockTick) reads it through the same
+                // macro so the countdown and the schedule cannot disagree.
+                private _interval = INCOME_INTERVAL;
                 private _next = CBA_missionTime + _interval;
                 (_this select 0) set [0, _next];
 
@@ -40,12 +53,27 @@ if (!isServer && {!hasInterface}) exitWith {};
                 // lands (see FUNC(incomeClockTick)). The size of the payout does
                 // not need publishing — income and incomeInterval are both GLOBAL
                 // settings, so every machine can work it out; only the phase is
-                // missing, and CBA_missionTime is synchronized. One broadcast per
-                // interval, and publicVariable also reaches JIP clients, so a
-                // curator connecting mid-operation gets a correct readout on its
-                // first Zeus open rather than after the next payout.
-                GVAR(nextIncome) = _next;
-                publicVariable QGVAR(nextIncome);
+                // missing, and CBA_missionTime is synchronized.
+                //
+                // globalEventJIP, NOT publicVariable. This was a bare
+                // `publicVariable QGVAR(nextIncome)` under a comment claiming it
+                // "also reaches JIP clients". It does not, and the mod's own
+                // docs said so (docs/Knowledge Base/Gotchas.md §4): a curator
+                // connecting mid-operation read the preInit default of -1 and got
+                // a blank countdown until the next payout — up to a full interval
+                // of a display that exists to say when the next payout lands.
+                //
+                // CBA is the proof rather than the Biki, which returns 403 to any
+                // scripted fetch: CBA_fnc_globalEventJIP does not use
+                // publicVariable for its own JIP stack. It publishes a NETWORKED
+                // NAMESPACE once and then writes each entry with
+                // `setVariable [id, value, true]` — the object-setVariable public
+                // flag, which is the mechanism that does persist for late joiners.
+                // If publicVariable reached them, none of that would be needed.
+                //
+                // One stable JIP id, so each payout OVERWRITES the last rather
+                // than stacking an entry per interval for a joiner to replay.
+                [QGVAR(nextIncomeAt), [_next], QGVAR(nextIncomeJIP)] call CBA_fnc_globalEventJIP;
 
                 private _points = GVAR(income) * _interval / 60;
                 {[_x, _points] call FUNC(addPoints)} forEach allCurators;
