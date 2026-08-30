@@ -24,24 +24,39 @@ if (hasInterface) then {
 // rtz_officer for the same pattern), and so ZEN's own postInit has already
 // registered the actions the menu clean-up removes.
 ["CBA_settingsInitialized", {
-    // Strip ZEN's cluttered built-in context entries (client-side only).
-    if (hasInterface && {GVAR(enableCleanContextMenu)}) then {
+    if (!hasInterface) exitWith {};
+
+    // Strip ZEN's cluttered built-in context entries, then fold what is left of
+    // the vehicle actions into one folder. Both are the same feature — one
+    // curator-facing setting for "tidy ZEN's menu" — so they share its gate
+    // rather than adding a second checkbox for the half nobody would turn off
+    // on its own. Client-side only.
+    //
+    // The order is LOAD-BEARING. Removal strips Repair / Rearm / Refuel by the
+    // path ["VehicleLogistics", ...]; regrouping DELETES that folder after moving
+    // what is left of it into RTZ_Vehicle. Reversed, those three would ride the
+    // move into RTZ's own folder and their removal paths would then miss and log.
+    if (GVAR(enableCleanContextMenu)) then {
         [] call FUNC(removeContextActions);
+        [] call FUNC(regroupVehicleActions);
     };
 }] call CBA_fnc_addEventHandler;
 
 // Turning the clean-up on mid-mission applies immediately instead of waiting
-// for a restart. The reverse is one-way: zen_context_menu_fnc_removeAction
-// deletes the node out of ZEN's runtime action tree and ZEN offers no re-add
-// for its own built-ins, so turning the setting back OFF only takes effect on
-// the next mission start. FUNC(removeContextActions) self-guards against a
-// repeated ON (ZEN logs an RPT error for an already-removed path).
+// for a restart. The reverse is one-way for BOTH halves: removal deletes the
+// node out of ZEN's runtime action tree and ZEN offers no re-add for its own
+// built-ins, and the regrouping likewise keeps no copy of the menu it rewrote —
+// so turning the setting back OFF only takes effect on the next mission start.
+// Each function self-guards against a repeated ON (ZEN logs an RPT error for an
+// already-removed path, and a second regroup would stack a second entity test
+// on the condition it already rewrote).
 if (hasInterface) then {
     ["CBA_SettingChanged", {
         params ["_name", "_value"];
         if (toLower _name != toLower QGVAR(enableCleanContextMenu)) exitWith {};
         if (_value) then {
             [] call FUNC(removeContextActions);
+            [] call FUNC(regroupVehicleActions);
         };
     }] call CBA_fnc_addEventHandler;
 };

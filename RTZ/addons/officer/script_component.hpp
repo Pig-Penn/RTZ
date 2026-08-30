@@ -22,7 +22,9 @@
 // Seconds between lifecycle/prune passes of FUNC(monitorAreas)
 #define MONITOR_INTERVAL 10
 
-// Seconds an officer must wait after his area is removed before a new one can be placed
+// Seconds an officer must wait before a new area can be placed on him, after his
+// area is removed or lost to combat (gated on GVAR(cooldownEnable)) or after he
+// is reset (FUNC(resetCooldown), never gated)
 #define COOLDOWN_DURATION 15
 
 // Seconds between hold/release passes of FUNC(monitorAuras) (server-side)

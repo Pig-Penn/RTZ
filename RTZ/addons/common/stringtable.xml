@@ -25,5 +25,8 @@
         <Key ID="STR_RTZ_Common_SubmenuOverlays">
             <English>Overlays</English>
         </Key>
+        <Key ID="STR_RTZ_Common_SubmenuVehicle">
+            <English>Vehicle</English>
+        </Key>
     </Package>
 </Project>

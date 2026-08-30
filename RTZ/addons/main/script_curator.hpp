@@ -32,12 +32,24 @@
 // zen_context_menu_fnc_compileActions, recorded here in full:
 //   0 name | 1 displayName | 2 icon | 3 iconColor | 4 statement
 //   5 condition | 6 args | 7 insertChildren | 8 modifierFunction
-// Only the three RTZ actually writes are defined — the other six were never
+// Only the slots RTZ actually writes are defined — the rest were never
 // referenced anywhere in the mod, and the comment claiming "every RTZ
 // *ActionModifier needs it" was true of three of the nine.
 #define ACTION_INDEX_DISPLAYNAME 1
 #define ACTION_INDEX_ICON 2
 #define ACTION_INDEX_ICONCOLOR 3
+#define ACTION_INDEX_CONDITION 5
+
+// One level up: the NODE that wraps an action in the compiled tree, which is
+// what the tree itself is an array of. Layout per the same function:
+//   0 action (the nine slots above) | 1 children (more nodes) | 2 priority
+// Needed by anything that restructures the tree rather than restyling one
+// entry — see rtz_common's FUNC(regroupVehicleActions). ZEN's addAction cannot
+// stand in for this: it builds its node with an EMPTY child list, so a node
+// that has children of its own has to be placed by hand.
+#define NODE_INDEX_ACTION 0
+#define NODE_INDEX_CHILDREN 1
+#define NODE_INDEX_PRIORITY 2
 
 // Every RTZ *ActionModifier restyles an action the same way — a label, an icon
 // and a tint, written into those three slots. Spelled out as three `set` calls it

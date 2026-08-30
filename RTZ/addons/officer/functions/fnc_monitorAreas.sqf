@@ -21,6 +21,8 @@
  *    attention), arming the same COOLDOWN_DURATION so it cannot be instantly
  *    re-planted once behaviour normalizes. Gated on GVAR(cooldownEnable);
  *    when off, the area is still torn down but re-planting is instant.
+ *    FUNC(resetCooldown) does the same thing on the same grounds when an
+ *    officer is reset, driven by an event rather than by this poll.
  *
  * Areas do NOT follow their officer. An area is anchored to the position the
  * officer stood on when it was planted and stays there for its whole life; the
@@ -67,9 +69,10 @@ if (!hasInterface) exitWith {};
     // Sweep expired cooldowns. FUNC(isOnCooldown) forgets an entry only when a
     // read happens to land on an expired one, so an officer who is killed — or
     // simply never right-clicked again — leaves his entry for the rest of the
-    // mission. Deliberately ABOVE the early-exit below: cooldowns are armed by
-    // area REMOVAL, so the state that needs pruning is exactly the state in
-    // which GVAR(areas) is empty and that exit fires.
+    // mission. Deliberately ABOVE the early-exit below: every path that arms a
+    // cooldown also leaves the officer WITHOUT an area, so the state that needs
+    // pruning is exactly the state in which GVAR(areas) is empty and that exit
+    // fires.
     if (count GVAR(cooldowns) > 0) then {
         private _expired = [];
         {

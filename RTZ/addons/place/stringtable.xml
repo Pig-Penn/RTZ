@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Place">
+        <Key ID="STR_RTZ_Place_Cooldown">
+            <English>Placement Cooldown</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_Cooldown_Description">
+            <English>Seconds before a placement session can be opened again after one that moved something. Scaled by distance: a short hop costs a fraction of this, a full-range move costs all of it. 0 disables the cooldown.</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_DisplayName">
+            <English>Unit Placement</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_GhostModelMax">
+            <English>Ghost Model Limit</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_GhostModelMax_Description">
+            <English>How many placement ghosts get a full model. Above this many selected units the session still works exactly the same way, but the ghosts are drawn as markers only. Lower this if a large selection costs frames on your machine; it affects nobody else.</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_MaxDistance">
+            <English>Placement Range</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_MaxDistance_Description">
+            <English>How far, in metres, a unit may be repositioned from where it stood when the session opened. A ghost dragged beyond this turns red and is refused on confirm.</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_MsgBeyondRange">
+            <English>Beyond %1m</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_MsgCooldown">
+            <English>%1s Cooldown</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_MsgIconsOnly">
+            <English>Markers Only</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_MsgInCombat">
+            <English>Engaged</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_MsgPlaced">
+            <English>Placed</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_MsgPlacing">
+            <English>Drag to arrange, Enter to confirm, Esc to cancel</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_TogglePlacement">
+            <English>Place Units at Cursor</English>
+        </Key>
+        <Key ID="STR_RTZ_Place_TogglePlacement_Description">
+            <English>Opens a placement session for the selected units: ghosts appear in formation at the cursor, and each can be dragged onto whatever surface you point at. Fly the Zeus camera inside a building and the ghosts land on that room's floor rather than the roof, which is how units are placed indoors. Press again or hit Enter to move them, Escape to cancel. Units in combat are left out.</English>
+        </Key>
+    </Package>
+</Project>

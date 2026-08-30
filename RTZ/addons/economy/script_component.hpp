@@ -99,7 +99,8 @@
     "zen_modules_modulecasgun", "zen_modules_modulecasmissile", "zen_modules_modulecasgunmissile", "zen_modules_modulecasbomb", \
     "moduleordnancehowitzer_f", "moduleordnancemortar_f", "moduleordnancerocket_f", \
     "zen_modules_modulemakeinvincible", \
-    "zen_modules_moduleambientflyby" \
+    "zen_modules_moduleambientflyby", \
+    "moduleFlareGreen_F", "moduleFlareGreen_Illumination_F", "moduleFlareRed_F", "moduleFlareRed_Illumination_F", "moduleFlareYellow_F", "moduleFlareYellow_Illumination_F", "moduleFlareWhite_F", "moduleFlareWhite_Illumination_F" \
 ]
 
 // Cost category indices, order matches the base cost array in fnc_registerCosts

@@ -123,8 +123,8 @@ on, so each later hit overwrote the result and the **last** surface won instead 
 
 | Site | Symptom |
 |---|---|
-| [fnc_teleportToCursor.sqf](addons/orders/functions/fnc_teleportToCursor.sqf) | Trace runs downward from 200 m up, so "first" means highest. Units teleported onto a multi-storey building landed on its ground floor, and units aimed at a bridge landed underneath it |
-| [fnc_placementPreview.sqf](addons/common/functions/fnc_placementPreview.sqf) | Trace runs outward from the curator camera, so "first" means nearest. The placement ghost snapped through the roof under the cursor down to the ground below it |
+| [fnc_surfaceStack.sqf](addons/common/functions/fnc_surfaceStack.sqf) | Trace runs downward from 200 m up, so "first" means highest. Units teleported onto a multi-storey building landed on its ground floor, and units aimed at a bridge landed underneath it. Was inlined in `orders/fnc_teleportToCursor.sqf`, now extracted here — and the hazard is gone with the extraction, because this version collects every hit and has no short-circuit left to get wrong |
+| [fnc_cursorSurface.sqf](addons/common/functions/fnc_cursorSurface.sqf) | Trace runs outward from the curator camera, so "first" means nearest. The placement ghost snapped through the roof under the cursor down to the ground below it. Was inlined in `common/fnc_placementPreview.sqf`, which now calls this |
 
 ### `exitWith` inside `apply` yields **no value** — the element comes back `nil`
 

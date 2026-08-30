@@ -116,6 +116,9 @@ private _t0   = 0;
 private _perfHostile  = 0;
 private _perfGroups   = 0;
 private _perfChevrons = 0;
+private _perfInvert   = 0;   // ms in the per-side knowledge inversion, summed over sides
+private _perfReps     = 0;
+private _perfKnown    = 0;
 if (_perf) then { _t0 = diag_tickTime };
 
 // Rebuild the fire-blink lookup from scratch each tick; the wedge block below
@@ -250,6 +253,18 @@ private _chevronMemo = createHashMap;
     // Recorded for the hull and crew cross-credits too, not just the target itself: they
     // are what put a mounted man (or a UAV's absent crew) into _knownBy, and a group
     // reachable only by that route must not be gated out.
+    // Timed separately under the perf gate. This block is the one large piece of the
+    // per-side pass that is NOT per group: it is O(spotter reps x their target lists),
+    // paid once per curator side. Without its own line the pass reports a single figure
+    // that mixes a fixed per-side cost with a per-in-contact-group one, and the first
+    // real RTZ_perf run could not tell them apart — the regression it supported put the
+    // fixed term at a physically impossible NEGATIVE value, which is what an
+    // unidentifiable split looks like. It also matters more than its size suggests:
+    // being per SIDE, this is one of the few costs that genuinely does multiply with the
+    // number of manned-curator sides hostile to a given entity.
+    private _tInv = 0;
+    if (_perf) then { _tInv = diag_tickTime };
+
     private _knownBy         = createHashMap;
     private _activeGroupKeys = createHashMap;
     {
@@ -276,6 +291,12 @@ private _chevronMemo = createHashMap;
             };
         } forEach (_rep targets [true]);
     } forEach _spotterReps;
+
+    if (_perf) then {
+        _perfInvert = _perfInvert + (diag_tickTime - _tInv) * 1000;
+        _perfReps   = _perfReps + count _spotterReps;
+        _perfKnown  = _perfKnown + count _knownBy;
+    };
 
     // Union in the group of every LIVE chevron latch on this side. Belt and braces: the
     // latch fires at HARD_THRESHOLD and lasts CHEVRON_LATCH_DURATION (10 s), while
@@ -646,6 +667,8 @@ call FUNC(pruneStores);
 // hostiles), which is exactly why they are timed apart.
 if (_perf) then {
     ["spotCheck", (diag_tickTime - _t0) * 1000,
-        format ["sides=%1 hostile=%2 grps=%3 chev=%4", count _bySide, _perfHostile, _perfGroups, _perfChevrons]
+        format ["sides=%1 hostile=%2 grps=%3 chev=%4 invert=%5ms reps=%6 known=%7",
+            count _bySide, _perfHostile, _perfGroups, _perfChevrons,
+            _perfInvert toFixed 2, _perfReps, _perfKnown]
     ] call EFUNC(core,perfSample);
 };

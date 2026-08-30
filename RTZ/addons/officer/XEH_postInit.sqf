@@ -128,3 +128,12 @@ if (!hasInterface) exitWith {};
         [_curatorDisplay] call FUNC(initCuratorDisplay);
     };
 }] call CBA_fnc_addEventHandler;
+
+// Reset cooldown, client-side. rtz_control raises QEGVAR(control,resetDone)
+// globally on every reset; FUNC(resetCooldown) works on GVAR(areas) and this
+// client's own curator module, so each curator machine handles its own areas —
+// hence below the hasInterface guard rather than above it with the order
+// receivers. Subscribed by name only: QEGVAR builds the string at compile time,
+// so this adds no dependency on rtz_control, the same arrangement
+// RTZ_officerZoneMap uses in the other direction for rtz_spotting.
+[QEGVAR(control,resetDone), LINKFUNC(resetCooldown)] call CBA_fnc_addEventHandler;

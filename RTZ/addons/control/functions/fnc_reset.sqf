@@ -43,7 +43,32 @@ private _grps = +_groups;
 _grps = _grps select { units _x findIf { !isPlayer _x } != -1 };
 if (_grps isEqualTo []) exitWith {};
 
+// Snapshot the members BEFORE the reset is sent, for the announcement below.
+// BEFORE is load-bearing: CBA_fnc_targetEvent calls a LOCAL target's receiver in
+// the same statement rather than over the network (the local branch of
+// fnc_targetEvent.sqf, and see EFUNC(orders,keepGearAnimation) for the other
+// place in this mod that ordering matters), and a curator's units are local to
+// him. So by the line after the send, FUNC(resetApply) has already run here: it
+// joinSilents the AI into a NEW group and every group in _grps is EMPTY. Read
+// afterwards this collected nothing at all.
+//
+// UNITS, not the groups. The hard reset discards each group, so a group
+// reference would be stale by the time any receiver looked at it. The units
+// survive with their netIds intact, which is what a per-officer cooldown is
+// keyed on anyway.
+private _units = [];
+{ _units append units _x } forEach _grps;
+
 [QGVAR(reset), [_grps], _grps] call CBA_fnc_targetEvent;
+
+// Announce the reset to whoever cares, BLIND and globally. rtz_officer listens
+// (its FUNC(resetCooldown)) to strip the editing area anchored on a reset
+// officer and start his placement cooldown; this component has no business
+// knowing what an officer is, so it ships the units and lets that one decide.
+// No requiredAddons edge in either direction — the event name is a compile-time
+// string, and with rtz_officer unloaded this is one message nothing subscribes
+// to.
+[QGVAR(resetDone), [_units]] call CBA_fnc_globalEvent;
 
 // Force an immediate refresh of everything watching this selection, instead of
 // waiting for the next poll and stream tick: a fresh subscription resets the

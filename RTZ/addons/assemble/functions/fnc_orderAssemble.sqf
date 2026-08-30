@@ -37,8 +37,9 @@ if (_sets isEqualTo []) exitWith {};
 private _previewClass = (_sets select 0) select 1;
 
 // The static's own Zeus tree icon (the glyph shown next to its create-menu entry),
-// resolved live through ZEN's cache so the ghost reads like a normal Zeus placement
-// rather than a generic reticle
+// resolved live through ZEN's cache. It rides INSIDE the vanilla Zeus ring
+// EFUNC(common,drawZeusIcon) draws, off the same config the engine reads for its
+// own placement marker, so a curator cannot tell this picker from a Zeus one
 private _previewIcon = [_previewClass] call zen_common_fnc_getVehicleIcon;
 
 [

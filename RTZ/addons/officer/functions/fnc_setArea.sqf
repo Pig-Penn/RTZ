@@ -15,6 +15,10 @@
  * instantly re-planted — moving your editing rights is meant to cost that
  * wait. Gated on GVAR(cooldownEnable); when off, removal is instant.
  *
+ * The add path checks that cooldown WITHOUT consulting the setting, and must
+ * keep doing so: FUNC(resetCooldown) arms the same map unconditionally when an
+ * officer is reset, and that wait applies whatever the setting says.
+ *
  * Locality: call on any curator machine. The BIS curator logic is local to the
  * SERVER and add/removeCuratorEditingArea require the curator to be local, so
  * the engine calls are dispatched there via QGVAR(applyArea) (FUNC(applyArea)),
@@ -45,6 +49,7 @@ private _key = netId _officer;
 if (_enable) then {
     if (_key in GVAR(areas)) exitWith {false};            // already has an area
     if (!alive _officer) exitWith {false};                // never anchor to a corpse
+    if (!simulationEnabled _officer) exitWith {false};     // simulation disabled — officer isn't actually "there" to anchor on
     if ([_officer] call FUNC(isOnCooldown) > 0) exitWith {false}; // just torn down, not re-plantable yet
     if (behaviour _officer in ["COMBAT", "CARELESS"]) exitWith {false}; // don't hand out editing rights while the officer is in a firefight or not paying attention
     if (GETVAR(_officer,GVAR(auraActive),false)) exitWith {false}; // command aura active — the two officer zones are mutually exclusive (see FUNC(applyAura))

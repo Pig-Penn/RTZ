@@ -8,5 +8,4 @@ PREP(keepGearAnimation);
 PREP(openUnitInventory);
 PREP(playGearAnim);
 PREP(switchStance);
-PREP(teleportToCursor);
 PREP(toggleCombatMode);

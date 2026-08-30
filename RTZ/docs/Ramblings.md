@@ -8,6 +8,9 @@ This is a *weird*, *unofficial*, and *messy* record of my own personal ramblings
 2. Recategorize CBA settings.
 3. See if restoring the default Zeus camera teleport functionality is possible.
 4. Add a working front ramp to the Zubr LCAC.
+5. Add a bombsight sort of function for bombing runs.
+6. Port CSAT Modification Project's assets into this mod.
+7. See if porting CSAT Marine assets is viable.
 
 ## Refine
 

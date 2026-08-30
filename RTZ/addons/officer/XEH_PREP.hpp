@@ -9,6 +9,7 @@ PREP(modifyAction);
 PREP(modifyAuraAction);
 PREP(monitorAreas);
 PREP(monitorAuras);
+PREP(resetCooldown);
 PREP(setArea);
 PREP(toggleArea);
 PREP(toggleAura);

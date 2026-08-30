@@ -13,7 +13,7 @@
  * to slopes and rooftops via lineIntersectsSurfaces + surfaceNormal),
  * rotatable while the curator's rotate modifier is held. With "" it is an
  * icon-only picker (for things without a meaningful silhouette, e.g. mines).
- * A 3D icon + hint always draws at the spot. Left click confirms; Escape (or
+ * A Zeus-style marker + hint always draws at the spot. Left click confirms; Escape (or
  * the Zeus display closing) cancels. Exactly one instance runs at a time.
  *
  * Entirely client-local — no remoteExec, nothing networked — so the caller
@@ -27,8 +27,9 @@
  * 1: Confirm callback, run once as [confirmed <BOOL>, position (AGL) <ARRAY>,
  *    direction <NUMBER> (0 when rotation is off), args <ANY>] <CODE>
  * 2: Arguments passed through to the callback <ANY> (default: [])
- * 3: 3D icon texture drawn at the spot <STRING> (default: select target cursor)
- * 4: Icon color <ARRAY> (default: [1, 1, 1, 1])
+ * 3: Class glyph drawn inside the Zeus ring at the spot <STRING> (default: "",
+ *    the bare ring, for pickers whose target has no glyph of its own)
+ * 4: Marker color <ARRAY> (default: [1, 1, 1, 1])
  * 5: Allow rotation and report facing <BOOL> (default: false)
  * 6: Hint text drawn under the icon <STRING> (default: the standard place/cancel
  *    hint, picking up the rotate wording when rotation is on; "" draws no text,
@@ -47,7 +48,7 @@ params [
     ["_previewClass", "", [""]],
     ["_onConfirm", {}, [{}]],
     ["_args", []],
-    ["_icon", ICON_PREVIEW, [""]],
+    ["_icon", "", [""]],
     ["_color", [1, 1, 1, 1], [[]], 4],
     ["_allowRotate", false, [false]]
 ];
@@ -87,6 +88,21 @@ if (GETGVAR(previewActive,false) || {GETMVAR(zen_common_selectPositionActive,fal
 if (call zen_common_fnc_isPlacementActive) then {
     (call zen_common_fnc_getActiveTree) tvSetCurSel [-1];
 };
+
+// Drop the curator's ENTITY selection too — the sibling of the tree clear above,
+// and the only thing that fixes the mouse pointer. Zeus picks its pointer from
+// what is selected: with a squad held it shows CuratorSelect, the four-arc ring,
+// which reads as "you are about to grab these" — the wrong thing to say while a
+// curator is choosing where something goes. With nothing selected it falls back
+// to CuratorPlace, the arrow with the plus, which is exactly right. Overriding
+// the pointer directly is not an option: ctrlMapCursor is the only script lever
+// on it and it works through a map control, while the curator display's 3D view
+// is covered by its full-screen MouseArea (idc 53) instead.
+//
+// Costs the caller nothing: every picker resolves its targets BEFORE opening,
+// and the selection is not put back on cancel — restoring it would restore the
+// ring, and a curator who cancelled can select again.
+setCuratorSelected [];
 
 GVAR(previewActive) = true;
 GVAR(previewPending) = nil;               // set to [_confirmed] by the input EHs below
@@ -170,25 +186,25 @@ private _hint = param [6, [LLSTRING(PreviewHint), LLSTRING(PreviewHintRotate)] s
 // Feedback marker + hint at the spot, drawn from a Draw3D mission EH of its own.
 // Deliberately NOT on rtz_core's shared frame loop, which every persistent RTZ
 // overlay rides: that loop exists to stop long-lived displays each rebuilding the
-// camera basis every frame, and this draw needs no camera at all — one drawIcon3D
-// off the helper's live position — while living only for the seconds a picker is
-// open, inside Zeus by construction. Registering it would add indirection and
-// buy nothing. It reads the helper's live position, so the PFH below never has to
-// feed it. Drawn upright (angle
-// 0) rather than spun to the ghost's facing: the ghost model already shows the
-// direction, and a fixed icon reads like vanilla Zeus instead of a tumbling
-// reticle. Single-instance state is safe here — GVAR(previewActive) above
-// guarantees exactly one picker at a time.
+// camera basis every frame, and this draw needs no camera at all — three
+// drawIcon3D layers off the helper's live position, at a fixed size — while
+// living only for the seconds a picker is open, inside Zeus by construction.
+// Registering it would add indirection, and would also mean rtz_common taking a
+// dependency on rtz_core that every component in the mod would then carry. It
+// reads the helper's live position, so the PFH below never has to feed it. Drawn
+// upright (angle 0) rather than spun to the ghost's facing: the ghost model
+// already shows the direction, and a fixed marker reads like vanilla Zeus instead
+// of a tumbling reticle. Single-instance state is safe here —
+// GVAR(previewActive) above guarantees exactly one picker at a time.
 GVAR(previewDraw) = [_helper, _icon, _color, _hint];
 GVAR(previewDrawEH) = addMissionEventHandler ["Draw3D", {
     GVAR(previewDraw) params ["_helper", "_icon", "_color", "_hint"];
     if (isNull _helper) exitWith {};
 
-    drawIcon3D [
-        _icon, _color, ASLToAGL getPosASL _helper,
-        PREVIEW_ICON_SIZE, PREVIEW_ICON_SIZE, 0,
-        _hint, 1, PREVIEW_TEXT_SIZE, "RobotoCondensed"
-    ];
+    [
+        ASLToAGL getPosASL _helper,
+        _color, _icon, _hint, PREVIEW_TEXT_SIZE
+    ] call FUNC(drawZeusIcon);
 }];
 
 // Per-frame: drive the helper to the cursor, finish on a result
@@ -215,25 +231,11 @@ GVAR(previewDrawEH) = addMissionEventHandler ["Draw3D", {
             _helper setDir _direction;
         } else {
             // Snap to the cursor's terrain point; sit flush on any mostly-flat
-            // surface hit on the way (rooftops, bridges)
-            private _position = AGLToASL screenToWorld getMousePosition;
-            private _vectorUp = surfaceNormal _position;
-            // `break`, not `exitWith`. Hits come back sorted by distance from the
-            // BEGIN position — the curator camera — so the first mostly-flat
-            // surface is the NEAREST one, i.e. the roof the cursor is actually
-            // over. This was an `exitWith`, which inside a forEach unwinds only the
-            // current ITERATION (it is continue, not break —
-            // docs/Knowledge Base/Gotchas.md §2), so every later, FURTHER surface
-            // overwrote the result and the ghost snapped through the building to
-            // the ground beneath it.
-            {
-                _x params ["_intersectPos", "_surfaceNormal"];
-                if (_surfaceNormal vectorDotProduct [0, 0, 1] > 0.5) then {
-                    _position = _intersectPos;
-                    _vectorUp = _surfaceNormal;
-                    break;
-                };
-            } forEach lineIntersectsSurfaces [getPosASL curatorCamera, _position, _helper, _ghost, true, 5];
+            // surface hit on the way (rooftops, bridges). Both ignore slots go to
+            // this picker's own helper and ghost — see FUNC(cursorSurface), which
+            // is where this trace and its break-not-exitWith hazard now live, and
+            // which rtz_place's dragged handles call for the same answer.
+            ([_helper, _ghost] call FUNC(cursorSurface)) params ["_position", "_vectorUp"];
             _helper setPosASL _position;
             _helper setVectorUp _vectorUp;
         };

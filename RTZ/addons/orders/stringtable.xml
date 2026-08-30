@@ -28,20 +28,11 @@
         <Key ID="STR_RTZ_Orders_HeliHeightUp_Description">
             <English>Raise the selected aircraft's altitude by the step setting.</English>
         </Key>
-        <Key ID="STR_RTZ_Orders_MsgBeyondRange">
-            <English>Beyond %1 [m]</English>
-        </Key>
-        <Key ID="STR_RTZ_Orders_MsgCooldown">
-            <English>%1 [s] Cooldown</English>
-        </Key>
         <Key ID="STR_RTZ_Orders_MsgFlyHeight">
-            <English>Altitude %1%2 [m]</English>
+            <English>Altitude %1%2m</English>
         </Key>
         <Key ID="STR_RTZ_Orders_MsgHoldFireCount">
             <English>Hold Fire x%1</English>
-        </Key>
-        <Key ID="STR_RTZ_Orders_MsgInCombat">
-            <English>Engaged</English>
         </Key>
         <Key ID="STR_RTZ_Orders_MsgNoCrew">
             <English>Vehicle has no crew to access its cargo</English>
@@ -51,9 +42,6 @@
         </Key>
         <Key ID="STR_RTZ_Orders_MsgOpenFireCount">
             <English>Open Fire x%1</English>
-        </Key>
-        <Key ID="STR_RTZ_Orders_MsgTeleported">
-            <English>Teleported</English>
         </Key>
         <Key ID="STR_RTZ_Orders_OpenUnitInventory">
             <English>Open Inventory</English>
@@ -84,24 +72,6 @@
         </Key>
         <Key ID="STR_RTZ_Orders_StanceUp_Description">
             <English>Set the selected AI infantry's stance to standing.</English>
-        </Key>
-        <Key ID="STR_RTZ_Orders_TeleportCooldown">
-            <English>Teleport Cooldown</English>
-        </Key>
-        <Key ID="STR_RTZ_Orders_TeleportCooldown_Description">
-            <English>Seconds before the teleport keybind can be used again after a successful teleport. 0 disables the cooldown.</English>
-        </Key>
-        <Key ID="STR_RTZ_Orders_TeleportRange">
-            <English>Teleport Range</English>
-        </Key>
-        <Key ID="STR_RTZ_Orders_TeleportRange_Description">
-            <English>Maximum distance in metres between a unit and the cursor position for the teleport keybind to move it.</English>
-        </Key>
-        <Key ID="STR_RTZ_Orders_TeleportToCursor">
-            <English>Teleport Units to Cursor</English>
-        </Key>
-        <Key ID="STR_RTZ_Orders_TeleportToCursor_Description">
-            <English>Teleport the selected units to the cursor position, preserving their formation. Units in combat are skipped; the Unit Teleport settings control range and cooldown.</English>
         </Key>
         <Key ID="STR_RTZ_Orders_ToggleCombatMode">
             <English>Toggle Hold Fire</English>

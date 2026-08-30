@@ -9,12 +9,6 @@ private _category = ELSTRING(main,DisplayName);
 [_category, QGVAR(curatorMapTeleport), [LSTRING(CameraToCursor), LSTRING(CameraToCursor_Description)],
     {call FUNC(curatorMapTeleport)}, {}, [0x21, [false, false, false]]] call CBA_fnc_addKeybind; // Default: F
 
-// Selected-unit teleport to cursor. Client-side handler: curatorSelected and
-// the cursor are UI-local, and setPos has global effects so no server
-// round-trip is needed (see fnc_teleportToCursor).
-[_category, QGVAR(teleportToCursor), [LSTRING(TeleportToCursor), LSTRING(TeleportToCursor_Description)],
-    {call FUNC(teleportToCursor)}, {}, [0x14, [true, false, false]]] call CBA_fnc_addKeybind; // Default: Shift + T
-
 // Unit stance keybinds — a ZEN dev-branch feature (zen-mod/ZEN#795) that
 // never shipped in a release. Unbound by default, matching that branch.
 [_category, QGVAR(switchStanceUp), [LSTRING(StanceUp), LSTRING(StanceUp_Description)],

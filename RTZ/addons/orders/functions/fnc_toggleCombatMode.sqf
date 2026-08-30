@@ -29,7 +29,11 @@
  * XEH_postInit). Groups with no AI (all-player) are skipped — the mode has
  * nothing to apply to.
  *
- * Feedback: a 3-second drawHint icon over each affected unit using ZEN's own
+ * The selection is normalized first: a selected man contributes his own group, a
+ * selected vehicle the groups of its crew, and a group picked by its group icon
+ * (which lands in SELECTED_GROUPS, not SELECTED_OBJECTS) contributes itself.
+ *
+ * Feedback: a 3-second drawHint icon over each affected entity using ZEN's own
  * Combat Mode menu glyph, tinted the same way ZEN tints it — red for forced
  * hold fire ("BLUE"), white for open fire ("YELLOW").
  *
@@ -48,9 +52,36 @@
 // Zeus open, and not typing in ZEN's search box
 CHECK_CURATOR_INPUT;
 
-private _units = SELECTED_OBJECTS select {
-    _x isKindOf "CAManBase"
-    && {alive _x}
+// A Zeus selection arrives as two DISJOINT lists: entities picked individually
+// land in SELECTED_OBJECTS, while a group picked by its group icon lands in
+// SELECTED_GROUPS with NONE of its units in the first list (same expansion, and
+// the same reasoning, as rtz_core's selectionPoll). A picked VEHICLE is in the
+// first list as the hull — its crew is not there at all.
+//
+// This used to read SELECTED_OBJECTS alone and keep only men, so a selected
+// vehicle contributed nothing and the curator was forced to select its crew by
+// hand, and a group-icon pick did nothing at all.
+private _objects = SELECTED_OBJECTS;
+private _selGrps = SELECTED_GROUPS;
+if (_selGrps isNotEqualTo []) then {
+    // Copied before appending: never mutate the array a command handed back. Skipped
+    // entirely in the ordinary case where no group icon is part of the selection.
+    _objects = +_objects;
+    {
+        // ALIAS: the inner loop rebinds _x to a unit (docs/Knowledge Base/Gotchas.md §2).
+        private _grp = _x;
+        if (_grp isEqualType grpNull) then {
+            { _objects pushBackUnique _x } forEach units _grp;
+        };
+    } forEach _selGrps;
+};
+
+// EFUNC(common,collectUnits) is the shared normalizer: a selected man contributes
+// himself, a selected vehicle its crew, and non-object / non-man entries are
+// dropped. It already returns a unique list, so the group expansion above cannot
+// double-count a unit that was also picked individually.
+private _units = ([_objects] call EFUNC(common,collectUnits)) select {
+    alive _x
     && {!isPlayer _x}
     && {!isNull group _x}
 };
@@ -91,14 +122,25 @@ private _openCount = 0;
     };
 } forEach _grps;
 
+// One icon per affected ENTITY rather than per unit: a mounted unit's icon draws
+// at its vehicle, so a four-man crew would stack four identical glyphs on the one
+// spot. `vehicle _x` is the man himself when he is on foot, so a foot selection
+// behaves exactly as before. Passing the same object as the hint ID keeps a
+// re-press replacing that entity's icon instead of layering another.
+//
 // Every unit here passed the !isNull group filter above and its group was pushed
 // into the loop that filled the map, so the lookup always hits; the default is
 // only there so a future filter change degrades to an uncoloured icon rather than
 // a nil that aborts the rest of the hint pass.
+private _drawn = [];
 {
-    [[
-        ["ICON", [_x, ICON_COMBAT_MODE, _grpColorById getOrDefault [netId group _x, COLOR_OPEN_FIRE]]]
-    ], HINT_DURATION, _x] call zen_common_fnc_drawHint;
+    private _veh = vehicle _x;
+    if !(_veh in _drawn) then {
+        _drawn pushBack _veh;
+        [[
+            ["ICON", [_veh, ICON_COMBAT_MODE, _grpColorById getOrDefault [netId group _x, COLOR_OPEN_FIRE]]]
+        ], HINT_DURATION, _veh] call zen_common_fnc_drawHint;
+    };
 } forEach _units;
 
 private _messages = [];

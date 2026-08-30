@@ -15,8 +15,9 @@ PREP_RECOMPILE_END;
 GVAR(areas) = createHashMap;
 GVAR(nextAreaId) = AREA_ID_BASE;
 
-// Post-removal placement lock, THIS client only: officerNetId -> CBA_missionTime
-// an area may next be added. See FUNC(isOnCooldown).
+// Placement lock, THIS client only: officerNetId -> CBA_missionTime an area may
+// next be added. Armed on removal, on a combat teardown, and on a reset. See
+// FUNC(isOnCooldown).
 GVAR(cooldowns) = createHashMap;
 
 // className -> isOfficer verdict, so the string scan runs once per class (see FUNC(isOfficer))

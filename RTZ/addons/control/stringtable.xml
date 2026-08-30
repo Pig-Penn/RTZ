@@ -59,10 +59,10 @@
             <English>Simulation Enabled</English>
         </Key>
         <Key ID="STR_RTZ_Control_RcReset">
-            <English>Fix Units After Remote Control</English>
+            <English>Remote-Control Reset</English>
         </Key>
         <Key ID="STR_RTZ_Control_RcReset_Description">
-            <English>Repair a unit when you stop remote controlling it. An Arma bug leaves a released unit unable to aim — it will turn toward an enemy but never put its gun on target — and the only fix is to replace the unit with an identical copy, which this does. Its loadout, name, rank, injuries, group, orders and Zeus ownership all carry over, but it is a new object, so a mission script holding a reference to the old one will lose it. Only applies to units on foot, and never to unconscious or surrendered units. This setting is per-curator: it only affects your own remote controls.</English>
+            <English>Fully respawn a unit after it has been remote controlled.</English>
         </Key>
         <Key ID="STR_RTZ_Control_ReloadSquad">
             <English>Reload Squad</English>

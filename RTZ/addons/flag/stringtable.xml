@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Flag">
+        <Key ID="STR_RTZ_Flag_ActionAttachFlag">
+            <English>Attach Flag</English>
+        </Key>
+    </Package>
+</Project>
