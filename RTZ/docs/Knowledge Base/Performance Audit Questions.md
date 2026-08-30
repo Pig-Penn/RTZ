@@ -17,9 +17,16 @@ pass should start from:
 - **Listen server, no headless clients.** Server-side and client-side costs are
   ADDITIVE on the host. A "server" cost and a "client" cost are the same machine's
   frame time here.
-- **Curators are usually on OPPOSING sides.** Anything inside `fnc_spotCheck`'s
-  per-side loop carries a 2–4× multiplier that a single-side test mission hides
-  completely.
+- **Curators are usually on OPPOSING sides — but that alone is NOT a multiplier.**
+  This bullet used to claim anything inside `fnc_spotCheck`'s per-side loop carried a
+  2–4× cost, and a follow-up pass planned real work on that basis. It is wrong. The
+  loop runs once per manned-curator side, but each pass unions only the sides *hostile
+  to that spotter*, so a given entity is touched **once per manned-curator side hostile
+  to it** — not once per curator, and not once per curator side. A straight
+  BLUFOR-vs-OPFOR session touches every entity exactly once. A third mutually hostile
+  curator side makes it twice. An AI-only faction adds nothing at all, since `_bySide`
+  admits only sides with a player-manned curator. Weigh any future work here against
+  that rule, not against a fixed number — see Q8.
 - **Tags, supply lines and spot chevrons are always on.** Tags and supply lines are
   selection-bounded (`SEL_MAX_*`) and stay cheap; chevrons are the only display
   whose cost grows with the mission.
@@ -101,7 +108,16 @@ proportion to how much of the enemy force is out of contact at any moment.
 If yes, `fnc_spotCheck`'s per-side loop runs once and several costs the audit
 flagged as "per curator side" are single-pass in practice.
 
-> _Answer:_ Not at all, typically curators are going against each other.
+> _Answer:_ Not at all, typically curators are going against each other — BLUFOR,
+> OPFOR and Independent all see play, and both where the curators sit and whether
+> Independent is hostile to both or allied to one vary by mission.
+>
+> _Correction (third pass):_ this answer is what produced the "2–4× multiplier" claim
+> at the top of this file, and that claim was wrong — see the bullet there for the real
+> rule. The cost that actually repeats is per manned-curator side **hostile to** the
+> entity, so opposed curators on two sides cost nothing extra and only a genuine
+> three-way does. Since the shape varies by mission, code here should state the rule
+> rather than a number.
 
 **9. Ambient/civilian traffic on the maps in use?**
 `fnc_collectSides` walks `vehicles`, which is every vehicle on the terrain —

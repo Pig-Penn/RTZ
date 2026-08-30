@@ -44,6 +44,29 @@ if (!isNil QGVAR(spotGroups) && {!(_display getVariable [QGVAR(spotDrawAttached)
         // so needs the most lift, 2 = independent/civilian square). Screen-space Y
         // offset (holds at any map zoom); AMP_GAPS_MAP #defined in script_component.hpp.
         private _AMP_GAPS = AMP_GAPS_MAP;
+
+        // Metres of world +Y per UI-y of map screen, measured ONCE per Draw.
+        //
+        // This used to be a world→screen→world round trip PER GROUP, per frame, purely to
+        // move the amplifier a fixed screen distance up. A map projection is linear and
+        // north-up — there is no map-rotation command in the engine, and ACE's
+        // ace_maptools_fnc_calculateMapScale derives the scale for the WHOLE map from one
+        // probe pair the same way — so a fixed screen-Y lift is exactly a fixed world-Y
+        // offset, and one measurement answers for every icon on the map. This store is
+        // uncapped (one entry per spotted enemy group, no cap anywhere in the chain) and
+        // this overlay has no broad phase, so that round trip scaled with how much of the
+        // mission was in contact, on the surface a curator actually works on.
+        //
+        // Probed with ctrlMapScreenToWorld against the curator map, whose screen space IS
+        // the screen's: ZEN's own position picker feeds getMousePosition straight into it
+        // on this same control (zen_common_fnc_selectPosition), as does
+        // EFUNC(orders,curatorMapTeleport).
+        private _p0 = _map ctrlMapScreenToWorld [0.5, 0.5];
+        private _p1 = _map ctrlMapScreenToWorld [0.5, 0.4];
+        private _mPerUI = 0;   // "could not measure" — the amplifier then rides the symbol
+        if (count _p0 > 1 && {count _p1 > 1}) then {
+            _mPerUI = ((_p1 select 1) - (_p0 select 1)) / 0.1;
+        };
         {
             // _y = [unit, texture, colorArray, echelonTex, sideIdx, leaderNetId] —
             // GVAR(spotGroups) holds group icons only (chevrons live in spotChevrons).
@@ -54,13 +77,16 @@ if (!isNil QGVAR(spotGroups) && {!(_display getVariable [QGVAR(spotDrawAttached)
             _map drawIcon [_texture, _colorArray, _pos, MAP_ICON_SIZE, MAP_ICON_SIZE, 0, "", 0, 0.03, "RobotoCondensed"];
             if (_echelonTex != "") then {
                 // map drawIcon takes a WORLD pos and has no vertical offset, so the
-                // amplifier would stack on the symbol. Lift it in SCREEN space (constant
-                // gap at any zoom): world→screen, nudge Y up, screen→world. ctrlMapWorld-
-                // ToScreen returns [] off-screen — fall back to _pos so we still draw.
-                // Gap raised to sit at the same height the native High Command map shows.
-                private _scr    = _map ctrlMapWorldToScreen _pos;
-                private _ampPos = if (_scr isEqualTo []) then { _pos }
-                    else { _map ctrlMapScreenToWorld [_scr#0, (_scr#1) - (_AMP_GAPS select _sideIdx)] };
+                // amplifier would stack on the symbol. The lift is still a SCREEN
+                // distance (constant gap at any zoom) — it is just converted through the
+                // per-frame scale above instead of through a projection round trip of its
+                // own. Gap sits at the same height the native High Command map shows.
+                //
+                // Two elements, matching what ctrlMapScreenToWorld hands back and what the
+                // map's own drawIcon takes (ZEN passes its 2D pos to the same command).
+                private _ampPos = if (_mPerUI == 0) then { _pos } else {
+                    [_pos select 0, (_pos select 1) + (_AMP_GAPS select _sideIdx) * _mPerUI]
+                };
                 _map drawIcon [_echelonTex, _colorArray, _ampPos, MAP_ICON_SIZE, MAP_ICON_SIZE, 0, "", 0, 0.03, "RobotoCondensed"];
             };
         } forEach GVAR(spotGroups);

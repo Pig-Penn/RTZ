@@ -5,8 +5,16 @@ A second read of the hot paths, after the first audit
 answers are the premises this pass reasons from, so read that file first; the three that
 matter most here are repeated inline where they bite.
 
-**Nothing in this document has been implemented.** It is a findings list, written down so
-the reasoning survives rather than being re-derived a third time.
+**Both findings have now been implemented** (third pass, 2026-08-29), along with two the
+coverage list below missed. Kept for the reasoning.
+
+**One premise here was WRONG and has been corrected in place** — see the strikethrough in
+§1. It claimed the per-side loop multiplies every per-entity cost by 2–4× because curators
+are opposed. It does not: each pass unions only the sides *hostile to that spotter*, so an
+entity is touched once per manned-curator side hostile to it, which is **once** in a
+straight two-curator-side session. Finding 1 was still worth doing — it is strictly less
+work in every regime — but it is not the win this document advertised. `docs/Knowledge
+Base/Performance Audit Questions.md` §8 now carries the corrected rule.
 
 ## What was covered
 
@@ -47,10 +55,16 @@ looking:
 | `fnc_spotCheck.sqf:398` | `_menCount = { _x isKindOf "CAManBase" } count _members` | engine call per member |
 
 Which group an entity belongs to, how many men that group holds, and whether it is a
-command element are the same answers for every observer. Audit §8 says curators are
-typically on **opposing** sides, so with three or more sides in play each of these runs two
-to four times over 200–500 AI, every `spotCheckInterval` (3 s by default, §4) — and audit
-§3 says this is a **listen server**, so that is the same machine also drawing the picture.
+command element are the same answers for every observer.
+
+~~Audit §8 says curators are typically on **opposing** sides, so with three or more sides in
+play each of these runs two to four times over 200–500 AI.~~ **Corrected:** each pass unions
+only the sides hostile to the spotter, so an entity is touched once per manned-curator side
+*hostile to it* — once in a two-curator-side session, twice in a genuine three-way. Still
+worth doing (strictly less work in every regime, and it moves the work into loops that
+already walk those engine lists), but the payoff is smaller than claimed here. It runs every
+`spotCheckInterval` (3 s by default, §4), and audit §3 says this is a **listen server**, so
+that is the same machine also drawing the picture.
 
 The grouping walk carries a comment defending itself: *"The `leader group` + `netId` per
 hostile stays: it IS the question being asked."* That is true of **one** pass. It is not a
@@ -107,6 +121,14 @@ hostile sides' group maps, under the `RTZ_perf` gate only.
 **Risk:** moderate. Behaviour-identical by construction, but it moves the shape of the
 component's central data structure.
 
+**Implemented.** The seam this section warns about is REAL, not hypothetical: `setCaptive
+true` (`EFUNC(captive,surrenderApply)`) makes `side` answer civilian while `group` still
+answers the unit's real group, so a surrendered rifleman lands in the civilian bucket under
+his OPFOR squad's key. `fnc_spotCheck` therefore merges by key when it selects, building a
+new tuple exactly as advised. The invariant hoist also went further than the table above:
+`netId` per member, `FUNC(unitMarker)`, `FUNC(echelonTex)` and the whole per-chevron build
+(now `FUNC(chevronEntry)`, memoised per tick) were all side-invariant too.
+
 ---
 
 ## 2. The fire-blink `FiredMan` handler cannot bail cheaply
@@ -153,6 +175,10 @@ and it is what makes the setting free.
 
 **Risk:** very low. Roughly six lines, no data-structure change.
 
+**Implemented.** Note the sizing: the win is skipping the `netId` engine call on every
+infantry shot mod-wide. The eager `[]` is real but an empty-array allocation is cheap, so
+the `count == 0` gate is what earns this, not the `getOrDefault` swap.
+
 ---
 
 ## Considered and rejected
@@ -180,6 +206,29 @@ and it is what makes the setting free.
   invalidation wiring for a cost that is not on a hot path.
 
 ---
+
+## What the third pass found on top of these two
+
+Neither is in the coverage list above, because that list is 3D-only on the client side and
+never looked at the tag cache lifecycle:
+
+- **The tag caches were invalidated wholesale on every server push.** `fnc_receiveUnitData`
+  marked the whole cache dirty on every snapshot, and the stream diffs at the SNAPSHOT
+  level — so one unit changing rebuilt all 24 tags, roughly 3.3 times a second for the whole
+  of every engagement, each rebuild costing three `getTextWidth` calls plus a `format`-heavy
+  `FUNC(buildTagEntry)`. The receivers now diff per packet and name only the stale ids. This
+  is the same deep compare `fnc_streamServer` already runs to decide whether to send at all.
+- **The Zeus MAP spot overlay did two map projections per spotted group per frame**, purely
+  to lift the echelon amplifier a fixed screen distance. A map projection is linear and
+  north-up, so that is a constant world-Y offset: one probe pair per frame now answers for
+  every icon. This store is uncapped and the overlay has no broad phase, unlike
+  `fnc_drawSpots`.
+
+A third — caching `CTX_ASPECT` in `fnc_frameLoop` rather than re-probing it every frame —
+is NOT implemented, deliberately. It rests on the ratio being zoom-invariant, which the
+file's comment asserts but nothing verifies, and the shipped code cannot corroborate it
+because it re-measures every frame anyway. Payoff is only ~6 engine calls a frame. Measure
+first; a probe script exists in the third pass's plan.
 
 ## Before anything more invasive than these two
 

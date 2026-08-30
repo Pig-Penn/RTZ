@@ -25,6 +25,47 @@
 #define SOFT_THRESHOLD 1.0
 #define HARD_THRESHOLD 1.5
 
+// ── Per-tick hostile group tuple (fnc_collectSides → fnc_spotCheck) ──────────
+// FUNC(collectSides) buckets every spottable entity into its GROUP once per tick, so
+// FUNC(spotCheck)'s per-curator-side loop selects from a ready-made map instead of
+// re-deriving `leader group` + `netId` for every hostile entity it can see.
+//
+// HOW OFTEN THAT RE-DERIVATION WAS PAID is worth stating exactly, because the older
+// comments here got it wrong: an entity is walked once per MANNED-CURATOR SIDE HOSTILE
+// TO IT — not once per curator, and not once per curator side. FUNC(spotCheck) unions
+// only the sides hostile to the spotter, and GVAR(bySide) admits only sides with a
+// player-manned curator. So a straight two-curator-side session walked each entity
+// once and the old shape cost nothing extra; a third mutually hostile curator side
+// walked it twice. The bucketing below is what makes it once in every regime.
+//
+// Tuples are SHARED ACROSS CURATOR SIDES within a tick. Nothing may mutate one in
+// place — GRP_INV is the single exception, and it is an idempotent memo fill.
+#define GRP_LEADER  0   // group leader OBJECT; may be a player, or otherwise unspottable
+#define GRP_MEMBERS 1   // this group's spottable entities, allUnits order then vehicles
+#define GRP_KEY     2   // netId of GRP_LEADER — the group key, and the spot key's group half
+#define GRP_MEN     3   // count of MEN among the members; free at bucket time
+#define GRP_LDRIN   4   // is GRP_LEADER itself one of the members?
+#define GRP_INV     5   // lazily-built side-invariant bundle (INV_*); [] until filled
+
+// ── Side-invariant per-group render facts (fnc_groupInvariants) ──────────────
+// Everything about how a spotted group is DRAWN that does not depend on who is looking
+// at it. Filled by the first curator side that processes the group in a tick and read
+// back by every later one.
+//
+// LAZY, not built in FUNC(collectSides): resolving these eagerly would pay an
+// EFUNC(common,classInfo) call per member for every group in the mission, and most of
+// the enemy force is out of contact at any moment (docs/Knowledge Base/Performance
+// Audit Questions.md §7) — which is the whole reason the contact gate exists. Computed
+// at most once per group per tick, and zero times for a group nobody can see.
+#define INV_ANCHOR   0  // the entity the group icon hangs over (leader, or a fallback member)
+#define INV_ANCHORID 1  // netId of INV_ANCHOR
+#define INV_TEX      2  // NATO symbol texture
+#define INV_COLOR    3  // marker colour, shared by the group icon and every chevron
+#define INV_SIDEIDX  4  // client-side per-side tuning table index
+#define INV_ECHELON  5  // echelon/size amplifier texture, "" for none
+#define INV_DRAWGRP  6  // does this group get a group icon at all?
+#define INV_MEMIDS   7  // netId per member, parallel to GRP_MEMBERS
+
 // Once a member's knowsAbout crosses HARD_THRESHOLD (chevron shown), that
 // result is latched per (spotter side, unit) for this many seconds — the
 // per-spotter knowsAbout loop for that unit is skipped entirely while the

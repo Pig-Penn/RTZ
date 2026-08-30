@@ -41,11 +41,31 @@
 
 params ["", "_entries"];
 
-private _m = createHashMap;
-{ _m set [_x select 0, _x] } forEach _entries;
+// The unpack doubles as the tag cache's invalidation diff — see FUNC(markTagsDirty)
+// for why per-packet and not wholesale. This is the SAME comparison
+// EFUNC(core,streamServer) already makes to decide whether to send at all (it runs
+// `_entries isEqualTo _lastSent`, a deep compare over an array of these very
+// packets); the client simply threw that granularity away on arrival. Neither packet
+// layout carries an OBJECT — FUNC(gatherUnitInfo) is netIds, bools, strings, numbers
+// and a string array — so isNotEqualTo answers the question actually being asked.
+private _old   = GVAR(unitData);
+private _m     = createHashMap;
+private _dirty = [];
+{
+    private _pid = _x select 0;
+    _m set [_pid, _x];
+    private _prev = _old get _pid;
+    if (isNil "_prev" || {_prev isNotEqualTo _x}) then { _dirty pushBack _pid };
+} forEach _entries;
+
+// Entries whose unit has left the snapshot. The wholesale wipe used to drop these as
+// a side effect, so they have to be collected explicitly or the cache keeps a slot
+// per unit ever selected for the rest of the mission. `keys` returns a copy, and
+// nothing here mutates _old anyway.
+{ if !(_x in _m) then { _dirty pushBack _x } } forEach keys _old;
 
 GVAR(unitData) = _m;
-[QGVAR(unitTags)] call FUNC(markTagsDirty);
+[QGVAR(unitTags), _dirty] call FUNC(markTagsDirty);
 // The selection dialog reads GVAR(unitData) too, and its row model is far more
 // expensive to build than a tag string — see the gate in FUNC(openSelectionInfo).
 GVAR(selRowsDirty) = true;

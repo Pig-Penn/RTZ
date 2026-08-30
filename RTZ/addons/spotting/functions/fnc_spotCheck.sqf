@@ -10,10 +10,20 @@
  *    group instead of every unit — the knowsAbout matrix shrinks from units x hostiles
  *    to groups x hostiles.
  *  - Manned curators are resolved FIRST; with none, the tick skips straight to
- *    icon cleanup. Otherwise all units + vehicles are classified into per-side
- *    buckets once per tick (spotter reps only for sides that actually have a
+ *    icon cleanup. Otherwise all units + vehicles are classified into per-side,
+ *    per-GROUP buckets once per tick (spotter reps only for sides that actually have a
  *    curator); curators on the same side share one detection pass. That whole
  *    once-per-tick pass lives in FUNC(collectSides).
+ *  - NOTHING SIDE-INVARIANT IS COMPUTED IN THE PER-SIDE LOOP. Which group an entity is
+ *    in, what symbol and colour that group takes, how many men it holds, what its
+ *    echelon amplifier is, its members' netIds and what each member's chevron looks
+ *    like are all facts about the SPOTTED, not about the observer — so they are
+ *    resolved once per tick and read back by every later curator side.
+ *    FUNC(collectSides) does the grouping; FUNC(groupInvariants) fills the per-group
+ *    bundle lazily on first use; a tick-scoped memo covers the per-member chevron
+ *    tuples. What stays per side is exactly what depends on the observer: the
+ *    knowsAbout scores, which members cross the thresholds, the latch and callout
+ *    state, and the anchor's officer zone.
  *  - The knowledge matrix is INVERTED via the `targets` command: one engine call
  *    per spotter group returns every enemy that group already has on its target
  *    list (the same group-level store knowsAbout reads), so the per-member
@@ -37,14 +47,18 @@
  *  - Hostile groups NO spotter has any knowledge of are skipped before their members
  *    are ever walked. `targets` above already answers "which entities does any spotter
  *    group know about", so the leader key of each is collected into _activeGroupKeys as
- *    that pass runs — plus the leader of every live chevron latch on this side — and the
- *    grouping walk below only builds a bucket for a group in that set. A group outside
- *    it scores _groupKnows = 0, fails the SOFT_THRESHOLD test and produces nothing, so
- *    the skip is behaviour-identical BY CONSTRUCTION; what it saves is the whole
- *    per-member loop (alive + netId + latch lookup, per man) for every enemy group
- *    currently out of contact, which on a 200-500 AI mission is most of them. The
- *    cheap part — one `leader group` + `netId` per hostile — still runs, because that
- *    is what answers which group a hostile is in.
+ *    that pass runs — plus the leader of every live chevron latch on this side. A group
+ *    outside that set scores _groupKnows = 0, fails the SOFT_THRESHOLD test and produces
+ *    nothing, so the skip is behaviour-identical BY CONSTRUCTION; what it saves is the
+ *    whole per-member loop (alive + latch lookup, per man) for every enemy group
+ *    currently out of contact, which on a 200-500 AI mission is most of them.
+ *    The gate is applied by walking _activeGroupKeys — the small set — and looking each
+ *    key up in the hostile sides' pre-built group maps, NOT by walking every hostile
+ *    entity to rediscover that most of them are out of contact. The `leader group` +
+ *    `netId` per entity that used to answer "which group is this hostile in" is gone
+ *    from this pass entirely: it is not a question about the observer, so
+ *    FUNC(collectSides) answers it once per tick in the loops already walking allUnits
+ *    and vehicles.
  *  - Once a member's knowsAbout crosses HARD_THRESHOLD (its chevron is shown),
  *    that result is latched per (spotter side, unit) for CHEVRON_LATCH_DURATION
  *    seconds: the per-spotter knowsAbout loop — the O(spotterReps) part of this
@@ -56,9 +70,17 @@
  *  - The latch and callout-gate stores are NESTED, side object → HashMap(netId → …),
  *    resolved once per curator side. They used to be flat maps under a
  *    (str side + "_" + netId) key built per member per tick — see the store comments in
- *    FUNC(spottingSystem) for why that had to go, and note that with curators typically
- *    on OPPOSING sides the entire per-side loop below runs two to four times, so every
- *    per-entity cost inside it carries that multiplier.
+ *    FUNC(spottingSystem) for why that had to go.
+ *  - HOW OFTEN THE PER-SIDE LOOP REALLY REPEATS WORK, stated exactly because this
+ *    comment used to get it wrong (it claimed "two to four times, with curators
+ *    typically on opposing sides"). The loop runs once per manned-curator side, but each
+ *    pass unions only the sides HOSTILE to that spotter, so a given entity is touched
+ *    once per MANNED-CURATOR SIDE HOSTILE TO IT — not once per curator, and not once per
+ *    curator side. A straight two-curator-side session therefore touched each entity
+ *    exactly once and carried no multiplier at all; a third mutually hostile curator
+ *    side makes it twice. Both figures assume a curator is actually manning that side:
+ *    AI-only factions never appear in _bySide. That is the number any future
+ *    optimisation here has to be weighed against.
  *  - Payload signatures are ARRAYS compared with isEqualTo, not `str` of the same.
  *    They exist purely to answer "did this payload change?", and building a string
  *    to answer it meant one throwaway allocation per group AND per chevron on every
@@ -167,6 +189,12 @@ private _officerZones = GETMVAR(RTZ_officerZoneMap,_emptyMap);
 // there are no spotters this tick (all killed) — stale icons must be cleared.
 private _currentKeys = createHashMap;
 
+// memberNetId → that member's finished chevron tuple, for THIS TICK only. A chevron's
+// look is a property of the spotted man, so a member visible to two hostile curator
+// sides is built once instead of once each. Scoped to the pass and dropped with it, so
+// unlike the mission-lifetime stores it needs no entry in FUNC(pruneStores).
+private _chevronMemo = createHashMap;
+
 // ── Spot detection: one pass per curator side ─────────────────────────────
 // _x = the side (HashMap key); _y = that side's curator tuples.
 {
@@ -263,43 +291,77 @@ private _currentKeys = createHashMap;
         if ((_y select 0) > CBA_missionTime) then { _activeGroupKeys set [_y select 2, true] };
     } forEach _latchMap;
 
-    // All alive, non-player entities hostile to this side: union of the
-    // pre-bucketed sides whose relation to us is hostile.
-    private _allHostile = [];
+    // The group maps of every side hostile to us, pre-built once per tick by
+    // FUNC(collectSides) (GRP_* in script_component.hpp).
+    private _hostileGroups = [];
     {
-        if ((_spotterSide getFriend _x) < 0.5) then { _allHostile append _y };
+        if ((_spotterSide getFriend _x) < 0.5) then { _hostileGroups pushBack _y };
     } forEach _sideEntities;
-    if (_allHostile isEqualTo []) then { continue };
+    if (_hostileGroups isEqualTo []) then { continue };
 
-    // Group hostile units by their group leader.
-    // Skip units whose group has no man leader (empty vehicles, ungrouped objects) —
-    // leader group returns objNull for those, which would collapse them all to key "".
+    // ── Select the groups in contact ──────────────────────────────────────
+    // The contact gate is applied at GROUP granularity, by walking the (small) set of
+    // groups some spotter knows about and looking each key up, instead of walking every
+    // hostile ENTITY to rediscover that most of them are out of contact. Groups nobody
+    // knows anything about used to be bucketed and then have EVERY member walked
+    // (alive, netId, latch lookup) only to score _groupKnows = 0 and produce nothing.
+    // `_activeGroupKeys` holds exactly the groups that can score above zero, so the
+    // output is identical by construction.
     //
-    // Groups nobody knows anything about are dropped here rather than a hundred lines
-    // later. Every one of them used to be bucketed and then have EVERY member walked
-    // (alive, netId, latch lookup) only to score _groupKnows = 0, fail the
-    // SOFT_THRESHOLD test below and produce nothing — the largest piece of pure waste
-    // on the server, repeated once per curator side, on a mission where most of the
-    // enemy force is out of contact at any moment. `_activeGroupKeys` holds exactly the
-    // groups that can score above zero, so the output is identical by construction.
-    // The `leader group` + `netId` per hostile stays: it IS the question being asked.
-    private _grpMap = createHashMap;
+    // The `leader group` + `netId` per hostile entity that used to run here is gone
+    // entirely: it is not a question about the observer, so FUNC(collectSides) answers
+    // it once per tick in the loops already walking allUnits and vehicles. It was paid
+    // once per manned-curator side hostile to the entity — once in a two-curator-side
+    // session, twice with a third mutually hostile curator side.
+    //
+    // ALIAS THE KEY: the inner loop rebinds _x to a side's group map (docs/Knowledge
+    // Base/Gotchas.md §2).
+    private _groups   = [];
+    private _seenKeys = createHashMap;
     {
-        private _ldr = leader group _x;
-        if (isNull _ldr) then { continue };
-        private _gk = netId _ldr;
-        if !(_gk in _activeGroupKeys) then { continue };
-        private _tuple = _grpMap get _gk;
-        if (isNil "_tuple") then {
-            _tuple = [_ldr, [], _gk];
-            _grpMap set [_gk, _tuple];
-        };
-        (_tuple select 1) pushBack _x;
-    } forEach _allHostile;
+        private _gk = _x;
+        {
+            private _tuple = _x get _gk;
+            if (isNil "_tuple") then { continue };
+
+            private _prevIdx = _seenKeys get _gk;
+            if (isNil "_prevIdx") then {
+                _seenKeys set [_gk, count _groups];
+                _groups pushBack _tuple;
+                continue;
+            };
+
+            // Same group reached through TWO hostile side buckets. Real, not defensive:
+            // `setCaptive true` (EFUNC(captive,surrenderApply)) makes `side` answer
+            // civilian while `group` still answers the unit's real group, so a
+            // surrendered man sits in the civilian bucket under his squad's key. The
+            // flat union this replaced merged them implicitly; without this a squad with
+            // one surrendered member would draw as TWO groups with different anchors,
+            // but only for a spotter hostile to both buckets.
+            //
+            // A NEW tuple, never an in-place append: these tuples are shared across
+            // curator sides within the tick, so mutating one would leak this side's
+            // merged member list into every later side's pass. GRP_INV resets to []
+            // because a different member list is a different anchor, HQ test, men count
+            // and echelon amplifier.
+            private _prev = _groups select _prevIdx;
+            _groups set [_prevIdx, [
+                _prev select GRP_LEADER,
+                (_prev select GRP_MEMBERS) + (_tuple select GRP_MEMBERS),
+                _gk,
+                (_prev select GRP_MEN) + (_tuple select GRP_MEN),
+                (_prev select GRP_LDRIN) || {_tuple select GRP_LDRIN},
+                []
+            ]];
+        } forEach _hostileGroups;
+    } forEach _activeGroupKeys;
 
     if (_perf) then {
-        _perfHostile = _perfHostile + count _allHostile;
-        _perfGroups  = _perfGroups + count _grpMap;
+        // `hostile` still means "spottable entities hostile to this side", but it is now
+        // summed off the group buckets rather than off a flat union that no longer
+        // exists. Same population: everything in a bucket reached it through a group.
+        { { _perfHostile = _perfHostile + count (_y select GRP_MEMBERS) } forEach _x } forEach _hostileGroups;
+        _perfGroups = _perfGroups + count _groups;
     };
 
     // Side-level new contact accumulation: one callout per tick fires to all
@@ -307,27 +369,29 @@ private _currentKeys = createHashMap;
     private _sideNewReport = [objNull, [], []];
 
     {
-        _x params ["_leader", "_members", "_leaderNetId"];
+        private _tuple = _x;
+        _tuple params ["", "_members", "_leaderNetId"];
 
-        // The group leader is not necessarily a SPOTTABLE entity: the hostile union
-        // excludes players and simulation-disabled units, but grouping above keys
-        // on `leader group`, so an AI squad led by a player reports the PLAYER as
-        // its leader. Anchoring the group icon on him would track a player's exact
-        // position for the enemy Zeus every frame (and seed the callout's location
-        // lookup) — precisely what the isPlayer filter exists to prevent, and not
-        // something his chevron-less members ever reveal. Fall back to a member that
-        // genuinely is spotted, preferring a MAN — a crewed hull rides in _members
-        // alongside its crew, and anchoring on the man both classifies correctly
-        // (FUNC(unitMarker), FUNC(contactCategory)) and still renders on the hull,
-        // since FUNC(drawSpots) anchors every icon on `vehicle _unit`. findIf
-        // returns -1 when the group is men-less (a UAV), where index 0 — the hull —
-        // is what we want. _leaderNetId keeps the ORIGINAL leader's netId as the group
-        // key, so chevron→group association (the hover peek in FUNC(drawSpots))
-        // and the callout last-seen gate are unaffected; the anchor itself rides in
-        // _grpBaseSig below.
-        if !(_leader in _members) then {
-            _leader = _members select ((_members findIf { _x isKindOf "CAManBase" }) max 0);
+        // ── Side-invariant render facts, resolved at most once per group per TICK ──
+        // The anchor resolution, the HQ test, the men count, the NATO symbol, the
+        // colour, the echelon amplifier and every member's netId are facts about the
+        // spotted group, not about who is looking at it — yet all of them used to be
+        // recomputed inside this loop for every curator side that could see the group.
+        // FUNC(groupInvariants) answers them once and the tuple carries the answer.
+        //
+        // The `set` is the ONE sanctioned in-place mutation of a shared tuple: it is an
+        // idempotent memo fill, so two sides racing to it (they cannot — this is one
+        // unscheduled pass) would write the same bundle. Everything else about a tuple
+        // is read-only, because the next curator side is looking at the same array.
+        private _inv = _tuple select GRP_INV;
+        if (_inv isEqualTo []) then {
+            _inv = [_tuple] call FUNC(groupInvariants);
+            _tuple set [GRP_INV, _inv];
         };
+        _inv params [
+            "_leader", "_anchorId", "_leaderTex", "_mrkrColor",
+            "_sideIdx", "_echelonTex", "_drawGroup", "_memberIds"
+        ];
 
         // Team awareness, computed ONCE for all curators on this side, ONE
         // knowsAbout per (spotter group, member):
@@ -339,7 +403,10 @@ private _currentKeys = createHashMap;
         {
             private _member = _x;
             if !(alive _member) then { continue };
-            private _memberId = netId _member;
+            // Parallel to _members and resolved with the group's other invariants — a
+            // netId is fixed for the life of the object, and this used to be an engine
+            // call per alive member per curator side.
+            private _memberId = _memberIds select _forEachIndex;
             // Sticky chevron latch: a member that crossed HARD_THRESHOLD recently
             // skips the knowsAbout loop entirely for CHEVRON_LATCH_DURATION seconds —
             // that per-spotter loop is the expensive part of this pass, and a unit
@@ -380,28 +447,6 @@ private _currentKeys = createHashMap;
         // higher bar than the group) no chevrons either.
         if (_groupKnows < SOFT_THRESHOLD) then { continue };
 
-        // HQ: any member whose class display name says "officer" / "HQ" makes the
-        // whole group a command element, so the group frame becomes the staff symbol.
-        private _isHQ = -1 < _members findIf { ([_x] call EFUNC(common,classInfo)) select 2 };
-        // Classify once per group; colour is the side colour, shared by the
-        // group icon and every chevron below.
-        ([_leader, _isHQ] call FUNC(unitMarker)) params ["_leaderTex", "_mrkrColor", "_sideIdx"];
-
-        // Group icon. Drawn for groups of >1 man, OR whenever the anchor is in a
-        // vehicle (a single-crewed vehicle is still worth marking), OR whenever the
-        // anchor IS a vehicle — a hull whose crew never reach _members because they
-        // are absent from allUnits (a UAV). A lone infantryman shows no group icon;
-        // its members still chevron below.
-        // Men only: crewed hulls ride in _members alongside their crew, so counting
-        // raw members read a 3-man tank crew as 4 and skewed the echelon amplifier
-        // for every mechanised group.
-        private _menCount   = { _x isKindOf "CAManBase" } count _members;
-        private _drawGroup  = (_menCount > 1)
-            || { !isNull objectParent _leader }
-            || { !(_leader isKindOf "CAManBase") };
-        private _echelonTex = [_leader, _menCount] call FUNC(echelonTex);   // size amplifier
-        private _anchorId   = netId _leader;
-
         // The anchor is the man the group icon is drawn over — FUNC(drawSpots) hangs
         // it directly above him and stems it back down to his body — so his own
         // chevron is a second marker on the same soldier. Drop it.
@@ -439,44 +484,25 @@ private _currentKeys = createHashMap;
         // why that forces isEqualTo on every comparison.
         private _grpBaseSig = [_anchorId, _leaderTex, _mrkrColor, _echelonTex, _anchorZone];
 
-        // Chevron colour and display name — once per member, shared by every curator.
+        // Chevron colour and display name — once per member, shared by every curator
+        // AND, through _chevronMemo, by every curator SIDE that can see him. Which
+        // members reach _chevrons is side-dependent (it comes from _knownBy and this
+        // side's latch map); what a chevron for one member LOOKS like is not — the
+        // colour, the name, the officer zone and the signature are all properties of the
+        // spotted man. A man is in exactly one group, so _mrkrColor and _leaderNetId
+        // read inside the block are the same whichever side builds it first.
+        //
+        // getOrDefaultCall, NOT getOrDefault: SQF evaluates a getOrDefault default
+        // EAGERLY, so the plain form would run the whole build on every HIT — which is
+        // the opposite of the point. Same trap as the per-tick fallbacks above.
+        // The block reads _member/_memberId by CLOSING OVER them, not from `_this`:
+        // getOrDefaultCall runs its default with _this set to [key, hashMap]
+        // (docs/Knowledge Base/Gotchas.md §3).
         private _chevronData = _chevrons apply {
             _x params ["_member", "_memberId"];
-
-            ([_member] call EFUNC(common,classInfo)) params ["_memberName", "_isLeaderName"];
-            // NCOs — any unit whose class display name contains "leader" (Squad
-            // Leader, Team Leader, …) — get the brighter "own-group" palette
-            // (EFUNC(common,sideColor) leader variant) so leadership reads at a glance.
-            private _base = if (_isLeaderName)
-                then { [side _member, true] call EFUNC(common,sideColor) }
-                else { _mrkrColor };
-            private _wedgeColor = [_base#0, _base#1, _base#2, WEDGE_ALPHA];
-            // Surrendered (rtz_captive) overrides → white-flag chevron, so a
-            // curator can pick the men who have given up out of a firefight
-            // without hovering them. Captured prisoners keep the flag: capture
-            // never clears QEGVAR(captive,surrendered).
-            //
-            // A SOFT read, like the officer zone map below and rtz_hud's read of
-            // QEGVAR(orders,flyHeight): a public variable by name, with a false
-            // default, so rtz_captive being absent is a supported configuration
-            // and no requiredAddons edge is implied (see config.cpp).
-            if (_member getVariable [QEGVAR(captive,surrendered), false]) then {
-                _wedgeColor = COLOR_SURRENDERED;
-            };
-            // Incapacitated (BIS revive / setUnconscious) overrides → civilian-purple chevron.
-            // Last, so it wins over the surrender flag above: a man who gave up and
-            // was then dropped anyway is down first and surrendered second.
-            if (lifeState _member isEqualTo "INCAPACITATED") then {
-                _wedgeColor = COLOR_INCAPACITATED;
-            };
-            // Officer zone ring: [] for the overwhelming majority (non-officers,
-            // or officers with no active area) — one O(1) lookup, no extra pass.
-            // The [plantedCenter, radius] pair rides the wedge payload verbatim
-            // and is folded into the signature, so planting, re-planting or
-            // clearing the area while the officer stays spotted re-sends the
-            // wedge and the client updates/clears its ring the same tick.
-            private _zone = _officerZones getOrDefault [_memberId, _emptyArr];
-            [_member, _memberId, _wedgeColor, _memberName, _zone, [_wedgeColor, _leaderNetId, _zone]]
+            _chevronMemo getOrDefaultCall [_memberId, {
+                [_member, _memberId, _mrkrColor, _leaderNetId, _officerZones, _emptyArr] call FUNC(chevronEntry)
+            }, true]
         };
 
         // Emit to each curator on this side with their own spot key and target player.
@@ -556,7 +582,7 @@ private _currentKeys = createHashMap;
             };
         };
 
-    } forEach (values _grpMap);
+    } forEach _groups;
 
     // ── Notify all curators on this side of new contacts ──────────────
     // One call for the whole side: the location lookup and phrasing are

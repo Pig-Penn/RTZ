@@ -150,7 +150,8 @@ GVAR(calloutPhrases) = [
 // Units under Zeus RC shift locality to the curator's client — those can still be
 // wedge-spotted (locality not filtered on hostiles) but their shots won't reach this
 // handler, so the white blink is silently skipped for RC'd units only.
-// Cheap early-out for the common case: a shot nobody is watching does one lookup.
+// Cheap early-out for the common case: a shot nobody is watching costs two variable
+// reads and no engine call at all.
 //
 // Gated on GVAR(enableFireBlink), read live so it can be switched off mid-mission. The
 // test is the FIRST thing in the body, above the `netId` — that is an engine call paid on
@@ -159,14 +160,26 @@ GVAR(calloutPhrases) = [
 // A class event handler cannot be removed once added, which is why this is a gate here
 // rather than a conditional registration; the matching gate on the producing side (the
 // GVAR(wedgeByUnit) population in FUNC(spotCheck)) is what actually saves the work.
+//
+// The EMPTY-MAP test earns its place for the same reason and sits in the same position.
+// GVAR(wedgeByUnit) is rebuilt from scratch by every detection pass (FUNC(spotCheck)) and
+// holds nothing whenever no chevron is live on any side — a quiet mission, and the whole
+// time the blink setting is off, since the producing side then skips populating it. A
+// `count` on a hashmap is not an engine call; `netId` is, and it used to run first.
 ["CAManBase", "FiredMan", {
     if !(GETGVAR(enableFireBlink,true)) exitWith {};
+    private _map = GVAR(wedgeByUnit);
+    if (count _map == 0) exitWith {};
     params ["_unit"];
 
     private _id = netId _unit;
-    private _spotters = GVAR(wedgeByUnit) getOrDefault [_id, []];
+    // get + isNil, not getOrDefault with an inline []: SQF evaluates a getOrDefault
+    // default EAGERLY — which is the entire reason getOrDefaultCall exists — so the old
+    // form built and discarded an array on every shot that got this far. Same trap
+    // FUNC(spotCheck) documents fixing for its own per-tick fallbacks.
+    private _spotters = _map get _id;
 
-    if (_spotters isEqualTo []) exitWith {};
+    if (isNil "_spotters") exitWith {};
     // Throttle: cap to one blink event per 0.1 s per unit (slightly under the blink
     // duration so sustained auto-fire stays lit) to bound network cost in a firefight.
     private _now = CBA_missionTime;

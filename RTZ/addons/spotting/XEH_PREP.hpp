@@ -1,6 +1,7 @@
 // Once-per-tick halves of a detection pass, split out of FUNC(spotCheck) so the
 // per-contact loop that remains there keeps its shape: collectSides resolves the tick's
 // curator/hostile/spotter picture, pruneStores bounds the long-lived server maps.
+PREP(chevronEntry);
 PREP(collectSides);
 PREP(contactCategory);
 // RENDER_WORLD renderers for this component's own stores, registered with
@@ -10,6 +11,9 @@ PREP(drawRcIndicator);
 PREP(drawSpots);
 PREP(echelonTex);
 PREP(emitSpot);
+// Side-invariant half of one spotted group's render facts, memoised into the group
+// tuple FUNC(collectSides) builds — see the INV_* block in script_component.hpp.
+PREP(groupInvariants);
 PREP(initCuratorDisplay);
 PREP(pruneStores);
 PREP(remoteControlIndicator);

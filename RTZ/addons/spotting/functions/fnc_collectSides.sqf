@@ -2,13 +2,22 @@
 /*
  * Author: Maxim
  * Resolves one detection tick's SIDE picture for FUNC(spotCheck): which sides have a
- * manned curator, every spottable hostile candidate bucketed by side, and one
- * representative spotter per local AI group on each side that has a curator.
+ * manned curator, every spottable hostile candidate bucketed by side AND BY GROUP, and
+ * one representative spotter per local AI group on each side that has a curator.
  *
  * Split out of FUNC(spotCheck) because it runs exactly ONCE per tick, whereas the
  * detection loop it feeds runs per group per curator side — so the extra `call` is
  * free here, and it keeps the hot loop readable. Everything in this file is
  * O(curators + allUnits + vehicles); nothing in it is per-contact.
+ *
+ * THE GROUP BUCKETING IS THE POINT OF THAT SPLIT, not a convenience. FUNC(spotCheck)
+ * used to union the hostile side buckets into one flat array and then walk it doing
+ * `leader group` + `netId` per entity — once per curator side hostile to that entity.
+ * Which group an entity is in is not a question about the observer, so it is answered
+ * here, once, in the loops that were already walking those two engine lists. The
+ * per-side pass then selects ready-made tuples out of these maps by key. See the GRP_*
+ * block in script_component.hpp for the tuple layout, the sharing rule, and the exact
+ * statement of how often the old shape paid — the previous comments overstated it.
  *
  * Every map returned is keyed on the SIDE OBJECT, not on `str side`. Side is a legal
  * HashMap key (Gotchas §3 lists it among Number/Bool/Array/String/Namespace/NaN/Code/
@@ -33,7 +42,7 @@
  * Return Value:
  * [
  *   0: side → curator tuples [curator, player, curatorNetId, forceResend] <HASHMAP>,
- *   1: side → spottable hostile candidates <HASHMAP>,
+ *   1: side → HashMap(group netId → group tuple, GRP_* indices) <HASHMAP>,
  *   2: side → HashMap(group netId → representative spotter unit) <HASHMAP>
  * ] <ARRAY>
  *
@@ -90,9 +99,21 @@ private _bySide = createHashMap;
 } forEach _curators;
 
 // ── Classify every unit and vehicle ONCE per tick ────────────────────────────
-// _sideEntities:    side → spottable hostile candidates (alive, non-player; locality
-//                   NOT filtered: knowsAbout only requires the SPOTTER to be local, and
-//                   targets may sit on a client, e.g. under curator remote control).
+// _sideEntities:    side → HashMap(group netId → group tuple) over that side's spottable
+//                   candidates (alive, non-player; locality NOT filtered: knowsAbout only
+//                   requires the SPOTTER to be local, and targets may sit on a client,
+//                   e.g. under curator remote control).
+//
+//                   A GROUP CAN STRADDLE TWO SIDE BUCKETS, and in this mod routinely
+//                   does. The buckets key on `side _x` while the grouping keys on
+//                   `netId (leader group _x)`, and `setCaptive true` — which
+//                   EFUNC(captive,surrenderApply) calls on every surrender — makes
+//                   `side` answer CIVILIAN while `group` still answers the unit's real
+//                   group. So a surrendered rifleman lands in the civilian bucket under
+//                   his OPFOR squad's key. FUNC(spotCheck) therefore merges by key when
+//                   it selects, rather than assuming one bucket per group; the flat
+//                   union it replaced merged them implicitly, and dropping that would
+//                   have split one squad into two group icons with different anchors.
 // _sideSpotterReps: side → HashMap(group netId → representative unit), collected ONLY
 //                   for sides that actually have a manned curator (_bySide keys) — no
 //                   other side's knowledge is ever queried, so building its rep map
@@ -128,13 +149,45 @@ if (count _bySide == 0 && {!_dbg}) exitWith {
 {
     if (isPlayer _x) then { continue };
     if (!simulationEnabled _x) then { continue };
-    private _eSide  = side _x;
-    private _bucket = _sideEntities get _eSide;
-    if (isNil "_bucket") then {
-        _bucket = [];
-        _sideEntities set [_eSide, _bucket];
+
+    private _eSide = side _x;
+
+    // Grouped HERE, once per tick, rather than in FUNC(spotCheck) once per curator side
+    // hostile to this entity — see the GRP_* block in script_component.hpp for the exact
+    // rule and why the previous comments overstated it. A group with no man leader is
+    // dropped for the reason it always was: the grouping keys on `leader group`, and
+    // objNull would collapse every such entity into one bucket.
+    //
+    // Scoped to the BUCKETING only, never `continue`d over the whole iteration: the
+    // spotter-rep block below carries its own, weaker guard (`!isNull group _x`) and must
+    // keep getting the chance to run. A leaderless unit failing that test as well is the
+    // ordinary case, not a guarantee, and coupling the two would silently narrow the
+    // spotter pool.
+    private _ldr = leader group _x;
+    if (!isNull _ldr) then {
+        private _groups = _sideEntities get _eSide;
+        if (isNil "_groups") then {
+            _groups = createHashMap;
+            _sideEntities set [_eSide, _groups];
+        };
+        private _gk    = netId _ldr;
+        private _tuple = _groups get _gk;
+        if (isNil "_tuple") then {
+            // GRP_INV starts [] rather than nil: a nil element read back with `select` is
+            // a trap, and an invariant bundle is never empty, so [] is an unambiguous
+            // "not built yet".
+            _tuple = [_ldr, [], _gk, 0, false, []];
+            _groups set [_gk, _tuple];
+        };
+        (_tuple select GRP_MEMBERS) pushBack _x;
+        // allUnits is alive-only and all CAManBase, so every entry here is a MAN — which
+        // is what makes the men count free. It must stay men-only: a crewed hull rides in
+        // the members alongside its crew, and counting it reads a 3-man tank crew as 4 and
+        // skews the echelon amplifier for every mechanised group.
+        _tuple set [GRP_MEN, (_tuple select GRP_MEN) + 1];
+        // One isEqualTo at push time, replacing an O(members) `in` scan per group per side.
+        if (_x isEqualTo _ldr) then { _tuple set [GRP_LDRIN, true] };
     };
-    _bucket pushBack _x;
 
     if (_eSide in _bySide && { local _x } && { !isNull group _x }) then {
         private _reps = _sideSpotterReps get _eSide;
@@ -154,19 +207,28 @@ if (count _bySide == 0 && {!_dbg}) exitWith {
         || { _x isKindOf "Ship" }) then { continue };
     private _eSide = side _x;
 
-    // Spottable only when the hull's group has a man leader. The grouping pass in
-    // FUNC(spotCheck) keys on `leader group` and discards anything answering objNull, so
-    // a hull without one never produced an icon anyway — it was merely walked once per
-    // curator side first. `vehicles` is every vehicle on the map, which on a populated
-    // terrain means hundreds of alive ambient cars, so testing it here keeps them out of
-    // the hostile union and out of the per-side grouping walk entirely.
-    if (!isNull (leader group _x)) then {
-        private _bucket = _sideEntities get _eSide;
-        if (isNil "_bucket") then {
-            _bucket = [];
-            _sideEntities set [_eSide, _bucket];
+    // Spottable only when the hull's group has a man leader. The grouping keys on
+    // `leader group` and discards anything answering objNull, so a hull without one
+    // never produced an icon anyway. `vehicles` is every vehicle on the map, which on a
+    // populated terrain means hundreds of alive ambient cars, so testing it here keeps
+    // them out of the group buckets entirely.
+    private _ldr = leader group _x;
+    if (!isNull _ldr) then {
+        private _groups = _sideEntities get _eSide;
+        if (isNil "_groups") then {
+            _groups = createHashMap;
+            _sideEntities set [_eSide, _groups];
         };
-        _bucket pushBack _x;
+        private _gk    = netId _ldr;
+        private _tuple = _groups get _gk;
+        if (isNil "_tuple") then {
+            _tuple = [_ldr, [], _gk, 0, false, []];
+            _groups set [_gk, _tuple];
+        };
+        // GRP_MEN is deliberately NOT incremented and GRP_LDRIN cannot be set here: a
+        // hull is not a man, and a hull is never its own group's leader — that is always
+        // a crewman. Both facts are what keep the echelon amplifier honest.
+        (_tuple select GRP_MEMBERS) pushBack _x;
     };
 
     // Spotter rep regardless of the above: UAV crew are absent from allUnits (see
