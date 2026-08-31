@@ -44,13 +44,7 @@ private _modifierFunction = {
         [LSTRING(NoTarget)] call zen_common_fnc_showMessage;
     };
 
-    private _elements = [["ICON", [_target, ICON_ATTACK, COLOR_TARGET]]];
-
     {
         [QGVAR(destroy), [_x, _target], leader _x] call CBA_fnc_targetEvent;
-
-        _elements pushBack ["LINE", [leader _x, _target, COLOR_TARGET]];
     } forEach _groups;
-
-    [_elements, HINT_DURATION, _target] call zen_common_fnc_drawHint;
 }, _groups, LSTRING(ActionDestroy), nil, nil, nil, _modifierFunction] call zen_common_fnc_selectPosition;

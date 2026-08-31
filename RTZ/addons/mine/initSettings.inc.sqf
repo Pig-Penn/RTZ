@@ -16,17 +16,11 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     true // Global
 ] call CBA_fnc_addSetting;
 
+// One switch for both markers, the 3D one and the map one. FUNC(start) reads it to
+// decide what to register, so neither draw pass has to test it per frame.
 [
-    QGVAR(mark3D), "CHECKBOX",
-    [LSTRING(Mark3D), LSTRING(Mark3D_Description)],
-    _category,
-    true,
-    false // Local
-] call CBA_fnc_addSetting;
-
-[
-    QGVAR(markMap), "CHECKBOX",
-    [LSTRING(MarkMap), LSTRING(MarkMap_Description)],
+    QGVAR(markers), "CHECKBOX",
+    [LSTRING(Markers), LSTRING(Markers_Description)],
     _category,
     true,
     false // Local

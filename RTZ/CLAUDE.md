@@ -10,6 +10,8 @@ It runs on servers with several curators, large numbers of units, and operations
 
 ## References
 
+During development, you are encouraged to utilize online resources and websites, read Arma 3's source files, consult from other mods and repositories, and ask me questions.
+
 Zeus Enhanced (ZEN), Community Base Addons (CBA), and LAMBS Danger FSM (LAMBS) are always loaded alongside RTZ and may be referenced directly. Any other well-structured Arma 3 mod is fair game as a reference too — ACE3 is a great example.
 
 ## Architecture

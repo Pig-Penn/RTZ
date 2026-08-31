@@ -126,6 +126,14 @@ private _ghosts = [];
     private _helper = "Logic" createVehicleLocal [0, 0, 0];
     _helper hideObject true;
     _helper setPosASL _posASL;
+
+    // Seed the ghost facing the way its unit is ALREADY facing, so an untouched
+    // ghost reads as that unit and the setDir FUNC(commitPlacement) applies is a
+    // no-op for anything the curator never rotated. Before setVectorUp, never
+    // after: setDir resets the up vector, so a ghost aligned to a slope first
+    // would be stood upright again by this. Same ordering, and the same reason,
+    // as EFUNC(assemble,finishBuild)'s.
+    _helper setDir (getDir _unit);
     _helper setVectorUp (surfaceNormal _posASL);
 
     // The class test is not paranoia: typeOf answers "" for a terrain-placed

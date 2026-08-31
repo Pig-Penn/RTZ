@@ -24,7 +24,7 @@
             <English>We've got enemy %1 in sight%2.</English>
         </Key>
         <Key ID="STR_RTZ_Spotting_CalloutPhrase7">
-            <English>Spotted enemy %1%2 — keep your heads down.</English>
+            <English>Spotted enemy %1%2.</English>
         </Key>
         <Key ID="STR_RTZ_Spotting_CalloutPhrase8">
             <English>Heads up, enemy %1 on the move%2.</English>
@@ -41,7 +41,7 @@
             <English>infantry</English>
         </Key>
         <Key ID="STR_RTZ_Spotting_CategoryNaval">
-            <English>naval units</English>
+            <English>boats</English>
         </Key>
         <Key ID="STR_RTZ_Spotting_CategoryVehicles">
             <English>vehicles</English>

@@ -38,7 +38,7 @@
             <English>Placed</English>
         </Key>
         <Key ID="STR_RTZ_Place_MsgPlacing">
-            <English>Drag to arrange, Enter to confirm, Esc to cancel</English>
+            <English>Drag to arrange, hold rotate modifier to turn, Enter to confirm, Esc to cancel</English>
         </Key>
         <Key ID="STR_RTZ_Place_TogglePlacement">
             <English>Place Units at Cursor</English>

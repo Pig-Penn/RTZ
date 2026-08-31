@@ -1,7 +1,8 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Moves every unit to where its ghost is standing, and arms the cooldown.
+ * Moves every unit to where its ghost is standing, facing the way its ghost
+ * faces, and arms the cooldown.
  *
  * THE POSITION IS TAKEN VERBATIM. getPosASL off the helper goes straight into
  * setPosASL on the unit, with no re-trace, no ground snap and no correction of
@@ -66,6 +67,13 @@ private _maxTravel = 0;
     };
 
     _unit setPosASL _posASL;
+    // Facing comes off the helper for the same reason the position does: the
+    // curator turned the ghost to say which way this unit should end up looking,
+    // and a ghost that was never rotated still holds the facing it was seeded
+    // with in FUNC(beginPlacement) — the unit's own — so this is a no-op there
+    // rather than a snap to north. setDir has global effects, like setPosASL, so
+    // it needs no more locality handling than the line above.
+    _unit setDir (getDir _helper);
     _moved = _moved + 1;
     if (_travel > _maxTravel) then {_maxTravel = _travel};
 

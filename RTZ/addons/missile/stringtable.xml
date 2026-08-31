@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="RTZ">
+    <Package name="Missile">
+        <Key ID="STR_RTZ_Missile_DisplayName">
+            <English>Incoming Missiles</English>
+        </Key>
+        <Key ID="STR_RTZ_Missile_DrawLine">
+            <English>Draw Line to Target</English>
+        </Key>
+        <Key ID="STR_RTZ_Missile_DrawLine_Description">
+            <English>Draw a line from the incoming missile to the unit it is tracking, so it is clear which unit is under threat.</English>
+        </Key>
+        <Key ID="STR_RTZ_Missile_Enabled">
+            <English>Enable Incoming Missile Warnings</English>
+        </Key>
+        <Key ID="STR_RTZ_Missile_Enabled_Description">
+            <English>Report guided missiles fired at a unit to the curators who own that unit. Only guided weapons are reported — ATGMs and lock-on anti-air and anti-tank missiles — so unguided rockets an AI happens to be aiming at the unit are ignored.</English>
+        </Key>
+        <Key ID="STR_RTZ_Missile_Markers">
+            <English>Mark Incoming Missiles</English>
+        </Key>
+        <Key ID="STR_RTZ_Missile_Markers_Description">
+            <English>Draw a marker on incoming missiles, both in the Zeus camera view and on the Zeus map.</English>
+        </Key>
+        <Key ID="STR_RTZ_Missile_MaxDistance">
+            <English>Marker Draw Distance</English>
+        </Key>
+        <Key ID="STR_RTZ_Missile_MaxDistance_Description">
+            <English>Maximum distance from the camera at which 3D incoming missile markers are drawn.</English>
+        </Key>
+    </Package>
+</Project>

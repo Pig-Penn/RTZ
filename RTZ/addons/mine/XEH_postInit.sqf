@@ -9,15 +9,15 @@ if (!hasInterface) exitWith {};
 ["zen_curatorDisplayLoaded", {_this call FUNC(start)}] call CBA_fnc_addEventHandler;
 ["zen_curatorDisplayUnloaded", {call FUNC(stop)}] call CBA_fnc_addEventHandler;
 
-// FUNC(start) registers only the handlers whose setting is on and tears down the
-// ones whose setting went off, so re-running it IS the toggle. Applying it live
-// means a curator flipping a marker off stops paying for it immediately rather
+// FUNC(start) registers the handlers when the setting is on and tears them down
+// when it goes off, so re-running it IS the toggle. Applying it live means a
+// curator flipping the markers off stops paying for them immediately rather
 // than at the next mission — and it is the reason neither draw function has to
 // re-test its setting every frame.
 ["CBA_SettingChanged", {
     params ["_name"];
 
-    if !((toLower _name) in [toLower QGVAR(mark3D), toLower QGVAR(markMap)]) exitWith {};
+    if ((toLower _name) isNotEqualTo (toLower QGVAR(markers))) exitWith {};
 
     // Nothing to start unless Zeus is actually open — FUNC(start) is otherwise
     // only ever reached through zen_curatorDisplayLoaded, and the markers are

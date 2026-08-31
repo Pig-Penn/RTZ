@@ -35,6 +35,6 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     QGVAR(ghostModelMax), "SLIDER",
     [LSTRING(GhostModelMax), LSTRING(GhostModelMax_Description)],
     _category,
-    [0, 60, 12, 0],
+    [0, 60, 30, 0],
     false // Client
 ] call CBA_fnc_addSetting;

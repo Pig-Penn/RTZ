@@ -82,10 +82,10 @@ if (_selGrps isNotEqualTo []) then {
 // double-count a unit that was also picked individually.
 private _units = ([_objects] call EFUNC(common,collectUnits)) select {
     alive _x
-    && {!isPlayer _x}
-    && {!isNull group _x}
+    && { !isPlayer _x }
+    && { !isNull group _x }
 };
-if (_units isEqualTo []) exitWith {false};
+if (_units isEqualTo []) exitWith { false };
 
 // Unique AI-bearing groups from the selection. Every _x already passed the
 // !isPlayer filter above, so its own group is guaranteed to contain an AI

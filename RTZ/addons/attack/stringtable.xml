@@ -5,7 +5,7 @@
             <English>Attack</English>
         </Key>
         <Key ID="STR_RTZ_Attack_NoTarget">
-            <English>No Target</English>
+            <English>No Target Selected</English>
         </Key>
     </Package>
 </Project>

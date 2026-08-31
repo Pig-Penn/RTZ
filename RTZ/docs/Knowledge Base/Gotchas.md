@@ -73,8 +73,10 @@ It takes a timeout and a timeout branch; use them:
 
 Shipped in `fnc_addWaypoint`, which watched a DESTROY target for deletion with no timeout — one
 per-frame condition per attack order, forever, and re-tasking a group added another. The watch
-was bounded, then deleted outright: in-game testing showed a DESTROY waypoint completes within
-seconds on its own — target alive, dead, or deleted — so there was never an orphan to clean up.
+was bounded, then deleted outright: a DESTROY waypoint aimed at infantry retires itself within
+seconds whether or not the target is alive, so there was never an orphan to clean up. *Why* it
+retires is §5, "A DESTROY waypoint binds to a vehicle but never to a man" — and note that it is
+**completed**, not deleted, which is a different thing and was misread as one for a while.
 
 ### `while` loops in unscheduled code silently stop at 10,000 iterations
 
@@ -1159,6 +1161,43 @@ Two fixes, both in [rtz_hud](addons/hud): define constants that appear inside `Q
 with **single** quotes (`#define STREAM_DEST 'dest'` — valid SQF, harmless in config), and
 resolve localized labels **inside** the called function from a plain id rather than passing them
 through the config.
+
+### A DESTROY waypoint binds to a vehicle but never to a man
+
+`waypointAttachVehicle` is the only command that binds a waypoint to its target, and it takes
+**only on a vehicle**. Against a `CAManBase` it is a silent no-op — no error, no return value,
+`waypointAttachedVehicle` stays `objNull`. `waypointAttachObject` does nothing in either case,
+including on a vehicle where `waypointAttachVehicle` has just succeeded, so it is not the
+infantry counterpart it looks like.
+
+The engine does say so, in the RPT, once per frame for the life of the waypoint:
+
+```
+Destroy waypoint not linked to a target: Near target acquisition is slow and may even select friendly unit.
+```
+
+An unbound DESTROY waypoint is **positional**: a spot the group walks to and fights near, which
+the engine retires within seconds regardless of whether the target ever died. A bound one tracks
+its vehicle and completes on its destruction, as intended.
+
+Retired means **completed, not deleted**. `count waypoints _group` never changes; `currentWaypoint
+_group` advances past the last index. Zeus stops drawing a waypoint the group has moved past, so
+in the curator display this reads as "the waypoint was removed a second later" — it wasn't, and
+looking for whoever deleted it is a dead end.
+
+Measured side by side against vanilla Zeus's own right-click attack order, same map, same groups:
+
+| Order | Target | Bound? | Held before completing |
+|---|---|---|---|
+| `EFUNC(attack,orderDestroy)` | infantry | no | 3.6 s, target untouched |
+| Zeus right-click | infantry | no | ~11 s, target untouched |
+| `EFUNC(attack,orderDestroy)` | vehicle | yes | ~9.6 s, target still alive |
+| Zeus right-click | vehicle | yes | ~17 s, ending the instant the target died |
+
+So this is an engine limit, not an RTZ one — vanilla Zeus cannot bind to a man either. The
+consequence to design around: **an attack order against infantry is a one-shot nudge, not a
+standing order.** Anything that needs a group to keep prosecuting a man has to supply the
+tracking itself, and per §1 that means something bounded, never a per-frame watch.
 
 ### `curatorSelected` is `[objects, groups, waypoints, markers]`
 

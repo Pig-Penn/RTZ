@@ -16,17 +16,11 @@
         <Key ID="STR_RTZ_Mine_MagazineLabel">
             <English>%1 (%2 carried)</English>
         </Key>
-        <Key ID="STR_RTZ_Mine_Mark3D">
-            <English>Mark Spotted Mines in 3D</English>
+        <Key ID="STR_RTZ_Mine_Markers">
+            <English>Mark Spotted Mines</English>
         </Key>
-        <Key ID="STR_RTZ_Mine_Mark3D_Description">
-            <English>Draw an icon on spotted mines in the Zeus camera view.</English>
-        </Key>
-        <Key ID="STR_RTZ_Mine_MarkMap">
-            <English>Mark Spotted Mines on Map</English>
-        </Key>
-        <Key ID="STR_RTZ_Mine_MarkMap_Description">
-            <English>Draw an icon on spotted mines on the Zeus map.</English>
+        <Key ID="STR_RTZ_Mine_Markers_Description">
+            <English>Draw an icon on spotted mines, both in the Zeus camera view and on the Zeus map.</English>
         </Key>
         <Key ID="STR_RTZ_Mine_MaxDistance">
             <English>Marker Draw Distance</English>

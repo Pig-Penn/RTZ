@@ -1,9 +1,15 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Replaces the group's waypoints with a destroy waypoint attached to the
- * target and reveals the target to the group so it engages reliably.
+ * Replaces the group's waypoints with a destroy waypoint aimed at the target
+ * and reveals the target to the group so it engages reliably.
  * Must be executed where the group is local.
+ *
+ * Against a VEHICLE this is a standing order: the waypoint binds to the target,
+ * tracks it, and completes when it dies. Against INFANTRY it is a one-shot nudge
+ * that the engine retires within seconds - a waypoint cannot be bound to a man.
+ * That is an engine limit, not an RTZ one; vanilla Zeus's right-click attack
+ * order behaves identically. See docs/Knowledge Base/Gotchas.md 5.
  *
  * Arguments:
  * 0: Group <GROUP>
@@ -20,16 +26,7 @@
 
 params ["_group", "_target"];
 
-if (isNull _group || {isNull _target} || {!alive _target}) exitWith {};
-
-// A new order supersedes all existing waypoints, except the implicit waypoint 0
-// every group is created with: that is the one the group is already standing on,
-// so an order placed there can be treated as reached the moment it is set
-private _waypoints = waypoints _group;
-_waypoints deleteAt 0;
-{
-    deleteWaypoint _x;
-} forEachReversed _waypoints;
+if (isNull _group || { isNull _target } || { !alive _target }) exitWith {};
 
 // Without the reveal the group may reach the waypoint but never spot,
 // and therefore never engage, the target
@@ -40,4 +37,3 @@ _waypoint setWaypointType "DESTROY";
 _waypoint waypointAttachVehicle _target;
 _waypoint setWaypointBehaviour "COMBAT";
 _waypoint setWaypointCombatMode "RED";
-_group setCurrentWaypoint _waypoint;

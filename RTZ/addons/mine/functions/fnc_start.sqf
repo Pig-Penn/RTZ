@@ -2,13 +2,13 @@
 /*
  * Author: Maxim
  * Starts marking spotted mines: the refresh PFH, the 3D drawing and the Zeus map
- * drawing. Called when the curator display opens, and again whenever one of the
- * two marker settings is toggled mid-mission (see XEH_postInit).
+ * drawing. Called when the curator display opens, and again whenever the marker
+ * setting is toggled mid-mission (see XEH_postInit).
  *
- * Each piece is registered only when the setting that feeds it is actually ON, and
- * torn down again when it is turned off — rather than registering everything and
- * testing the settings inside a handler that then runs every single frame for
- * nothing. With both markers off the component costs exactly zero.
+ * All three pieces ride one setting, and each is registered only while it is ON
+ * and torn down again when it goes off — rather than registering everything and
+ * testing the setting inside a handler that then runs every single frame for
+ * nothing. With the markers off the component costs exactly zero.
  *
  * The map Draw handler is attached to a control of the curator display, so it dies
  * with the display; only its id is kept, so a mid-mission toggle can detach it
@@ -35,10 +35,10 @@
 
 params [["_display", displayNull]];
 
-private _wanted = GVAR(mark3D) || {GVAR(markMap)};
+private _markers = GVAR(markers);
 
-// The cache feeds both markers, so it is kept alive for either
-if (_wanted) then {
+// The cache feeds both markers, so it lives and dies with them
+if (_markers) then {
     if (GVAR(pfh) == -1) then {
         GVAR(pfh) = [LINKFUNC(refreshMines), REFRESH_INTERVAL] call CBA_fnc_addPerFrameHandler;
         call FUNC(refreshMines);
@@ -54,7 +54,7 @@ if (_wanted) then {
 // Registration with rtz_core's shared frame loop, not a Draw3D handler of our
 // own — registering and unregistering is what makes the marker free while it is
 // switched off, exactly as adding/removing the handler used to be.
-if (GVAR(mark3D)) then {
+if (_markers) then {
     [QGVAR(mines3D), ELINKFUNC(mine,draw3D), RENDER_WORLD, 60] call EFUNC(core,registerRenderer);
 } else {
     [QGVAR(mines3D), RENDER_WORLD] call EFUNC(core,unregisterRenderer);
@@ -74,7 +74,7 @@ if (isNull _mapCtrl) exitWith {};
 
 // Added and removed by id rather than cleared wholesale — ctrlRemoveAllEventHandlers
 // would take ZEN's own Draw handlers on the same map with it
-if (GVAR(markMap)) then {
+if (_markers) then {
     if (GVAR(mapEH) == -1) then {
         GVAR(mapEH) = _mapCtrl ctrlAddEventHandler ["Draw", {_this call FUNC(drawMap)}];
     };

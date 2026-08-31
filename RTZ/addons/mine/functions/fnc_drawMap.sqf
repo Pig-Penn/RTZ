@@ -3,7 +3,7 @@
  * Author: Maxim
  * Draws an icon on each cached spotted mine on the Zeus map. The cache is already
  * a flat list of validated positions (FUNC(refreshMines)), and the handler is only
- * attached while GVAR(markMap) is on (FUNC(start)), so this is just the loop.
+ * attached while GVAR(markers) is on (FUNC(start)), so this is just the loop.
  *
  * Arguments:
  * 0: Zeus Map Control <CONTROL>
