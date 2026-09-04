@@ -20,7 +20,10 @@
  * which is the wrong cause and the wrong wait. It now fails on the spot and says so.
  *
  * Arguments:
- * 0: Units <ARRAY of OBJECT, or OBJECT> — first entry is the watched lead
+ * 0: Units <ARRAY, or OBJECT> — an entry is a unit, which walks to Position, or
+ *    [unit, destination] for a unit given a stand-point of its own. The first entry
+ *    is the watched lead, and arrival is measured on the lead against Position — so
+ *    the lead is the unit whose destination that is
  * 1: Position <ARRAY>
  * 2: Arrival Distance <NUMBER>
  * 3: Timeout <NUMBER> — seconds before the errand expires
@@ -44,7 +47,16 @@ params ["_units", "_pos", "_arriveDistance", "_timeout", "_onArrive", ["_onFail"
 
 if (_units isEqualType objNull) then { _units = [_units] };
 
-private _lead = _units param [0, objNull];
+// Normalized to [unit, destination] pairs once, so the walk loop below is a plain
+// read. Everything an errand sends along follows the lead to the same spot unless it
+// says otherwise — which the static-weapon assemble does, because two men ordered onto
+// the same square shove each other and the engine refuses to raise a weapon through
+// the man standing where it goes.
+private _walkers = _units apply {
+    if (_x isEqualType objNull) then {[_x, _pos]} else {[_x select 0, _x param [1, _pos]]}
+};
+
+private _lead = (_walkers param [0, []]) param [0, objNull];
 if (isNull _lead) exitWith {};
 
 // Supersede any pending order on the lead so only the newest one can resolve.
@@ -54,14 +66,16 @@ _lead setVariable [QGVAR(approachOrder), _order];
 // lambs_danger_forceMove (inert without LAMBS) keeps the danger FSM from seizing
 // the units mid-errand; setUnitPosWeak requests the pose without hard-locking it.
 {
-    if (!isNull _x && {alive _x}) then {
+    _x params ["_unit", "_unitPos"];
+
+    if (!isNull _unit && {alive _unit}) then {
         if (_forceMove) then {
-            _x setVariable ["lambs_danger_forceMove", true];
-            _x setUnitPosWeak "UP";
+            _unit setVariable ["lambs_danger_forceMove", true];
+            _unit setUnitPosWeak "UP";
         };
-        _x doMove _pos;
+        _unit doMove _unitPos;
     };
-} forEach _units;
+} forEach _walkers;
 
 [
     {

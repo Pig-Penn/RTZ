@@ -5,9 +5,9 @@
  * XEH_postInit). Routes one carried assemble set to its build path:
  *   - a UAV operator's bag deploys instantly into an autonomous drone on the spot
  *     (FUNC(assembleUAV) - lightweight, no walk, no animation)
- *   - a manned static weapon is walked to the picked cursor spot by its gunner and
- *     assistant, then raised with the real engine assemble animation (arrival, or a
- *     walk timeout, hands off to FUNC(buildWeapon))
+ *   - a manned static weapon is walked to the picked cursor spot by its gunner, with
+ *     the assistant flanking it, then raised with the real engine assemble animation
+ *     (arrival, or a walk timeout, hands off to FUNC(buildWeapon))
  *
  * doMove, createVehicle and the assemble action all need the gunner local, so the
  * whole errand lives here and FUNC(orderAssemble) dispatches each set to his owner
@@ -71,7 +71,7 @@ private _walkTimeout = WALK_TIMEOUT_BASE + (_gunner distance2D _position) * WALK
 // Claimed before the UAV split so a fast double order can't deploy two drones off one
 // bag; the drone path releases it again the moment it is done
 if (CBA_missionTime < (_gunner getVariable [QGVAR(assembling), 0])) exitWith {};
-SETPVAR(_gunner,GVAR(assembling),CBA_missionTime + _walkTimeout + BUILD_TIMEOUT);
+SETPVAR(_gunner,GVAR(assembling),CBA_missionTime + _walkTimeout + SETTLE_TIMEOUT + BUILD_TIMEOUT);
 
 // A UAV operator's bag becomes an autonomous drone deployed on the spot - no tripod
 // to walk in, no gunner seat. Lightweight, instant, separate path
@@ -89,10 +89,21 @@ if (GVAR(instant)) exitWith {
     [_gunner, _staticClass, _assistant, _direction, _curator] call FUNC(buildWeapon);
 };
 
+// The gunner walks to the picked spot itself - the weapon is raised where he stands,
+// so sending him anywhere else would drift the static off the preview ghost. The
+// assistant instead gets a stand-point of his own, CREW_SPREAD meters to the side:
+// clear of the footprint the static is about to occupy, but inside the reach the
+// engine's "PutBag" half needs. Vanilla's BIS_fnc_unpackStaticWeapon flanks the spot
+// the same way
 private _crew = [_gunner];
 
 if (!isNull _assistant && {alive _assistant}) then {
-    _crew pushBack _assistant;
+    // Perpendicular to the facing the weapon will take. With no preview facing (-1,
+    // auto-aim at the nearest enemy, which FUNC(finishBuild) only resolves once the
+    // weapon exists) the crew's own approach bearing stands in - either way the
+    // assistant ends up beside the gunner rather than in front of the muzzle
+    private _facing = if (_direction >= 0) then {_direction} else {_position getDir _gunner};
+    _crew pushBack [_assistant, _position getPos [CREW_SPREAD, _facing + 90]];
 };
 
 // Walk the crew to the spot, then raise the weapon. Build on arrival, or in place on

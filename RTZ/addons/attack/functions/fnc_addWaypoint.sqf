@@ -37,3 +37,5 @@ _waypoint setWaypointType "DESTROY";
 _waypoint waypointAttachVehicle _target;
 _waypoint setWaypointBehaviour "COMBAT";
 _waypoint setWaypointCombatMode "RED";
+
+_group setCurrentWaypoint _waypoint;

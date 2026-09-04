@@ -154,9 +154,12 @@ private _walkTimeout = WALK_TIMEOUT_BASE + (_assistant distance2D _weapon) * WAL
 // weapon afterwards
 SETPVAR(_weapon,GVAR(packing),CBA_missionTime + _walkTimeout + PACK_TIMEOUT);
 
+// Behind the weapon and off to one side rather than into the weapon's own square: the
+// assistant only has to be within reach when the bags are handed out, and a
+// destination he can stand on beats one the engine keeps pushing him out of
 [
     [_assistant],
-    getPosATL _weapon,
+    _weapon getRelPos [CREW_SPREAD, PACK_SPREAD_BEARING],
     ARRIVE_DISTANCE,
     _walkTimeout,
     LINKFUNC(packWeapon),

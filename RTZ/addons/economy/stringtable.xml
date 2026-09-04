@@ -11,7 +11,7 @@
             <English>Refund Coefficient</English>
         </Key>
         <Key ID="STR_RTZ_Economy_DeleteRefund_Description">
-            <English>The percentage of an object's cost refunded when it is deleted. Note that deleting corpses and wrecks also refunds.</English>
+            <English>The percentage of an object's cost refunded when a curator deletes it. Only objects a curator placed and that are still intact are refunded — corpses, wrecks and anything the mission itself placed are worth nothing.</English>
         </Key>
         <Key ID="STR_RTZ_Economy_DisplayName">
             <English>Economy</English>

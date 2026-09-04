@@ -70,17 +70,13 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     true
 ] call CBA_fnc_addSetting;
 
+// No change handler: the refund is no longer an engine coefficient that has to
+// be re-applied to every curator, it is read at the moment of the deletion
+// (see fnc_refundApply)
 [
     QGVAR(deleteRefund), "SLIDER",
     [LSTRING(DeleteRefund), LSTRING(DeleteRefund_Description)],
     _category,
     [0, 100, 50, 0],
-    true,
-    {
-        if (!isServer) exitWith {};
-
-        {
-            _x call FUNC(applyCoefs);
-        } forEach (allCurators select {_x getVariable [QGVAR(initialized), false]});
-    }
+    true
 ] call CBA_fnc_addSetting;

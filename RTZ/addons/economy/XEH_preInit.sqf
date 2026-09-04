@@ -10,6 +10,10 @@ PREP_RECOMPILE_END;
 // leaves a newer one alone (see fnc_placementToast)
 GVAR(toastToken) = 0;
 
+// Classes deleted through the Zeus interface this frame, awaiting one batched
+// refund event to the server (see fnc_refundDeleted). Emptied by the flush
+GVAR(refundQueue) = [];
+
 // Classname -> cost category index, built lazily as classes are first priced
 GVAR(categories) = createHashMap;
 

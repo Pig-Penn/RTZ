@@ -4,12 +4,15 @@
  * Handler body for QGVAR(delete) (server only). Deletes the objects and hands
  * the groups they emptied to FUNC(cleanupGroupsApply).
  *
- * Deleting through the Zeus interface refunds a share of the placement cost
- * (rtz_economy's "delete" curator coefficient, see EFUNC(economy,applyCoefs));
- * a scripted deleteVehicle goes around that system entirely, so this action is
- * free by construction. The points are snapshotted and restored on the next
- * frame anyway, so the curators' bars stay put no matter what the engine
- * credits for a removal — one allCurators pass per action, not per object.
+ * This action never refunds curator points, and no longer has to defend itself
+ * against the engine doing so: it used to snapshot every curator's points and
+ * restore them a frame later, in case a removal was credited. Nothing credits
+ * it. A scripted deleteVehicle goes around the curator economy entirely, and
+ * the engine's "delete" coefficient is held at zero regardless
+ * (EFUNC(economy,applyCoefs)) — a Zeus-interface deletion is refunded from
+ * script instead, off an event this path does not fire. The snapshot cost an
+ * allCurators pass per action and would have reverted any other credit (an
+ * income payout, say) that landed in the same frame.
  *
  * Arguments:
  * 0: Objects to delete <ARRAY>
@@ -24,8 +27,6 @@
  */
 
 params ["_targets"];
-
-private _points = allCurators apply { [_x, curatorPoints _x] };
 
 private _groups = [];
 {
@@ -44,12 +45,3 @@ private _groups = [];
 if (_groups isNotEqualTo []) then {
     [QGVAR(cleanupGroups), [_groups]] call CBA_fnc_globalEvent;
 };
-
-[{
-    {
-        _x params ["_curator", "_before"];
-        if (!isNull _curator) then {
-            _curator addCuratorPoints (_before - curatorPoints _curator);
-        };
-    } forEach _this;
-}, _points] call CBA_fnc_execNextFrame;

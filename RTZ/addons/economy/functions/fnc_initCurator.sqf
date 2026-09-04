@@ -1,8 +1,9 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Sets up the economy on a curator module once per machine: the cost table
- * event handler everywhere, points and action coefficients on the server.
+ * Sets up the economy on a curator module once per machine: the cost table and
+ * placement/deletion event handlers everywhere, points and action coefficients
+ * on the server.
  *
  * Runs regardless of the enable setting — a disabled economy still has to
  * register its (all zero) cost table and hand out its starting points,
@@ -28,8 +29,14 @@ if (isNull _curator) exitWith {};
 if (_curator getVariable [QGVAR(initialized), false]) exitWith {};
 _curator setVariable [QGVAR(initialized), true];
 
-// Fires on the machine of the player entering the curator interface
+// All three fire on the machine of the player using the curator interface.
+// Placing marks what the curator paid for and deleting refunds a share of it,
+// which the engine's own "delete" coefficient cannot do selectively — see
+// FUNC(markPlaced) and FUNC(refundDeleted).
 _curator addEventHandler ["CuratorObjectRegistered", LINKFUNC(registerCosts)];
+_curator addEventHandler ["CuratorObjectPlaced", LINKFUNC(markPlaced)];
+_curator addEventHandler ["CuratorGroupPlaced", LINKFUNC(markPlaced)];
+_curator addEventHandler ["CuratorObjectDeleted", LINKFUNC(refundDeleted)];
 
 if (!isServer) exitWith {};
 

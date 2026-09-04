@@ -6,9 +6,15 @@
  * the vanilla / LAMBS flow). The engine fires "WeaponAssembled" when the animation
  * completes, the event handler claims the build and hands off to FUNC(finishBuild).
  *
- * The engine action can silently no-op (indoors, on steep ground, with the AI not
- * ready, or an assistant still out of reach), so a deterministic fallback fires
- * after BUILD_TIMEOUT: if the weapon never appeared it is built directly (a plain
+ * Two of the ways the engine action silently no-ops are headed off before it is even
+ * issued: both men are asked to kneel and the action waits for the animation to reach
+ * CROUCH (an AI still settling out of his walk is not ready), and the wait also
+ * checks the assistant is inside ASSIST_REACH, which is the only place his arrival is
+ * checked at all - EFUNC(common,approach) watches the gunner alone. Vanilla's
+ * BIS_fnc_unpackStaticWeapon makes the same settle before its own action ["Assemble"].
+ *
+ * The action can still no-op (indoors, on steep ground), so a deterministic fallback
+ * fires after BUILD_TIMEOUT: if the weapon never appeared it is built directly (a plain
  * createVehicle + moveInGunner) so a Zeus order never fails quietly. The state slot
  * of the shared QGVAR(buildCtx) on the gunner makes the event handler and the
  * fallback mutually exclusive - whichever fires first claims "done" and the other
@@ -167,15 +173,60 @@ private _eh = _gunner addEventHandler ["WeaponAssembled", {
 }];
 _ctx set [4, _eh];
 
-// Issue the real assemble action
-if (isNull _assistant) then {
-    // Single bag weapon such as the Mk6 mortar, the gunner assembles his own bag
-    _gunner action ["Assemble", unitBackpack _gunner];
-} else {
-    // Two bag: drop the assistant's support bag, then assemble it
-    _gunner action ["PutBag", _assistant];
-    _gunner action ["Assemble", unitBackpack _assistant];
+// Issue the real assemble action, once the settle below says both men are ready
+private _fnc_issueAssemble = {
+    params ["_gunner", "_staticClass", "_assistant", "_direction", "_bags", "_fnc_directBuild"];
+
+    // Gunner lost inside the settle window - resolve the errand now rather than idle
+    // out the whole build window first. _fnc_directBuild aborts on a dead gunner
+    if (isNull _gunner || {!alive _gunner}) exitWith {
+        [_gunner, _staticClass, _assistant, _direction, _bags] call _fnc_directBuild;
+    };
+
+    if (isNull _assistant) then {
+        // Single bag weapon such as the Mk6 mortar, the gunner assembles his own bag
+        _gunner action ["Assemble", unitBackpack _gunner];
+    } else {
+        // Two bag: drop the assistant's support bag, then assemble it
+        _gunner action ["PutBag", _assistant];
+        _gunner action ["Assemble", unitBackpack _assistant];
+    };
+
+    // Deterministic fallback: if the engine never fired, build it directly. Started
+    // here rather than at the bottom of this file so the settle above can't eat into
+    // the window the engine gets to report back
+    [_fnc_directBuild, [_gunner, _staticClass, _assistant, _direction, _bags], BUILD_TIMEOUT] call CBA_fnc_waitAndExecute;
 };
 
-// Deterministic fallback: if the engine never fired, build it directly
-[_fnc_directBuild, [_gunner, _staticClass, _assistant, _direction, _bags], BUILD_TIMEOUT] call CBA_fnc_waitAndExecute;
+// Ask both men to kneel. setUnitPosWeak rather than a hard setUnitPos, so
+// EFUNC(common,clearErrand)'s weak "AUTO" releases it again at the end of the errand
+// exactly as it releases the "UP" the walk set
+{
+    if (!isNull _x && {alive _x} && {isNull objectParent _x}) then {
+        _x setUnitPosWeak "MIDDLE";
+    };
+} forEach [_gunner, _assistant];
+
+// Wait for that to actually take before issuing the action - an AI mid-transition is
+// one of the states the engine assemble refuses. A weak stance is a request, not an
+// order, so SETTLE_TIMEOUT issues the action regardless: a man who never kneels still
+// gets his weapon built, he just doesn't get the settle
+[
+    {
+        params ["_gunner", "_staticClass", "_assistant"];
+
+        !alive _gunner
+        || {
+            stance _gunner isEqualTo "CROUCH"
+            && {
+                isNull _assistant
+                || {!alive _assistant}
+                || {stance _assistant isEqualTo "CROUCH" && {_assistant distance _gunner < ASSIST_REACH}}
+            }
+        }
+    },
+    _fnc_issueAssemble,
+    [_gunner, _staticClass, _assistant, _direction, _bags, _fnc_directBuild],
+    SETTLE_TIMEOUT,
+    _fnc_issueAssemble
+] call CBA_fnc_waitUntilAndExecute;

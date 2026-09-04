@@ -68,7 +68,7 @@
 // sheet, against 0.75-0.875 for the simpleTasks glyphs everything else uses. The
 // ~2.2x here buys back the dead margin, it does not draw a bigger marker.
 #define ICON_MISSILE "\a3\ui_f\data\IGUI\RscCustomInfo\Sensors\Targets\missileAlt_ca.paa"
-#define ICON_SIZE_3D 2.4
-#define ICON_SIZE_MAP 56
+#define ICON_SIZE_3D 1
+#define ICON_SIZE_MAP 28
 #define LINE_WIDTH_3D 4
 #define LINE_WIDTH_MAP 3

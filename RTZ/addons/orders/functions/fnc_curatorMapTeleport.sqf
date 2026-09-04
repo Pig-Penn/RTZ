@@ -30,10 +30,10 @@
 CHECK_CURATOR_INPUT;
 
 // This one is map-only: there is no map cursor to read otherwise
-if (!visibleMap) exitWith {false};
+if (!visibleMap) exitWith { false };
 
 private _ctrlMap = findDisplay IDD_RSCDISPLAYCURATOR displayCtrl IDC_RSCDISPLAYCURATOR_MAINMAP;
-if (isNull _ctrlMap) exitWith {false};
+if (isNull _ctrlMap) exitWith { false };
 
 // Cursor position on the map → world (ctrlMapScreenToWorld extrapolates, so
 // it always yields a position, even with the cursor off the map's edge)

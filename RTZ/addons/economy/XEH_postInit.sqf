@@ -13,6 +13,13 @@ if (!isServer && {!hasInterface}) exitWith {};
     GVAR(nextIncome) = _next;
 }] call CBA_fnc_addEventHandler;
 
+// Refunds for objects deleted through the Zeus interface are decided on the
+// deleting curator's machine and priced here, because curator points are
+// server-side (see fnc_refundDeleted and fnc_refundApply)
+if (isServer) then {
+    [QGVAR(refund), LINKFUNC(refundApply)] call CBA_fnc_addEventHandler;
+};
+
 ["CBA_settingsInitialized", {
     // Curator modules can be created mid-mission (e.g. ZEN's Add Zeus module),
     // so the income tick doubles as lazy detection of new modules. The PFH

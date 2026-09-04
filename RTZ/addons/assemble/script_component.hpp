@@ -24,6 +24,30 @@
 // How close the crew must get to the picked spot before the weapon is raised (meters)
 #define ARRIVE_DISTANCE 4
 
+// The assistant does not share the gunner's square: he stands CREW_SPREAD meters to
+// the side of the build spot and, when packing, CREW_SPREAD out at PACK_SPREAD_BEARING
+// degrees off the weapon's own facing. Two men sent to the same point shove each
+// other, and an assistant standing where the static is about to be raised is one of
+// the cases the engine's assemble action refuses outright. Vanilla's
+// BIS_fnc_unpackStaticWeapon flanks the spot the same way, at the same 1.5m
+#define CREW_SPREAD 1.5
+#define PACK_SPREAD_BEARING 135
+
+// How close the assistant must be before the engine assemble is issued (meters).
+// Deliberately loose rather than the ~3m the men actually end up apart: the gunner is
+// only held to ARRIVE_DISTANCE of the build spot and the assistant stands CREW_SPREAD
+// off it, so a perfectly good pair can legitimately be ARRIVE_DISTANCE + CREW_SPREAD
+// apart and a tighter bound would time the settle out on every second build. What
+// this catches is the case that actually broke assembles - an assistant still twenty
+// meters back, because EFUNC(common,approach) never watched him
+#define ASSIST_REACH 6
+
+// Seconds to wait for both men to kneel and settle before the engine assemble action
+// is issued. A backstop, not the expected path - see FUNC(buildWeapon). BUILD_TIMEOUT
+// only starts once the action has actually been issued, so this window never eats
+// into the one the engine gets to report back
+#define SETTLE_TIMEOUT 3
+
 // Fallback clean-up radii, both in meters, used only when the engine assemble ran
 // half way (see FUNC(buildWeapon)). ADOPT_RADIUS is how far out the fallback looks
 // for a static the engine already raised before deciding to raise its own;
