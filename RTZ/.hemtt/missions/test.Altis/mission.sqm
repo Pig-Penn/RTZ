@@ -16,7 +16,7 @@ class EditorData
 	};
 	class LayerIndexProvider
 	{
-		nextID=138;
+		nextID=142;
 	};
 	class Camera
 	{
@@ -4073,6 +4073,19 @@ class Mission
 			{
 				class Attribute0
 				{
+					property="lambs_WP_Editor_IsArtillery";
+					expression="if (_value) then {_this spawn {waitUntil {!(isNil 'lambs_wp_fnc_taskArtilleryRegister')};[gunner _this] call lambs_wp_fnc_taskArtilleryRegister;};};";
+					class Value
+					{
+						class data
+						{
+							singleType="BOOL";
+							value=1;
+						};
+					};
+				};
+				class Attribute1
+				{
 					property="VehicleCustomization";
 					expression="if (local _this) then {([_this] + _value + [true]) call (uinamespace getvariable 'BIS_fnc_initVehicle')};";
 					class Value
@@ -4202,19 +4215,6 @@ class Mission
 									};
 								};
 							};
-						};
-					};
-				};
-				class Attribute1
-				{
-					property="lambs_WP_Editor_IsArtillery";
-					expression="if (_value) then {_this spawn {waitUntil {!(isNil 'lambs_wp_fnc_taskArtilleryRegister')};[gunner _this] call lambs_wp_fnc_taskArtilleryRegister;};};";
-					class Value
-					{
-						class data
-						{
-							singleType="BOOL";
-							value=1;
 						};
 					};
 				};
@@ -4883,6 +4883,7 @@ class Mission
 			};
 			id=295;
 			type="I_GMG_01_F";
+			atlOffset=0.019348145;
 		};
 		class Item60
 		{
@@ -11935,7 +11936,7 @@ class Mission
 			class PositionInfo
 			{
 				position[]={15043.868,17.91,17149.75};
-				angles[]={-0,5.5447316,0};
+				angles[]={0,5.5447316,0};
 			};
 			areaSize[]={500,-1,300};
 			flags=1;
@@ -12490,7 +12491,7 @@ class Mission
 					class PositionInfo
 					{
 						position[]={10339.037,119.41422,18983.062};
-						angles[]={0,1.2222588,-0};
+						angles[]={0,1.2222588,0};
 					};
 					side="West";
 					flags=7;
@@ -12618,7 +12619,7 @@ class Mission
 					class PositionInfo
 					{
 						position[]={10496.162,110.50183,19040.207};
-						angles[]={0,0.39713269,-0};
+						angles[]={0,0.39713269,0};
 					};
 					side="West";
 					flags=5;
@@ -12663,6 +12664,7 @@ class Mission
 			};
 			id=1454;
 			type="B_Quadbike_01_F";
+			atlOffset=-0.00074005127;
 		};
 	};
 	class Connections

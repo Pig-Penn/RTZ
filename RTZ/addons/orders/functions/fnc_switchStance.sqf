@@ -33,18 +33,18 @@ CHECK_CURATOR_INPUT;
 
 private _units = SELECTED_OBJECTS select {
     _x isKindOf "CAManBase"
-    && {alive _x}
-    && {!isPlayer _x}
-    && {isNull objectParent _x}
+    && { alive _x }
+    && { !isPlayer _x }
+    && { isNull objectParent _x }
 };
 if (_units isEqualTo []) exitWith {false};
 
 // Feedback matches ZEN's switchStance: a stance icon over each unit
 private _iconProperties = switch (_stance) do {
-    case "UP":     {[STANCE_ICON_UP, [1, 1, 1, 1], 1.5]};
-    case "MIDDLE": {[STANCE_ICON_MIDDLE, [1, 1, 1, 1], 1.5]};
-    case "DOWN":   {[STANCE_ICON_DOWN, [1, 1, 1, 1], 1.5]};
-    default        {[STANCE_ICON_AUTO, [1, 1, 1, 1], 1]};
+    case "UP":     { [STANCE_ICON_UP, [1, 1, 1, 1], 1.5] };
+    case "MIDDLE": { [STANCE_ICON_MIDDLE, [1, 1, 1, 1], 1.5] };
+    case "DOWN":   { [STANCE_ICON_DOWN, [1, 1, 1, 1], 1.5] };
+    default        { [STANCE_ICON_AUTO, [1, 1, 1, 1], 1] };
 };
 
 {
