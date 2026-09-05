@@ -18,3 +18,4 @@ This is a *weird*, *unofficial*, and *messy* record of my own personal ramblings
 3. Improve my mod's behavior display.
 4. For the supply addon, add a picker like the one that the attack context menu button has.
 5. Improve my mod's counter battery systems.
+6. Change the stance feature to "stance up" and "stance down".
