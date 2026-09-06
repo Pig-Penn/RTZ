@@ -9,7 +9,7 @@
  * now (FUNC(applyService)), reports nothing about them, and this watches the
  * deficit close instead. Three jobs, none of which the engine does for us:
  *
- *  — DROP targets that died or drove out of range, releasing their claims.
+ *  — DROP the target if it died or drove out of range, releasing its claims.
  *  — MEASURE progress, as the fraction of the starting deficit that has closed,
  *    and keep the supply-lines overlay's straight line honest about it.
  *  — GIVE UP when the deficit stops falling, which is what a supply truck running
@@ -19,12 +19,18 @@
  * ignored: nothing here is applied over time, so there is no share to apply. The
  * duration this job was started with is a TIMEOUT, not a service length.
  *
- * A dropped target's starting deficit is subtracted from the total. Without that,
- * a vehicle driving off would shrink the remaining deficit without any work having
- * been done and the bar would jump forward to celebrate losing a target.
+ * ONE TARGET, since FUNC(orderResupply) became a picker. This carried a target list
+ * with a mark-and-compact pass, a running total the dropped entries had to be
+ * subtracted from, and a per-entry claim release — all of which existed to keep one
+ * job's arithmetic straight across a blanket sweep's worth of vehicles. A job now
+ * watches exactly one deficit close.
+ *
+ * Progress is measured against the GRANTED services, not everything the truck
+ * carries: a fuel truck whose fuel slot was already claimed elsewhere is not
+ * watching that tank's fuel and must not read another truck's work as its own.
  *
  * Arguments:
- * 0: Job Arguments <ARRAY> — [supply, capabilities, work, radius, curator, startTotal, bestProgress, stalls, succeeded]
+ * 0: Job Arguments <ARRAY> — [supply, granted, target, startDeficit, radius, curator, bestProgress, stalls, succeeded]
  *
  * Return Value:
  * Keep Going <BOOL>
@@ -36,65 +42,35 @@
  */
 
 params ["_args"];
-_args params ["_supply", "_capabilities", "_work", "_radius", "", "_startTotal", "_bestProgress", "_stalls"];
+_args params ["_supply", "_granted", "_target", "_startDeficit", "_radius", "", "_bestProgress", "_stalls"];
 
 if (!alive _supply) exitWith {false};
 
-private _dropped   = false;
-private _remaining = 0;
+// Leaving the radius drops the target from the ORDER, not from the service:
+// actionNow has no distance limit, so the engine will finish whatever it started
+// however far the vehicle drives. This is RTZ's own policy bound — what a curator
+// meant by aiming at a vehicle parked next to this truck — and all it costs a
+// vehicle that drives off is its supply line and its claims.
+if (!alive _target || {_target distance _supply > _radius}) exitWith {
+    // Released here rather than left to FUNC(endService), which sees the nulled
+    // slot below and has nothing to release: a vehicle that drove into another
+    // depot's radius would otherwise stay locked against every other supply
+    // vehicle until the claim's own expiry.
+    [_target, _supply] call FUNC(releaseClaims);
 
-{
-    _x params ["_target", "_startDeficit"];
+    // Nulled so FUNC(endService) can tell "the target left" from "the truck ran
+    // dry" — the first is something the curator watched happen and is not told
+    // about, the second is a report he needs.
+    _args set [2, objNull];
 
-    // Leaving the radius drops a target from the ORDER, not from the service:
-    // actionNow has no distance limit, so the engine will finish whatever it
-    // started however far the vehicle drives. This is RTZ's own policy bound —
-    // what a curator meant by "the vehicles around this truck" — and all it costs
-    // a vehicle that drives off is its supply line and its claim.
-    if (!alive _target || {_target distance _supply > _radius}) then {
-        // Release the claim on the way out. FUNC(endService) only releases what is
-        // still in _work, so a target dropped here would otherwise stay locked
-        // against every other supply vehicle until the claim's own expiry — for a
-        // vehicle that just drove into another depot's radius, that is the rest of
-        // this job's timeout plus CLAIM_GRACE. Only a claim still held by THIS
-        // vehicle is dropped, same rule as the end pass.
-        if (!isNull _target && {((_target getVariable [QGVAR(claim), []]) param [0, objNull]) isEqualTo _supply}) then {
-            _target setVariable [QGVAR(claim), nil];
-        };
-
-        // Marked rather than deleted so the list is compacted at most once per
-        // tick instead of being re-indexed mid-iteration.
-        _x set [0, objNull];
-        _startTotal = _startTotal - _startDeficit;
-        _dropped = true;
-        continue;
-    };
-
-    _remaining = _remaining + ([_target, _capabilities] call FUNC(serviceDeficit));
-} forEach _work;
-
-if (_dropped) then {
-    _work = _work select {!isNull (_x select 0)};
-    _args set [2, _work];
-    _args set [5, _startTotal max 0];
-
-    // Keep the overlay contract in step, so a vehicle that drove off stops being
-    // drawn as serviced. The record array is mutated in place — it is the same
-    // array FUNC(gatherSupply) reads off the supply vehicle, so there is nothing
-    // to write back.
-    private _record = _supply getVariable [QGVAR(servicing), []];
-    if (_record isNotEqualTo []) then {
-        _record set [0, _work apply {_x select 0}];
-    };
+    false
 };
 
-// Everything died or drove off. Not a success and not a failure worth a toast —
-// the curator watched it happen.
-if (_work isEqualTo []) exitWith {false};
+private _remaining = [_target, _granted] call FUNC(serviceDeficit);
 
 private _progress = 1;
-if (_startTotal > 0) then {
-    _progress = (((_startTotal - _remaining) / _startTotal) max 0) min 1;
+if (_startDeficit > 0) then {
+    _progress = (((_startDeficit - _remaining) / _startDeficit) max 0) min 1;
 };
 
 // Done. Stop rather than idle out the rest of the timeout.

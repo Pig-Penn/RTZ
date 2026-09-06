@@ -1,7 +1,11 @@
 #include "script_component.hpp"
 
 // Stance orders are executed where the unit is local (setUnitPos is a
-// local-effect command; FUNC(switchStance) targets each unit's own machine)
+// local-effect command; FUNC(switchStance) targets each unit's own machine).
+// The ordered stance that the up/down keybinds step through is NOT recorded
+// here — FUNC(switchStance) publishes it on the curator's machine before
+// sending this event, so a fast second press has the first press's rung to
+// step from rather than waiting on a round trip.
 [QGVAR(switchStance), {
     params ["_unit", "_stance"];
     _unit setUnitPos _stance;

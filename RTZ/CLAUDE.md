@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Real-Time Zeus (RTZ) is an Arma 3 mod written in SQF that adds real-time strategy elements to the Zeus system, following the [ACE3 coding guidelines](https://ace3.acemod.org/wiki/development/coding-guidelines) and CBA's modular component structure — the same conventions ACE3 and ZEN use.
 
-It runs on servers with several curators, large numbers of units, and operations lasting several hours; players may connect and disconnect mid-mission. The units a curator spawns are local to that curator. Some units will have their simulation manually disabled when the fight is happening elsewhere.
+It runs on servers with several curators, large numbers of units, and with operations that last for several hours; players may connect and disconnect mid-mission. The units a curator spawns are local to that curator.
+
+Some units will have their simulation manually disabled when the fight is happening elsewhere. These units typically do not need to be considered and do not need to be iterated over by this mod's various systems.
 
 ## References
 

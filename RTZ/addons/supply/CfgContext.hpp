@@ -1,7 +1,9 @@
 class zen_context_menu_actions {
-    // Single order covering all three services: whichever of repair / fuel /
-    // ammo the selected supply vehicle carries is applied to everything
-    // serviceable parked around it.
+    // Opens a PICKER (FUNC(orderResupply)): the curator aims at one vehicle and
+    // every selected supply vehicle that can do something for it services it,
+    // handing over whichever of repair / fuel / ammo it carries. The statement is
+    // unchanged from when this order swept everything parked in radius — what
+    // FUNC(orderResupply) does with the selection is what changed.
     class GVAR(resupply) {
         displayName = CSTRING(ActionResupply);
         icon = ICON_RESUPPLY;

@@ -211,13 +211,25 @@ opens on an order that cannot succeed.
 
 **New**
 
-- `functions/fnc_findServiceTarget.sqf`
-- `functions/fnc_serviceProviders.sqf`
-- `functions/fnc_drawServiceRadius.sqf`
+- `functions/fnc_findServiceTarget.sqf` — cheap per-frame resolve, distance tests only
+- `functions/fnc_serviceProviders.sqf` — expensive resolve, cached by the picker
+- `functions/fnc_grantedServices.sqf` — a truck's capabilities minus the claimed slots
+- `functions/fnc_releaseClaims.sqf` — drop the slots one truck holds on one target
+- `functions/fnc_serviceLabel.sqf` — the Repair / Refuel / Rearm / Resupply naming
+- `functions/fnc_drawRing3D.sqf` — the ring in the world
+- `functions/fnc_drawRingMap.sqf` — the ring on the Zeus map
+
+The last three were not in the original file list. `grantedServices` and
+`releaseClaims` exist because the claim rules are read from both the client (what
+the cursor offers) and the server (what is actually taken), and duplicating them
+is how the two would drift apart. `serviceLabel` exists because the picker's
+cursor text must be the same string the context entry relabelled itself with.
+`drawServiceRadius` split in two because a `RENDER_WORLD` renderer is deliberately
+skipped while the Zeus map is up, and the picker works on the map.
 
 **Rewritten**
 
-- `functions/fnc_orderResupply.sqf` — picker opener and click handler
+- `functions/fnc_orderResupply.sqf` — picker opener, cursor modifier, click handler
 - `functions/fnc_serviceVehicles.sqf` — single target, granted capabilities, per-service claims
 - `functions/fnc_serviceTick.sqf` — single target
 
@@ -225,24 +237,51 @@ opens on an order that cannot succeed.
 
 - `functions/fnc_applyService.sqf` — single target
 - `functions/fnc_endService.sqf` — per-service claim release
-- `functions/fnc_findTargets.sqf` — existence test
+- `functions/fnc_resupplyActionModifier.sqf` — delegates to `FUNC(serviceLabel)`
+
+**Replaced**
+
+- `functions/fnc_findTargets.sqf` → `functions/fnc_hasServiceWork.sqf` — existence test
 
 **Edited**
 
 - `script_component.hpp` — add `PICK_SNAP_RADIUS`, `PICK_REFRESH`,
   `RING_SEGMENTS`, `COLOR_VALID`, `COLOR_NEUTRAL`, `COLOR_INVALID`,
-  `COLOR_RING`, `CLAIM_REPAIR` / `CLAIM_FUEL` / `CLAIM_AMMO`; remove
-  `MAX_SERVICE_TARGETS`
+  `COLOR_RING`; remove `MAX_SERVICE_TARGETS`. No `CLAIM_*` index macros: every
+  reader walks the claim array in parallel with a capability array and indexes it
+  with `_forEachIndex`, so named indices would be constants nothing referenced.
 - `stringtable.xml` — add `NoTarget`, `NothingNeeded`
-- `XEH_PREP.hpp` — register the three new functions
+- `XEH_PREP.hpp` — register the new functions
+- `XEH_preInit.sqf` — `GVAR(ringTrucks)`, `GVAR(ringOffsets)`, `GVAR(ringMapEH)`
 - `XEH_postInit.sqf` — `QGVAR(resupply)` payload is now `[[truck, target], ...]`
-- `CfgContext.hpp` — `statement` comment only; the statement expression is unchanged
+- `CfgContext.hpp` — comment only; the statement expression is unchanged
 
 **Untouched**
 
-`fnc_canResupply`, `fnc_supplyCapabilities`, `fnc_serviceDeficit`,
-`fnc_ammoRatio`, `fnc_getSupplyVehicles`, `fnc_resupplyActionModifier`,
-`fnc_gatherSupply`, `fnc_drawSupply`, `initSettings.inc.sqf`
+`fnc_canResupply` (one line, to call the renamed existence test),
+`fnc_supplyCapabilities`, `fnc_serviceDeficit`, `fnc_ammoRatio`,
+`fnc_getSupplyVehicles`, `fnc_gatherSupply`, `fnc_drawSupply`,
+`initSettings.inc.sqf`
+
+## Found during implementation: superseded jobs strand their claims
+
+`EFUNC(common,progressJob)` supersedes a running job when a second one starts on
+the same owner with the same job id, and it removes the superseded job **without
+running its end hook**. `FUNC(endService)` is what releases claims, so a
+superseded job's target keeps its claims until they expire on their own —
+`SERVICE_TIMEOUT + CLAIM_GRACE`, some 65 seconds — locked against every other
+supply vehicle.
+
+This predates the picker and was survivable while the order was a blanket sweep,
+because a repeat order on the same truck re-claimed the same vehicles anyway.
+It is not survivable now: one click carries one vehicle, so re-tasking a truck to
+the vehicle parked next to it is the ordinary way to use the picker, and every
+re-task would strand the last target.
+
+`FUNC(serviceVehicles)` therefore releases the previous job's claims explicitly,
+read from the `QGVAR(servicing)` record the old job left on the truck, before
+taking the new ones. The ordering matters: releasing after claiming would undo
+the fresh claims of a re-task aimed back at the same vehicle.
 
 ## Error handling
 

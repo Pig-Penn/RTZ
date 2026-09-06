@@ -34,6 +34,12 @@
 #define STANCE_ICON_DOWN "\a3\3DEN\Data\Attributes\Stance\down_ca.paa"
 #define STANCE_ICON_AUTO "\a3\3DEN\Data\Attributes\default_ca.paa"
 
+// The rungs FUNC(switchStance) steps between, lowest first. setUnitPos's own
+// fourth value, "AUTO", is deliberately NOT on the ladder: it is a release of
+// the order rather than a height, so it is its own keybind and stepping never
+// lands on it.
+#define STANCE_LADDER ["DOWN", "MIDDLE", "UP"]
+
 // ZEN's own Combat Mode context-menu glyph, tinted the same way ZEN tints it
 #define ICON_COMBAT_MODE "\x\zen\addons\context_actions\ui\hold_ca.paa"
 #define COLOR_HOLD_FIRE [1, 0, 0, 1]

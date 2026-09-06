@@ -7,8 +7,17 @@
  * selecting only a fuel truck relabels the entry "Refuel" with the refuel
  * icon. A mixed selection (a fuel truck alongside an ammo truck, or a single
  * vehicle that carries more than one supply) falls back to the generic
- * "Resupply" truck icon set in CfgContext.hpp, since no single label would
- * describe the order.
+ * "Resupply" truck icon, since no single label would describe the order.
+ *
+ * The decision itself is FUNC(serviceLabel)'s, because FUNC(orderResupply) needs
+ * the same answer: the picker's valid-state cursor text is this entry's label, so
+ * the cursor names the exact action the menu promised rather than a second wording
+ * that has to be kept in step by hand.
+ *
+ * The generic pair is written back explicitly rather than left to the values in
+ * CfgContext.hpp. ZEN hands the same action array to the modifier on every rebuild,
+ * so a mixed selection following a single-service one would otherwise keep the
+ * previous selection's label.
  *
  * Arguments:
  * 0: The action array (mutated in place) <ARRAY>
@@ -25,34 +34,7 @@
 
 params ["_action", "_objects"];
 
-private _repair = false;
-private _fuel   = false;
-private _ammo   = false;
+([[_objects] call FUNC(getSupplyVehicles)] call FUNC(serviceLabel)) params ["_key", "_icon"];
 
-{
-    ([_x] call FUNC(supplyCapabilities)) params ["_r", "_f", "_a"];
-    _repair = _repair || _r;
-    _fuel   = _fuel   || _f;
-    _ammo   = _ammo   || _a;
-} forEach ([_objects] call FUNC(getSupplyVehicles));
-
-// Only relabel when the selection points at exactly one of the three services
-private _serviceCount = 0;
-if (_repair) then {_serviceCount = _serviceCount + 1};
-if (_fuel)   then {_serviceCount = _serviceCount + 1};
-if (_ammo)   then {_serviceCount = _serviceCount + 1};
-
-if (_serviceCount != 1) exitWith {};
-
-if (_repair) exitWith {
-    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionRepair)];
-    _action set [ACTION_INDEX_ICON, ICON_REPAIR];
-};
-
-if (_fuel) exitWith {
-    _action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionRefuel)];
-    _action set [ACTION_INDEX_ICON, ICON_REFUEL];
-};
-
-_action set [ACTION_INDEX_DISPLAYNAME, LLSTRING(ActionRearm)];
-_action set [ACTION_INDEX_ICON, ICON_REARM];
+_action set [ACTION_INDEX_DISPLAYNAME, localize _key];
+_action set [ACTION_INDEX_ICON, _icon];

@@ -59,19 +59,13 @@
             <English>Stance Down</English>
         </Key>
         <Key ID="STR_RTZ_Orders_StanceDown_Description">
-            <English>Set the selected AI infantry's stance to prone.</English>
-        </Key>
-        <Key ID="STR_RTZ_Orders_StanceMiddle">
-            <English>Stance Middle</English>
-        </Key>
-        <Key ID="STR_RTZ_Orders_StanceMiddle_Description">
-            <English>Set the selected AI infantry's stance to crouched.</English>
+            <English>Lower the selected AI infantry one stance: standing to crouched to prone.</English>
         </Key>
         <Key ID="STR_RTZ_Orders_StanceUp">
             <English>Stance Up</English>
         </Key>
         <Key ID="STR_RTZ_Orders_StanceUp_Description">
-            <English>Set the selected AI infantry's stance to standing.</English>
+            <English>Raise the selected AI infantry one stance: prone to crouched to standing.</English>
         </Key>
         <Key ID="STR_RTZ_Orders_ToggleCombatMode">
             <English>Toggle Hold Fire</English>

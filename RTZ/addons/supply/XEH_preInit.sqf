@@ -17,6 +17,20 @@ PREP_RECOMPILE_END;
 // here: rtz_control and rtz_hud ask the same question, so it lives in
 // EFUNC(common,magazineCapacity).
 
+// ── Target picker state ──────────────────────────────────────────────────────
+// Live only while FUNC(orderResupply)'s picker is open, and read by the two ring
+// renderers. GVAR(ringTrucks) is what those renderers gate on, so clearing it is
+// half of the teardown; GVAR(ringOffsets) carries the circle baked once when the
+// picker opens, so a frame costs one vectorAdd per segment and no trigonometry.
+GVAR(ringTrucks)  = [];
+GVAR(ringOffsets) = [];
+
+// Zeus map Draw handler id. The control it sits on belongs to the curator display
+// and is never stored (controls are not serializable, and one left in the mission
+// namespace trips an engine warning on save) — FUNC(orderResupply) re-resolves it
+// at both ends of the pick.
+GVAR(ringMapEH) = -1;
+
 #include "initSettings.inc.sqf"
 
 ADDON = true;

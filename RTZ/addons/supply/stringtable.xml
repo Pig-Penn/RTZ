@@ -37,6 +37,12 @@
         <Key ID="STR_RTZ_Supply_MsgSupplyEmpty">
             <English>Depleted</English>
         </Key>
+        <Key ID="STR_RTZ_Supply_NoTarget">
+            <English>No Target</English>
+        </Key>
+        <Key ID="STR_RTZ_Supply_NothingNeeded">
+            <English>Nothing Needed</English>
+        </Key>
         <Key ID="STR_RTZ_Supply_ServiceRadius">
             <English>Service Radius</English>
         </Key>

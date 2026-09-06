@@ -9,19 +9,19 @@ private _category = ELSTRING(main,DisplayName);
 [_category, QGVAR(curatorMapTeleport), [LSTRING(CameraToCursor), LSTRING(CameraToCursor_Description)],
     {call FUNC(curatorMapTeleport)}, {}, [0x21, [false, false, false]]] call CBA_fnc_addKeybind; // Default: F
 
-// Unit stance keybinds — a ZEN dev-branch feature (zen-mod/ZEN#795) that
-// never shipped in a release. Unbound by default, matching that branch.
+// Unit stance keybinds — after a ZEN dev-branch feature (zen-mod/ZEN#795) that
+// never shipped in a release. That branch bound one key per stance; these two
+// step the selection up and down the ladder instead, so the curator raises or
+// lowers men without having to know which rung they are on. The arrow cluster
+// is free while Zeus is open — the camera moves on WASD.
 [_category, QGVAR(switchStanceUp), [LSTRING(StanceUp), LSTRING(StanceUp_Description)],
-    {["UP"] call FUNC(switchStance)}, {}, [0, [false, false, false]]] call CBA_fnc_addKeybind; // Default: Unbound
-
-[_category, QGVAR(switchStanceMiddle), [LSTRING(StanceMiddle), LSTRING(StanceMiddle_Description)],
-    {["MIDDLE"] call FUNC(switchStance)}, {}, [0, [false, false, false]]] call CBA_fnc_addKeybind; // Default: Unbound
+    {["RAISE"] call FUNC(switchStance)}, {}, [0xC8, [false, false, false]]] call CBA_fnc_addKeybind; // Default: Up Arrow
 
 [_category, QGVAR(switchStanceDown), [LSTRING(StanceDown), LSTRING(StanceDown_Description)],
-    {["DOWN"] call FUNC(switchStance)}, {}, [0, [false, false, false]]] call CBA_fnc_addKeybind; // Default: Unbound
+    {["LOWER"] call FUNC(switchStance)}, {}, [0xD0, [false, false, false]]] call CBA_fnc_addKeybind; // Default: Down Arrow
 
 [_category, QGVAR(switchStanceAuto), [LSTRING(StanceAuto), LSTRING(StanceAuto_Description)],
-    {["AUTO"] call FUNC(switchStance)}, {}, [0, [false, false, false]]] call CBA_fnc_addKeybind; // Default: Unbound
+    {["AUTO"] call FUNC(switchStance)}, {}, [0xCD, [false, false, false]]] call CBA_fnc_addKeybind; // Default: Right Arrow
 
 // Helicopter fly-height keybinds
 [_category, QGVAR(heliHeightUp), [LSTRING(HeliHeightUp), LSTRING(HeliHeightUp_Description)],

@@ -6,13 +6,17 @@
 // anywhere. What it no longer does is WRITE: the three engine service actions are
 // dispatched to each target's own owner (see QGVAR(service) below), so this
 // machine only watches.
+//
+// One entry per (truck, target) pair. A single click can produce several, because
+// every selected truck that can help the picked vehicle contributes — see
+// FUNC(serviceProviders) — and each becomes its own job with its own claim slots.
 if (isServer) then {
     [QGVAR(resupply), {
         params ["_orders", ["_curator", objNull]];
 
         {
-            _x params ["_supply", "_targets"];
-            [_supply, _targets, _curator] call FUNC(serviceVehicles);
+            _x params ["_supply", "_target"];
+            [_supply, _target, _curator] call FUNC(serviceVehicles);
         } forEach _orders;
     }] call CBA_fnc_addEventHandler;
 };
@@ -22,9 +26,8 @@ if (isServer) then {
 // owned by a headless client or a player is a silent no-op, the same trap that hid
 // the old setFuel bug (docs/Knowledge Base/Gotchas.md, "Argument-local vs
 // argument-global"). Registered on every machine and targeted at the SERVICED
-// object by FUNC(serviceVehicles) — one event per target per order, not per tick,
-// because the engine does the work from there and this component only watches it
-// happen.
+// object by FUNC(serviceVehicles) — one event per order, not per tick, because the
+// engine does the work from there and this component only watches it happen.
 [QGVAR(service), LINKFUNC(applyService)] call CBA_fnc_addEventHandler;
 
 // Completion report, aimed at whoever gave the order. The stringtable KEY comes

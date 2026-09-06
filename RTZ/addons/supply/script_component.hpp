@@ -36,15 +36,71 @@
 #define ICON_REFUEL "\a3\ui_f\data\igui\cfg\simpleTasks\types\refuel_ca.paa"
 #define ICON_REARM  "\a3\ui_f\data\igui\cfg\simpleTasks\types\rearm_ca.paa"
 
-// Hard cap on how many targets one order can take on, and the sweep's own early
-// out. Matches SEL_MAX_UNITS in core/script_macros_core.hpp — the cap the shared
-// selection poll already applies for the same reason.
-#define MAX_SERVICE_TARGETS 24
+// MAX_SERVICE_TARGETS used to sit here — a hard cap of 24 on how many targets one
+// order could take on, matching SEL_MAX_UNITS. It existed because the old blanket
+// sweep resolved its own targets and a truck parked in a company motor pool would
+// otherwise produce a hundred-odd claims, a hundred-odd events and a hundred supply
+// lines from one click. FUNC(orderResupply) is a PICKER now: one click carries one
+// vehicle, so there is nothing left to cap.
 
 // getFriend below this counts as hostile, so a supply vehicle will not service an
 // enemy. Same idiom and same reading as rtz_attack's HOSTILE_THRESHOLD, phrased
 // from the friendly side because this filter KEEPS what passes it.
 #define FRIENDLY_THRESHOLD 0.6
+
+// ── Target picker ────────────────────────────────────────────────────────────
+// How far from the clicked point a vehicle may be and still count as the one the
+// curator meant. Deliberately TIGHTER than rtz_attack's SEARCH_RADIUS of 20: that
+// order picks out of a dispersed enemy where the nearest hostile is almost always
+// the intended one, while this one aims into a parked column inside a 30 m default
+// service radius, where 20 m would routinely snap onto a neighbour.
+#define PICK_SNAP_RADIUS 8
+
+// How stale the cached provider set may get before the cursor recomputes it. The
+// cheap half of the resolve (FUNC(findServiceTarget), distance tests only) runs
+// every frame; FUNC(serviceProviders) walks every turret's magazines through
+// FUNC(serviceDeficit) and must not. Recomputed when the target under the cursor
+// CHANGES or when this has elapsed — so sweeping across a column costs one walk per
+// vehicle crossed, and resting on one costs four a second rather than sixty.
+#define PICK_REFRESH 0.25
+
+// Segments in the service-radius ring. The offsets are baked once when the picker
+// opens (the radius cannot change mid-pick), so this is a per-frame drawLine3D
+// count per selected truck and nothing else.
+#define RING_SEGMENTS 32
+
+// Cursor feedback. Three states, not two: a full vehicle parked beside a loaded
+// truck is otherwise indistinguishable from bare ground, which is the one failure
+// a curator cannot explain to himself. Out-of-range is deliberately NOT its own
+// state — the ring already draws that boundary.
+#define COLOR_VALID   [0.40, 0.80, 0.50, 1]
+#define COLOR_NEUTRAL [0.75, 0.75, 0.75, 0.9]
+#define COLOR_INVALID [0.50, 0.50, 0.50, 0.8]
+
+// The ring itself, dimmer than the cursor. Matches COLOR_SUPPLY_RGB below so the
+// aiming overlay and the supply lines it produces read as one system.
+#define COLOR_RING [0.40, 0.80, 0.50, 0.5]
+
+// ── Claim slots ──────────────────────────────────────────────────────────────
+// The QGVAR(claim) array a serviced vehicle carries is PER SERVICE, not one lock
+// for the whole target: a repair truck and a fuel truck aimed at one damaged, empty
+// tank hold disjoint slots and work it together, while two fuel trucks still cannot
+// both take the fuel — which is the invariant the monitor rests on, since each job
+// measures progress from its own deficit snapshot and two jobs measuring the same
+// service would each read the other's work as its own. The exclusive claim this
+// replaced made the first case impossible: the two contended for one lock despite
+// carrying nothing in common, and the loser was dropped from the order.
+//
+// Three slots in the order FUNC(supplyCapabilities) returns — repair, fuel, ammo —
+// so a capability array and a claim array are walked with one index, which is how
+// FUNC(grantedServices) and FUNC(releaseClaims) both read it. Each slot is [] when
+// free, or [holder, expiresAt]; see CLAIM_GRACE below for why the expiry exists.
+//
+// There are deliberately no CLAIM_REPAIR / CLAIM_FUEL / CLAIM_AMMO index macros.
+// Every reader walks the array in parallel with a capability array and indexes it
+// with _forEachIndex, so named indices would be three constants nothing referenced —
+// and a dead constant that looks tunable is exactly the kind of thing that misleads
+// the next reader.
 
 // ── Service thresholds ───────────────────────────────────────────────────────
 // Each is the point past which a target is treated as already full, so a
@@ -101,10 +157,10 @@
 
 // Extra seconds a target's claim outlives the job that took it. Claims are what
 // stop two supply vehicles — ordered separately, or by two different curators —
-// running jobs with different snapshots against one vehicle and overwriting each
-// other every tick. They carry an expiry rather than being released explicitly
-// so that a superseded job, a destroyed supply truck or an order that stopped
-// early can never strand a vehicle as permanently unserviceable.
+// running jobs against the same SERVICE on one vehicle and each reading the
+// other's work as its own progress. They carry an expiry as well as being released
+// explicitly so that a superseded job, a destroyed supply truck or an order that
+// stopped early can never strand a service as permanently unclaimable.
 #define CLAIM_GRACE 5
 
 // ── Supply-lines overlay ─────────────────────────────────────────────────────
