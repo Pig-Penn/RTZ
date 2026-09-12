@@ -43,7 +43,16 @@ params ["_target", "_ammo", "_vehicle", "", "_missile"];
 // become `local _vehicle` instead.
 TRACE_4("incoming",_target,local _target,local _vehicle,isServer);
 
+// A bare read, deliberately — see the matching note in FUNC(detectGrenade). CBA has
+// written this into missionNamespace synchronously by the end of this component's
+// preInit, and GETGVAR would only add an array literal per launch.
 if (!GVAR(enabled)) exitWith {};
+
+// isNull BEFORE local: `local objNull` answers true, so without this a null target
+// passes the gate below, costs a serverEvent, and is discarded on arrival at
+// FUNC(reportIncoming). There is nothing to warn about and nothing to draw on.
+if (isNull _target) exitWith {};
+
 if (!local _target) exitWith {};
 
 // Guided only. "shotMissile" is the engine's own simulation type for a missile
@@ -53,24 +62,14 @@ if (!local _target) exitWith {};
 // have to declare the simulation to be guided at all, whereas irLock/laserLock
 // are set inconsistently across modsets.
 //
-// Memoized by ammo classname: this runs on every launch aimed at a unit local to
-// this machine, and a rocket pod emptying would otherwise pay for a configFile
-// read per rocket. The config answer for a class never changes within a session.
-private _guided = GVAR(guidedAmmo) get _ammo;
-
-if (isNil "_guided") then {
-    // Flushed whole rather than evicted one at a time: the key space is the set of
-    // ammo classes in the modset, so this is a safety net, not a working mechanism.
-    if (count GVAR(guidedAmmo) > GUIDED_CACHE_MAX) then {
-        GVAR(guidedAmmo) = createHashMap;
-    };
-
+// Memoized by ammo classname — see FUNC(ammoVerdict), which is this cache and the
+// explosive-grenade one, once. A rocket pod emptying would otherwise pay for a
+// configFile read per rocket.
+private _guided = [GVAR(guidedAmmo), _ammo, {
     // Lowercased because config values are written by hand and mods are not
     // consistent about the capital M.
-    _guided = (toLower getText (configFile >> "CfgAmmo" >> _ammo >> "simulation")) isEqualTo "shotmissile";
-
-    GVAR(guidedAmmo) set [_ammo, _guided];
-};
+    (toLower getText (configFile >> "CfgAmmo" >> _this >> "simulation")) isEqualTo "shotmissile"
+}] call FUNC(ammoVerdict);
 
 if (!_guided) exitWith {};
 

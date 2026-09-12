@@ -2,13 +2,13 @@
 <Project name="RTZ">
     <Package name="Missile">
         <Key ID="STR_RTZ_Missile_DisplayName">
-            <English>Incoming Missiles</English>
+            <English>Incoming Threats</English>
         </Key>
         <Key ID="STR_RTZ_Missile_DrawLine">
             <English>Draw Line to Target</English>
         </Key>
         <Key ID="STR_RTZ_Missile_DrawLine_Description">
-            <English>Draw a line from the incoming missile to the unit it is tracking, so it is clear which unit is under threat.</English>
+            <English>Draw a line from the incoming missile to the unit it is tracking, so it is clear which unit is under threat. Missiles only — a thrown grenade is aimed at a position rather than at a unit.</English>
         </Key>
         <Key ID="STR_RTZ_Missile_Enabled">
             <English>Enable Incoming Missile Warnings</English>
@@ -16,17 +16,29 @@
         <Key ID="STR_RTZ_Missile_Enabled_Description">
             <English>Report guided missiles fired at a unit to the curators who own that unit. Only guided weapons are reported — ATGMs and lock-on anti-air and anti-tank missiles — so unguided rockets an AI happens to be aiming at the unit are ignored.</English>
         </Key>
+        <Key ID="STR_RTZ_Missile_GrenadeEnabled">
+            <English>Enable Incoming Grenade Warnings</English>
+        </Key>
+        <Key ID="STR_RTZ_Missile_GrenadeEnabled_Description">
+            <English>Report grenades thrown on a curator's order — Zeus Enhanced's "Throw Grenade" action — to the curators who own units near where it lands. Only curator-ordered throws are reported, so the grenades AI throw of their own accord in a firefight are ignored, as are smoke, chemlights and other harmless throwables. You are warned about a throw your own units are near even if you ordered it yourself.</English>
+        </Key>
+        <Key ID="STR_RTZ_Missile_GrenadeRadius">
+            <English>Grenade Warning Radius</English>
+        </Key>
+        <Key ID="STR_RTZ_Missile_GrenadeRadius_Description">
+            <English>How close one of your units must be to where an ordered grenade is going to land before you are warned about it, in metres.</English>
+        </Key>
         <Key ID="STR_RTZ_Missile_Markers">
-            <English>Mark Incoming Missiles</English>
+            <English>Mark Incoming Threats</English>
         </Key>
         <Key ID="STR_RTZ_Missile_Markers_Description">
-            <English>Draw a marker on incoming missiles, both in the Zeus camera view and on the Zeus map.</English>
+            <English>Draw a marker on incoming missiles, and on where an ordered grenade is about to land, both in the Zeus camera view and on the Zeus map.</English>
         </Key>
         <Key ID="STR_RTZ_Missile_MaxDistance">
             <English>Marker Draw Distance</English>
         </Key>
         <Key ID="STR_RTZ_Missile_MaxDistance_Description">
-            <English>Maximum distance from the camera at which 3D incoming missile markers are drawn.</English>
+            <English>Maximum distance from the camera at which 3D incoming threat markers are drawn.</English>
         </Key>
     </Package>
 </Project>

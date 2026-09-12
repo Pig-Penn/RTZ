@@ -74,7 +74,10 @@ params ["_unit", "_hull", "_points", "_kind", "_patrol", ["_facing", []]];
 // believed when it sent this
 if (isNull _unit || {!local _unit}) exitWith {};
 if (_points isEqualTo []) exitWith {};
-if ([_hull] call FUNC(pathKind) == KIND_NONE) exitWith {};
+private _resolvedKind = [_hull] call FUNC(pathKind);
+if (_resolvedKind == KIND_NONE || {_resolvedKind != _kind} || {!local _hull}) exitWith {};
+private _driver = if (_kind == KIND_INFANTRY) then {_hull} else {driver _hull};
+if (_driver isNotEqualTo _unit) exitWith {};
 
 // Read where the unit is LOCAL, which is the only machine the executors they
 // gate have any effect on. The settings are global so this agrees with what the
@@ -101,12 +104,9 @@ private _existing = _active findIf {(_x select FOLLOW_UNIT) isEqualTo _unit};
 private _retask = _existing != -1;
 
 if (_retask) then {
-    // Torn down rather than dropped: the outgoing record may have the unit
-    // puppeted with its AI disabled and two handlers installed, and simply
-    // forgetting it would leave nothing driving it. The rest of the teardown —
-    // handing the unit back to its group — is deliberately NOT done, because the
-    // unit is about to be stopped again and would only start walking home first.
-    [_active select _existing, ""] call FUNC(setPuppet);
+    // Release every executor resource, including an AI flight's speed cap.
+    // Replacement is not arrival and must not run the old path's landing logic.
+    [_active select _existing, false, true] call FUNC(endFollow);
     _active deleteAt _existing;
 };
 
@@ -266,7 +266,8 @@ _active pushBack [
     _cruise,
     _flight,
     getPosASL _hull,
-    false     // FOLLOW_LAUNCHED — nothing has been ordered yet
+    false,    // FOLLOW_LAUNCHED — nothing has been ordered yet
+    []        // FOLLOW_AI_RESTORE — captured when entering puppet movement
 ];
 
 // Created by the first path, destroyed by the last (FUNC(followTick)) — the

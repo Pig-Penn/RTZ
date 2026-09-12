@@ -1,3 +1,4 @@
+PREP(advanceFlightPath);
 PREP(airTarget);
 PREP(appendPoint);
 PREP(autoPath);

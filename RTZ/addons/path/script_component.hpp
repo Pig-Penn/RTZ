@@ -365,9 +365,11 @@
 // than a zeroed FOLLOW_START_AT, because that field is still wanted afterwards:
 // it is the clock a scripted flight measures its liftoff grace from.
 #define FOLLOW_LAUNCHED 25
+// [MOVE, ANIM] captured on each puppet entry; [] while no puppet is active.
+#define FOLLOW_AI_RESTORE 26
 
 // How often the shared handler wakes (seconds), and how often each record's
-// CONDITION checks — alive, local, still in the seat, stuck, arrived — run once
+// slower condition checks — mobility, timeout, stuck, AI arrival — run once
 // it does.
 //
 // Two cadences, because there are two kinds of work. Steering a puppet and

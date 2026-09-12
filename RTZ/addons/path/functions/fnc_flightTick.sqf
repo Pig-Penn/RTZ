@@ -63,11 +63,9 @@ params ["_record", "_now"];
 _record params ["", "_hull", "_points", "_index", "", "_patrol"];
 (_record select FOLLOW_FLIGHT) params ["_isHeli", "_isPlane", "_isNaval", "_pitch", "_turnCoef"];
 
-// setVelocity and setVectorDirAndUp only do anything where the HULL is local,
-// which is not implied by the driver being local — a vehicle can change hands
-// without its crew doing so. Ending the path is the honest outcome: the new
-// owner has the vehicle under its own AI and nothing issued here would reach it.
-if (!local _hull) exitWith {true};
+// The caller aborts on hull-locality loss before dispatch. Keep direct calls
+// inert too, but never report a locality failure as successful arrival.
+if (!local _hull) exitWith {false};
 
 private _current = getPosASL _hull;
 
@@ -85,26 +83,18 @@ private _count = count _points;
 private _arrival = _record select FOLLOW_ARRIVAL;
 private _last = _record select FOLLOW_LAST_POS;
 
-// How far the hull actually travelled since the last step. Below a few
-// centimetres there is no direction of travel to test against, so the
-// passed-the-waypoint test is skipped and distance decides on its own.
-private _travelled = _current vectorDiff _last;
-private _moving = (vectorMagnitude _travelled) > 0.1;
+// Sweep the distance actually travelled, not the infinite half-space behind the
+// hull. That half-space swallowed unvisited return legs and distant corners.
+// The helper also preserves waypoint order when one fast tick passes many legs.
+private _advance = [_points, _index, _last, _current, _arrival] call FUNC(advanceFlightPath);
+_index = _advance select 0;
+_record set [FOLLOW_LAST_POS, _advance select 1];
 
-// Credit every leg already behind or inside the arrival radius, not just one per
-// step. A traced corner puts several points within a few metres of each other,
-// and a fast hull can be past all of them between two ticks.
-private _skips = 0;
-while {
-    _skips < MAX_SKIP
-    && {_index < _count}
-    && {
-        private _to = (_points select _index) vectorDiff _current;
-        (vectorMagnitude _to) <= _arrival || {_moving && {(_travelled vectorDotProduct _to) < 0}}
-    }
-} do {
-    _index = _index + 1;
-    _skips = _skips + 1;
+// At low FPS, defer the rest of a long sweep without steering back towards a
+// point already crossed. Keep both the swept distance and its ordering cursor.
+if (_advance select 2) exitWith {
+    _record set [FOLLOW_INDEX, _index];
+    false
 };
 
 if (_index >= _count) then {

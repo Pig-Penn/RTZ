@@ -30,12 +30,11 @@
  * against, so the common case — same animation as last tick — costs a string
  * compare rather than a getVariable.
  *
- * On locality: disableAI does not travel with ownership (Gotchas §4), so a unit
- * that changes hands mid-path arrives at its new owner with its AI intact and
- * the enableAI calls here become a no-op on a machine that no longer owns it.
- * That is the right outcome either way, and it is why this does not refuse to
- * run when the unit has gone non-local — refusing would leave the handlers
- * installed on this machine forever.
+ * Cleanup removes the event handlers on the machine that installed them.
+ * AI and animation writes require continued ownership; the old owner must not
+ * issue switchMove or aiming commands into a new owner's movement session.
+ * MOVE and ANIM are restored to their captured values, including on a combat
+ * pause, rather than unconditionally enabled.
  *
  * Arguments:
  * 0: Follow record, mutated in place <ARRAY>
@@ -78,35 +77,32 @@ if (_anim isEqualTo "") exitWith {
         _unit setVariable [QGVAR(anim), nil];
         _unit setVariable [QGVAR(threat), nil];
 
-        _unit enableAI "MOVE";
-        _unit enableAI "ANIM";
+        if (local _unit) then {
+            // Fallback supports records created before a live PREP recompile.
+            (_record param [FOLLOW_AI_RESTORE, [true, true]]) params ["_move", "_animate"];
+            if (_move) then {_unit enableAI "MOVE"} else {_unit disableAI "MOVE"};
+            if (_animate) then {_unit enableAI "ANIM"} else {_unit disableAI "ANIM"};
 
-        // Let go of the animation as well as of the AI. Without this the man is
-        // handed back mid-stride and stays in that pose until something else
-        // moves him — playMoveNow put him there, and only a switchMove takes him
-        // off it. Wargame ends its scripted move the same way.
-        if (alive _unit) then {
-            _unit switchMove "";
+            if (alive _unit && {!isPlayer _unit}) then {
+                _unit switchMove "";
+                _unit doWatch objNull;
+            };
         };
-
-        // The path aimed the unit somewhere; hand the direction back to his own
-        // AI rather than leaving him staring down the last azimuth for the rest
-        // of the mission. objNull, not a position — a zero position is a watch
-        // order pointed at the map corner (see rtz_control's fnc_resetApply).
-        _unit doWatch objNull;
     };
 
     _record set [FOLLOW_ANIM, ""];
     _record set [FOLLOW_ANIM_EH, -1];
     _record set [FOLLOW_HIT_EH, -1];
     _record set [FOLLOW_TARGET, objNull];
+    _record set [FOLLOW_AI_RESTORE, []];
     true
 };
 
-if (isNull _unit || {!alive _unit}) exitWith {false};
+if (isNull _unit || {!alive _unit} || {!local _unit} || {isPlayer _unit}) exitWith {false};
 
 // Entering, as opposed to swapping animation within a path
 if (_current isEqualTo "") then {
+    _record set [FOLLOW_AI_RESTORE, [_unit checkAIFeature "MOVE", _unit checkAIFeature "ANIM"]];
     _unit disableAI "MOVE";
     _unit disableAI "ANIM";
 
@@ -122,6 +118,7 @@ if (_current isEqualTo "") then {
     // back (Gotchas §1).
     _record set [FOLLOW_ANIM_EH, _unit addEventHandler ["AnimDone", {
         params ["_unit"];
+        if (!local _unit || {isPlayer _unit}) exitWith {};
         private _looping = _unit getVariable [QGVAR(anim), ""];
         if (_looping isEqualTo "") exitWith {};
         _unit playMoveNow _looping;

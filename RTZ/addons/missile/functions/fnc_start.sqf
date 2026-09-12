@@ -35,6 +35,17 @@ params [["_display", displayNull]];
 
 private _markers = GVAR(markers);
 
+// FUNC(pruneTracked) is only ever reached FROM a draw pass, and reporting
+// deliberately keeps running while the markers are off (see above) — so with them
+// off the store quietly accumulates up to TRACK_CAP records that expired minutes ago.
+//
+// This is NOT a visual fix. Both draw passes prune at the top, before drawing, so a
+// stale record was never rendered even for one frame. It is so the store is not
+// holding dead records for as long as a curator leaves the markers off.
+if (_markers) then {
+    [CBA_missionTime] call FUNC(pruneTracked);
+};
+
 // Registration with rtz_core's shared frame loop, not a Draw3D handler of our own.
 // Priority 45 sits above rtz_spotting's contact chevrons (41) and below rtz_mine's
 // markers (60): a missile in flight is the more urgent of the three.

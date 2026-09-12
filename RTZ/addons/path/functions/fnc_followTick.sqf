@@ -94,17 +94,20 @@ for "_i" from (count _active) - 1 to 0 step -1 do {
     private _moves = (_scripted || {_anim isNotEqualTo ""}) && {_kind != KIND_LAND};
     private _due = _now >= _checkAt;
 
-    if (!_moves && {!_due}) then {continue};
+    // These guards must precede EVERY movement write, including the deferred
+    // launch. A half-second throttle allowed several more animation/steering
+    // writes after player takeover, a seat change or a locality transfer.
+    private _finished = !alive _unit || {!alive _hull}
+        || {!local _unit} || {!local _hull} || {isPlayer _unit}
+        || {_kind != KIND_INFANTRY && {driver _hull isNotEqualTo _unit}};
+    private _completed = false;
+
+    if (!_finished && {!_moves} && {!_due}) then {continue};
 
     // The settle between a re-task's teardown and its launch. Nothing at all
     // happens to the record in between — it is not stuck, it has not arrived, it
     // is waiting.
-    if (!(_record select FOLLOW_LAUNCHED) && {_now < (_record select FOLLOW_START_AT)}) then {continue};
-
-    // Checked on every wake rather than on the stagger, because the two things
-    // this catches are the two that must never be steered: a dead man is not
-    // walked, and a destroyed hull is not given a velocity.
-    private _finished = isNull _unit || {!alive _unit} || {!alive _hull};
+    if (!_finished && {!(_record select FOLLOW_LAUNCHED)} && {_now < (_record select FOLLOW_START_AT)}) then {continue};
 
     if (_due && {!_finished}) then {
         _record set [FOLLOW_CHECK_AT, _now + CHECK_INTERVAL];
@@ -117,17 +120,7 @@ for "_i" from (count _active) - 1 to 0 step -1 do {
         };
 
         _finished =
-            // Ownership moved mid-path (rtz_control's transfer, a JIP handover,
-            // a headless client rebalancing). Orders issued from here would
-            // silently do nothing from now on, so let go cleanly instead.
-            !local _unit
-            || {!canMove _hull}
-            // A player took the controls — including a curator remote-controlling
-            // the unit, which isPlayer also reports
-            || {isPlayer _unit}
-            // Not "is there a driver" but "is it still HIM": a swapped seat ends
-            // this path so teardown releases the unit it actually stopped
-            || {_kind != KIND_INFANTRY && {(driver _hull) isNotEqualTo _unit}}
+            !canMove _hull
             || {_now > _endTime}
             || {_now - _movedAt > STUCK_TIME};
     };
@@ -150,6 +143,7 @@ for "_i" from (count _active) - 1 to 0 step -1 do {
                 _record set [FOLLOW_MOVED_AT, _now];
             } else {
                 _finished = true;
+                _completed = true;
             };
         } else {
             // Still on the way, and stationary long enough that the engine has
@@ -179,7 +173,8 @@ for "_i" from (count _active) - 1 to 0 step -1 do {
     // FUNC(flightTick), including which leg it is on, because none of it is
     // shared with the chain below.
     if (!_finished && {_scripted} && {_kind == KIND_AIR || {_kind == KIND_BOAT}}) then {
-        _finished = [_record, _now] call FUNC(flightTick);
+        _completed = [_record, _now] call FUNC(flightTick);
+        _finished = _completed;
     };
 
     // Everything else: a puppeted man, and anything at all on the AI executor.
@@ -224,6 +219,7 @@ for "_i" from (count _active) - 1 to 0 step -1 do {
                     _record set [FOLLOW_SPAN, -1];
                 } else {
                     _finished = true;
+                    _completed = true;
                 };
             };
 
@@ -335,7 +331,7 @@ for "_i" from (count _active) - 1 to 0 step -1 do {
     };
 
     if (_finished) then {
-        [_record] call FUNC(endFollow);
+        [_record, _completed] call FUNC(endFollow);
         _active deleteAt _i;
     };
 };

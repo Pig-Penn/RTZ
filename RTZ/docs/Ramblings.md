@@ -16,5 +16,4 @@ This is a *weird*, *unofficial*, and *messy* record of my own personal ramblings
 1. Add some sort of digging system that modifies the terrain.
 2. Rebuild and fix my mod's Path Planning system.
 3. Improve my mod's behavior display.
-4. For the supply addon, add a picker like the one that the attack context menu button has.
-5. Improve my mod's counter battery systems.
+4. Improve my mod's counter battery systems.

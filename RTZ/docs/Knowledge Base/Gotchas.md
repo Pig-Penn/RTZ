@@ -346,6 +346,39 @@ travels with its netId (the selection slices do), carry that string along rather
 Arrays *are* valid keys, but only if everything inside them is hashable — `[_unit, "x"]` throws
 for the same reason.
 
+### A packed NUMBER key silently collides — SQF numbers are 32-bit floats
+
+Keying a HashMap on two values packed into one number is the obvious way to avoid building a
+string on a hot path, and it is a trap. SQF `Number` is single-precision: integers are exact
+only up to **2^24 = 16,777,216**, and past that the gap between representable values grows.
+The Biki's own HashMap page spells it out — 87654316 … 87654324 are nine distinct integers that
+all hash to the same key.
+
+The failure is invisible. Nothing throws; the low-order term of the pack is simply rounded away
+and unrelated keys merge:
+
+```sqf
+// WRONG — on a 30 km terrain the x cell index reaches 6144, so this lands near 6.14e8,
+// where floats are 64 apart. The y term is gone.
+private _key = _xCell * 100000 + _yCell;
+
+// RIGHT — an array key is exact at any map size, and is hashed by value.
+private _key = [_xCell, _yCell];
+```
+
+`rtz_missile`'s grenade coalescing window shipped with the packed form, justified by a comment
+that reasoned carefully about the *stride* being wide enough to separate cells. It was — the
+product was the problem, not the stride. The intended 5 m coalescing cell was really 8 m of y
+resolution at the west edge of Altis and 320 m at the east one, and the symptom was a **dropped
+warning**, which is the exact failure that component exists to prevent. See
+[missile/functions/fnc_reportGrenade.sqf](addons/missile/functions/fnc_reportGrenade.sqf).
+
+Array keys are deep-copied on insertion and must not be mutated after being read back through
+`keys` or `forEach`, so only ever hand one straight to `deleteAt` / `get` / `set`.
+
+The allocation this was avoiding is real but usually mispriced: CLAUDE.md's rule is about paths
+that run per tick or per entity. A key built once per network event is not one of them.
+
 ### `==` on strings is case-**in**sensitive; `isEqualTo` is case-sensitive
 
 ```sqf
@@ -445,6 +478,29 @@ The trap for anyone re-investigating: the *pose* the unit was released in is a *
 bug with a separate fix (`lambs_main_fnc_doAnimation`, `doWatch objNull`, `lookAt objNull`),
 and that one does work. Fixing the pose makes the unit look right while leaving it unable
 to shoot, which is easy to mistake for success.
+
+### `_applyInitRetroactively` is silently forced false for non-init events
+
+`CBA_fnc_addClassEventHandler`'s sixth argument only does anything for `"init"` and
+`"initPost"`. For every other event name CBA resets it before it is used:
+
+```sqf
+// cba/addons/xeh/fnc_addClassEventHandler.sqf
+if (_applyInitRetroactively && {!(_eventName in ["init", "initpost"])}) then {
+    _applyInitRetroactively = false;
+};
+```
+
+Passing `true` on a `"Fired"`, `"FiredMan"` or `"IncomingMissile"` registration is therefore
+a no-op. **Units already on the map are still covered** — by the unconditional
+`forEach _entities` sweep further down the same function, which installs the handler on
+everything that already exists — so nothing is broken by passing it. What breaks is the
+*comment* next to it: `rtz_missile` carried "applied retroactively so units already on the
+map are covered too", which credits the wrong mechanism and would have sent the next reader
+hunting for a bug in the wrong place if the flag ever had to change.
+
+Drop the argument on non-init registrations, and if the retroactive coverage matters, say
+which mechanism actually provides it.
 
 ### CBA's XEH re-runs on `createUnit`; hand-added event handlers do not
 
@@ -1003,14 +1059,32 @@ id**, so each payout overwrites the last rather than stacking one entry per inte
 
 ### CBA settings are not ready in `postInit`
 
-A client receives its synced setting values a frame or more *after* `postInit`. Reading one
-straight away yields `nil` — and `if (nil) then` aborts the rest of the init (§2). Defending
-with a default is just as wrong: it silently ignores a server-side "disabled". Gate on the
+A client receives its synced setting values a frame or more *after* `postInit`. Gate on the
 event:
 
 ```sqf
 ["CBA_settingsInitialized", { if (GVAR(enabled)) then { call FUNC(start) } }] call CBA_fnc_addEventHandler;
 ```
+
+**Be precise about what the early read actually returns — this entry used to say `nil`, and
+it is not.** `CBA_fnc_addSetting` wraps `cba_settings_fnc_init`, which *ends* by raising
+`refreshSetting`, whose handler does `missionNamespace setVariable [_setting, _value]`
+**synchronously** (`cba/addons/settings/XEH_preInit.sqf`). So a setting registered from your
+own `XEH_preInit` is a real value before that preInit returns. What lands a frame later, in
+`refreshAllSettings` under `CBA_fnc_execNextFrame`, is the **server's synced value replacing
+the local default**.
+
+The recommended fix is unchanged; the reason is different. The hazard is not an undefined
+variable, it is a **decision made once, too early, off the local default** — starting a
+system the server had disabled. That is why defending with a default is no better: a
+defaulted read and a bare read return the *same* value there.
+
+The corollary matters as much: code that **re-reads on every event** — a class event handler
+body, a per-frame renderer — does not have this problem at all and needs no gate and no
+`GETGVAR`. Converting such a gate "defensively" is a regression, because `GETGVAR` expands to
+`getVariable ["name", default]` and builds an array literal per call. See
+[missile/functions/fnc_detectGrenade.sqf](addons/missile/functions/fnc_detectGrenade.sqf),
+whose bare read is deliberate and commented, on a path that runs per infantry shot.
 
 **There is no `CBA_fnc_runAfterSettingsInit`.** That helper is ACE3/ZEN-only
 (`ace_common_fnc_` / `zen_common_fnc_`); calling the `CBA_` name is a silent `nil` no-op.
