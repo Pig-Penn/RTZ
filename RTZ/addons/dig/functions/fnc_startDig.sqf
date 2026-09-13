@@ -29,7 +29,7 @@ params ["_start", "_end", "_force", "_engineers", "_curator"];
 
 if (!GVAR(enabled)) exitWith {};
 
-([_start, _end, _force] call FUNC(planTrench)) params ["_valid", "_reason", "_cells", "_scale"];
+([_start, _end, _force] call FUNC(planTrench)) params ["_valid", "_reason", "_cells"];
 
 if (!_valid) exitWith {
     [_curator, _reason] call EFUNC(common,notifyCurator);
@@ -45,7 +45,7 @@ if (_engineers isEqualTo []) exitWith {
 
 GVAR(nextId) = GVAR(nextId) + 1;
 
-private _record = [GVAR(nextId), [], [], _curator, count _cells, count _cells, _cells, _scale, []];
+private _record = [GVAR(nextId), [], _curator, count _cells, count _cells, _cells, []];
 
 GVAR(trenches) pushBack _record;
 

@@ -1,15 +1,12 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * SERVER: builds one finished cell — drops its heightmap vertex and creates its
- * blocks. The only function in the component that touches the world.
+ * SERVER: finishes one cell — takes its vertex to full depth, cuts the grass out of
+ * the hole, and counts the cell off against the trench.
  *
- * setTerrainHeight is server-only (both ACE and Zeus Wargame enforce this), and
- * createSimpleObject with two arguments is GLOBAL — CBA's own fnc_createNamespace
- * branches on exactly that, taking the bare two-argument form as its global case —
- * so the blocks reach every client, and JIP clients, as ordinary networked objects.
- * The third argument would make them local; LAMBS passes it for throwaway debug
- * arrows, which is what it is for.
+ * The dig itself happens in FUNC(sinkCell), called ~15 times over the cell's life by
+ * the progress the digger reports. This is only the last of those calls plus the
+ * bookkeeping, so the terrain a curator watched sink does not jump at the end.
  *
  * Arguments:
  * 0: Trench record <ARRAY>
@@ -26,56 +23,33 @@
 
 params ["_record", "_cell"];
 
-_cell params ["", "_vertex", "_blocks", "_cut"];
+[_record, _cell, 1] call FUNC(sinkCell);
 
-private _scale = _record select TRENCH_SCALE;
+_cell params ["", "_vertex"];
 
-// Terrain first, blocks second — the blocks are placed at heights resolved off
-// pristine terrain by FUNC(planTrench), so the order only matters for the objects
-// already standing here, and there are none: the plan refused the cell otherwise.
+// Grass, not geometry. Nothing is modelled here, so a shallow dip left full of clutter
+// reads as a fold in the ground rather than as a trench — the cutter is what makes it
+// legible. Only where there is a vertex: the end cells deform nothing, so they have no
+// hole to clear.
 //
-// adjustObjects FALSE, where ACE passes true. ACE deforms the WHOLE trench before
-// placing any block, so it has nothing of its own to disturb. This builds cell by
-// cell, and neighbouring cells share vertices — with true, every later cell would
-// drag the blocks its finished neighbour had already placed down with it. Zeus
-// Wargame's own digging passes false for the same reason.
+// Created with the bare two-argument createSimpleObject, which is GLOBAL (CBA's own
+// fnc_createNamespace branches on exactly that, and the third argument is what makes
+// one local), so it reaches every client and JIP like any networked object.
 if (_vertex isNotEqualTo []) then {
-    _vertex params ["_vx", "_vy", "_original"];
+    _vertex params ["_vx", "_vy"];
 
-    (_record select TRENCH_HEIGHTS) pushBack _vertex;
+    private _at = [_vx, _vy, getTerrainHeightASL [_vx, _vy]];
+    private _cutter = createSimpleObject [CLUTTER_CUTTER, _at];
 
-    setTerrainHeight [[[_vx, _vy, _original + LAND_ADJUST]], false];
+    // Read AFTER the sink above, so it lies in the finished dip rather than on the
+    // slope that was here before the cell was dug.
+    _cutter setVectorUp (surfaceNormal _at);
+
+    // Paired with its creation, here, rather than parked in the record: there is
+    // nothing else left that outlives a dig, and a cutter whose deletion depended on
+    // some later step would leak for the rest of the mission if that step never ran.
+    [{deleteVehicle (_this select 0)}, [_cutter], CUTTER_LIFETIME] call CBA_fnc_waitAndExecute;
 };
-
-private _created = _record select TRENCH_BLOCKS;
-
-// Cutter before the walls so it is not left sitting on top of them. Sized with the
-// blocks: a cutter scaled for a 3.75 m model clears nothing on a 7.5 m cell.
-if (_cut) then {
-    (_blocks select 0) params ["_floorPos", "", "_floorUp"];
-
-    private _cutter = createSimpleObject [CLUTTER_CUTTER, _floorPos];
-    _cutter setVectorDirAndUp [[0, 1, 0], _floorUp];
-
-    if (_scale != 1) then {
-        _cutter setObjectScale _scale;
-    };
-
-    _created pushBack _cutter;
-};
-
-{
-    _x params ["_pos", "_dir", "_up"];
-
-    private _block = createSimpleObject [TRENCH_BLOCK, _pos];
-    _block setVectorDirAndUp [_dir, _up];
-
-    if (_scale != 1) then {
-        _block setObjectScale _scale;
-    };
-
-    _created pushBack _block;
-} forEach _blocks;
 
 // Pending reaches zero only if every cell was actually dug. A squad wiped out
 // halfway leaves a half-built trench and no toast, which is the honest report.

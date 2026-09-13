@@ -17,6 +17,19 @@ private _category = [ELSTRING(main,DisplayName), LSTRING(DisplayName)];
     true // Global
 ] call CBA_fnc_addSetting;
 
+// Metres the heightmap drops under a finished section. With nothing modelled on top,
+// this is the only lever the feature has — it used to be pinned to the trench block's
+// own geometry and is a free parameter now. 1.7 is Zeus Wargame's figure.
+//
+// Read on the server, by FUNC(sinkCell), but Global with the rest for the reason above.
+[
+    QGVAR(depth), "SLIDER",
+    [LSTRING(Depth), LSTRING(Depth_Description)],
+    _category,
+    [0.5, 4, 1.7, 1],
+    true // Global
+] call CBA_fnc_addSetting;
+
 // Seconds one engineer spends on one grid cell. The trench's total cost is this
 // times its length in cells, divided among however many engineers were selected.
 [

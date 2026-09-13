@@ -17,6 +17,7 @@
  * 0: Assembled Weapon <OBJECT> - objNull clears the errand state and nothing else
  * 1: Gunner <OBJECT>
  * 2: Assistant <OBJECT> - objNull for single bag weapons
+ * 3: Crew errand tokens, [[unit, token], ...] <ARRAY> (default: legacy unguarded cleanup)
  *
  * Return Value:
  * None
@@ -27,7 +28,7 @@
  * Public: No
  */
 
-params ["_weapon", "_gunner", "_assistant"];
+params ["_weapon", "_gunner", "_assistant", ["_tokens", []]];
 
 // The facing chosen in the placement preview rides in the ctx FUNC(buildWeapon)
 // stashed on the gunner. -1 (no preview facing) falls back to auto-aiming at the
@@ -88,11 +89,24 @@ if (!isNull _weapon) then {
     [_weapon, _gunner] call EFUNC(common,grantCurators);
 };
 
-[[_gunner, _assistant]] call EFUNC(common,clearErrand);
+private _release = [];
+{
+    _x params ["_unit", "_token"];
+    if (!isNull _unit && {_token >= 0} && {([_unit] call EFUNC(common,errandToken)) == _token}) then {
+        _release pushBack _unit;
+    };
+} forEach _tokens;
+
+// Compatibility for direct callers that predate token-aware teardown.
+if (_tokens isEqualTo []) then {_release = [_gunner, _assistant]};
+[_release] call EFUNC(common,clearErrand);
 
 if (!isNull _gunner) then {
     // Public, like the claim FUNC(assembleWeapon) took: the context menu reads it
     // from the ordering curator's client, not from here
-    SETPVAR(_gunner,GVAR(assembling),nil);
-    _gunner setVariable [QGVAR(buildCtx), nil];
+    private _currentCtx = _gunner getVariable [QGVAR(buildCtx), []];
+    if (_tokens isEqualTo [] || {(_currentCtx param [5, []]) isEqualTo _tokens}) then {
+        SETPVAR(_gunner,GVAR(assembling),nil);
+        _gunner setVariable [QGVAR(buildCtx), nil];
+    };
 };

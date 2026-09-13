@@ -148,6 +148,9 @@ if (GVAR(instant)) exitWith {
 // assistant's death or the timeout, so a Zeus order always completes
 private _walkTimeout = WALK_TIMEOUT_BASE + (_assistant distance2D _weapon) * WALK_TIMEOUT_PER_METER;
 
+private _assistantToken = (_assistant getVariable [QEGVAR(common,approachOrder), 0]) + 1;
+private _gunnerToken = [_gunner] call EFUNC(common,errandToken);
+
 // Extend the claim deadline over the walk plus the pack window, mirroring
 // FUNC(assembleWeapon). If the assistant is re-tasked mid-walk the errand's hooks
 // never fire (see the claim comment above), and this lapse is what un-strands the
@@ -164,7 +167,7 @@ SETPVAR(_weapon,GVAR(packing),CBA_missionTime + _walkTimeout + PACK_TIMEOUT);
     _walkTimeout,
     LINKFUNC(packWeapon),
     LINKFUNC(packWeapon),
-    [_weapon, _gunner, _weaponBag, _baseBag, _assistant, _curator],
+    [_weapon, _gunner, _weaponBag, _baseBag, _assistant, _curator, [[_gunner, _gunnerToken], [_assistant, _assistantToken]]],
     true,
     _curator,
     LLSTRING(PackInPlace)

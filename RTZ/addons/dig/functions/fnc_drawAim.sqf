@@ -37,8 +37,8 @@ if (_start isEqualTo []) exitWith {};
 private _now = _ctx select CTX_NOW;
 
 // Re-planned on PLAN_INTERVAL, never per frame: FUNC(planTrench) runs
-// nearestObjects, nearestTerrainObjects and a surfaceType lookup for three points
-// of every cell. rtz_airstrike caches its own validity check the same way.
+// nearestObjects, nearestTerrainObjects and a surfaceType lookup for every cell.
+// rtz_airstrike caches its own validity check the same way.
 //
 // The label is composed HERE too, inside the same throttle. `format` on a path that
 // runs every frame is exactly what this mod's hour-long sessions cannot afford, and
@@ -61,7 +61,9 @@ if (_now >= _planAt) then {
 // First frame after the press, before the first plan has been made.
 if (_plan isEqualTo []) exitWith {};
 
-_plan params ["_valid", "", "_cells", "", ["_label", ""]];
+// The label is the entry FUNC(planTrench) does not return — it is pushBack'd above, so
+// it sits one past the plan's own three.
+_plan params ["_valid", "", "_cells", ["_label", ""]];
 
 // Refused: mark both ends rather than the cells, because there are no cells. The
 // reason rides on the end the cursor is at, where the curator is already looking.

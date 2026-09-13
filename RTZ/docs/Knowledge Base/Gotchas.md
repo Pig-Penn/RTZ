@@ -1126,6 +1126,34 @@ matching, and do not forget `VEHICLE PLANNED`: it is what every *driving vehicle
 — index 2 is the sighting time, 5 the error in metres, and 6 an **ASL** position needing
 `ASLToAGL` before it is drawn.
 
+### Incremental world state must be computed from a captured original, never read back
+
+`setTerrainHeight` is the clearest case, but the rule is general. `rtz_dig` takes a cell down
+over roughly fifteen steps as an engineer works, and the obvious way to write a step is "read the
+height, subtract a bit, write it back". That is wrong twice over:
+
+- **Progress arrives over the network.** The digger is local to whichever machine owns him and
+  reports into the server. One dropped or duplicated event and every later step compounds the
+  error, silently and permanently — there is nothing to notice it against.
+- **Neighbours share the vertex.** Trench cells are one grid cell apart, so two cells being dug
+  at once both write the vertex between them. Read-modify-write makes the result depend on which
+  of them ticked last.
+
+So the digger reports a **fraction** and never a height, and the server writes an absolute value
+derived from the pristine height the plan captured once:
+
+```sqf
+private _height = _original - (_fraction * GVAR(depth));
+```
+
+Every write is then independently correct regardless of order, loss or duplication. Add a
+monotonic guard (`CELL_SUNK`) so a *late* event cannot raise ground that is already dug, since an
+absolute write is perfectly happy to move terrain back up. See
+[fnc_sinkCell.sqf](addons/dig/functions/fnc_sinkCell.sqf).
+
+This is the same shape as the stale-mirror findings in the 2026-09-13 sweep: state read back from
+the world where a captured value was the authority.
+
 ---
 
 ## 5. Zeus & curator specifics

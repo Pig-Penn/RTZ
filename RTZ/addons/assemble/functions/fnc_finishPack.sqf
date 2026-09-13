@@ -15,6 +15,7 @@
  * 0: Gunner <OBJECT>
  * 1: Assistant <OBJECT> - objNull for single bag weapons
  * 2: Packed Weapon <OBJECT> - objNull when the pack found nothing to remove
+ * 3: Crew errand tokens, [[unit, token], ...] <ARRAY> (default: legacy unguarded cleanup)
  *
  * Return Value:
  * None
@@ -25,13 +26,24 @@
  * Public: No
  */
 
-params ["_gunner", "_assistant", ["_weapon", objNull]];
+params ["_gunner", "_assistant", ["_weapon", objNull], ["_tokens", []]];
 
-[[_gunner, _assistant]] call EFUNC(common,clearErrand);
+private _release = [];
+{
+    _x params ["_unit", "_token"];
+    if (!isNull _unit && {_token >= 0} && {([_unit] call EFUNC(common,errandToken)) == _token}) then {
+        _release pushBack _unit;
+    };
+} forEach _tokens;
+if (_tokens isEqualTo []) then {_release = [_gunner, _assistant]};
+[_release] call EFUNC(common,clearErrand);
 
 if (isNull _gunner) exitWith {};
 
-_gunner setVariable [QGVAR(packCtx), nil];
+private _currentCtx = _gunner getVariable [QGVAR(packCtx), []];
+if (_tokens isEqualTo [] || {(_currentCtx param [5, []]) isEqualTo _tokens}) then {
+    _gunner setVariable [QGVAR(packCtx), nil];
+};
 
 // A deleted object goes null in the list rather than dropping out of it, so the null
 // sweep also collects weapons LAMBS packed or that were destroyed since

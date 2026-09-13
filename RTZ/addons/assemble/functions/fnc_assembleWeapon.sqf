@@ -96,6 +96,12 @@ if (GVAR(instant)) exitWith {
 // engine's "PutBag" half needs. Vanilla's BIS_fnc_unpackStaticWeapon flanks the spot
 // the same way
 private _crew = [_gunner];
+// Tokens are captured BEFORE approach claims the lead.  The predicted gunner token
+// is what approach will write below; the assistant is claimed here because approach
+// only owns its lead.  Delayed settle/build callbacks use both tokens so an old
+// assembly cannot consume bags or clear a newer errand on either crewman.
+private _gunnerToken = (_gunner getVariable [QEGVAR(common,approachOrder), 0]) + 1;
+private _assistantToken = -1;
 
 if (!isNull _assistant && {alive _assistant}) then {
     // Perpendicular to the facing the weapon will take. With no preview facing (-1,
@@ -104,6 +110,9 @@ if (!isNull _assistant && {alive _assistant}) then {
     // assistant ends up beside the gunner rather than in front of the muzzle
     private _facing = if (_direction >= 0) then {_direction} else {_position getDir _gunner};
     _crew pushBack [_assistant, _position getPos [CREW_SPREAD, _facing + 90]];
+
+    _assistantToken = (_assistant getVariable [QEGVAR(common,approachOrder), 0]) + 1;
+    _assistant setVariable [QEGVAR(common,approachOrder), _assistantToken, true];
 };
 
 // Walk the crew to the spot, then raise the weapon. Build on arrival, or in place on
@@ -115,7 +124,7 @@ if (!isNull _assistant && {alive _assistant}) then {
     _walkTimeout,
     LINKFUNC(buildWeapon),
     LINKFUNC(buildWeapon),
-    [_gunner, _staticClass, _assistant, _direction, _curator],
+    [_gunner, _staticClass, _assistant, _direction, _curator, [[_gunner, _gunnerToken], [_assistant, _assistantToken]]],
     true,
     _curator,
     LLSTRING(BuildInPlace)

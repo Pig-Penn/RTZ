@@ -1,8 +1,9 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Why this point cannot be dug, or "" if it can. One point of one cell;
- * FUNC(planTrench) runs it over each cell's floor and both wall positions.
+ * Why this point cannot be dug, or "" if it can. FUNC(planTrench) runs it once per
+ * cell, at the cell's centre, with a radius of one heightmap cell — which is the
+ * ground a dropped vertex actually pulls down.
  *
  * Returns the REASON rather than a boolean so the curator's preview can say what
  * is wrong — a gesture that just turns red tells him to move it, not why.

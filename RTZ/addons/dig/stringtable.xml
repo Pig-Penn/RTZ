@@ -10,6 +10,12 @@
         <Key ID="STR_RTZ_Dig_CellDuration_Description">
             <English>How long one engineer works on one section of trench. A trench costs this much per section, shared out among the engineers ordered to dig it.</English>
         </Key>
+        <Key ID="STR_RTZ_Dig_Depth">
+            <English>Trench Depth</English>
+        </Key>
+        <Key ID="STR_RTZ_Dig_Depth_Description">
+            <English>How deep a finished section is cut into the ground, in metres. Terrain detail is coarse, so a trench is a broad hollow to lie in rather than a walled ditch, and deeper simply means more cover.</English>
+        </Key>
         <Key ID="STR_RTZ_Dig_DigTimeout">
             <English>Walk Timeout</English>
         </Key>

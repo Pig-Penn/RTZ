@@ -10,10 +10,10 @@
  * on commit. A preview that validated by different rules than the builder would
  * promise trenches the server then refuses.
  *
- * Ported from ace_trenches_fnc_blockTrench_place (PabstMirror), split into a
- * planner and a builder — ACE validates and constructs in one pass, which is what
- * forces its own Zeus module to call it with a `_dryRun` flag that returns a
- * different shape. Here the plan IS the shape, and FUNC(buildCell) consumes it.
+ * Validation is ported from ace_trenches_fnc_blockTrench_place (PabstMirror), split
+ * off into a planner — ACE validates and constructs in one pass, which is what forces
+ * its own Zeus module to call it with a `_dryRun` flag that returns a different shape.
+ * Here the plan IS the shape, and FUNC(sinkCell) consumes it.
  *
  * The trench is axis-aligned, snapped to the heightmap grid, because
  * setTerrainHeight moves vertices and nothing finer exists. A diagonal drag is
@@ -28,7 +28,6 @@
  * 0: Diggable <BOOL>
  * 1: Reason when not, "" when it is <STRING>
  * 2: Cells, indexed by the CELL_* macros <ARRAY>
- * 3: Block scale to apply to every created object <NUMBER>
  *
  * Example:
  * ([_start, _end] call rtz_dig_fnc_planTrench) params ["_valid", "_reason", "_cells"];
@@ -44,13 +43,13 @@ getTerrainInfo params ["", "", "_cellSize"];
 // ACE refuses the same range and names Malden (12.5 m) as a real example, so this
 // is a legitimate "not on this terrain", not a defensive impossibility.
 if (_cellSize < CELL_MIN || {_cellSize > CELL_MAX}) exitWith {
-    [false, LLSTRING(ReasonWorld), [], 0]
+    [false, LLSTRING(ReasonWorld), []]
 };
 
-private _blockScale = _cellSize / MODEL_SIZE;
-private _xOffset = TRENCH_WIDTH + _blockScale * MODEL_X;
-private _zOffset = BLOCK_ADJUST - (_blockScale - 1) * MODEL_Z;
-private _testRadius = _blockScale * MODEL_SIZE;
+// One cell. Dropping a vertex pulls the ground down in a cone reaching about that far,
+// so this is the footprint the dig actually disturbs. It was previously derived from
+// the trench block's footprint and its scale, which multiplied out to the same number.
+private _testRadius = _cellSize;
 
 // Snap both ends onto heightmap vertices. Everything downstream is expressed in
 // whole cells from here on, so this is the only place rounding happens.
@@ -63,7 +62,7 @@ _end2D params ["_bx", "_by"];
 // findIf, not a forEach with exitWith: this is a pure existence test and findIf
 // short-circuits natively (docs/Knowledge Base/Gotchas.md section 2).
 if ([_ax, _ay, _bx, _by] findIf {_x < _cellSize || {_x > (worldSize - _cellSize)}} != -1) exitWith {
-    [false, LLSTRING(ReasonBounds), [], 0]
+    [false, LLSTRING(ReasonBounds), []]
 };
 
 // Resolve the drag to an axis, then walk from the LOWER end so the cell order is
@@ -85,7 +84,7 @@ if (_east) then {
 };
 
 if (_length < MIN_CELLS) exitWith {
-    [false, LLSTRING(ReasonShort), [], 0]
+    [false, LLSTRING(ReasonShort), []]
 };
 
 private _cells = [];
@@ -93,31 +92,21 @@ private _reason = "";
 
 // Inclusive: _length cells span the gap, and the extra one closes the far end.
 for "_i" from 0 to _length do {
-    private _centre = [];
-    private _left = [];
-    private _right = [];
-    private _direction = [];
-
-    if (_east) then {
-        _centre = _origin2D vectorAdd [(_i + 0.5) * _cellSize, 0];
-        _left = _centre vectorAdd [0, _xOffset];
-        _right = _centre vectorAdd [0, -_xOffset];
-        _direction = [0, -1, 0];
+    private _centre = if (_east) then {
+        _origin2D vectorAdd [(_i + 0.5) * _cellSize, 0]
     } else {
-        _centre = _origin2D vectorAdd [0, (_i + 0.5) * _cellSize];
-        _left = _centre vectorAdd [_xOffset, 0];
-        _right = _centre vectorAdd [-_xOffset, 0];
-        _direction = [-1, 0, 0];
+        _origin2D vectorAdd [0, (_i + 0.5) * _cellSize]
     };
 
-    // Existence test first, so the clear case costs one pass and only a genuine
-    // refusal pays for the second call that names the reason.
-    private _bad = [_centre, _left, _right] findIf {
-        ([_x, _testRadius, _force] call FUNC(cellObstruction)) isNotEqualTo ""
-    };
+    // ONE probe, at the centre. There used to be three — centre plus a point out at
+    // _xOffset either side — because the side WALL BLOCKS stood there and had to land
+    // on clear ground. Nothing stands out there now, and a disc of one cell about the
+    // centre already covers the inner half of both vertices this cell is between plus
+    // the ground the digger kneels on, which is everything the dig disturbs. The
+    // flanking probes would veto ground the trench no longer reaches.
+    _reason = [_centre, _testRadius, _force] call FUNC(cellObstruction);
 
-    if (_bad != -1) then {
-        _reason = [[_centre, _left, _right] select _bad, _testRadius, _force] call FUNC(cellObstruction);
+    if (_reason isNotEqualTo "") then {
         // break, not exitWith — inside a loop body exitWith is continue, and this
         // loop ASSIGNS, so it would silently become a last-wins reducer over every
         // remaining cell (docs/Knowledge Base/Gotchas.md section 2).
@@ -134,31 +123,17 @@ for "_i" from 0 to _length do {
         } else {
             _origin2D vectorAdd [0, _i * _cellSize]
         };
-        // The ORIGINAL height travels with the plan: FUNC(buildCell) subtracts from
-        // this rather than from whatever the heightmap says when it runs, and the
-        // same figure is what a fill-in order would restore.
+        // The ORIGINAL height travels with the plan: every sink is computed as an
+        // absolute height from THIS figure rather than from whatever the heightmap
+        // says at the time, and the same figure is what a fill-in order would restore.
         _vertex = [_at select 0, _at select 1, getTerrainHeight _at];
     };
 
-    // The floor block sits TRENCH_DEPTH below the walls; all three are sunk by
-    // _zOffset, which compensates for the block having been scaled up to span a cell.
-    // Resolved to 3D first, then handed to surfaceNormal, which wants a real
-    // position rather than the bare [x,y] the cell walk works in.
-    private _floorASL = _centre + [(getTerrainHeightASL _centre) + _zOffset + TRENCH_DEPTH];
-    private _leftASL = _left + [(getTerrainHeightASL _left) + _zOffset];
-    private _rightASL = _right + [(getTerrainHeightASL _right) + _zOffset];
-
-    private _blocks = [
-        [_floorASL, _direction, surfaceNormal _floorASL],
-        [_leftASL, _direction, surfaceNormal _leftASL],
-        [_rightASL, _direction vectorMultiply -1, surfaceNormal _rightASL]
-    ];
-
-    _cells pushBack [_centre, _vertex, _blocks, _vertex isNotEqualTo []];
+    _cells pushBack [_centre, _vertex, 0];
 };
 
 if (_reason isNotEqualTo "") exitWith {
-    [false, _reason, [], 0]
+    [false, _reason, []]
 };
 
-[true, "", _cells, _blockScale]
+[true, "", _cells]

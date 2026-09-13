@@ -41,17 +41,43 @@
  * 3: Direction <NUMBER> - facing chosen in the placement preview, -1 auto-faces the
  *    nearest known enemy (default: -1)
  * 4: Curator's Player <OBJECT> - feedback toasts (default: objNull)
+ * 5: Crew errand tokens, [[unit, token], ...] <ARRAY> (default: current tokens)
  *
  * Return Value:
  * None
  *
  * Example:
- * [_gunner, "B_HMG_01_F", _assistant, 180, player] call rtz_assemble_fnc_buildWeapon
+ * [_gunner, "B_HMG_01_F", _assistant, 180, player, _tokens] call rtz_assemble_fnc_buildWeapon
  *
  * Public: No
  */
 
-params ["_gunner", "_staticClass", "_assistant", ["_direction", -1], ["_curator", objNull]];
+params ["_gunner", "_staticClass", "_assistant", ["_direction", -1], ["_curator", objNull], ["_tokens", []]];
+
+if (_tokens isEqualTo []) then {
+    _tokens = [
+        [_gunner, [_gunner] call EFUNC(common,errandToken)],
+        [_assistant, if (isNull _assistant) then {-1} else {[_assistant] call EFUNC(common,errandToken)}]
+    ];
+};
+
+private _fnc_tokensCurrent = {
+    _this findIf {
+        _x params ["_unit", "_token"];
+        !isNull _unit && {_token >= 0} && {([_unit] call EFUNC(common,errandToken)) != _token}
+    } == -1
+};
+
+// The walk may have completed because only the lead is watched while the assistant
+// was re-tasked independently.  In that case this old order owns nothing any more.
+if !(_tokens call _fnc_tokensCurrent) exitWith {
+    private _release = _tokens select {
+        _x params ["_unit", "_token"];
+        !isNull _unit && {_token >= 0} && {([_unit] call EFUNC(common,errandToken)) == _token}
+    } apply {_x select 0};
+    [_release] call EFUNC(common,clearErrand);
+    SETPVAR(_gunner,GVAR(assembling),nil);
+};
 
 // Gunner down mid-errand, abort and clear any errand state
 if (isNull _gunner || {!alive _gunner} || {lifeState _gunner isEqualTo "INCAPACITATED"}) exitWith {
@@ -79,7 +105,7 @@ if (!isNull _assistant) then {
 // copy. "pending" until the event handler or the fallback claims the build, the
 // finalize arguments ride along because the event handler's own scope can't capture
 // them from here
-private _ctx = ["pending", _assistant, _curator, _direction, -1];
+private _ctx = ["pending", _assistant, _curator, _direction, -1, _tokens];
 _gunner setVariable [QGVAR(buildCtx), _ctx];
 
 // Deterministic build: consume the bags and place the static in front of the gunner
@@ -87,12 +113,31 @@ _gunner setVariable [QGVAR(buildCtx), _ctx];
 // fallback - the ctx state slot keeps it mutually exclusive with the
 // "WeaponAssembled" handler, so whichever fires first claims "done"
 private _fnc_directBuild = {
-    params ["_gunner", "_staticClass", "_assistant", "_direction", "_bags"];
+    params ["_gunner", "_staticClass", "_assistant", "_direction", "_bags", "_tokens"];
 
     if (isNull _gunner) exitWith {};
 
     private _ctx = _gunner getVariable [QGVAR(buildCtx), []];
     if ((_ctx param [0, ""]) isNotEqualTo "pending") exitWith {};
+    // A later assembly may have replaced the context while this timeout was queued.
+    // Never remove its handler or clear its claim from the old callback.
+    if ((_ctx param [5, []]) isNotEqualTo _tokens) exitWith {};
+
+    if (_tokens findIf {
+        _x params ["_unit", "_token"];
+        !isNull _unit && {_token >= 0} && {([_unit] call EFUNC(common,errandToken)) != _token}
+    } != -1) exitWith {
+        private _eh = _ctx param [4, -1];
+        if (_eh >= 0) then {_gunner removeEventHandler ["WeaponAssembled", _eh]};
+        private _release = _tokens select {
+            _x params ["_unit", "_token"];
+            !isNull _unit && {_token >= 0} && {([_unit] call EFUNC(common,errandToken)) == _token}
+        } apply {_x select 0};
+        [_release] call EFUNC(common,clearErrand);
+        _gunner setVariable [QGVAR(buildCtx), nil];
+        SETPVAR(_gunner,GVAR(assembling),nil);
+    };
+
     _ctx set [0, "done"];
 
     private _eh = _ctx param [4, -1];
@@ -103,7 +148,7 @@ private _fnc_directBuild = {
 
     // Gunner died inside the animation window, don't build off a corpse
     if (!alive _gunner) exitWith {
-        [objNull, _gunner, _assistant] call FUNC(finishBuild);
+        [objNull, _gunner, _assistant, _tokens] call FUNC(finishBuild);
         [_ctx param [2, objNull], LLSTRING(Aborted)] call EFUNC(common,notifyCurator);
     };
 
@@ -151,12 +196,12 @@ private _fnc_directBuild = {
     _gunner assignAsGunner _weapon;
     _gunner moveInGunner _weapon;
 
-    [_weapon, _gunner, _assistant] call FUNC(finishBuild);
+    [_weapon, _gunner, _assistant, _tokens] call FUNC(finishBuild);
 };
 
 // Instant assembly: skip the engine animation, build immediately
 if (GVAR(instant)) exitWith {
-    [_gunner, _staticClass, _assistant, _direction, _bags] call _fnc_directBuild;
+    [_gunner, _staticClass, _assistant, _direction, _bags, _tokens] call _fnc_directBuild;
 };
 
 // The engine finished the animation and spawned the (empty) weapon
@@ -165,22 +210,22 @@ private _eh = _gunner addEventHandler ["WeaponAssembled", {
 
     private _ctx = _unit getVariable [QGVAR(buildCtx), []];
 
-    if ((_ctx param [0, ""]) isEqualTo "pending") then {
+    if ((_ctx param [0, ""]) isEqualTo "pending" && {(_ctx param [4, -1]) == _thisEventHandler}) then {
         _ctx set [0, "done"];
         _unit removeEventHandler ["WeaponAssembled", _thisEventHandler];
-        [_weapon, _unit, _ctx param [1, objNull]] call FUNC(finishBuild);
+        [_weapon, _unit, _ctx param [1, objNull], _ctx param [5, []]] call FUNC(finishBuild);
     };
 }];
 _ctx set [4, _eh];
 
 // Issue the real assemble action, once the settle below says both men are ready
 private _fnc_issueAssemble = {
-    params ["_gunner", "_staticClass", "_assistant", "_direction", "_bags", "_fnc_directBuild"];
+    params ["_gunner", "_staticClass", "_assistant", "_direction", "_bags", "_tokens", "_fnc_directBuild"];
 
     // Gunner lost inside the settle window - resolve the errand now rather than idle
     // out the whole build window first. _fnc_directBuild aborts on a dead gunner
     if (isNull _gunner || {!alive _gunner}) exitWith {
-        [_gunner, _staticClass, _assistant, _direction, _bags] call _fnc_directBuild;
+        [_gunner, _staticClass, _assistant, _direction, _bags, _tokens] call _fnc_directBuild;
     };
 
     if (isNull _assistant) then {
@@ -195,7 +240,7 @@ private _fnc_issueAssemble = {
     // Deterministic fallback: if the engine never fired, build it directly. Started
     // here rather than at the bottom of this file so the settle above can't eat into
     // the window the engine gets to report back
-    [_fnc_directBuild, [_gunner, _staticClass, _assistant, _direction, _bags], BUILD_TIMEOUT] call CBA_fnc_waitAndExecute;
+    [_fnc_directBuild, [_gunner, _staticClass, _assistant, _direction, _bags, _tokens], BUILD_TIMEOUT] call CBA_fnc_waitAndExecute;
 };
 
 // Ask both men to kneel. setUnitPosWeak rather than a hard setUnitPos, so
@@ -226,7 +271,7 @@ private _fnc_issueAssemble = {
         }
     },
     _fnc_issueAssemble,
-    [_gunner, _staticClass, _assistant, _direction, _bags, _fnc_directBuild],
+    [_gunner, _staticClass, _assistant, _direction, _bags, _tokens, _fnc_directBuild],
     SETTLE_TIMEOUT,
     _fnc_issueAssemble
 ] call CBA_fnc_waitUntilAndExecute;

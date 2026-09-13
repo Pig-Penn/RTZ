@@ -12,9 +12,9 @@
  *
  * The cache is keyed on the surface CLASS, of which a terrain has a few dozen, so
  * it is bounded by the map rather than by how long the mission runs. That matters
- * here: FUNC(planTrench) calls this three times per cell and re-plans while the
- * curator drags, and `surfaceType` plus a configFile walk is not something to do
- * per point per frame.
+ * here: FUNC(planTrench) calls this once per cell and re-plans while the curator
+ * drags, and `surfaceType` plus a configFile walk is not something to do per point
+ * per frame.
  *
  * Arguments:
  * 0: Position 2D or ASL <ARRAY>

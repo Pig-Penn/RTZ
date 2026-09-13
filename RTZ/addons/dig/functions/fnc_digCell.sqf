@@ -42,7 +42,7 @@ params ["_unit", "_trenchId", "_cellIndex", "_centre", "_curator"];
         // through the whole dig and clears the errand itself when the cell is done.
         [
             _unit, _trenchId, _cellIndex,
-            CBA_missionTime + GVAR(cellDuration),
+            CBA_missionTime, CBA_missionTime + GVAR(cellDuration),
             [_unit] call EFUNC(common,errandToken)
         ] call FUNC(digStep)
     },

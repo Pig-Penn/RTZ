@@ -17,6 +17,21 @@ if (!isServer) exitWith {};
 // Sent by FUNC(orderDig) from the ordering curator's client.
 [QGVAR(start), LINKFUNC(startDig)] call CBA_fnc_addEventHandler;
 
+// Sent by FUNC(digStep) from wherever the digger is local, on every replay of the dig
+// animation. A FRACTION of the cell's time, never a height: the server owns the
+// heightmap and the pristine value to compute an absolute height against.
+[QGVAR(cellProgress), {
+    params ["_trenchId", "_cellIndex", "_fraction"];
+
+    private _found = [_trenchId, _cellIndex] call FUNC(findCell);
+
+    if (_found isEqualTo []) exitWith {};
+
+    _found params ["_record", "_cell"];
+
+    [_record, _cell, _fraction] call FUNC(sinkCell);
+}] call CBA_fnc_addEventHandler;
+
 // Sent by FUNC(digStep) from wherever the digger is local, once his cell is finished.
 // The cell itself is NOT carried in the payload — CBA events copy what they are
 // given, so the digger's machine holds no part of the plan and cannot mutate the
@@ -24,18 +39,13 @@ if (!isServer) exitWith {};
 [QGVAR(cellDone), {
     params ["_trenchId", "_cellIndex"];
 
-    private _index = GVAR(trenches) findIf {(_x select TRENCH_ID) == _trenchId};
+    private _found = [_trenchId, _cellIndex] call FUNC(findCell);
 
-    // Aged out of the bounded registry while this cell was being dug. The trench
-    // stops where it got to; there is nothing left to attach the cell to.
-    if (_index == -1) exitWith {};
+    if (_found isEqualTo []) exitWith {};
 
-    private _record = GVAR(trenches) select _index;
-    private _cells = _record select TRENCH_CELLS;
+    _found params ["_record", "_cell"];
 
-    if (_cellIndex < 0 || {_cellIndex >= count _cells}) exitWith {};
-
-    [_record, _cells select _cellIndex] call FUNC(buildCell);
+    [_record, _cell] call FUNC(buildCell);
 
     // The digger's NEXT cell goes out only now. His run is walked one cell at a
     // time because EFUNC(common,approach) supersedes any pending order on the same
@@ -44,8 +54,8 @@ if (!isServer) exitWith {};
     // Contiguous runs, so the next cell is his when DIGGER_INDEX yields the same
     // digger for both; a different index means his stretch ended here and the next
     // cell already has its own digger working toward it.
+    private _total = count (_record select TRENCH_CELLS);
     private _diggers = count (_record select TRENCH_DIGGERS);
-    private _total = count _cells;
     private _next = _cellIndex + 1;
 
     if (_next >= _total) exitWith {};

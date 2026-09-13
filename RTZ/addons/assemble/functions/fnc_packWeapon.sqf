@@ -29,17 +29,37 @@
  * 3: Support Bag <STRING> - "" for single bag weapons, fallback path only (default: "")
  * 4: Assistant <OBJECT> - receives the support bag, objNull for single bag (default: objNull)
  * 5: Curator's Player <OBJECT> - feedback toasts (default: objNull)
+ * 6: Crew errand tokens, [[unit, token], ...] <ARRAY> (default: current tokens)
  *
  * Return Value:
  * None
  *
  * Example:
- * [_weapon, _gunner, "B_HMG_01_weapon_F", "B_HMG_01_support_F", _assistant, player] call rtz_assemble_fnc_packWeapon
+ * [_weapon, _gunner, "B_HMG_01_weapon_F", "B_HMG_01_support_F", _assistant, player, _tokens] call rtz_assemble_fnc_packWeapon
  *
  * Public: No
  */
 
-params ["_weapon", "_gunner", ["_weaponBag", ""], ["_baseBag", ""], ["_assistant", objNull], ["_curator", objNull]];
+params ["_weapon", "_gunner", ["_weaponBag", ""], ["_baseBag", ""], ["_assistant", objNull], ["_curator", objNull], ["_tokens", []]];
+
+if (_tokens isEqualTo []) then {
+    _tokens = [
+        [_gunner, if (isNull _gunner) then {-1} else {[_gunner] call EFUNC(common,errandToken)}],
+        [_assistant, if (isNull _assistant) then {-1} else {[_assistant] call EFUNC(common,errandToken)}]
+    ];
+};
+
+if (_tokens findIf {
+    _x params ["_unit", "_token"];
+    !isNull _unit && {_token >= 0} && {([_unit] call EFUNC(common,errandToken)) != _token}
+} != -1) exitWith {
+    private _release = _tokens select {
+        _x params ["_unit", "_token"];
+        !isNull _unit && {_token >= 0} && {([_unit] call EFUNC(common,errandToken)) == _token}
+    } apply {_x select 0};
+    [_release] call EFUNC(common,clearErrand);
+    SETPVAR(_weapon,GVAR(packing),nil);
+};
 
 if (isNull _weapon) exitWith {
     [_gunner, _assistant, objNull] call FUNC(finishPack);
@@ -64,7 +84,7 @@ if (isNull _gunner || {!alive _gunner}) exitWith {
 // curator and weapon ride along because the event handler's own scope can't capture
 // them from here - and unlike WeaponAssembled, WeaponDisassembled doesn't pass the
 // static back as an argument, so the handler has no other way to reach it for cleanup
-private _ctx = ["pending", _assistant, _curator, -1, _weapon];
+private _ctx = ["pending", _assistant, _curator, -1, _weapon, _tokens];
 _gunner setVariable [QGVAR(packCtx), _ctx];
 
 // Deterministic pack: delete the static and hand the bags back directly, no engine
@@ -72,12 +92,29 @@ _gunner setVariable [QGVAR(packCtx), _ctx];
 // state slot keeps it mutually exclusive with the "WeaponDisassembled" handler, so
 // whichever fires first claims "done"
 private _fnc_directPack = {
-    params ["_weapon", "_gunner", "_weaponBag", "_baseBag", "_assistant"];
+    params ["_weapon", "_gunner", "_weaponBag", "_baseBag", "_assistant", "_tokens"];
 
     if (isNull _gunner) exitWith {};
 
     private _ctx = _gunner getVariable [QGVAR(packCtx), []];
     if ((_ctx param [0, ""]) isNotEqualTo "pending") exitWith {};
+    if ((_ctx param [5, []]) isNotEqualTo _tokens) exitWith {};
+
+    if (_tokens findIf {
+        _x params ["_unit", "_token"];
+        !isNull _unit && {_token >= 0} && {([_unit] call EFUNC(common,errandToken)) != _token}
+    } != -1) exitWith {
+        private _eh = _ctx param [3, -1];
+        if (_eh >= 0) then {_gunner removeEventHandler ["WeaponDisassembled", _eh]};
+        private _release = _tokens select {
+            _x params ["_unit", "_token"];
+            !isNull _unit && {_token >= 0} && {([_unit] call EFUNC(common,errandToken)) == _token}
+        } apply {_x select 0};
+        [_release] call EFUNC(common,clearErrand);
+        _gunner setVariable [QGVAR(packCtx), nil];
+        SETPVAR(_weapon,GVAR(packing),nil);
+    };
+
     _ctx set [0, "done"];
 
     private _eh = _ctx param [3, -1];
@@ -87,7 +124,7 @@ private _fnc_directPack = {
     };
 
     if (isNull _weapon) exitWith {
-        [_gunner, _assistant, objNull] call FUNC(finishPack);
+        [_gunner, _assistant, objNull, _tokens] call FUNC(finishPack);
     };
 
     private _position = getPosATL _weapon;
@@ -121,12 +158,12 @@ private _fnc_directPack = {
         [_ctx param [2, objNull], LLSTRING(Packed)] call EFUNC(common,notifyCurator);
     };
 
-    [_gunner, _assistant, _weapon] call FUNC(finishPack);
+    [_gunner, _assistant, _weapon, _tokens] call FUNC(finishPack);
 };
 
 // Instant disassembly: skip the engine animation, pack immediately
 if (GVAR(instant)) exitWith {
-    [_weapon, _gunner, _weaponBag, _baseBag, _assistant] call _fnc_directPack;
+    [_weapon, _gunner, _weaponBag, _baseBag, _assistant, _tokens] call _fnc_directPack;
 };
 
 // The engine folded the weapon and spawned the bag objects
@@ -135,7 +172,7 @@ private _eh = _gunner addEventHandler ["WeaponDisassembled", {
 
     private _ctx = _unit getVariable [QGVAR(packCtx), []];
 
-    if ((_ctx param [0, ""]) isEqualTo "pending") then {
+    if ((_ctx param [0, ""]) isEqualTo "pending" && {(_ctx param [3, -1]) == _thisEventHandler}) then {
         _ctx set [0, "done"];
         _unit removeEventHandler ["WeaponDisassembled", _thisEventHandler];
 
@@ -156,7 +193,7 @@ private _eh = _gunner addEventHandler ["WeaponDisassembled", {
         private _packed = _ctx param [4, objNull];
         deleteVehicle _packed;
 
-        [_unit, _assistant, _packed] call FUNC(finishPack);
+        [_unit, _assistant, _packed, _ctx param [5, []]] call FUNC(finishPack);
     };
 }];
 _ctx set [3, _eh];
@@ -168,4 +205,4 @@ unassignVehicle _gunner;
 _gunner action ["Disassemble", _weapon];
 
 // Deterministic fallback: if the engine never fired, pack it directly
-[_fnc_directPack, [_weapon, _gunner, _weaponBag, _baseBag, _assistant], PACK_TIMEOUT] call CBA_fnc_waitAndExecute;
+[_fnc_directPack, [_weapon, _gunner, _weaponBag, _baseBag, _assistant, _tokens], PACK_TIMEOUT] call CBA_fnc_waitAndExecute;
