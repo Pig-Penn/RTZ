@@ -61,7 +61,8 @@ if (isNull _lead) exitWith {};
 
 // Supersede any pending order on the lead so only the newest one can resolve.
 private _order = (_lead getVariable [QGVAR(approachOrder), 0]) + 1;
-_lead setVariable [QGVAR(approachOrder), _order];
+// Server-side repair jobs also use this token to discard re-tasked workers.
+_lead setVariable [QGVAR(approachOrder), _order, true];
 
 // lambs_danger_forceMove (inert without LAMBS) keeps the danger FSM from seizing
 // the units mid-errand; setUnitPosWeak requests the pose without hard-locking it.

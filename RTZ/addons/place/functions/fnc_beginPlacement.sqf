@@ -36,8 +36,11 @@ if (!hasInterface || {isNull _display}) exitWith {false};
 // picker both install click handlers on this same display and both drive a ghost
 // off the cursor; a session opened underneath either of them would fight it for
 // the two ignore slots lineIntersectsSurfaces has and the ghosts would climb each
-// other. EFUNC(common,placementPreview) states the contract in full.
-if (GETEGVAR(common,previewActive,false) || {GETMVAR(zen_common_selectPositionActive,false)}) exitWith {false};
+// other. EFUNC(common,placementPreview) states the contract in full. An rtz_path
+// planning session counts too, though it holds no flag — both modes own the left
+// press, so one click would grab a path handle and a ghost at once
+// (EFUNC(common,pickerActive)).
+if (GETEGVAR(common,previewActive,false) || {call EFUNC(common,pickerActive)}) exitWith {false};
 
 // ── Who is taking part ───────────────────────────────────────────────────────
 // A Zeus selection arrives as two DISJOINT lists: a group picked by its group

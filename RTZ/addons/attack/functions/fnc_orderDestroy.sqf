@@ -2,8 +2,8 @@
 /*
  * Author: Maxim
  * Lets Zeus pick a live enemy by clicking in the world or on the map, then
- * orders the selected AI groups to destroy it, replacing their current
- * waypoints. The cursor shows whether a valid target is under it.
+ * orders the selected AI groups to destroy it, overriding their current
+ * waypoints (see FUNC(addWaypoint)). The cursor shows whether a valid target is under it.
  *
  * Arguments:
  * N: Selected Objects <OBJECT>
@@ -20,6 +20,10 @@
 private _groups = _this call FUNC(getGroups);
 
 if (_groups isEqualTo []) exitWith {};
+
+// ZEN's re-entry guard sees only pickers holding its flag. An rtz_path planning
+// session holds none, and both would act on the same left click.
+if (call EFUNC(common,pickerActive)) exitWith {};
 
 private _modifierFunction = {
     params ["", "_position", "_groups", "_visuals"];

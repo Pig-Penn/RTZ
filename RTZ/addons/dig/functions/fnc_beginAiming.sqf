@@ -35,8 +35,9 @@ if (isNull _display) exitWith {false};
 // ZEN's side keeps a curator out of an RTZ action while one is open —
 // zen_context_menu's keybind checks isPlacementActive but not this — so the test
 // has to be made here. It is also what makes clearing the flag in FUNC(endAiming)
-// safe: no ZEN session can be running underneath this one.
-if (GETMVAR(zen_common_selectPositionActive,false)) exitWith {false};
+// safe: no ZEN session can be running underneath this one. rtz_path's planning
+// mode counts too, though it holds no flag — see EFUNC(common,pickerActive).
+if (call EFUNC(common,pickerActive)) exitWith {false};
 
 // Never two at once. A second session would install a second set of handlers on the
 // same display and only one of them would ever be removed.

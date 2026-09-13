@@ -29,6 +29,7 @@ PREP(magazineCapacity);
 // Shared UI / presentation helpers.
 PREP(drawZeusIcon);
 PREP(notifyCurator);
+PREP(pickerActive);
 PREP(placementPreview);
 PREP(regroupVehicleActions);
 PREP(removeContextActions);

@@ -21,6 +21,8 @@
  * orders never leave two loops fighting over one target with different snapshots.
  * The counter only ever counts up and is deliberately never cleared: a superseded
  * loop that has not ticked yet must not find its own number back on the owner.
+ * Deleted owners cancel with onEnd called as [_args, false]. Resources needed
+ * for that cleanup must be held in _args, not only in the owner's variables.
  *
  * The kind matters because one object can legitimately own two unrelated jobs at
  * once — a damaged supply truck is the owner of its own resupply run AND the
@@ -60,6 +62,13 @@ _owner setVariable [_varName, _order];
 [{
     params ["_state", "_handle"];
     _state params ["_owner", "_varName", "_order", "_onStep", "_onEnd", "_args", "_startTime", "_duration", "_lastProgress"];
+
+    // Deletion is cancellation, not supersession. Object variables disappear
+    // with the owner, but callers can still hold resources in their arguments.
+    if (isNull _owner) exitWith {
+        [_handle] call CBA_fnc_removePerFrameHandler;
+        [_args, false] call _onEnd;
+    };
 
     // A newer job took over — it owns this target now, so leave without running
     // the end hook over its work

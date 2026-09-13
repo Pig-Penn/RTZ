@@ -35,7 +35,7 @@
  * 2: Ordering Curator <OBJECT> (default: objNull)
  *
  * Return Value:
- * None
+ * A job was started <BOOL> — false when the server refused the order
  *
  * Example:
  * [_truck, _tank, player] call rtz_supply_fnc_serviceVehicles
@@ -45,17 +45,17 @@
 
 params ["_supply", "_target", ["_curator", objNull]];
 
-if (isNull _supply || {!alive _supply}) exitWith {};
+if (isNull _supply || {!alive _supply}) exitWith {false};
 
 // Re-validated server-side: the target was resolved on the curator's client a
 // network hop ago, so it may have died, driven off, mounted up or never been an
 // object at all.
-if (!(_target isEqualType objNull)) exitWith {};
-if (isNull _target || {!alive _target} || {_target isEqualTo _supply}) exitWith {};
-if (!(_target isKindOf "AllVehicles") || {_target isKindOf "CAManBase"}) exitWith {};
+if (!(_target isEqualType objNull)) exitWith {false};
+if (isNull _target || {!alive _target} || {_target isEqualTo _supply}) exitWith {false};
+if (!(_target isKindOf "AllVehicles") || {_target isKindOf "CAManBase"}) exitWith {false};
 
 private _radius = GVAR(serviceRadius);
-if (_target distance _supply > _radius) exitWith {};
+if (_target distance _supply > _radius) exitWith {false};
 
 // Side is judged from the crewed GROUP, the same test FUNC(serviceProviders) makes
 // and the same one VEH_SIDE_OK makes: a crewless hull has no meaningful side and
@@ -68,18 +68,18 @@ if (
     !isNull _supplyGroup
     && {!isNull _targetGroup}
     && {side _supplyGroup getFriend (side _targetGroup) < FRIENDLY_THRESHOLD}
-) exitWith {};
+) exitWith {false};
 
 private _capabilities = [_supply] call FUNC(supplyCapabilities);
 private _granted      = [_target, _supply, _capabilities] call FUNC(grantedServices);
 
-if !(true in _granted) exitWith {};
+if !(true in _granted) exitWith {false};
 
 // Measured against the GRANTED services only, not everything the truck carries: a
 // fuel truck arriving at a tank whose fuel another truck already claimed has no
 // deficit to close here, however empty the tank still looks.
 private _deficit = [_target, _granted] call FUNC(serviceDeficit);
-if (_deficit <= 0) exitWith {};
+if (_deficit <= 0) exitWith {false};
 
 private _timeout = SERVICE_TIMEOUT;
 private _until   = CBA_missionTime + _timeout + CLAIM_GRACE;
@@ -111,7 +111,12 @@ if (count _claim < 3) then { _claim = [[], [], []] };
     if (_x) then { _claim set [_forEachIndex, [_supply, _until]] };
 } forEach _granted;
 
-_target setVariable [QGVAR(claim), _claim];
+// PUBLIC. FUNC(grantedServices) reads this on the curator's CLIENT too, through
+// FUNC(serviceProviders), to decide what the cursor offers. Written server-local, it
+// reached nobody but the host: every other curator's picker promised a service a
+// truck already held, and the click was refused here in silence. One broadcast per
+// order and one per release (FUNC(releaseClaims)), never per tick.
+_target setVariable [QGVAR(claim), _claim, true];
 
 // Contract read by FUNC(gatherSupply) for the supply-lines overlay. The target is
 // wrapped in a one-element array because that gatherer and FUNC(drawSupply) take a
@@ -140,3 +145,5 @@ _supply setVariable [QGVAR(servicing), [[_target], time, _timeout]];
     [_supply, _granted, _target, _deficit, _radius, _curator, 0, 0, false],
     LINKFUNC(endService)
 ] call EFUNC(common,progressJob);
+
+true

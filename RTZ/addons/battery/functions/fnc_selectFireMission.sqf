@@ -61,6 +61,10 @@ params ["_objects"];
 private _guns = [_objects] call FUNC(fireMissionGuns);
 if (_guns isEqualTo []) exitWith {};
 
+// ZEN's re-entry guard sees only pickers holding its flag. An rtz_path planning
+// session holds none, and both would act on the same left click.
+if (call EFUNC(common,pickerActive)) exitWith {};
+
 // The ANCHOR decides which guns actually fire. gui_fireMission does not take a gun
 // list: it rebuilds one as `_anchor nearObjects [typeOf _anchor, 100]` filtered to
 // crewed guns, so guns further out are dropped however they were selected, and

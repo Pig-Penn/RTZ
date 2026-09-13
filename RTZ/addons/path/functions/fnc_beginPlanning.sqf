@@ -31,6 +31,13 @@
 private _display = findDisplay IDD_RSCDISPLAYCURATOR;
 if (isNull _display) exitWith {false};
 
+// Another picker already owns the left press — a placement session, a dig or
+// airstrike aim, ZEN's own position picker. This mode deliberately never holds
+// zen_common_selectPositionActive (it would suppress ZEN's context menu for the
+// whole session), so it has to TEST it here, and the other pickers test this
+// mode's flag in turn through the same predicate. The press passes through.
+if (call EFUNC(common,pickerActive)) exitWith {false};
+
 private _selection = SELECTED_OBJECTS;
 private _hulls = [];
 

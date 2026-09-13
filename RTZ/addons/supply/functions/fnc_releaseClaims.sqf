@@ -14,6 +14,9 @@
  * skips its walk entirely, so this keeps the common case common: a vehicle that has
  * been serviced and released looks exactly like one that never was.
  *
+ * Both writes are PUBLIC, matching the claim FUNC(serviceVehicles) takes: curators'
+ * clients read the slots through FUNC(grantedServices) to decide what the picker offers.
+ *
  * Arguments:
  * 0: Target <OBJECT>
  * 1: Supply Vehicle <OBJECT>
@@ -49,7 +52,7 @@ private _released = false;
 if (!_released) exitWith {};
 
 if (_claim findIf {_x isNotEqualTo []} == -1) exitWith {
-    _target setVariable [QGVAR(claim), nil];
+    _target setVariable [QGVAR(claim), nil, true];
 };
 
-_target setVariable [QGVAR(claim), _claim];
+_target setVariable [QGVAR(claim), _claim, true];

@@ -14,19 +14,24 @@
  *
  * Arguments:
  * 0: Unit <OBJECT>
+ * 1: Errand Token <NUMBER>
  *
  * Return Value:
  * None
  *
  * Example:
- * [_unit] call rtz_repair_fnc_finishRepair
+ * [_unit, _token] call rtz_repair_fnc_finishRepair
  *
  * Public: No
  */
 
-params ["_unit"];
+params ["_unit", "_token"];
 
-if (isNull _unit) exitWith {};
+if (isNull _unit || {!local _unit}) exitWith {};
+
+// Re-check after the network hop: a newer order may have started since the
+// server released this worker, including while the old vehicle was deleted.
+if (([_unit] call EFUNC(common,errandToken)) != _token) exitWith {};
 
 // A corpse keeps its ragdoll — switchMove on a dead unit snaps it upright
 if (alive _unit) then {

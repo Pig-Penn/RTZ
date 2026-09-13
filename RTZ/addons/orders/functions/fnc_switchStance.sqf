@@ -65,7 +65,21 @@ private _top = (count _ladder) - 1;
     private _stance = "AUTO";
 
     if (_dir != 0) then {
-        private _current = _x getVariable [QGVAR(stance), "AUTO"];
+        // Where the unit is LOCAL — the usual case, since a curator's spawned units
+        // are local to him — unitPos is authoritative, and already reflects a press
+        // made a moment ago (CBA delivers a local target event synchronously), so
+        // it is read directly. The mirror stands in only for a REMOTE unit, and only
+        // while fresh: RTZ's own Reset (lambs_wp_fnc_taskReset does setUnitPos
+        // "AUTO"), ZEN's Stance action and LAMBS tactics all move the rung without
+        // touching it, and a stale mirror made "Up" crouch a man who was standing.
+        // Once it lapses the animation-derived fallback below answers instead.
+        private _current = "AUTO";
+        if (local _x) then {
+            _current = unitPos _x;
+        } else {
+            (_x getVariable [QGVAR(stance), []]) params [["_mirrored", "AUTO"], ["_stampedAt", -1]];
+            if (CBA_missionTime - _stampedAt < STANCE_MIRROR_TTL) then {_current = _mirrored};
+        };
 
         if (_current isEqualTo "AUTO") then {
             _current = switch (stance _x) do {
@@ -80,7 +94,8 @@ private _top = (count _ladder) - 1;
         _stance = _ladder select (((_ladder find _current) + _dir) max 0 min _top);
     };
 
-    _x setVariable [QGVAR(stance), _stance, true];
+    // Stamped, so a remote unit's mirror can lapse (STANCE_MIRROR_TTL, above)
+    _x setVariable [QGVAR(stance), [_stance, CBA_missionTime], true];
 
     [QGVAR(switchStance), [_x, _stance], _x] call CBA_fnc_targetEvent;
 

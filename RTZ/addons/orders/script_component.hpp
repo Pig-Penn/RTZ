@@ -40,6 +40,12 @@
 // lands on it.
 #define STANCE_LADDER ["DOWN", "MIDDLE", "UP"]
 
+// Seconds a REMOTE unit's ordered-stance mirror is trusted by FUNC(switchStance).
+// Long enough to span a stance-change animation, so a fast second press steps from
+// the first press's rung; short enough that a rung changed by anything else (Reset,
+// ZEN, LAMBS) is soon read back off the animation instead of from the stale mirror.
+#define STANCE_MIRROR_TTL 3
+
 // ZEN's own Combat Mode context-menu glyph, tinted the same way ZEN tints it
 #define ICON_COMBAT_MODE "\x\zen\addons\context_actions\ui\hold_ca.paa"
 #define COLOR_HOLD_FIRE [1, 0, 0, 1]

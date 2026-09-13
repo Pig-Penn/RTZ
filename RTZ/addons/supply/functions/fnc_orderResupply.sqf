@@ -57,8 +57,9 @@ if (_supplies isEqualTo []) exitWith {
 // Bail BEFORE installing the ring rather than letting ZEN's re-entry guard bounce
 // us. selectPosition answers a second call by invoking the callback with
 // _successful false, and that callback tears the ring down — which would take the
-// ring belonging to the pick already running with it.
-if (zen_common_selectPositionActive) exitWith {};
+// ring belonging to the pick already running with it. An rtz_path planning session
+// blocks too, though it holds no flag (EFUNC(common,pickerActive)).
+if (call EFUNC(common,pickerActive)) exitWith {};
 
 // The same key the ZEN context entry relabelled itself with, so the cursor names
 // the exact action the menu promised: "Refuel" for a lone fuel truck, "Resupply"

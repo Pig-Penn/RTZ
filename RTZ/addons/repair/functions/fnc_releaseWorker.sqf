@@ -13,18 +13,19 @@
  *
  * Arguments:
  * 0: Unit <OBJECT> — objNull is a no-op
+ * 1: Errand Token <NUMBER>
  *
  * Return Value:
  * None
  *
  * Example:
- * [_unit] call rtz_repair_fnc_releaseWorker
+ * [_unit, _token] call rtz_repair_fnc_releaseWorker
  *
  * Public: No
  */
 
-params ["_unit"];
+params ["_unit", "_token"];
 
 if (isNull _unit) exitWith {};
 
-[QGVAR(finish), [_unit], _unit] call CBA_fnc_targetEvent;
+[QGVAR(finish), [_unit, _token], _unit] call CBA_fnc_targetEvent;

@@ -41,7 +41,10 @@
 
 params ["_unit", "_vehicle", ["_token", 0]];
 
-if (!alive _unit || {isNull _vehicle} || {!alive _vehicle}) exitWith {};
+if (!alive _unit) exitWith {};
+if (isNull _vehicle || {!alive _vehicle}) exitWith {
+    [_unit, _token] call FUNC(releaseWorker);
+};
 
 private _workers = _vehicle getVariable [QGVAR(workers), []];
 
@@ -68,7 +71,7 @@ if (count _workers > 1) exitWith {};
     REPAIR_TICK,
     {
         params ["_args", "_step"];
-        _args params ["_vehicle", "_startDamage"];
+        _args params ["_vehicle", "_startDamage", "_workers"];
 
         if (!alive _vehicle) exitWith {false};
 
@@ -84,14 +87,17 @@ if (count _workers > 1) exitWith {};
 
                 // Dead, or knocked/blown clear of the vehicle he was working on
                 case (!alive _unit || {_unit distance _vehicle > REPAIR_ABORT_DISTANCE}): {
-                    [_unit] call FUNC(releaseWorker);
+                    [_unit, _token] call FUNC(releaseWorker);
                 };
 
                 default {_working pushBack _x};
             };
-        } forEach (_vehicle getVariable [QGVAR(workers), []]);
+        } forEach _workers;
 
-        _vehicle setVariable [QGVAR(workers), _working];
+        // Keep the same array in the vehicle and job arguments: later arrivals
+        // join it, and deletion must not erase the job's cleanup list.
+        _workers resize 0;
+        _workers append _working;
 
         // Nobody left working — stop rather than idle out the duration
         if (_working isEqualTo []) exitWith {false};
@@ -103,10 +109,10 @@ if (count _workers > 1) exitWith {};
 
         damage _vehicle > 0
     },
-    [_vehicle, damage _vehicle],
+    [_vehicle, damage _vehicle, _workers],
     {
         params ["_args"];
-        _args params ["_vehicle"];
+        _args params ["_vehicle", "", "_workers"];
 
         // Fully repaired, or the job ran its duration out
         if (alive _vehicle && {damage _vehicle <= REPAIR_THRESHOLD}) then {
@@ -114,8 +120,8 @@ if (count _workers > 1) exitWith {};
         };
 
         {
-            [_x select 0] call FUNC(releaseWorker);
-        } forEach (_vehicle getVariable [QGVAR(workers), []]);
+            _x call FUNC(releaseWorker);
+        } forEach _workers;
 
         _vehicle setVariable [QGVAR(workers), nil];
     }

@@ -65,8 +65,9 @@ if (!hasInterface || {isNull _display}) exitWith {
 // an RTZ action while one is open either — zen_context_menu's keybind checks
 // isPlacementActive but not this flag — so the test has to be made from this side.
 // It is also what makes clearing the flag on teardown safe: no ZEN session can be
-// running underneath this one.
-if (GETGVAR(previewActive,false) || {GETMVAR(zen_common_selectPositionActive,false)}) exitWith {
+// running underneath this one. rtz_path's planning mode counts too, though it holds
+// no flag — see FUNC(pickerActive).
+if (GETGVAR(previewActive,false) || {call FUNC(pickerActive)}) exitWith {
     [false, [0, 0, 0], 0, _args] call _onConfirm;
 };
 // Drop ZEN's placement ghost if the curator left a class selected in the create

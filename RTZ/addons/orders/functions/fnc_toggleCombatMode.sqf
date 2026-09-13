@@ -106,8 +106,16 @@ private _holdCount = 0;
 private _openCount = 0;
 
 {
-    // Current state: broadcast var, seeded from the engine read the first time
-    private _holdFire = _x getVariable [QGVAR(holdFire), combatMode _x == "BLUE"];
+    // Current state. From the ENGINE where the group is local — the usual case, a
+    // curator's own units — because RTZ's attack order (a DESTROY waypoint set to
+    // RED), ZEN's Combat Mode action and LAMBS all change the mode without touching
+    // the mirror, and a stale mirror inverted the toggle. The broadcast var stands in
+    // only for a group owned elsewhere, where combatMode is not authoritative.
+    private _holdFire = if (local _x) then {
+        combatMode _x == "BLUE"
+    } else {
+        _x getVariable [QGVAR(holdFire), combatMode _x == "BLUE"]
+    };
     private _newHold = !_holdFire;
     private _mode = ["YELLOW", "BLUE"] select _newHold;
 

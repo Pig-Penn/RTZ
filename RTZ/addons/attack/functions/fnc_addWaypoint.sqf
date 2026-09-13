@@ -1,8 +1,9 @@
 #include "script_component.hpp"
 /*
  * Author: Maxim
- * Replaces the group's waypoints with a destroy waypoint aimed at the target
- * and reveals the target to the group so it engages reliably.
+ * Appends a destroy waypoint aimed at the target, makes it the group's current
+ * waypoint, and reveals the target to the group so it engages reliably. Earlier
+ * waypoints are skipped, NOT deleted — they stay in the group's list.
  * Must be executed where the group is local.
  *
  * Against a VEHICLE this is a standing order: the waypoint binds to the target,

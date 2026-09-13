@@ -14,10 +14,22 @@ if (isServer) then {
     [QGVAR(resupply), {
         params ["_orders", ["_curator", objNull]];
 
+        private _started = 0;
         {
             _x params ["_supply", "_target"];
-            [_supply, _target, _curator] call FUNC(serviceVehicles);
+            if ([_supply, _target, _curator] call FUNC(serviceVehicles)) then {
+                _started = _started + 1;
+            };
         } forEach _orders;
+
+        // The curator's client already toasted "Resupplying" off an answer that was a
+        // network hop stale — another curator's truck may have claimed the service, or
+        // the target driven off, since. This is the authoritative refusal, so say it
+        // rather than leave an order that silently never happened. Per ORDER, not per
+        // truck: one click, one verdict.
+        if (_started == 0 && {!isNull _curator}) then {
+            [QGVAR(report), [LSTRING(MsgNothingToService)], _curator] call CBA_fnc_targetEvent;
+        };
     }] call CBA_fnc_addEventHandler;
 };
 
